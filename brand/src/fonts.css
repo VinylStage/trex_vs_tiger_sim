@@ -1,0 +1,41 @@
+/*
+  Pretendard 1.3.9 (SIL Open Font License 1.1), static OTF weights.
+  brand/render.mjs downloads the files into brand/.cache/fonts/ and checks their SHA-256 before
+  any page is rendered. The family is registered under a private name, so nothing on these pages
+  can resolve to an installed system font; render.mjs also fails the build on any fallback.
+*/
+@font-face {
+  font-family: 'PretendardBrand';
+  font-weight: 500;
+  font-style: normal;
+  font-display: block;
+  src: url('../.cache/fonts/Pretendard-Medium.otf') format('opentype');
+}
+@font-face {
+  font-family: 'PretendardBrand';
+  font-weight: 600;
+  font-style: normal;
+  font-display: block;
+  src: url('../.cache/fonts/Pretendard-SemiBold.otf') format('opentype');
+}
+@font-face {
+  font-family: 'PretendardBrand';
+  font-weight: 700;
+  font-style: normal;
+  font-display: block;
+  src: url('../.cache/fonts/Pretendard-Bold.otf') format('opentype');
+}
+@font-face {
+  font-family: 'PretendardBrand';
+  font-weight: 800;
+  font-style: normal;
+  font-display: block;
+  src: url('../.cache/fonts/Pretendard-ExtraBold.otf') format('opentype');
+}
+@font-face {
+  font-family: 'PretendardBrand';
+  font-weight: 900;
+  font-style: normal;
+  font-display: block;
+  src: url('../.cache/fonts/Pretendard-Black.otf') format('opentype');
+}
