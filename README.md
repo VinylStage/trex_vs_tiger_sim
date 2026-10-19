@@ -36,17 +36,20 @@ Node: see `.node-version` (24).
 
 ## Documentation
 
-| Doc                                                | Content                                                           |
-| -------------------------------------------------- | ----------------------------------------------------------------- |
-| [ARCHITECTURE.md](ARCHITECTURE.md)                 | System, modules, run sequence, state machines, pipeline (Mermaid) |
-| [docs/MODEL.md](docs/MODEL.md)                     | Simulation model, parameters, sources, assumptions                |
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)           | Cloudflare Pages setup and free-plan budget                       |
-| [docs/CONFIGURATION.md](docs/CONFIGURATION.md)     | Every config file explained                                       |
-| [docs/adr/](docs/adr/README.md)                    | Architecture Decision Records                                     |
-| [ROADMAP.md](ROADMAP.md)                           | Planned work                                                      |
-| [IMPLEMENTATION_AUDIT.md](IMPLEMENTATION_AUDIT.md) | Implementation status, verification, deviations                   |
-| [CONTRIBUTING.md](CONTRIBUTING.md)                 | GitHub Flow, conventional commits, release process                |
-| [SECURITY.md](SECURITY.md)                         | Vulnerability reporting                                           |
+| Doc                                                | Content                                                                   |
+| -------------------------------------------------- | ------------------------------------------------------------------------- |
+| [ARCHITECTURE.md](ARCHITECTURE.md)                 | System, modules, run sequence, state machines, pipeline (Mermaid)         |
+| [docs/MODEL.md](docs/MODEL.md)                     | Simulation model, parameters, sources, assumptions                        |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)           | Cloudflare Pages setup and free-plan budget                               |
+| [docs/CONFIGURATION.md](docs/CONFIGURATION.md)     | Every config file explained                                               |
+| [docs/adr/](docs/adr/README.md)                    | Architecture Decision Records                                             |
+| [docs/BRANDING.md](docs/BRANDING.md)               | Title, OG cards, icon set and how to re-render them                       |
+| [docs/ADSENSE.md](docs/ADSENSE.md)                 | AdSense readiness gates, owner actions, checklist                         |
+| [docs/research/](docs/research/README.md)          | Research records (UX, performance, SEO/GEO, AdSense, species, animation)  |
+| [ROADMAP.md](ROADMAP.md)                           | Planned work                                                              |
+| [IMPLEMENTATION_AUDIT.md](IMPLEMENTATION_AUDIT.md) | Implementation status, verification, deviations                           |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                 | GitHub Flow, conventional commits, release process, content framing rules |
+| [SECURITY.md](SECURITY.md)                         | Vulnerability reporting                                                   |
 
 ## Disclaimer
 
