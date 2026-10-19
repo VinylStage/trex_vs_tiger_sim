@@ -590,6 +590,12 @@ export function startApp(root: HTMLElement): void {
     updateStale();
   });
 
+  // Canvas text does not reflow when a web font arrives; redraw once Pretendard is ready.
+  void document.fonts?.ready.then(() => {
+    replayView.refresh();
+    redrawAllCharts();
+  });
+
   renderResults();
   writeUrl();
 }
