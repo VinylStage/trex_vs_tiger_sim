@@ -80,6 +80,7 @@ value = clamp(runValue × f, bounds)
   - Battle `i`: `deriveSeed(seed, i, 2)`. All in-battle randomness comes from this stream: spawn positions, individual factors, initial timers, flank side, latch and shake-off rolls, bite hits and damage.
 - **Consequences:**
   - A run's result depends only on `(config, i)`. Splitting runs across any number of Web Workers gives identical results.
+  - Results are bit-identical within the same JavaScript engine. Across engines (e.g. V8 vs JavaScriptCore) they agree statistically but may differ run-by-run, because `Math.atan2/sin/cos/log` are not required to be correctly rounded. Distances use `Math.sqrt` (correctly rounded) rather than `Math.hypot`.
   - Re-running battle `i` with `trace = true` (the replay) reproduces the same battle, because tracing consumes no random numbers.
   - The design depends on `runs`. Changing the run count changes every row, so run 7 of a 100-run batch is not run 7 of a 500-run batch.
 
@@ -88,14 +89,15 @@ value = clamp(runValue × f, bounds)
 Untrusted input, such as the URL fragment, goes through `sanitizeConfig`:
 
 - unknown keys are dropped;
-- numbers are clamped to the limits below, and counts and the seed are rounded to integers;
-- each triangular `(min, mode, max)` is clamped to the parameter's bounds and sorted so that `min ≤ mode ≤ max`.
+- only JSON numbers are accepted (numeric strings fall back to the default); numbers are clamped to the limits below, counts and the seed are rounded to integers, and `maxTime` is snapped to the 0.1 s step;
+- each triangular `(min, mode, max)` must supply all three numbers (a partial range falls back to the default triangle); values are clamped to the parameter's bounds and sorted so that `min ≤ mode ≤ max`;
+- **work budget:** `runs × (maxTime / 0.1) × (trexCount + tigerCount)` must not exceed `MAX_WORK = 5·10¹⁰` agent-steps; otherwise `runs` is lowered to fit. This stops a shared link from requesting an effectively unbounded amount of CPU.
 
 | Setting        | Default        | Allowed                                          |
 | -------------- | -------------- | ------------------------------------------------ |
 | `trexCount`    | 10             | 1–500                                            |
 | `tigerCount`   | 100            | 1–5,000                                          |
-| `runs`         | 500            | 1–20,000                                         |
+| `runs`         | 500            | 1–20,000, and within the work budget             |
 | `seed`         | 20261019       | 0–2³²−1                                          |
 | `arenaSize`    | 600 m (square) | 100–5,000 m                                      |
 | `maxTime`      | 1,200 s        | 30–3,600 s                                       |
@@ -111,7 +113,7 @@ A battle ends at the end of the first tick in which one of these holds. The chec
 
 1. **Tigers win:** every T-Rex is dead (HP ≤ 0). If the last T-Rex and the last active tiger fall in the same tick, the tigers win.
 2. **T-Rex win:** no tiger is _active_. Active means in state Approach, Latched or Recover, so every tiger is Dead, Routed or has Left the arena. A T-Rex win therefore includes battles that end because the tigers fled.
-3. **Draw:** `maxTime` is reached (`ceil(maxTime / 0.1)` ticks).
+3. **Draw:** `maxTime` is reached (`maxTime / 0.1` ticks; `maxTime` is already on the 0.1 s grid).
 
 Each run returns a `RunSummary`:
 
@@ -125,14 +127,14 @@ Each run returns a `RunSummary`:
 
 ### 2.5 Aggregate metrics
 
-| Metric                       | Definition (`montecarlo.ts`, `stats.ts`)                                                                                                                                              |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P(T-Rex), P(tigers), P(draw) | Proportion of runs, with a **Wilson score 95% interval** (`z = 1.95996`).                                                                                                             |
-| Duration, T-Rex survivors    | Mean, p5, p50 and p95, using linearly interpolated quantiles. Histograms: duration in 30 bins over `[0, maxTime]`; survivors in `trexCount + 1` integer bins.                         |
-| Tigers killed, tigers routed | Mean, p5, p50 and p95.                                                                                                                                                                |
-| Exchange ratio               | Σ tigers killed ÷ Σ T-Rex lost over all runs (a ratio of totals). It is `Infinity` if no T-Rex died.                                                                                  |
-| Sensitivity                  | For each parameter, the **Spearman rank correlation ρ** (average ranks for ties) between its _run-level_ design value and `trexAdvantage`. Sorted by \|ρ\|; a non-finite ρ becomes 0. |
-| Representative run           | The run whose `trexAdvantage` is closest to the median `trexAdvantage`, with ties going to the lowest run index. The UI replays this run.                                             |
+| Metric                       | Definition (`montecarlo.ts`, `stats.ts`)                                                                                                                                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P(T-Rex), P(tigers), P(draw) | Proportion of runs, with a **Wilson score 95% interval** (`z = 1.95996`).                                                                                                                                             |
+| Duration, T-Rex survivors    | Mean, p5, p50 and p95, using linearly interpolated quantiles. Histograms: duration in ≤ 30 bins over `[0, maxTime]`, each bin a whole number of 0.1 s steps (no aliasing); survivors in `trexCount + 1` integer bins. |
+| Tigers killed, tigers routed | Mean, p5, p50 and p95.                                                                                                                                                                                                |
+| Exchange ratio               | Σ tigers killed ÷ Σ T-Rex lost over all runs (a ratio of totals). `Infinity` if tigers died but no T-Rex did; `NaN` if nobody died.                                                                                   |
+| Sensitivity                  | For each parameter, the **Spearman rank correlation ρ** (average ranks for ties) between its _run-level_ design value and `trexAdvantage`. Sorted by \|ρ\|; a non-finite ρ becomes 0.                                 |
+| Representative run           | The run whose `trexAdvantage` is closest to the median `trexAdvantage`, with ties going to the lowest run index. The UI replays this run.                                                                             |
 
 How to read the sensitivity:
 
@@ -288,8 +290,8 @@ A Routed tiger that is bitten and survives is set to Recover. Its morale is alre
 
 - Stamina regenerates at `DT / recoveryTime` per tick, four times the cruise rate.
 - If the tiger is within 40 m of the nearest T-Rex, it moves directly away at cruise speed.
-- At stamina ≥ 0.8 it returns to Approach with no target.
-- A bitten tiger enters Recover whatever its stamina. If its stamina is already ≥ 0.8, it re-engages on the next update after a 0.1 s retreat.
+- It returns to Approach with no target when stamina ≥ 0.8 **and** its minimum recovery time has elapsed.
+- A tiger that is bitten and survives, or shaken off, must stay in Recover for at least `recoverMinTime` (5 s) whatever its stamina, so it actually disengages before re-latching. Recover entered because stamina ran out has no minimum time.
 
 **Routed.**
 
@@ -334,33 +336,35 @@ This models the observation that tigers avoid injurious fights. The thresholds a
 
 These are fixed in `engine.ts`. They are not sampled and not editable in the UI.
 
-| Constant                          | Value           | Meaning                                                                       |
-| --------------------------------- | --------------- | ----------------------------------------------------------------------------- |
-| `DT`                              | 0.1 s           | Integration time step                                                         |
-| `tigerRadius`                     | 0.8 m           | Tiger body radius (contact distance, bite reach padding, latched offset)      |
-| `latchRetry`                      | 1 s             | Latch cooldown after a failed latch roll                                      |
-| `moraleRadius`                    | 40 m            | Morale-shock radius around a killed tiger                                     |
-| `routThreshold`                   | 0.2             | Morale below which a tiger routs (morale on)                                  |
-| `woundMoraleLoss`                 | 0.25            | Morale lost when bitten and surviving                                         |
-| `throwMoraleLoss`                 | 0.1             | Morale lost when shaken off and surviving                                     |
-| `throwDamageFrac`                 | 0.1             | Fraction of own max HP a tiger loses when shaken off                          |
-| `throwDistance`                   | 3 m             | Outward displacement when shaken off                                          |
-| `recoverDistance`                 | 40 m            | Recovering tigers closer than this to a T-Rex move away at cruise speed       |
-| `resumeStamina`                   | 0.8             | Stamina at which a recovering tiger re-engages                                |
-| `sprintTriggerDistance`           | 60 m            | Tigers sprint (and drain stamina) within this distance of their target        |
-| `cruiseRegenFactor`               | 0.25            | Stamina regeneration while cruising, relative to resting                      |
-| `trexRetarget`                    | 0.5 s           | T-Rex retarget interval                                                       |
-| `tigerRetarget`                   | 1 s             | Tiger retarget interval                                                       |
-| `minCarrySpeedFactor`             | 0.3             | Floor of the carried-mass speed factor                                        |
-| `latchedAccuracyBonus`            | 1.5             | Bite-accuracy multiplier against latched tigers                               |
-| `maxAccuracy`                     | 0.95            | Cap on the boosted accuracy                                                   |
-| `dangerMargin`                    | 4 m             | Flank: distance beyond `biteReach` treated as dangerous                       |
-| `dangerArcPad`                    | 20°             | Flank: angle beyond `biteArc` treated as dangerous                            |
-| `flankOffset`                     | 0.6 rad (≈ 34°) | Flank: aim-point offset from directly behind                                  |
-| `biteDamageMin`, `biteDamageSpan` | 0.7, 0.6        | Bite damage multiplier `U(0.7, 1.3)`                                          |
-| `flankLoadPenalty`                | 20 m            | Flank: target-score penalty per tiger already latched                         |
-| `traceFloatBudget`                | 6,000,000       | Replay: frame interval chosen so a trace holds about this many floats at most |
-| `traceMinEvery`                   | 5 ticks (0.5 s) | Replay: minimum interval between recorded frames                              |
+| Constant                          | Value           | Meaning                                                                                                                              |
+| --------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `DT`                              | 0.1 s           | Integration time step                                                                                                                |
+| `tigerRadius`                     | 0.8 m           | Tiger body radius (contact distance, bite reach padding, latched offset)                                                             |
+| `latchRetry`                      | 1 s             | Latch cooldown after a failed latch roll                                                                                             |
+| `moraleRadius`                    | 40 m            | Morale-shock radius around a killed tiger                                                                                            |
+| `routThreshold`                   | 0.2             | Morale below which a tiger routs (morale on)                                                                                         |
+| `woundMoraleLoss`                 | 0.25            | Morale lost when bitten and surviving                                                                                                |
+| `throwMoraleLoss`                 | 0.1             | Morale lost when shaken off and surviving                                                                                            |
+| `throwDamageFrac`                 | 0.1             | Fraction of own max HP a tiger loses when shaken off                                                                                 |
+| `throwDistance`                   | 3 m             | Outward displacement when shaken off                                                                                                 |
+| `recoverDistance`                 | 40 m            | Recovering tigers closer than this to a T-Rex move away at cruise speed                                                              |
+| `resumeStamina`                   | 0.8             | Stamina at which a recovering tiger re-engages                                                                                       |
+| `sprintTriggerDistance`           | 60 m            | Tigers sprint (and drain stamina) within this distance of their target                                                               |
+| `cruiseRegenFactor`               | 0.25            | Stamina regeneration while cruising, relative to resting                                                                             |
+| `trexRetarget`                    | 0.5 s           | T-Rex retarget interval                                                                                                              |
+| `tigerRetarget`                   | 1 s             | Tiger retarget interval                                                                                                              |
+| `minCarrySpeedFactor`             | 0.3             | Floor of the carried-mass speed factor                                                                                               |
+| `latchedAccuracyBonus`            | 1.5             | Bite-accuracy multiplier against latched tigers                                                                                      |
+| `maxAccuracy`                     | 0.95            | Cap on the boosted accuracy                                                                                                          |
+| `dangerMargin`                    | 4 m             | Flank: distance beyond `biteReach` treated as dangerous                                                                              |
+| `dangerArcPad`                    | 20°             | Flank: angle beyond `biteArc` treated as dangerous                                                                                   |
+| `flankOffset`                     | 0.6 rad (≈ 34°) | Flank: aim-point offset from directly behind                                                                                         |
+| `biteDamageMin`, `biteDamageSpan` | 0.7, 0.6        | Bite damage multiplier `U(0.7, 1.3)`                                                                                                 |
+| `flankLoadPenalty`                | 20 m            | Flank: target-score penalty per tiger already latched                                                                                |
+| `traceFloatBudget`                | 6,000,000       | Replay: when a trace would exceed this many floats, every other frame is dropped and the interval doubles                            |
+| `traceMinEvery`                   | 5 ticks (0.5 s) | Replay: starting interval between recorded frames                                                                                    |
+| `recoverMinTime`                  | 5 s             | Minimum time in Recover after a wound or a throw                                                                                     |
+| `shockPad`                        | 6.5 m           | Morale-shock grid query padding (max per-tick displacement: 35 m/s × 0.1 s + 3 m throw); the exact 40 m distance check still applies |
 
 Hard-coded values in the code that are not in `CONSTANTS`:
 
@@ -523,7 +527,8 @@ Everything in this section can be explored in the UI. Edit any `(min, mode, max)
 
 - Explicit 0.1 s steps.
 - Agents are updated sequentially within a tick, so index order can matter slightly.
-- Some searches are O(N·M) per tick: T-Rex targeting, and tiger targeting in flank mode.
+- Nearest-neighbour searches (T-Rex → nearest free tiger, tiger → nearest T-Rex) use an expanding-ring search on uniform grids sized by area and population. Flank-mode target scoring is still a linear scan over T-Rex, once per tiger per second.
+- A latched tiger's position for the bite-cone test is derived from its host's current pose, so a host that turns this tick sees its riders where they are now.
 
 **Future work** (see also [ROADMAP.md](../ROADMAP.md))
 
