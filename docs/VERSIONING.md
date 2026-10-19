@@ -169,7 +169,7 @@ sequenceDiagram
 | `/reset/*`      | `no-transform`                        | `/reset/` is HTML. On the custom domain, Bot Fight Mode would otherwise inject its inline JavaScript Detections script, which the strict CSP blocks ([DEPLOYMENT.md](DEPLOYMENT.md#bot-fight-mode-and-javascript-detections)).                                  |
 | `/reset/*`      | `Clear-Site-Data: "cache", "storage"` | Server-side complement to the JavaScript clean-up: clears the origin's HTTP cache (which JavaScript cannot touch) and DOM storage — localStorage, sessionStorage, IndexedDB, service worker registrations and Cache Storage. Directives must be quoted strings. |
 
-The splat in `/reset/*` matches the empty string, so the rule applies to `/reset/` itself. `/reset` (no slash) and `/reset/index.html` are redirected to `/reset/` by Pages first. The CSP and other headers of the `/*` rule apply as usual. `vite preview` and `npm run dev` do not apply `_headers`; check them on a Pages preview (see [Verify](#verify)).
+The splat in `/reset/*` matches the empty string, so the rule applies to `/reset/` itself (verified on the branch preview: `clear-site-data: "cache", "storage"` on `GET /reset/`, and Chrome logs `Cleared data types: "cache", "storage".`). Pages answers `/reset` and `/reset/index.html` with a `308` to `/reset/`; the second also matches the rule, so its redirect carries the header as well, which only repeats the clearing. The app always links to `/reset/`. The CSP and other headers of the `/*` rule apply as usual. `vite preview` and `npm run dev` do not apply `_headers`; check them on a Pages preview (see [Verify](#verify)).
 
 ## Clear-Site-Data: browser support
 
