@@ -27,6 +27,7 @@ import {
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
 import { configFromHash, hashFromConfig } from './share';
+import { createSiteNav } from './site-nav';
 
 export const REPO_URL = 'https://github.com/VinylStage/trex_vs_tiger_sim';
 export const MODEL_DOC_URL = `${REPO_URL}/blob/main/docs/MODEL.md`;
@@ -129,6 +130,8 @@ export function startApp(root: HTMLElement): void {
     ),
     h('div', { class: 'header-actions' }, shareBtn, langBtn),
   );
+  let siteNav = createSiteNav(getLang());
+  header.append(siteNav);
 
   // ---------- config panel ----------
   const form = createConfigForm(config, pool.size, (c) => {
@@ -571,7 +574,10 @@ export function startApp(root: HTMLElement): void {
     renderReplayInfo();
   }
 
-  onLangChange(() => {
+  onLangChange((lang) => {
+    const nextNav = createSiteNav(lang);
+    siteNav.replaceWith(nextNav);
+    siteNav = nextNav;
     document.title = t('app.title');
     langBtn.lang = otherLang();
     applyI18n(document.body);

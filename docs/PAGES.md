@@ -66,7 +66,7 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 
 `vite.config.ts` passes `findHtmlEntries(root)` to `build.rolldownOptions.input` (Vite 8's name for `rollupOptions`). It walks the repository and returns every `index.html`, skipping `node_modules`, `dist`, `coverage`, `public` (copied verbatim by Vite) and every dot-directory (`.git`, `.claude`, `.github`, …). The root page keeps the key `index`, so the app's assets stay `assets/index-<hash>.*`; nested pages use their directory with `/` → `-` (`en/guide` → `en-guide`).
 
-`base: './'` makes every asset URL relative to its HTML file. Vite rewrites them per page: `./assets/…` for `/`, `../assets/…` for `/guide/`, `../../assets/…` for `/en/guide/`. All pages share one `assets/site-<hash>.js` (about 1 KiB) and one `assets/site-<hash>.css`, and every page including the app links the shared font stylesheet `assets/pretendard-variable-dynamic-subset-<hash>.css` (see [Fonts](#fonts)). Internal links between pages are root-relative (`/guide/`), which is correct on production and on every preview, because Pages always serves the site at the root of its hostname.
+`base: './'` makes every asset URL relative to its HTML file. Vite rewrites them per page: `./assets/…` for `/`, `../assets/…` for `/guide/`, `../../assets/…` for `/en/guide/`. All pages share one `assets/site-<hash>.js` (about 1 KiB) and one `assets/site-<hash>.css`. Code and styles used by both the app and the pages (the route table in `src/pages/routes.ts` and the Pretendard `@font-face` stylesheet) land in one shared chunk that every page including the app links; the bundler names it after its first module, currently `assets/routes-<hash>.js` and `assets/routes-<hash>.css` (see [Fonts](#fonts)). Internal links between pages are root-relative (`/guide/`), which is correct on production and on every preview, because Pages always serves the site at the root of its hostname.
 
 `build.modulePreload.polyfill` is off: with several entries Vite would otherwise split its preload polyfill into a separate shared chunk, adding a request to the app for code neither entry needs (neither has preloadable chunks).
 
@@ -121,7 +121,7 @@ Checked pairs (light / dark), computed with the WCAG 2.x formula:
 
 ## Fonts
 
-The pages use the same typeface as the app: self-hosted **Pretendard** ([ADR-0005](adr/0005-self-hosted-pretendard.md)). `site.ts` imports `src/assets/fonts/pretendard/pretendard-variable-dynamic-subset.css`, the file `src/main.ts` also imports, and `site.css` mirrors the app's `--font-sans` stack (the token mirror test covers it). Because both entries import the same stylesheet, the build emits it once as `assets/pretendard-variable-dynamic-subset-<hash>.css` and links it from every page's HTML, so it applies without JavaScript and is cached once for the whole site. The font files are same-origin, which `font-src 'self'` allows.
+The pages use the same typeface as the app: self-hosted **Pretendard** ([ADR-0005](adr/0005-self-hosted-pretendard.md)). `site.ts` imports `src/assets/fonts/pretendard/pretendard-variable-dynamic-subset.css`, the file `src/main.ts` also imports, and `site.css` mirrors the app's `--font-sans` stack (the token mirror test covers it). Because both entries import the same stylesheet, the build emits it once, in the shared chunk's CSS file (currently `assets/routes-<hash>.css`), and links it from every page's HTML, so it applies without JavaScript and is cached once for the whole site. The font files are same-origin, which `font-src 'self'` allows.
 
 Each `@font-face` rule covers a `unicode-range`, so a browser downloads only the subsets whose characters appear on the page. `font-display: swap` shows text at once in the fallback stack (`-apple-system`, `system-ui`, `Apple SD Gothic Neo`, `Noto Sans KR`, `Malgun Gothic`, …) and swaps in Pretendard when it arrives. That swap can reflow text once on a first visit, because the fallback fonts have slightly different metrics; later page views hit the immutable `assets/` cache and render in Pretendard straight away.
 
@@ -160,11 +160,9 @@ No ad code is included yet. The pages were written with an AdSense review in min
 
 ## Mounting the site navigation in the app
 
-`src/ui/app.ts` does not mount the nav yet. A minimal integration:
+`src/ui/app.ts` appends `createSiteNav(getLang())` to the app header as a full-width row (`.app-header .site-nav` in `src/ui/styles.css`) and rebuilds it in its `onLangChange` handler:
 
 ```ts
-import { createSiteNav } from './site-nav';
-
 let siteNav = createSiteNav(getLang());
 header.append(siteNav);
 onLangChange((lang) => {
