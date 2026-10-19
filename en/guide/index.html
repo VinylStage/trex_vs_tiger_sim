@@ -1,0 +1,738 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      How to use the simulator: step-by-step guide and tutorial | T-Rex vs Tiger Simulator
+    </title>
+    <meta
+      name="description"
+      content="How to use the T-Rex vs tiger Monte Carlo simulator: pick a preset, set the scenario and parameter ranges, run it, read win probabilities, confidence intervals and the sensitivity chart, watch a replay, share a link, and try three tutorial experiments."
+    />
+    <link rel="canonical" href="https://trex-vs-tiger.vinylims.com/en/guide/" />
+    <link rel="alternate" hreflang="ko" href="https://trex-vs-tiger.vinylims.com/guide/" />
+    <link rel="alternate" hreflang="en" href="https://trex-vs-tiger.vinylims.com/en/guide/" />
+    <link rel="alternate" hreflang="x-default" href="https://trex-vs-tiger.vinylims.com/guide/" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="T-Rex vs Tiger Simulator" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ko_KR" />
+    <meta
+      property="og:title"
+      content="How to use the simulator: step-by-step guide and tutorial | T-Rex vs Tiger Simulator"
+    />
+    <meta
+      property="og:description"
+      content="How to use the T-Rex vs tiger Monte Carlo simulator: pick a preset, set the scenario and parameter ranges, run it, read win probabilities, confidence intervals and the sensitivity chart, watch a replay, share a link, and try three tutorial experiments."
+    />
+    <meta property="og:url" content="https://trex-vs-tiger.vinylims.com/en/guide/" />
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="How to use the simulator: step-by-step guide and tutorial | T-Rex vs Tiger Simulator"
+    />
+    <meta
+      name="twitter:description"
+      content="How to use the T-Rex vs tiger Monte Carlo simulator: pick a preset, set the scenario and parameter ranges, run it, read win probabilities, confidence intervals and the sensitivity chart, watch a replay, share a link, and try three tutorial experiments."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/pages/site.css" />
+    <script type="module" src="/src/pages/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="site-brand" href="/">
+          <img src="/favicon.svg" alt="" width="32" height="32" />
+          <span>T-Rex vs Tigers</span>
+        </a>
+        <nav class="site-nav" aria-label="Site">
+          <ul class="site-nav-list">
+            <li><a class="site-nav-link" href="/" data-page="simulator">Simulator</a></li>
+            <li><a class="site-nav-link" href="/en/guide/" data-page="guide">Guide</a></li>
+            <li><a class="site-nav-link" href="/en/model/" data-page="model">Model</a></li>
+            <li>
+              <a class="site-nav-link" href="/en/parameters/" data-page="parameters">Parameters</a>
+            </li>
+            <li><a class="site-nav-link" href="/en/about/" data-page="about">About</a></li>
+          </ul>
+        </nav>
+        <a class="lang-switch" href="/guide/" hreflang="ko" lang="ko" data-lang-switch>한국어</a>
+      </div>
+    </header>
+    <main id="main" class="site-main">
+      <article class="page">
+        <header class="page-head">
+          <p class="eyebrow">Guide</p>
+          <h1>How to use the simulator: from your first run to reading the results</h1>
+          <p class="lead">
+            A step-by-step walk through picking a preset, changing the assumptions, running the
+            simulation, reading the results and sharing them as a link. At the end you will find
+            three tutorial experiments to try yourself.
+          </p>
+          <p class="page-meta">
+            Last updated <time datetime="2026-10-19">19 October 2026</time> · about a 10-minute read
+          </p>
+        </header>
+
+        <nav class="toc" aria-labelledby="toc-title">
+          <h2 id="toc-title">Contents</h2>
+          <ol>
+            <li><a href="#before">Before you start</a></li>
+            <li><a href="#layout">The screen at a glance</a></li>
+            <li><a href="#presets">Step 1: Pick a preset</a></li>
+            <li><a href="#scenario">Step 2: Set up the scenario</a></li>
+            <li><a href="#ranges">Step 3: Adjust parameter ranges</a></li>
+            <li><a href="#run">Step 4: Run and follow progress</a></li>
+            <li><a href="#results">Step 5: Read the results</a></li>
+            <li><a href="#replay">Step 6: Watch a battle replay</a></li>
+            <li><a href="#share">Step 7: Share a link</a></li>
+            <li><a href="#tutorial">Tutorial: three experiments</a></li>
+            <li><a href="#faq">Frequently asked questions</a></li>
+            <li><a href="#troubleshooting">Troubleshooting</a></li>
+          </ol>
+        </nav>
+
+        <div class="page-body">
+          <section id="before">
+            <h2>Before you start</h2>
+            <p>
+              The T-Rex vs Tiger Simulator explores one playground question with the Monte Carlo
+              method: if N adult <i>Tyrannosaurus rex</i> met M adult tigers on an open plain, who
+              would win? Instead of showing a single fight, it draws plausible but uncertain traits
+              from the literature and from stated assumptions, simulates hundreds or thousands of
+              battles with slightly different values each time, and summarises them as probabilities
+              and distributions.
+            </p>
+            <ul>
+              <li>
+                <strong>Nothing to install.</strong> A current browser (Chrome, Edge, Firefox or
+                Safari) with JavaScript is all you need. It also works on phones, but heavy
+                scenarios are much faster on a computer.
+              </li>
+              <li>
+                <strong>Everything is computed in your browser.</strong> The runs are spread across
+                several Web Workers, matched to your device's CPU cores, and neither your settings
+                nor your results are sent to a server. See the
+                <a href="/en/privacy/">privacy policy</a> for details.
+              </li>
+              <li>
+                <strong>The results are not a prediction.</strong> <i>T. rex</i> and tigers never
+                lived at the same time, and every interaction rule (latching, shaking off, bleeding,
+                morale) is an assumption. The point is to see how the answer changes when the
+                assumptions change. The ideas behind the model are explained in
+                <a href="/en/model/">How the model works</a>.
+              </li>
+            </ul>
+          </section>
+
+          <section id="layout">
+            <h2>The screen at a glance</h2>
+            <p>
+              The simulator has four parts. On a wide screen the settings and the results sit side
+              by side; on a narrow screen such as a phone, the results follow below the settings.
+            </p>
+            <ul>
+              <li>
+                <strong>Header</strong>: the title, a <em>Copy link</em> button that copies the
+                current settings as a URL, and the language button (한국어 ↔ English). Your language
+                choice is remembered for your next visit.
+              </li>
+              <li>
+                <strong>Scenario panel</strong>: presets, the basic settings (head counts, number of
+                runs, time limit and so on), the advanced parameter-range table, and, pinned to the
+                bottom of the panel, the <em>Run simulation</em> button with its progress bar.
+              </li>
+              <li>
+                <strong>Results panel</strong>: once a run finishes it shows a one-line verdict,
+                summary cards, four charts and an animated battle replay.
+              </li>
+              <li>
+                <strong>Footer</strong>: a reminder that this is an educational model, plus links to
+                the model document and the source code.
+              </li>
+            </ul>
+          </section>
+
+          <section id="presets">
+            <h2>Step 1: Pick a preset</h2>
+            <p>
+              The easiest way to start is a preset button. A preset changes only three things: the
+              number of T-Rex, the number of tigers and the number of runs. Everything else (seed,
+              tactic, morale, parameter ranges) stays as it is, so presets are also handy for
+              comparing head counts after you have edited some parameters.
+            </p>
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-presets">
+              <table>
+                <caption id="caption-presets">
+                  The five presets
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Preset</th>
+                    <th scope="col">T-Rex</th>
+                    <th scope="col">Tigers</th>
+                    <th scope="col">Runs</th>
+                    <th scope="col">Good for</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">10 vs 100 (default)</th>
+                    <td>10</td>
+                    <td>100</td>
+                    <td>500</td>
+                    <td>
+                      The headline question: can ten times as many tigers beat a few giant
+                      predators?
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">1 vs 100</th>
+                    <td>1</td>
+                    <td>100</td>
+                    <td>500</td>
+                    <td>
+                      How do the odds and the battle length change when one T-Rex faces the whole
+                      group?
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">1 vs 10</th>
+                    <td>1</td>
+                    <td>10</td>
+                    <td>1,000</td>
+                    <td>
+                      A small fight that computes quickly, ideal for trying many parameter changes.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">10 vs 1000</th>
+                    <td>10</td>
+                    <td>1,000</td>
+                    <td>200</td>
+                    <td>Strength in numbers. It is expensive, so the preset uses fewer runs.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">1 vs 1</th>
+                    <td>1</td>
+                    <td>1</td>
+                    <td>2,000</td>
+                    <td>One on one: how much do individual differences and chance matter?</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section id="scenario">
+            <h2>Step 2: Set up the scenario</h2>
+            <p>
+              The fields below the presets let you fine-tune the scenario. A value outside the
+              allowed range is moved to the nearest allowed value when you leave the field. Every
+              setting's default and range is listed in the
+              <a href="/en/parameters/#settings">scenario settings of the parameter reference</a>.
+            </p>
+            <dl class="facts">
+              <div>
+                <dt>T-Rex count · Tiger count</dt>
+                <dd>Head count on each side: 1–500 T-Rex and 1–5,000 tigers.</dd>
+              </div>
+              <div>
+                <dt>Monte Carlo runs</dt>
+                <dd>
+                  How many times the scenario is repeated. More runs give narrower confidence
+                  intervals but take longer. The default of 500 is a good start.
+                </dd>
+              </div>
+              <div>
+                <dt>Time limit (s)</dt>
+                <dd>
+                  If neither side has won by then, the battle counts as a draw. Default: 1,200 s (20
+                  min).
+                </dd>
+              </div>
+              <div>
+                <dt>Arena side (m)</dt>
+                <dd>
+                  Size of the square arena. A routed tiger leaves the battle as soon as it crosses
+                  the edge.
+                </dd>
+              </div>
+              <div>
+                <dt>Individual variation (CV)</dt>
+                <dd>
+                  Makes animals within the same run differ a little. At 0, every animal uses exactly
+                  the run's values.
+                </dd>
+              </div>
+              <div>
+                <dt>Sampling</dt>
+                <dd>
+                  LHS (Latin hypercube) covers the parameter space more evenly for the same number
+                  of runs. Keep the default unless you have a reason not to.
+                </dd>
+              </div>
+              <div>
+                <dt>Tiger tactic</dt>
+                <dd>
+                  <em>Flank</em> avoids the jaws and closes in from the side or rear;
+                  <em>Direct charge</em>
+                  runs straight at the nearest T-Rex. Tigers normally hunt alone, so both tactics
+                  are hypothetical.
+                </dd>
+              </div>
+              <div>
+                <dt>Seed</dt>
+                <dd>
+                  The starting point of the random numbers. The same seed and settings reproduce the
+                  same results. The <em>Random</em> button draws a new seed, giving a fresh sample
+                  under the same assumptions.
+                </dd>
+              </div>
+              <div>
+                <dt>Morale &amp; routing</dt>
+                <dd>
+                  When on, tigers lose morale when they are bitten or when a nearby tiger dies, and
+                  flee once morale falls below 0.2. When off, tigers fight to the death.
+                </dd>
+              </div>
+            </dl>
+          </section>
+
+          <section id="ranges">
+            <h2>Step 3: Adjust parameter ranges</h2>
+            <p>
+              Open <em>Advanced: model parameter ranges</em> to see 22 parameters, 11 for the T-Rex
+              and 11 for the tigers. Each parameter is not a single number but a triangular
+              distribution defined by <strong>min · mode · max</strong>. Every run draws one value
+              from it, so a wider range feeds more “we do not really know this” uncertainty into the
+              results.
+            </p>
+            <ul>
+              <li>
+                The order min ≤ mode ≤ max is kept automatically. If you type a min above the mode,
+                the mode and max move up with it. When you shift a range a long way, enter min, then
+                mode, then max.
+              </li>
+              <li>
+                A parameter that differs from its default gets a dot (•), and a badge counts the
+                changes.
+              </li>
+              <li>
+                The ↺ button on each row resets that parameter; <em>Reset all parameters</em> below
+                the table restores all 22 default ranges.
+              </li>
+              <li>
+                To fix a parameter to one value, enter the same number for min, mode and max. The
+                run-to-run uncertainty disappears, although individual variation (CV), if on, still
+                makes animals differ.
+              </li>
+            </ul>
+            <p>
+              What each parameter does in the engine, and where its default range comes from, is
+              listed one by one in the <a href="/en/parameters/">parameter reference</a>.
+            </p>
+          </section>
+
+          <section id="run">
+            <h2>Step 4: Run and follow progress</h2>
+            <ol class="steps">
+              <li>
+                Press <strong>Run simulation</strong>. The button is pinned to the bottom of the
+                settings panel, so it stays within reach while you scroll.
+              </li>
+              <li>
+                The progress bar shows finished runs, a percentage and an estimate of the time left,
+                along with the number of workers computing in parallel.
+              </li>
+              <li>
+                Press <strong>Cancel</strong> to stop. Work in progress is discarded; results you
+                saw before stay on screen.
+              </li>
+            </ol>
+            <p>Heavy settings trigger a notice before you run:</p>
+            <ul>
+              <li>
+                <strong>Heavy scenario</strong>: a yellow notice appears when the estimated time
+                exceeds about one minute, and a red warning above ten minutes. The estimate is
+                rough; real time depends on your device and on how the battles unfold.
+              </li>
+              <li>
+                <strong>Work budget</strong>: if runs × (time limit ÷ 0.1 s) × total head count
+                exceeds 5×10¹⁰ agent-steps, the number of runs is lowered to fit. This safety net
+                stops a shared link from freezing a browser.
+              </li>
+            </ul>
+          </section>
+
+          <section id="results">
+            <h2>Step 5: Read the results</h2>
+            <p>
+              When the runs finish, the top of the results panel states the most likely outcome in
+              one sentence, for example “T-Rex win probability 100.0% (95% CI 99.2%–100.0%)”. The
+              line below records the head counts, number of runs, seed and computing time, so you
+              always know which conditions produced the numbers.
+            </p>
+            <h3>Summary cards</h3>
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-cards">
+              <table>
+                <caption id="caption-cards">
+                  What each summary card shows
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Card</th>
+                    <th scope="col">Meaning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">T-Rex wins · Tigers win · Draw</th>
+                    <td>
+                      The share of runs with each outcome, with a Wilson 95% confidence interval.
+                      The interval covers sampling error from running a finite number of battles; it
+                      says nothing about whether the model's assumptions are right.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Battle duration (median)</th>
+                    <td>The median time until the battle ended, with the 5–95% range.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">T-Rex survivors (mean)</th>
+                    <td>The average number of T-Rex still alive at the end.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Tigers killed · Tigers routed (mean)</th>
+                    <td>
+                      The average number of tigers killed, and of tigers that fled or left the
+                      arena.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Exchange ratio</th>
+                    <td>
+                      Over all runs, tigers killed ÷ T-Rex lost. It shows ∞ when no T-Rex died and
+                      “—” when nobody died.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <h3>Charts</h3>
+            <ul>
+              <li>
+                <strong>Outcome probability with 95% CI</strong>: bars for the three outcomes, with
+                the confidence interval as error bars.
+              </li>
+              <li>
+                <strong>Battle duration distribution</strong>: a histogram of how long battles
+                lasted. Two peaks hint that different kinds of battle are mixed together, such as a
+                quick rout and a long war of attrition.
+              </li>
+              <li>
+                <strong>T-Rex survivors distribution</strong>: how many T-Rex were left standing.
+              </li>
+              <li>
+                <strong>Sensitivity (Spearman correlation, top 10)</strong>: the rank correlation ρ
+                between each parameter's value and the “T-Rex advantage”. A bar to the right
+                (positive) means higher values favour the T-Rex; to the left (negative), the tigers.
+                Longer bars mark the assumptions the result depends on most.
+              </li>
+            </ul>
+            <div class="note">
+              <p>
+                <strong>Reading the sensitivity chart.</strong> The T-Rex advantage is the T-Rex
+                share of HP left minus the share of tigers still fighting, a number between −1 and
+                1. With 500 runs, a |ρ| below about 0.1 is hard to tell apart from chance. The
+                correlation looks at one parameter at a time and only captures monotonic trends, so
+                effects that need two parameters to act together do not show up.
+              </p>
+            </div>
+            <p>
+              If you change a setting after a run, a “Settings changed” banner appears. The results
+              on screen belong to the previous settings; run again to see the new ones.
+            </p>
+          </section>
+
+          <section id="replay">
+            <h2>Step 6: Watch a battle replay</h2>
+            <p>
+              Below the results you can watch one of the computed battles as an animation. The
+              replay re-computes that battle with the same seed, so it unfolds exactly as the battle
+              that was counted in the statistics.
+            </p>
+            <ul>
+              <li>
+                <strong>Representative battle</strong>: the battle whose T-Rex advantage is closest
+                to the median of all runs. It loads and plays automatically after a run, and shows
+                what a “typical” battle looks like.
+              </li>
+              <li>
+                <strong>Random battle</strong>: picks one of the runs at random. Press it a few
+                times to see how differently battles can unfold under the same settings.
+              </li>
+              <li>
+                <strong>Controls</strong>: play and pause, playback speed, the view (follow the
+                fight automatically, the whole arena, or zoomed in on the T-Rex) and a position
+                slider.
+              </li>
+              <li>
+                <strong>Legend</strong>: the legend under the canvas explains the symbols for the
+                T-Rex (colour shows HP left) and for each tiger state: approaching, latched,
+                recovering, routed and dead.
+              </li>
+            </ul>
+            <p>
+              The shapes in the replay are simple markers for position and state; they do not
+              attempt to depict what the animals looked like.
+            </p>
+          </section>
+
+          <section id="share">
+            <h2>Step 7: Share a link</h2>
+            <p>
+              Every change you make is written to the end of the URL in the address bar
+              (<code>#s=…</code>).
+              <strong>Copy link</strong> puts that URL on your clipboard; whoever opens it gets
+              exactly your settings.
+            </p>
+            <ul>
+              <li>
+                The link includes the seed, so in the same browser engine (Chrome and Edge both use
+                V8) the results reproduce exactly. In a different engine, such as Safari, tiny
+                rounding differences in maths functions can make individual battles diverge, but the
+                probabilities and distributions agree statistically.
+              </li>
+              <li>
+                Only settings that differ from the defaults are stored, which keeps links short.
+                With all defaults, the <code>#s=</code> part disappears.
+              </li>
+              <li>
+                Browsers never send the part after <code>#</code> (the fragment) to the server, so
+                your settings are visible only to people who have the link.
+              </li>
+              <li>
+                The results themselves are not in the link. The recipient presses
+                <em>Run simulation</em>
+                and computes the same results in their own browser.
+              </li>
+            </ul>
+          </section>
+
+          <section id="tutorial">
+            <h2>Tutorial: three experiments</h2>
+            <p>
+              Follow these experiments in order and in about ten minutes you will know how to use
+              the simulator to explore how assumptions shape the answer. Each experiment changes one
+              thing from the previous one. Exact numbers vary a little with device, browser and
+              seed.
+            </p>
+            <h3>Experiment 1. Run the default scenario</h3>
+            <ol class="steps">
+              <li>Open the simulator and press the <em>10 vs 100 (default)</em> preset.</li>
+              <li>
+                Press <em>Run simulation</em> and wait. It usually takes a few seconds to a few tens
+                of seconds.
+              </li>
+              <li>
+                Read the verdict and the cards. Under the default assumptions the T-Rex win almost
+                every run, battles usually end in about half a minute, and most tigers flee rather
+                than die.
+              </li>
+              <li>
+                Look at the two or three longest bars in the sensitivity chart. In preliminary runs,
+                T-Rex bite force and tiger morale loss came out on top.
+              </li>
+            </ol>
+            <h3>Experiment 2. Switch morale off</h3>
+            <ol class="steps">
+              <li>
+                Untick <em>Morale &amp; routing</em>. The results panel shows the “Settings changed”
+                banner.
+              </li>
+              <li>Run again.</li>
+              <li>
+                The duration histogram moves far to the right: tigers no longer flee, battles last
+                minutes, and far more tigers die. The T-Rex still win almost every time.
+              </li>
+              <li>
+                The sensitivity ranking changes too. In a fight to the death, the tiger damage rate
+                (<code>tiger.dps</code>) becomes the most important assumption.
+              </li>
+            </ol>
+            <h3>Experiment 3. What would it take for the tigers to win?</h3>
+            <ol class="steps">
+              <li>With morale still off, open <em>Advanced: model parameter ranges</em>.</li>
+              <li>
+                Set the tiger's <em>Damage per second</em> to min 20, mode 40, max 80, roughly seven
+                times the default (2, 6, 12).
+              </li>
+              <li>
+                Run again. In a preliminary check, this one change let the tigers win close to half
+                the runs.
+              </li>
+              <li>
+                Now switch morale back on and run once more. With the same damage rate, the tigers
+                flee early and the T-Rex win almost every time: the answer depends on a combination
+                of assumptions, not on any single one.
+              </li>
+              <li>
+                When you find an interesting setup, save it with <em>Copy link</em> or send it to a
+                friend.
+              </li>
+            </ol>
+            <p>
+              More ideas: raise the tiger count to 300 or 1,000, switch the tactic to direct charge,
+              widen the bleed rate to 0.01–0.04, or set individual variation (CV) to 0 and see how
+              much narrower the distributions get. Why these changes matter is explained in
+              <a href="/en/model/#tigers-win">“What would make the tigers win?”</a> on the model
+              page.
+            </p>
+          </section>
+
+          <section id="faq">
+            <h2>Frequently asked questions</h2>
+            <h3>Why do the T-Rex almost always win?</h3>
+            <p>
+              Under the default assumptions a T-Rex weighs about 8 tonnes, more than 40 times a 180
+              kg tiger, and hit points scale with body mass. One good bite kills most tigers, while
+              a tiger's attacks are assumed to cause shallow wounds worth a few HP per second. With
+              the morale model on, tigers that see others fall also flee quickly. This conclusion
+              comes from the assumptions, so changing them changes the answer; see
+              <a href="/en/model/#tigers-win">which assumptions would let the tigers win</a>.
+            </p>
+            <h3>A friend opened my link and got slightly different numbers.</h3>
+            <p>
+              In the same browser engine the results should match exactly. Different engines, such
+              as Chrome (V8) and Safari (JavaScriptCore), may round the last digit of trigonometric
+              and logarithm functions differently, so individual battles can diverge while the
+              probabilities and distributions stay statistically the same. A different number of
+              runs changes the whole sampling design, so also check that the link was opened
+              unchanged.
+            </p>
+            <h3>How many runs should I use?</h3>
+            <p>
+              The width of a confidence interval shrinks roughly with the square root of the number
+              of runs. Near a probability of 50%, 500 runs give about ±4.4 percentage points and
+              2,000 runs about ±2.2. Explore with few runs, then raise the count for the result you
+              want to keep.
+            </p>
+            <h3>It is very slow on my phone.</h3>
+            <p>
+              Phones have fewer and slower CPU cores, so the same scenario takes longer. Try 100–200
+              runs, or start with a preset that has fewer animals. Turning off the screen or
+              switching apps during a run can also make the browser slow the work down.
+            </p>
+            <h3>When does a draw happen?</h3>
+            <p>
+              A battle is a draw when the time limit passes while at least one T-Rex is alive and at
+              least one tiger is still fighting. It mostly happens with morale off and very many
+              tigers, or with a short time limit.
+            </p>
+            <h3>Are my settings or results stored anywhere?</h3>
+            <p>
+              No. The settings live only in the part of the URL after <code>#</code>, and the
+              results stay in your browser's memory until you close the tab. The only thing the site
+              keeps in your browser is your language choice. See the
+              <a href="/en/privacy/">privacy policy</a>.
+            </p>
+          </section>
+
+          <section id="troubleshooting">
+            <h2>Troubleshooting</h2>
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-troubleshooting"
+            >
+              <table>
+                <caption id="caption-troubleshooting">
+                  Symptoms and what to do
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Symptom</th>
+                    <th scope="col">What to do</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">The page is blank or says it needs JavaScript.</th>
+                    <td>
+                      Enable JavaScript and check that no extension is blocking the site's scripts.
+                      If your browser is old, update it.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Progress does not move after pressing Run.</th>
+                    <td>
+                      Progress advances as each run finishes, so with very many animals the first
+                      step can take a while. If nothing happens for a long time, cancel and reduce
+                      the runs or the head counts.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">The number of runs drops below what I typed.</th>
+                    <td>
+                      That is the work budget. A shorter time limit or fewer animals allows more
+                      runs.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">A shared link opens with the default settings.</th>
+                    <td>
+                      The link may have been cut off, or the part after <code>#s=</code> damaged.
+                      Damaged values are ignored safely and the defaults are used. Copy the whole
+                      link again.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">The replay is not moving.</th>
+                    <td>
+                      The replay stops at the end; press play to watch it again from the start. It
+                      also pauses drawing while it is off screen or the tab is in the background, to
+                      save battery.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <aside class="cta">
+            <p>
+              <strong>Try it yourself.</strong> It runs right in your browser, with nothing to
+              install.
+            </p>
+            <a class="button" href="/">Open the simulator</a>
+          </aside>
+        </div>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <p>
+          T. rex and tigers never lived at the same time, and every interaction rule on this site is
+          an assumption. The results show how an educational model responds to its assumptions; they
+          do not predict a real fight.
+        </p>
+        <ul class="footer-links">
+          <li><a href="/en/privacy/">Privacy</a></li>
+          <li><a href="/en/about/">About & contact</a></li>
+          <li>
+            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+          </li>
+        </ul>
+        <p>© 2026 VinylStage · Open source under the MIT License</p>
+      </div>
+    </footer>
+  </body>
+</html>

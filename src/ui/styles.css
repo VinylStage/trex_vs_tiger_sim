@@ -168,6 +168,10 @@ a {
   gap: 8px;
 }
 
+.app-header .site-nav {
+  flex-basis: 100%;
+}
+
 /* ---------- layout ---------- */
 
 .layout {
