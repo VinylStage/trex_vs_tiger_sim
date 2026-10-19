@@ -1,5 +1,5 @@
 import type { ScenarioConfig } from './config';
-import { Outcome, simulateBattle, type RunSummary } from './engine';
+import { DT, Outcome, simulateBattle, type RunSummary } from './engine';
 import { PARAMS, type ParamId } from './params';
 import { buildDesign, designRow, type Design } from './sampling';
 import {
@@ -56,7 +56,10 @@ export interface AggregateResult {
   trexSurvivors: Distribution & { hist: Histogram };
   tigersKilled: Distribution;
   tigersRouted: Distribution;
-  /** Tigers killed per T-Rex killed (mean over runs; Infinity when no T-Rex died). */
+  /**
+   * Pooled ratio: total tigers killed / total T-Rex lost across all runs.
+   * Infinity when tigers died but no T-Rex did; NaN when nobody died.
+   */
   exchangeRatio: number;
   sensitivity: Sensitivity[];
   /** Run index closest to the median trexAdvantage — a representative battle for replay. */
@@ -114,7 +117,16 @@ export function aggregate(
     }
   }
 
-  const durBins = 30;
+  // Bin on the integer step grid so no bin straddles a different number of DT steps.
+  const maxSteps = Math.round(config.maxTime / DT);
+  const stepsPerBin = Math.max(1, Math.ceil(maxSteps / 30));
+  const durBins = Math.ceil(maxSteps / stepsPerBin);
+  const durHist = histogram(
+    durations.map((d) => Math.round(d / DT)),
+    durBins,
+    0,
+    durBins * stepsPerBin,
+  );
   return {
     n,
     trexWins,
@@ -123,14 +135,18 @@ export function aggregate(
     pTrex: wilson(trexWins, n),
     pTigers: wilson(tigerWins, n),
     pDraw: wilson(draws, n),
-    duration: { ...dist(durations), hist: histogram(durations, durBins, 0, config.maxTime) },
+    duration: {
+      ...dist(durations),
+      hist: { min: 0, max: durBins * stepsPerBin * DT, counts: durHist.counts },
+    },
     trexSurvivors: {
       ...dist(survivors),
       hist: histogram(survivors, config.trexCount + 1, -0.5, config.trexCount + 0.5),
     },
     tigersKilled: dist(sorted.map((s) => s.tigersKilled)),
     tigersRouted: dist(sorted.map((s) => s.tigersRouted)),
-    exchangeRatio: totalTrexLost > 0 ? totalKilled / totalTrexLost : Infinity,
+    exchangeRatio:
+      totalTrexLost > 0 ? totalKilled / totalTrexLost : totalKilled > 0 ? Infinity : NaN,
     sensitivity,
     representativeRun,
   };

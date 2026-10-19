@@ -34,6 +34,8 @@ export const CONSTANTS = {
   flankLoadPenalty: 20,
   traceFloatBudget: 6_000_000,
   traceMinEvery: 5,
+  recoverMinTime: 5,
+  shockPad: 6.5,
 } as const;
 
 export const TigerState = {
@@ -84,6 +86,8 @@ export interface BattleOutput {
 const BATTLE_SALT = 2;
 const TAU = Math.PI * 2;
 const DEG = Math.PI / 180;
+
+const len = (dx: number, dy: number): number => Math.sqrt(dx * dx + dy * dy);
 
 const wrap = (a: number): number => {
   a %= TAU;
@@ -187,6 +191,7 @@ export function simulateBattle(
   const tTarget = new Int32Array(M).fill(-1);
   const tTimer = new Float64Array(M);
   const tSide = new Int8Array(M);
+  const tRecoverTimer = new Float64Array(M);
 
   const discR = Math.min(0.2 * L, 3 * Math.sqrt(M));
   for (let j = 0; j < M; j++) {
@@ -212,6 +217,8 @@ export function simulateBattle(
   }
 
   const grid = new SpatialGrid(L, M);
+  const trexGrid = new SpatialGrid(L, N);
+  const trexAliveFilter = (i: number): boolean => rAlive[i] === 1;
   const presentFilter = (j: number): boolean => (tState[j] as number) < TigerState.Dead;
   let killed = 0;
 
@@ -237,13 +244,14 @@ export function simulateBattle(
       shockX = tx[j] as number;
       shockY = ty[j] as number;
       shockSelf = j;
-      grid.query(shockX, shockY, C.moraleRadius, shockVisit);
+      grid.query(shockX, shockY, C.moraleRadius + C.shockPad, shockVisit);
     }
   };
 
-  const toRecover = (j: number, moraleLoss: number): void => {
+  const toRecover = (j: number, moraleLoss: number, minTime: number): void => {
     tState[j] = TigerState.Recover;
     tHost[j] = -1;
+    tRecoverTimer[j] = minTime;
     tMorale[j] = (tMorale[j] as number) - moraleLoss;
   };
 
@@ -254,9 +262,18 @@ export function simulateBattle(
   const biteVisit = (j: number): void => {
     const s = tState[j] as number;
     if (s >= TigerState.Dead) return;
-    const dx = (tx[j] as number) - (rx[biter] as number);
-    const dy = (ty[j] as number) - (ry[biter] as number);
-    const d = Math.hypot(dx, dy);
+    let px = tx[j] as number;
+    let py = ty[j] as number;
+    if (s === TigerState.Latched) {
+      // Latched tigers ride their host; use the host's current pose, not last tick's position.
+      const h = tHost[j] as number;
+      const a = (rh[h] as number) + (tLatchAng[j] as number);
+      px = (rx[h] as number) + Math.cos(a) * (radius + C.tigerRadius);
+      py = (ry[h] as number) + Math.sin(a) * (radius + C.tigerRadius);
+    }
+    const dx = px - (rx[biter] as number);
+    const dy = py - (ry[biter] as number);
+    const d = len(dx, dy);
     if (d > (rReach[biter] as number) + C.tigerRadius) return;
     if (Math.abs(wrap(Math.atan2(dy, dx) - (rh[biter] as number))) > (rArc[biter] as number))
       return;
@@ -267,40 +284,14 @@ export function simulateBattle(
     }
   };
 
-  const nearestFreeTiger = (i: number): number => {
-    let bi = -1;
-    let bd = Infinity;
-    const x = rx[i] as number;
-    const y = ry[i] as number;
-    for (let j = 0; j < M; j++) {
-      const s = tState[j] as number;
-      if (s === TigerState.Latched || s >= TigerState.Dead) continue;
-      const dx = (tx[j] as number) - x;
-      const dy = (ty[j] as number) - y;
-      const d = dx * dx + dy * dy;
-      if (d < bd) {
-        bd = d;
-        bi = j;
-      }
-    }
-    return bi;
+  const freeFilter = (j: number): boolean => {
+    const s = tState[j] as number;
+    return s !== TigerState.Latched && s < TigerState.Dead;
   };
-
-  const nearestTrex = (j: number): number => {
-    let bi = -1;
-    let bd = Infinity;
-    for (let i = 0; i < N; i++) {
-      if (!rAlive[i]) continue;
-      const dx = (rx[i] as number) - (tx[j] as number);
-      const dy = (ry[i] as number) - (ty[j] as number);
-      const d = dx * dx + dy * dy;
-      if (d < bd) {
-        bd = d;
-        bi = i;
-      }
-    }
-    return bi;
-  };
+  const nearestFreeTiger = (i: number): number =>
+    grid.nearest(rx[i] as number, ry[i] as number, tx, ty, freeFilter);
+  const nearestTrex = (j: number): number =>
+    trexGrid.nearest(tx[j] as number, ty[j] as number, rx, ry, trexAliveFilter);
 
   const chooseTrex = (j: number): number => {
     if (config.tigerTactic === 'direct') return nearestTrex(j);
@@ -308,10 +299,7 @@ export function simulateBattle(
     let bs = Infinity;
     for (let i = 0; i < N; i++) {
       if (!rAlive[i]) continue;
-      const d = Math.hypot(
-        (rx[i] as number) - (tx[j] as number),
-        (ry[i] as number) - (ty[j] as number),
-      );
+      const d = len((rx[i] as number) - (tx[j] as number), (ry[i] as number) - (ty[j] as number));
       const s = d + C.flankLoadPenalty * (rLatched[i] as number);
       if (s < bs) {
         bs = s;
@@ -327,12 +315,11 @@ export function simulateBattle(
   };
 
   // --- Trace ---
-  const maxSteps = Math.ceil(config.maxTime / DT);
-  const traceEvery = Math.max(
-    C.traceMinEvery,
-    Math.ceil((maxSteps * (4 * N + 3 * M)) / C.traceFloatBudget),
-  );
-  const frames: TraceFrame[] = [];
+  const maxSteps = Math.round(config.maxTime / DT);
+  // Adaptive decimation: start dense, halve the frame rate whenever the float budget is exceeded.
+  let traceEvery: number = C.traceMinEvery;
+  const maxFrames = Math.max(2, Math.floor(C.traceFloatBudget / (4 * N + 3 * M)));
+  let frames: TraceFrame[] = [];
   const record = (t: number): void => {
     const fr = new Float32Array(N * 4);
     for (let i = 0; i < N; i++) {
@@ -387,7 +374,7 @@ export function simulateBattle(
         const dh = wrap(Math.atan2(dy, dx) - (rh[i] as number));
         const maxTurn = (rTurn[i] as number) * DT;
         rh[i] = wrap((rh[i] as number) + Math.max(-maxTurn, Math.min(maxTurn, dh)));
-        const dist = Math.hypot(dx, dy);
+        const dist = len(dx, dy);
         if (dist > (rReach[i] as number) * 0.8) {
           const carry = Math.max(
             C.minCarrySpeedFactor,
@@ -421,13 +408,14 @@ export function simulateBattle(
             const dmg = (rBiteDmg[i] as number) * (C.biteDamageMin + C.biteDamageSpan * rng.next());
             tHp[best] = (tHp[best] as number) - dmg;
             if ((tHp[best] as number) <= 0) kill(best);
-            else toRecover(best, C.woundMoraleLoss);
+            else toRecover(best, C.woundMoraleLoss, C.recoverMinTime);
           }
         }
       }
 
       if (bleed > 0) rHp[i] = (rHp[i] as number) - (rWound[i] as number) * bleed * DT;
     }
+    trexGrid.rebuild(N, rx, ry, trexAliveFilter);
 
     // --- Tigers ---
     for (let j = 0; j < M; j++) {
@@ -451,7 +439,7 @@ export function simulateBattle(
           if (r < 0) break;
           const dx = (rx[r] as number) - (tx[j] as number);
           const dy = (ry[r] as number) - (ty[j] as number);
-          const dist = Math.hypot(dx, dy);
+          const dist = len(dx, dy);
           const contact = radius + C.tigerRadius + 0.5;
           const rel = wrap(Math.atan2(-dy, -dx) - (rh[r] as number));
 
@@ -487,16 +475,16 @@ export function simulateBattle(
           if (config.tigerTactic === 'direct')
             stepLen = Math.min(stepLen, Math.max(0, dist - contact));
           else {
-            const aimDist = Math.hypot(aimX - (tx[j] as number), aimY - (ty[j] as number));
+            const aimDist = len(aimX - (tx[j] as number), aimY - (ty[j] as number));
             stepLen = Math.min(stepLen, aimDist);
           }
           moveToward(j, heading, stepLen);
 
           if ((tStamina[j] as number) <= 0) {
-            toRecover(j, 0);
+            toRecover(j, 0, 0);
             break;
           }
-          const nd = Math.hypot(
+          const nd = len(
             (rx[r] as number) - (tx[j] as number),
             (ry[r] as number) - (ty[j] as number),
           );
@@ -519,7 +507,7 @@ export function simulateBattle(
         case TigerState.Latched: {
           const h = tHost[j] as number;
           if (h < 0 || !rAlive[h]) {
-            toRecover(j, 0);
+            toRecover(j, 0, 0);
             break;
           }
           const a = (rh[h] as number) + (tLatchAng[j] as number);
@@ -535,11 +523,11 @@ export function simulateBattle(
               kill(j);
               break;
             }
-            toRecover(j, C.throwMoraleLoss);
+            toRecover(j, C.throwMoraleLoss, C.recoverMinTime);
             moveToward(j, a, C.throwDistance);
             break;
           }
-          if ((tStamina[j] as number) <= 0) toRecover(j, 0);
+          if ((tStamina[j] as number) <= 0) toRecover(j, 0, 0);
           break;
         }
         case TigerState.Recover: {
@@ -548,11 +536,12 @@ export function simulateBattle(
           if (r >= 0) {
             const dx = (tx[j] as number) - (rx[r] as number);
             const dy = (ty[j] as number) - (ry[r] as number);
-            if (Math.hypot(dx, dy) < C.recoverDistance) {
+            if (len(dx, dy) < C.recoverDistance) {
               moveToward(j, Math.atan2(dy, dx), (tCruise[j] as number) * DT);
             }
           }
-          if ((tStamina[j] as number) >= C.resumeStamina) {
+          tRecoverTimer[j] = (tRecoverTimer[j] as number) - DT;
+          if ((tStamina[j] as number) >= C.resumeStamina && (tRecoverTimer[j] as number) <= 0) {
             tState[j] = TigerState.Approach;
             tTarget[j] = -1;
           }
@@ -598,7 +587,13 @@ export function simulateBattle(
     let active = 0;
     for (let j = 0; j < M; j++) if ((tState[j] as number) < TigerState.Routed) active++;
 
-    if (trace && (step + 1) % traceEvery === 0) record((step + 1) * DT);
+    if (trace && (step + 1) % traceEvery === 0) {
+      record((step + 1) * DT);
+      if (frames.length > maxFrames) {
+        frames = frames.filter((_, k) => k % 2 === 0);
+        traceEvery *= 2;
+      }
+    }
     if (trexAlive === 0) {
       outcome = Outcome.Tigers;
       step++;

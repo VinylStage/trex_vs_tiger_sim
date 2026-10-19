@@ -1,6 +1,8 @@
 /**
  * Uniform grid over a square arena, rebuilt each tick via counting sort.
  * Points outside the arena are clamped into border cells.
+ * Resolution scales with both area (≥ 10 m cells) and population (~2·√capacity columns),
+ * so a sparse grid does not pay O(cells) bookkeeping per tick.
  */
 export class SpatialGrid {
   readonly cellSize: number;
@@ -11,7 +13,9 @@ export class SpatialGrid {
   private cellOf: Int32Array;
 
   constructor(arenaSize: number, capacity: number, maxCols = 128) {
-    this.cols = Math.max(1, Math.min(maxCols, Math.ceil(arenaSize / 10)));
+    const byArea = Math.ceil(arenaSize / 10);
+    const byPopulation = Math.max(4, Math.ceil(2 * Math.sqrt(capacity)));
+    this.cols = Math.max(1, Math.min(maxCols, byArea, byPopulation));
     this.cellSize = arenaSize / this.cols;
     const cells = this.cols * this.cols;
     this.cellStart = new Int32Array(cells + 1);
@@ -65,5 +69,54 @@ export class SpatialGrid {
         for (let k = this.cellStart[c] as number; k < end; k++) visit(this.items[k] as number);
       }
     }
+  }
+
+  /**
+   * Nearest indexed point to (x, y) among those `accept`ed, searching rings of cells outward
+   * and stopping once no unvisited ring can hold a closer point. Returns -1 if none.
+   * Distances use the points' true coordinates `xs`/`ys`.
+   */
+  nearest(
+    x: number,
+    y: number,
+    xs: Float64Array,
+    ys: Float64Array,
+    accept: (i: number) => boolean,
+  ): number {
+    const cx = this.col(x);
+    const cy = this.col(y);
+    let best = -1;
+    let bestD = Infinity;
+    for (let ring = 0; ring < this.cols; ring++) {
+      if (best >= 0) {
+        const gap = (ring - 1) * this.cellSize;
+        if (gap > 0 && gap * gap > bestD) break;
+      }
+      const r0 = cy - ring;
+      const r1 = cy + ring;
+      const c0 = cx - ring;
+      const c1 = cx + ring;
+      for (let row = r0; row <= r1; row++) {
+        if (row < 0 || row >= this.cols) continue;
+        const step = row === r0 || row === r1 ? 1 : Math.max(1, c1 - c0);
+        for (let col = c0; col <= c1; col += step) {
+          if (col < 0 || col >= this.cols) continue;
+          const c = row * this.cols + col;
+          const end = this.cellStart[c + 1] as number;
+          for (let k = this.cellStart[c] as number; k < end; k++) {
+            const i = this.items[k] as number;
+            if (!accept(i)) continue;
+            const dx = (xs[i] as number) - x;
+            const dy = (ys[i] as number) - y;
+            const d = dx * dx + dy * dy;
+            if (d < bestD) {
+              bestD = d;
+              best = i;
+            }
+          }
+        }
+      }
+    }
+    return best;
   }
 }
