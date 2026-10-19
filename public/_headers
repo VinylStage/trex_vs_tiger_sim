@@ -14,3 +14,10 @@
 
 /index.html
   Cache-Control: no-cache, no-transform
+
+/version.json
+  Cache-Control: no-store
+
+/reset/*
+  Cache-Control: no-store, no-transform
+  Clear-Site-Data: "cache", "storage"

@@ -27,6 +27,7 @@ import {
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
 import { configFromHash, hashFromConfig } from './share';
+import { createVersionBadge, createVersionFooter } from './version';
 
 export const REPO_URL = 'https://github.com/VinylStage/trex_vs_tiger_sim';
 export const MODEL_DOC_URL = `${REPO_URL}/blob/main/docs/MODEL.md`;
@@ -123,7 +124,7 @@ export function startApp(root: HTMLElement): void {
       h(
         'div',
         {},
-        h('h1', { i18n: 'app.title' }),
+        h('div', { class: 'brand-title' }, h('h1', { i18n: 'app.title' }), createVersionBadge()),
         h('p', { class: 'tagline', i18n: 'app.tagline' }),
       ),
     ),
@@ -286,6 +287,8 @@ export function startApp(root: HTMLElement): void {
       }),
       h('span', { attrs: { 'aria-hidden': 'true' }, text: ' · ' }),
       h('span', { i18n: 'footer.privacy' }),
+      h('span', { attrs: { 'aria-hidden': 'true' }, text: ' · ' }),
+      createVersionFooter(),
     ),
   );
 
