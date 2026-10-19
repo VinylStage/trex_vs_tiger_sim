@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      How the model works: a Monte Carlo agent-based battle model | T-Rex vs Tiger Simulator
+    </title>
+    <meta
+      name="description"
+      content="A plain-language explanation of the T-Rex vs tiger simulation model: triangular distributions and Latin hypercube sampling, individual variation, bite, latch, bleeding and morale rules, outcomes, Wilson intervals, Spearman sensitivity, reproducibility and limitations."
+    />
+    <link rel="canonical" href="https://trex-vs-tiger.vinylims.com/en/model/" />
+    <link rel="alternate" hreflang="ko" href="https://trex-vs-tiger.vinylims.com/model/" />
+    <link rel="alternate" hreflang="en" href="https://trex-vs-tiger.vinylims.com/en/model/" />
+    <link rel="alternate" hreflang="x-default" href="https://trex-vs-tiger.vinylims.com/model/" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="T-Rex vs Tiger Simulator" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ko_KR" />
+    <meta
+      property="og:title"
+      content="How the model works: a Monte Carlo agent-based battle model | T-Rex vs Tiger Simulator"
+    />
+    <meta
+      property="og:description"
+      content="A plain-language explanation of the T-Rex vs tiger simulation model: triangular distributions and Latin hypercube sampling, individual variation, bite, latch, bleeding and morale rules, outcomes, Wilson intervals, Spearman sensitivity, reproducibility and limitations."
+    />
+    <meta property="og:url" content="https://trex-vs-tiger.vinylims.com/en/model/" />
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="How the model works: a Monte Carlo agent-based battle model | T-Rex vs Tiger Simulator"
+    />
+    <meta
+      name="twitter:description"
+      content="A plain-language explanation of the T-Rex vs tiger simulation model: triangular distributions and Latin hypercube sampling, individual variation, bite, latch, bleeding and morale rules, outcomes, Wilson intervals, Spearman sensitivity, reproducibility and limitations."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/pages/site.css" />
+    <script type="module" src="/src/pages/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="site-brand" href="/">
+          <img src="/favicon.svg" alt="" width="32" height="32" />
+          <span>T-Rex vs Tigers</span>
+        </a>
+        <nav class="site-nav" aria-label="Site">
+          <ul class="site-nav-list">
+            <li><a class="site-nav-link" href="/" data-page="simulator">Simulator</a></li>
+            <li><a class="site-nav-link" href="/en/guide/" data-page="guide">Guide</a></li>
+            <li><a class="site-nav-link" href="/en/model/" data-page="model">Model</a></li>
+            <li>
+              <a class="site-nav-link" href="/en/parameters/" data-page="parameters">Parameters</a>
+            </li>
+            <li><a class="site-nav-link" href="/en/about/" data-page="about">About</a></li>
+          </ul>
+        </nav>
+        <a class="lang-switch" href="/model/" hreflang="ko" lang="ko" data-lang-switch>한국어</a>
+      </div>
+    </header>
+    <main id="main" class="site-main">
+      <article class="page">
+        <header class="page-head">
+          <p class="eyebrow">Model</p>
+          <h1>How the model works: a Monte Carlo, agent-based battle model</h1>
+          <p class="lead">
+            A plain-language tour of how the simulator computes one battle and how it turns many
+            battles into probabilities and statistics. Formulas and constants match the engine code,
+            and every assumption comes with its limits.
+          </p>
+          <p class="page-meta">
+            Last updated <time datetime="2026-10-19">19 October 2026</time> · about a 15-minute read
+          </p>
+        </header>
+
+        <nav class="toc" aria-labelledby="toc-title">
+          <h2 id="toc-title">Contents</h2>
+          <ol>
+            <li><a href="#summary">At a glance</a></li>
+            <li><a href="#purpose">The question and a disclaimer</a></li>
+            <li><a href="#monte-carlo">What is the Monte Carlo method?</a></li>
+            <li><a href="#uncertainty">Two levels of uncertainty</a></li>
+            <li><a href="#battle">How one battle unfolds</a></li>
+            <li><a href="#damage">Health, damage and bleeding</a></li>
+            <li><a href="#trex">T-Rex behaviour</a></li>
+            <li><a href="#tigers">Tiger behaviour</a></li>
+            <li><a href="#tactics">Tiger tactics</a></li>
+            <li><a href="#morale">Morale and routing</a></li>
+            <li><a href="#outcomes">Deciding the outcome</a></li>
+            <li><a href="#statistics">Result statistics</a></li>
+            <li><a href="#reproducibility">Reproducibility</a></li>
+            <li><a href="#results">Preliminary results with the defaults</a></li>
+            <li><a href="#tigers-win">What would make the tigers win?</a></li>
+            <li><a href="#limitations">Limitations and future work</a></li>
+            <li><a href="#references">References</a></li>
+          </ol>
+        </nav>
+
+        <div class="page-body">
+          <section id="summary">
+            <h2>At a glance</h2>
+            <ul>
+              <li>
+                <strong>Agent-based</strong>: every T-Rex and every tiger is an individual agent
+                with its own position, health, stamina and morale. Every 0.1 seconds each one
+                decides and acts by fixed rules.
+              </li>
+              <li>
+                <strong>Monte Carlo</strong>: 22 traits that nobody knows exactly are drawn afresh
+                from a range for every run. The same scenario is repeated hundreds or thousands of
+                times and the outcomes are counted.
+              </li>
+              <li>
+                <strong>Two levels of uncertainty</strong>: per run, “we do not know the species'
+                true value”; per animal, “individuals of the same species differ”.
+              </li>
+              <li>
+                <strong>The answer is a function of the assumptions</strong>: with the defaults, 10
+                T-Rex beat 100 tigers almost every time. Switch morale off and greatly raise the
+                tigers' damage or numbers, and the result can flip. Showing that sensitivity is the
+                whole point.
+              </li>
+            </ul>
+          </section>
+
+          <section id="purpose">
+            <h2>The question and a disclaimer</h2>
+            <p>
+              The simulator starts from a playground question: if N <i>Tyrannosaurus rex</i> met M
+              tigers on an open field, who would win? There is no true answer. Instead, the model
+              lays out every assumption needed to reach an answer and shows how the answer moves
+              when those assumptions move.
+            </p>
+            <div class="warning">
+              <ul>
+                <li>
+                  <i>T. rex</i> lived in the Late Cretaceous, about 68–66 million years ago; tigers
+                  appear in the Pleistocene.
+                  <strong>The two never coexisted, and no such fight ever happened.</strong>
+                </li>
+                <li>
+                  Every interaction rule (latching, shaking off, bleeding, morale, group tactics) is
+                  an assumption. The <a href="/en/parameters/">parameter reference</a> marks which
+                  values are sourced and which are speculative.
+                </li>
+                <li>
+                  Tigers are solitary ambush hunters. Coordinated attacks by several adult tigers on
+                  large prey are not documented, so both tiger tactics in the model are
+                  hypothetical.
+                </li>
+                <li>
+                  The win probabilities on screen are what the model produces under its assumptions.
+                  Do not read them as predictions about real animals.
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="monte-carlo">
+            <h2>What is the Monte Carlo method?</h2>
+            <p>
+              When an answer is hard to derive with a single formula, the Monte Carlo method repeats
+              a randomised experiment many times and studies the distribution of outcomes. It is
+              named after the casino district of Monaco.
+            </p>
+            <p>
+              Here, one experiment is one battle. For every run the simulator draws new values, such
+              as T-Rex bite force or the tiger's latch chance, from preset ranges, then simulates
+              the battle from start to finish with those values. If the T-Rex win 480 of 500 runs,
+              the estimated T-Rex win probability is 96%. More runs make the estimate steadier, and
+              a confidence interval shows how precise it is.
+            </p>
+            <p>
+              Importantly, this probability mixes two things: luck within a fight, and our ignorance
+              of the true traits. Narrow or widen a range and the probability changes with it.
+            </p>
+          </section>
+
+          <section id="uncertainty">
+            <h2>Two levels of uncertainty</h2>
+            <h3>Level 1: per run (values we do not know)</h3>
+            <p>
+              Estimates of T-Rex bite force, for example, range from about 8.5 kN to 57 kN depending
+              on the study. So each parameter is not one number but a
+              <strong>triangular distribution</strong>
+              defined by a minimum, a mode (the most plausible value) and a maximum. Values near the
+              mode are drawn most often and values near either end more rarely. All 22 parameters
+              have such a distribution, and every run draws one value per parameter.
+            </p>
+            <p>You can choose how the values are drawn:</p>
+            <ul>
+              <li>
+                <strong>LHS (Latin hypercube sampling, default)</strong>: each parameter's 0–1 range
+                is cut into as many equal strata as there are runs; every stratum is sampled exactly
+                once and the order is shuffled. Even a small number of runs reaches both ends of
+                every range. Each parameter is shuffled independently, so correlations between
+                parameters are not controlled.
+              </li>
+              <li>
+                <strong>Simple random</strong>: every value is drawn independently. With enough runs
+                it matches LHS; with few runs it is lumpier.
+              </li>
+            </ul>
+            <p>
+              Either way, a number u between 0 and 1 is turned into a value with the inverse
+              cumulative distribution of the triangle. With minimum a, mode c and maximum b:
+            </p>
+            <p class="formula">
+              if u &lt; (c−a)/(b−a): x = a + √(u·(b−a)·(c−a)); otherwise x = b −
+              √((1−u)·(b−a)·(b−c))
+            </p>
+            <h3>Level 2: per animal (individuals differ)</h3>
+            <p>
+              Animals within a run are not identical. For every parameter with individual variation,
+              each animal gets its own multiplier f, drawn from a normal distribution with mean 1
+              and standard deviation CV (default 0.08) and redrawn if it falls outside 0.5–1.5
+              (after 16 failed tries, f = 1). The animal's value is “run value × f”, clamped to the
+              parameter's bounds.
+            </p>
+            <ul>
+              <li>With CV = 0, every animal uses exactly the run value.</li>
+              <li>
+                Three parameters are set per run only and shared by all animals: bite lethality,
+                body radius and bleed rate.
+              </li>
+              <li>A tiger's cruise speed is capped at the same tiger's sprint speed.</li>
+            </ul>
+          </section>
+
+          <section id="battle">
+            <h2>How one battle unfolds</h2>
+            <h3>Arena and starting positions</h3>
+            <p>
+              The arena is an open, obstacle-free square with side L (600 m by default). The two
+              groups start the smaller of 200 m and 0.4 L apart. The T-Rex stand in a vertical line
+              on the left, facing the tigers, at most 15 m apart. The tigers start scattered at
+              random inside a disc on the right. With the defaults, the groups start about 200 m
+              apart.
+            </p>
+            <h3>Time in steps of 0.1 seconds</h3>
+            <p>The engine advances time in 0.1 s steps (ticks). Each tick runs in this order:</p>
+            <ol class="steps">
+              <li>Rebuild a spatial grid so nearby animals can be found quickly.</li>
+              <li>For every T-Rex, count the tigers latched onto it and their total mass.</li>
+              <li>
+                Each live T-Rex in turn picks a target, turns, moves, bites and takes bleeding
+                damage.
+              </li>
+              <li>Each tiger in turn checks whether it routs, then acts according to its state.</li>
+              <li>T-Rex with zero or negative health die, and the outcome checks run.</li>
+            </ol>
+            <p>
+              A tiger leaves the battle the moment it dies; a T-Rex is marked dead at the end of the
+              tick. Animals are updated in index order within a tick, so the order can matter very
+              slightly.
+            </p>
+          </section>
+
+          <section id="damage">
+            <h2>Health, damage and bleeding</h2>
+            <ul>
+              <li>
+                <strong>Hit points (HP)</strong>: for both species, 1 HP per kilogram of body mass.
+                An 8,000 kg T-Rex starts with 8,000 HP and a 180 kg tiger with 180 HP. This is a
+                modelling convention to put damage on one scale, not a law of physiology.
+              </li>
+              <li>
+                <strong>T-Rex bite</strong>: one hit deals
+                <span class="formula-inline"
+                  >bite force (kN) × bite lethality (HP/kN) × U(0.7, 1.3)</span
+                >, where U(0.7, 1.3) is a uniform random factor. At the default modes that is
+                196–364 HP, which usually kills a tiger in one bite.
+              </li>
+              <li>
+                <strong>Tiger attacks</strong>: while latched, a tiger deals “damage per second ×
+                0.1” every tick. The damage is also added to the T-Rex's accumulated wound total.
+              </li>
+              <li>
+                <strong>Bleeding</strong>: every second, a live T-Rex loses “accumulated wound ×
+                bleed rate” HP. With a bleed rate of 0.002/s, a T-Rex that has taken 1,000 HP of
+                tiger damage loses 2 HP every second from then on. Wounds never close, and bleeding
+                does not add to the wound total.
+              </li>
+            </ul>
+            <p>
+              Bleeding matters most in long, no-morale battles: T seconds after taking wound W,
+              bleeding has removed roughly W × bleed rate × T more. With W = 1,000 HP, 0.002/s and T
+              = 300 s, that is about 600 HP.
+            </p>
+          </section>
+
+          <section id="trex">
+            <h2>T-Rex behaviour</h2>
+            <h3>Targeting and movement</h3>
+            <ul>
+              <li>
+                A T-Rex targets the nearest tiger that is not latched onto anyone and is neither
+                dead nor gone. Routed and recovering tigers can be targets.
+              </li>
+              <li>
+                It re-targets every 0.5 s, and at once when its target latches onto someone or dies.
+              </li>
+              <li>
+                Its heading changes by at most “turn rate × 0.1” per tick: the huge body's
+                rotational inertia is assumed to make it a slow turner.
+              </li>
+              <li>It only moves forward while the target is farther than 80% of its bite reach.</li>
+              <li>
+                Latched tigers slow it down: speed is multiplied by
+                <span class="formula-inline">max(0.3, 1 − total latched tiger mass ÷ own mass)</span
+                >. Five 180 kg tigers on an 8,000 kg T-Rex give 0.89.
+              </li>
+              <li>Speed is halved while the heading is more than 60° off the target.</li>
+            </ul>
+            <h3>Biting</h3>
+            <p>
+              When its bite cooldown has expired, a T-Rex looks for a target inside a frontal cone:
+              within “bite reach + 0.8 m (tiger radius)” of its centre and within “bite arc” of
+              straight ahead. The bite arc is a half-angle, so the full cone is twice as wide.
+            </p>
+            <ul>
+              <li>
+                Tigers latched onto this T-Rex come first; otherwise the nearest candidate is
+                chosen.
+              </li>
+              <li>With no candidate, it tries again next tick.</li>
+              <li>
+                An attempt restarts the cooldown and hits with probability “bite accuracy”. Against
+                a latched tiger, accuracy is 1.5 times higher (at most 0.95).
+              </li>
+              <li>A tiger that survives a bite falls back to recover and loses 0.25 morale.</li>
+            </ul>
+            <div class="note">
+              <p>
+                <strong>A geometric consequence.</strong> A latched tiger keeps a fixed position on
+                its host and turns with it. A tiger hanging on a flank or the back, outside the
+                host's bite cone, therefore cannot be bitten by that host. It comes off only by
+                being shaken off, by running out of stamina, or by a bite from another T-Rex.
+              </p>
+            </div>
+            <h3>Shaking off</h3>
+            <p>
+              Every tick, each latched tiger is thrown off with probability “shake-off rate × 0.1”,
+              so on average it holds on for 1 ÷ shake-off rate seconds. A thrown tiger loses 10% of
+              its own max HP; if it survives it is pushed 3 m outward, starts recovering and loses
+              0.1 morale.
+            </p>
+            <p>
+              The T-Rex has no stamina, no morale and no arm attack: following published work, its
+              roughly 1 m arms are treated as useless in a fight.
+            </p>
+          </section>
+
+          <section id="tigers">
+            <h2>Tiger behaviour</h2>
+            <p>Each tiger is in one of these states, and its behaviour depends on the state.</p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">State</th>
+                    <th scope="col">Behaviour</th>
+                    <th scope="col">Leaves the state when</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Approaching</th>
+                    <td>
+                      Picks a target T-Rex every second and closes in. Farther than 60 m it cruises
+                      and slowly regains stamina; within 60 m it sprints and spends stamina.
+                    </td>
+                    <td>
+                      On contact it latches with probability “latch chance” (retrying after 1 s on a
+                      miss). Out of stamina → recovering.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Latched</th>
+                    <td>
+                      Clings to the T-Rex and moves with it, dealing “damage per second”. Stamina
+                      drains over the “latch endurance”.
+                    </td>
+                    <td>
+                      Stamina gone, host dead or shaken off → recovering. Morale broken → routed.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Recovering</th>
+                    <td>
+                      Regains stamina four times faster than while cruising. If a T-Rex is within 40
+                      m it moves away at cruise speed.
+                    </td>
+                    <td>
+                      Stamina at 80% or more, and at least 5 s since it was bitten or thrown →
+                      approaching again.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Routed</th>
+                    <td>
+                      Runs directly away from the nearest T-Rex, sprinting while stamina lasts, then
+                      cruising. Stamina does not recover while routed.
+                    </td>
+                    <td>
+                      Crossing the arena edge → gone. A routed tiger in front of a T-Rex can still
+                      be bitten.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Dead · Gone</th>
+                    <td>Takes no further part in the battle.</td>
+                    <td>—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              “Contact” means the centres are within T-Rex body radius + 0.8 m + 0.5 m (3.8 m at the
+              default radius). A latched tiger sits “body radius + 0.8 m” from its host's centre.
+            </p>
+          </section>
+
+          <section id="tactics">
+            <h2>Tiger tactics</h2>
+            <dl class="facts">
+              <div>
+                <dt>Direct charge</dt>
+                <dd>
+                  Targets the nearest live T-Rex and runs straight at its centre. The step is
+                  limited so the tiger stops at contact distance.
+                </dd>
+              </div>
+              <div>
+                <dt>Flank (default)</dt>
+                <dd>
+                  Targets the T-Rex with the smallest “distance + 20 m × tigers already latched on
+                  it”, which spreads the attack across T-Rex. The aim point is behind the T-Rex,
+                  offset about 34° to the tiger's own side. Closer than “bite reach + 4 m” and
+                  within “bite arc + 20°” of the T-Rex's heading counts as the danger zone; there
+                  the tiger sidesteps at right angles to the T-Rex's heading to get out of the cone.
+                </dd>
+              </div>
+            </dl>
+            <p>
+              Both tactics are hypothetical. Adult tigers hunt alone, and no coordinated multi-tiger
+              attack on large prey is documented.
+            </p>
+          </section>
+
+          <section id="morale">
+            <h2>Morale and routing</h2>
+            <p>
+              Only tigers have morale, starting at each animal's “initial morale”. It is a simple
+              stand-in for the observation that tigers avoid fights that could injure them.
+            </p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Event</th>
+                    <th scope="col">Morale change</th>
+                    <th scope="col">With the morale model off</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Bitten and survived</th>
+                    <td>−0.25</td>
+                    <td>Still lowered, but never leads to routing</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Shaken off and survived</th>
+                    <td>−0.10</td>
+                    <td>Still lowered, but never leads to routing</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Another tiger dies within 40 m</th>
+                    <td>Every tiger in range loses its own “morale loss”</td>
+                    <td>Not applied</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Morale below 0.2 on its turn</th>
+                    <td>Becomes routed (letting go if latched)</td>
+                    <td>Never routs</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              With default values, a tiger starting at 0.6 routs after two survived bites (0.6 →
+              0.35 → 0.10). One survived bite plus two nearby deaths at 0.08 each also routs it (0.6
+              → 0.35 → 0.19). These thresholds are speculative.
+            </p>
+          </section>
+
+          <section id="outcomes">
+            <h2>Deciding the outcome</h2>
+            <p>
+              At the end of every tick these checks run in order; the first one that holds ends the
+              battle.
+            </p>
+            <ol class="steps">
+              <li>
+                <strong>Tigers win</strong>: every T-Rex is dead. If the last T-Rex and the last
+                tiger fall in the same tick, the tigers win.
+              </li>
+              <li>
+                <strong>T-Rex win</strong>: no tiger is still fighting (approaching, latched or
+                recovering). Every tiger is dead, routed or gone, so a T-Rex win includes battles
+                that end because the tigers fled.
+              </li>
+              <li><strong>Draw</strong>: the time limit is reached.</li>
+            </ol>
+            <p>
+              Every battle records its outcome, duration, surviving T-Rex, tigers killed, routed and
+              still fighting, the T-Rex share of HP left, and the
+              <strong>T-Rex advantage</strong> used for sensitivity: the T-Rex share of HP left
+              minus the share of tigers still fighting, between −1 and 1.
+            </p>
+          </section>
+
+          <section id="statistics">
+            <h2>Result statistics</h2>
+            <dl class="facts">
+              <div>
+                <dt>Outcome probabilities</dt>
+                <dd>
+                  The share of runs with each outcome. The 95% confidence interval is the Wilson
+                  score interval, which stays inside 0–100% even for probabilities near 0% or 100%.
+                </dd>
+              </div>
+              <div>
+                <dt>Distributions</dt>
+                <dd>
+                  Battle duration, T-Rex survivors, tigers killed and tigers routed are summarised
+                  by the mean and the 5th, 50th (median) and 95th percentiles. The duration
+                  histogram has at most 30 bins; the survivor histogram has one bin per head count.
+                </dd>
+              </div>
+              <div>
+                <dt>Exchange ratio</dt>
+                <dd>
+                  Tigers killed ÷ T-Rex lost, summed over all runs: a ratio of totals, not an
+                  average of per-run ratios.
+                </dd>
+              </div>
+              <div>
+                <dt>Sensitivity</dt>
+                <dd>
+                  For each parameter, the Spearman rank correlation ρ between its per-run value and
+                  the T-Rex advantage, sorted by absolute size. The standard error is roughly
+                  1/√(runs − 1), about 0.045 at 500 runs, so treat |ρ| around 0.1 as noise.
+                </dd>
+              </div>
+              <div>
+                <dt>Representative battle</dt>
+                <dd>
+                  The run whose T-Rex advantage is closest to the median, with ties going to the
+                  lowest run number. It is the battle the replay shows first.
+                </dd>
+              </div>
+            </dl>
+            <p>
+              When the T-Rex win every run, no tiger is still fighting at the end, so the T-Rex
+              advantage equals the T-Rex share of HP left. The sensitivity chart then shows what
+              drives the T-Rex's loss of health.
+            </p>
+          </section>
+
+          <section id="reproducibility">
+            <h2>Reproducibility</h2>
+            <ul>
+              <li>
+                Random numbers come from the sfc32 generator, seeded through splitmix32. The
+                sampling design and every battle get their own sub-seed derived from the master
+                seed.
+              </li>
+              <li>
+                The result of battle i depends only on the settings and on i. Splitting the work
+                over any number of workers gives identical results, and the replay can re-compute
+                the very same battle.
+              </li>
+              <li>
+                Within one browser engine the results are bit-identical. Across engines, rounding in
+                trigonometric and logarithm functions can make individual battles diverge, while the
+                statistics agree.
+              </li>
+              <li>
+                The sampling design depends on the number of runs: battle 7 of a 100-run batch is
+                not battle 7 of a 500-run batch.
+              </li>
+            </ul>
+          </section>
+
+          <section id="results">
+            <h2>Preliminary results with the defaults</h2>
+            <p>
+              These numbers come from a local check of the engine during development (seed 20261019,
+              500 runs, LHS, 10 T-Rex vs 100 tigers, 600 m arena, 1,200 s limit, CV 0.08). Other
+              seeds or run counts move them slightly, so treat them as indicative.
+            </p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Scenario</th>
+                    <th scope="col">T-Rex win (95% CI)</th>
+                    <th scope="col">Duration p5 / p50 / p95 (s)</th>
+                    <th scope="col">Tigers killed (mean)</th>
+                    <th scope="col">Tigers routed (mean)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Morale on, flank (default)</th>
+                    <td>100% (99.2–100%)</td>
+                    <td>19 / 26 / 130</td>
+                    <td>14.1</td>
+                    <td>85.9</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Morale on, direct</th>
+                    <td>100% (99.2–100%)</td>
+                    <td>18 / 23 / 89</td>
+                    <td>14.8</td>
+                    <td>85.2</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Morale off, flank</th>
+                    <td>100% (99.2–100%)</td>
+                    <td>155 / 332 / 672</td>
+                    <td>100</td>
+                    <td>0</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Morale off, direct</th>
+                    <td>100% (99.2–100%)</td>
+                    <td>79 / 139 / 248</td>
+                    <td>100</td>
+                    <td>0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <ul>
+              <li>
+                With morale on, the T-Rex win every run and the median battle lasts about 26 s.
+                About 14 tigers die; the other 86 or so break and flee after nearby deaths and
+                survived bites.
+              </li>
+              <li>
+                With morale off, the tigers fight to the death, battles last a median of 140–330 s,
+                and all 100 tigers die. Even so, only a handful of the 5,000 T-Rex across 500 runs
+                died.
+              </li>
+              <li>
+                At the top of the sensitivity ranking were T-Rex bite force (ρ ≈ +0.43) and tiger
+                morale loss (+0.36) with morale on, and the tiger damage rate (ρ ≈ −0.50) with
+                morale off.
+              </li>
+            </ul>
+          </section>
+
+          <section id="tigers-win">
+            <h2>What would make the tigers win?</h2>
+            <p>
+              Single-change checks with 100 runs each (seed 20261019, flank tactic, otherwise
+              defaults). Their confidence intervals are about ±10 percentage points wide, so read
+              them as trends.
+            </p>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Change from the defaults</th>
+                    <th scope="col">Morale</th>
+                    <th scope="col">T-Rex win</th>
+                    <th scope="col">Tigers win</th>
+                    <th scope="col">Draw</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">None</th>
+                    <td>off</td>
+                    <td>99%</td>
+                    <td>0%</td>
+                    <td>1%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Damage per second 10 / 20 / 40</th>
+                    <td>off</td>
+                    <td>92%</td>
+                    <td>8%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Damage per second 20 / 40 / 80</th>
+                    <td>off</td>
+                    <td>54%</td>
+                    <td>46%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Bleed rate 0.01 / 0.02 / 0.04</th>
+                    <td>off</td>
+                    <td>84%</td>
+                    <td>16%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">300 tigers</th>
+                    <td>off</td>
+                    <td>78%</td>
+                    <td>21%</td>
+                    <td>1%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">1,000 tigers</th>
+                    <td>off</td>
+                    <td>0%</td>
+                    <td>100%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">1,000 tigers</th>
+                    <td>on</td>
+                    <td>97%</td>
+                    <td>3%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Damage per second 20 / 40 / 80</th>
+                    <td>on</td>
+                    <td>100%</td>
+                    <td>0%</td>
+                    <td>0%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>For the tigers to stand a real chance, several assumptions must move together:</p>
+            <ol>
+              <li>
+                <strong>No morale.</strong> The tigers must fight to the death. With morale on, even
+                1,000 tigers flee and lose 97% of the time.
+              </li>
+              <li>
+                <strong>And</strong> one of: a damage rate about 3–7 times the default, a bleed rate
+                about 10 times the default, or roughly 30 or more tigers per T-Rex (at 100 per T-Rex
+                they won every check run).
+              </li>
+              <li>
+                Weaker T-Rex killing power also helps the tigers: lower bite force, bite lethality
+                or bite accuracy, or a longer bite interval.
+              </li>
+            </ol>
+            <p>
+              You can test all of this in the simulator; an easy sequence to follow is in the
+              <a href="/en/guide/#tutorial">tutorial of the guide</a>.
+            </p>
+          </section>
+
+          <section id="limitations">
+            <h2>Limitations and future work</h2>
+            <h3>Geometry and physics</h3>
+            <ul>
+              <li>
+                A flat 2D field with no terrain, obstacles or height. Tigers cannot climb or go for
+                the neck.
+              </li>
+              <li>
+                Bodies are circles and animals do not collide, so animals of the same species can
+                overlap.
+              </li>
+              <li>Tigers have no facing direction, and the T-Rex's tail and arms play no role.</li>
+            </ul>
+            <h3>Damage model</h3>
+            <ul>
+              <li>
+                Health is one number per animal. Damage has no location and does not cripple: a
+                wounded T-Rex does not slow down, and a recovered tiger fights at full strength.
+              </li>
+              <li>1 HP per kilogram makes damage scale with body mass for both species.</li>
+              <li>Bleeding grows with accumulated wounds and never clots.</li>
+            </ul>
+            <h3>Behaviour</h3>
+            <ul>
+              <li>The T-Rex never tires, never panics and never flees.</li>
+              <li>Tiger tactics are scripted rules with no communication or learning.</li>
+              <li>Bite accuracy, cone and interval stay constant throughout a battle.</li>
+            </ul>
+            <h3>Statistics</h3>
+            <ul>
+              <li>
+                Individual multipliers are independent per parameter: a heavier tiger is not
+                automatically stronger.
+              </li>
+              <li>
+                LHS columns are independent, so there is no correlation between, say, T-Rex mass and
+                bite force.
+              </li>
+              <li>
+                Spearman ρ captures one-parameter-at-a-time monotonic trends and misses
+                interactions.
+              </li>
+              <li>
+                Results that hinge on the speculative parameters (bite lethality, accuracy, damage
+                rate, bleed rate, morale) are only as good as those guesses.
+              </li>
+            </ul>
+            <h3>Future work</h3>
+            <p>
+              Ideas under consideration include Sobol variance-based sensitivity indices, terrain
+              and obstacles, injuries that reduce speed and bite, T-Rex fatigue, correlated
+              parameter sampling, juvenile T-Rex and other predator presets, and calibrating the
+              tiger damage rate and latch chance against documented big-cat attacks on large prey.
+            </p>
+          </section>
+
+          <section id="references">
+            <h2>References</h2>
+            <p>
+              The source for each parameter is listed in the
+              <a href="/en/parameters/">parameter reference</a>. Key works:
+            </p>
+            <h3><i>Tyrannosaurus rex</i></h3>
+            <ul>
+              <li>
+                Erickson G.M. et al. (2004). Gigantism and comparative life-history parameters of
+                tyrannosaurid dinosaurs. <i>Nature</i> 430, 772–775.
+                <a href="https://doi.org/10.1038/nature02699">doi:10.1038/nature02699</a>
+              </li>
+              <li>
+                Persons W.S., Currie P.J., Erickson G.M. (2019). An older and exceptionally large
+                adult specimen of <i>Tyrannosaurus rex</i>. <i>The Anatomical Record</i>.
+                <a href="https://doi.org/10.1002/ar.24118">doi:10.1002/ar.24118</a>
+              </li>
+              <li>
+                Hutchinson J.R., Garcia M. (2002). <i>Tyrannosaurus</i> was not a fast runner.
+                <i>Nature</i> 415, 1018–1021.
+                <a href="https://doi.org/10.1038/4151018a">doi:10.1038/4151018a</a>
+              </li>
+              <li>
+                Sellers W.I. et al. (2017). Investigating the running abilities of
+                <i>Tyrannosaurus rex</i> using stress-constrained multibody dynamic analysis.
+                <i>PeerJ</i> 5, e3420.
+                <a href="https://peerj.com/articles/3420/">peerj.com/articles/3420</a>
+              </li>
+              <li>
+                Hutchinson J.R., Ng-Thow-Hing V., Anderson F.C. (2007). A 3D interactive method for
+                estimating body segmental parameters in animals.
+                <i>Journal of Theoretical Biology</i> 246, 660–680.
+                <a href="https://doi.org/10.1016/j.jtbi.2007.01.023"
+                  >doi:10.1016/j.jtbi.2007.01.023</a
+                >
+              </li>
+              <li>
+                Gignac P.M., Erickson G.M. (2017). The biomechanics behind extreme osteophagy in
+                <i>Tyrannosaurus rex</i>. <i>Scientific Reports</i> 7, 2012.
+                <a href="https://doi.org/10.1038/s41598-017-02161-w"
+                  >doi:10.1038/s41598-017-02161-w</a
+                >
+              </li>
+              <li>
+                Bates K.T., Falkingham P.L. (2012). Estimating maximum bite performance in
+                <i>Tyrannosaurus rex</i> using multi-body dynamics. <i>Biology Letters</i> 8,
+                660–664.
+                <a href="https://doi.org/10.1098/rsbl.2012.0056">doi:10.1098/rsbl.2012.0056</a>
+              </li>
+              <li>
+                Padian K. (2022). Why tyrannosaurid forelimbs were so short: An integrative
+                hypothesis.
+                <i>Acta Palaeontologica Polonica</i> 67(1).
+              </li>
+            </ul>
+            <h3>Tiger</h3>
+            <ul>
+              <li>
+                Schaller G.B. (1967). <i>The Deer and the Tiger: A Study of Wildlife in India</i>.
+                University of Chicago Press.
+              </li>
+              <li>
+                Wilson A.M. et al. (2018). Biomechanics of predator–prey arms race in lion, zebra,
+                cheetah and impala. <i>Nature</i> 554, 183–188.
+                <a href="https://doi.org/10.1038/nature25479">doi:10.1038/nature25479</a>
+              </li>
+              <li>
+                Wroe S., McHenry C., Thomason J. (2005). Bite club: comparative bite force in big
+                biting mammals and the prediction of predatory behaviour in fossil taxa.
+                <i>Proc. R. Soc. B</i> 272, 619–625.
+                <a href="https://doi.org/10.1098/rspb.2004.2986">doi:10.1098/rspb.2004.2986</a>
+              </li>
+              <li>
+                Hayward M.W., Jędrzejewski W., Jędrzejewska B. (2012). Prey preferences of the tiger
+                <i>Panthera tigris</i>. <i>Journal of Zoology</i> 286, 221–231.
+                <a href="https://doi.org/10.1111/j.1469-7998.2011.00871.x"
+                  >doi:10.1111/j.1469-7998.2011.00871.x</a
+                >
+              </li>
+            </ul>
+            <p>
+              The full list and the table of engine constants are in
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/MODEL.md"
+                >MODEL.md</a
+              >
+              in the repository. If the documentation and the code disagree, the code wins; please
+              report any mismatch as a
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim/issues">GitHub issue</a>.
+            </p>
+          </section>
+
+          <aside class="cta">
+            <p>
+              <strong>Change the assumptions yourself.</strong> Every range is editable in the
+              simulator.
+            </p>
+            <a class="button" href="/">Open the simulator</a>
+          </aside>
+        </div>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <p>
+          T. rex and tigers never lived at the same time, and every interaction rule on this site is
+          an assumption. The results show how an educational model responds to its assumptions; they
+          do not predict a real fight.
+        </p>
+        <ul class="footer-links">
+          <li><a href="/en/privacy/">Privacy</a></li>
+          <li><a href="/en/about/">About & contact</a></li>
+          <li>
+            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+          </li>
+        </ul>
+        <p>© 2026 VinylStage · Open source under the MIT License</p>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>소개 · 문의: 오픈 소스 교육용 시뮬레이터 | T-Rex vs 호랑이 시뮬레이터</title>
+    <meta
+      name="description"
+      content="T-Rex vs 호랑이 시뮬레이터를 만든 목적, 교육용 모델이라는 점과 면책, 기술 구성, MIT 라이선스 오픈 소스 저장소, GitHub 이슈를 통한 문의 방법을 안내합니다."
+    />
+    <link rel="canonical" href="https://trex-vs-tiger.vinylims.com/about/" />
+    <link rel="alternate" hreflang="ko" href="https://trex-vs-tiger.vinylims.com/about/" />
+    <link rel="alternate" hreflang="en" href="https://trex-vs-tiger.vinylims.com/en/about/" />
+    <link rel="alternate" hreflang="x-default" href="https://trex-vs-tiger.vinylims.com/about/" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="T-Rex vs 호랑이 시뮬레이터" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <meta
+      property="og:title"
+      content="소개 · 문의: 오픈 소스 교육용 시뮬레이터 | T-Rex vs 호랑이 시뮬레이터"
+    />
+    <meta
+      property="og:description"
+      content="T-Rex vs 호랑이 시뮬레이터를 만든 목적, 교육용 모델이라는 점과 면책, 기술 구성, MIT 라이선스 오픈 소스 저장소, GitHub 이슈를 통한 문의 방법을 안내합니다."
+    />
+    <meta property="og:url" content="https://trex-vs-tiger.vinylims.com/about/" />
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="소개 · 문의: 오픈 소스 교육용 시뮬레이터 | T-Rex vs 호랑이 시뮬레이터"
+    />
+    <meta
+      name="twitter:description"
+      content="T-Rex vs 호랑이 시뮬레이터를 만든 목적, 교육용 모델이라는 점과 면책, 기술 구성, MIT 라이선스 오픈 소스 저장소, GitHub 이슈를 통한 문의 방법을 안내합니다."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/pages/site.css" />
+    <script type="module" src="/src/pages/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="site-brand" href="/">
+          <img src="/favicon.svg" alt="" width="32" height="32" />
+          <span>T-Rex vs 호랑이</span>
+        </a>
+        <nav class="site-nav" aria-label="사이트 메뉴">
+          <ul class="site-nav-list">
+            <li><a class="site-nav-link" href="/" data-page="simulator">시뮬레이터</a></li>
+            <li><a class="site-nav-link" href="/guide/" data-page="guide">사용 방법</a></li>
+            <li><a class="site-nav-link" href="/model/" data-page="model">모델 설명</a></li>
+            <li>
+              <a class="site-nav-link" href="/parameters/" data-page="parameters">파라미터</a>
+            </li>
+            <li><a class="site-nav-link" href="/about/" data-page="about">소개</a></li>
+          </ul>
+        </nav>
+        <a class="lang-switch" href="/en/about/" hreflang="en" lang="en" data-lang-switch
+          >English</a
+        >
+      </div>
+    </header>
+    <main id="main" class="site-main">
+      <article class="page">
+        <header class="page-head">
+          <p class="eyebrow">소개 · 문의</p>
+          <h1>T-Rex vs 호랑이 시뮬레이터 소개</h1>
+          <p class="lead">
+            “티라노사우루스와 호랑이 무리가 싸우면 누가 이길까?”라는 재미있는 질문을 출발점으로,
+            불확실성 아래에서 추론하는 방법을 직접 체험해 보는 오픈 소스 교육용 시뮬레이터입니다.
+          </p>
+          <p class="page-meta">최종 수정 <time datetime="2026-10-19">2026년 10월 19일</time></p>
+        </header>
+
+        <nav class="toc" aria-labelledby="toc-title">
+          <h2 id="toc-title">목차</h2>
+          <ol>
+            <li><a href="#what">이 사이트는</a></li>
+            <li><a href="#learn">무엇을 배울 수 있나요</a></li>
+            <li><a href="#disclaimer">교육용 모델이라는 점</a></li>
+            <li><a href="#how-built">어떻게 만들었나요</a></li>
+            <li><a href="#open-source">오픈 소스</a></li>
+            <li><a href="#contact">문의</a></li>
+          </ol>
+        </nav>
+
+        <div class="page-body">
+          <section id="what">
+            <h2>이 사이트는</h2>
+            <p>
+              T-Rex vs 호랑이 시뮬레이터는 성체 티라노사우루스 N마리와 성체 호랑이 M마리가 탁 트인
+              평지에서 맞붙는 상황을 컴퓨터로 수백에서 수천 번 재현해 보는 웹 도구입니다. 한 판의
+              결과를 보여 주는 대신, 문헌에서 가져온 값과 명시적인 가정을 바탕으로 능력치를 매번
+              다르게 뽑아 전투를 반복하고, 그 결과를 승률, 신뢰구간, 분포, 민감도로 정리합니다.
+            </p>
+            <p>
+              마릿수, 전술, 사기 같은 시나리오와 22개 능력치의 범위를 모두 직접 바꿀 수 있고, 마음에
+              드는 설정은 링크 하나로 다른 사람과 공유할 수 있습니다. 회원 가입이나 설치는 필요
+              없으며, 모든 계산은 방문자의 브라우저 안에서 이뤄집니다.
+            </p>
+          </section>
+
+          <section id="learn">
+            <h2>무엇을 배울 수 있나요</h2>
+            <p>
+              공룡과 맹수의 대결은 관심을 끄는 소재일 뿐, 이 사이트가 정말 다루는 것은 다음과 같은
+              개념입니다.
+            </p>
+            <ul>
+              <li>
+                <strong>몬테카를로 시뮬레이션</strong>: 정답을 공식으로 구하기 어려운 문제를 무작위
+                실험의 반복으로 근사하는 방법입니다. 실행 횟수에 따라 추정이 얼마나 안정되는지 직접
+                볼 수 있습니다.
+              </li>
+              <li>
+                <strong>불확실성의 구분</strong>: “값을 모른다”는 인식론적 불확실성과 “개체마다
+                다르다”는 우연적 변동을 따로 다루는 이유를 경험할 수 있습니다.
+              </li>
+              <li>
+                <strong>에이전트 기반 모델링</strong>: 단순한 개체 규칙이 모여 무리 수준의 결과(대량
+                도주, 긴 소모전 등)를 만들어 내는 과정을 재생 화면으로 확인할 수 있습니다.
+              </li>
+              <li>
+                <strong>민감도 분석</strong>: 결과가 어떤 가정에 가장 크게 좌우되는지 순위 상관으로
+                찾아내고, 가정을 바꿔 결론이 얼마나 견고한지 시험해 볼 수 있습니다.
+              </li>
+              <li>
+                <strong>통계적 표현</strong>: 윌슨 신뢰구간, 분위수, 히스토그램처럼 결과를 정직하게
+                보여 주는 방법을 실제 수치와 함께 익힐 수 있습니다.
+              </li>
+            </ul>
+            <p>
+              수업이나 동아리에서 “가정이 바뀌면 결론이 어떻게 바뀌는가”를 토론하는 재료로 쓰기
+              좋습니다. 처음 사용한다면 <a href="/guide/">사용 방법</a>의 튜토리얼부터 따라 해
+              보세요.
+            </p>
+          </section>
+
+          <section id="disclaimer">
+            <h2>교육용 모델이라는 점</h2>
+            <div class="warning">
+              <p>
+                티라노사우루스(약 6,800만–6,600만 년 전)와 호랑이는 같은 시대에 산 적이 없고, 이런
+                싸움은 실제로 일어난 적이 없습니다. 매달리기, 떨쳐내기, 출혈, 사기, 무리 전술 같은
+                상호작용 규칙은 모두 가정이며, 일부 능력치는 직접적인 자료가 없어 넓은 범위로
+                추정했습니다. 시뮬레이터가 보여 주는 승률은 “이 가정 아래에서 모델이 내놓는 값”일
+                뿐, 실제 동물에 대한 과학적 예측이 아닙니다.
+              </p>
+            </div>
+            <p>
+              어떤 값이 문헌에 근거하고 어떤 값이 추정인지는
+              <a href="/parameters/">파라미터 설명</a>에, 모델의 규칙과 한계는
+              <a href="/model/">모델 설명</a>에 자세히 적었습니다.
+            </p>
+          </section>
+
+          <section id="how-built">
+            <h2>어떻게 만들었나요</h2>
+            <ul>
+              <li>
+                <strong>정적 웹사이트</strong>: 서버 프로그램 없이 HTML, CSS, JavaScript 파일만
+                Cloudflare Pages에서 제공합니다. 계정, 데이터베이스, 분석 도구가 없습니다.
+              </li>
+              <li>
+                <strong>브라우저 안의 계산</strong>: 전투 계산은 Web Worker에서 여러 CPU 코어로 나눠
+                실행됩니다. 같은 시드면 워커 수와 상관없이 결과가 같도록 난수를 설계했습니다.
+              </li>
+              <li>
+                <strong>외부 라이브러리 없음</strong>: 시뮬레이션 엔진, 차트, 재생 화면을 모두
+                TypeScript로 직접 구현해, 실행 시점에 다른 회사의 스크립트를 불러오지 않습니다.
+              </li>
+              <li>
+                <strong>엄격한 보안 정책</strong>: 콘텐츠 보안 정책(CSP)으로 이 사이트의 파일만
+                실행되도록 막아 두었습니다.
+              </li>
+              <li>
+                <strong>검증</strong>: 엔진, 통계, 공유 링크 해석 등 핵심 로직은 자동 테스트로
+                확인하며, 이 안내 페이지의 파라미터 값도 시뮬레이터 코드와 자동으로 대조합니다.
+              </li>
+            </ul>
+          </section>
+
+          <section id="open-source">
+            <h2>오픈 소스</h2>
+            <p>
+              전체 소스 코드와 문서는 GitHub 저장소
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim"
+                >VinylStage/trex_vs_tiger_sim</a
+              >에 MIT 라이선스로 공개되어 있습니다. 코드를 읽고, 내 컴퓨터에서 실행하고, 수정해 다른
+              용도로 쓸 수 있습니다.
+            </p>
+            <ul>
+              <li>
+                모델의 모든 규칙, 상수, 참고 문헌은
+                <a href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/MODEL.md"
+                  >MODEL.md</a
+                >에 정리되어 있습니다.
+              </li>
+              <li>
+                기여 방법은
+                <a href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/CONTRIBUTING.md"
+                  >CONTRIBUTING.md</a
+                >를 참고하세요. 모든 변경은 이슈와 풀 리퀘스트로 관리됩니다.
+              </li>
+              <li>
+                새로운 문헌 값, 더 나은 근거, 모델의 오류를 알려 주시는 것도 큰 도움이 됩니다.
+                파라미터를 바꾸자는 제안에는 출처를 함께 적어 주세요.
+              </li>
+            </ul>
+          </section>
+
+          <section id="contact">
+            <h2>문의</h2>
+            <p>
+              이 사이트에 대한 문의, 버그 제보, 기능 제안은 GitHub 이슈로 받습니다. 이슈는
+              공개되므로 개인정보는 적지 마세요.
+            </p>
+            <ol class="steps">
+              <li>
+                <a href="https://github.com/VinylStage/trex_vs_tiger_sim/issues"
+                  >GitHub 이슈 페이지</a
+                >에서 같은 내용의 이슈가 이미 있는지 먼저 검색합니다.
+              </li>
+              <li>
+                없다면
+                <a href="https://github.com/VinylStage/trex_vs_tiger_sim/issues/new">새 이슈</a>를
+                엽니다. GitHub 계정이 필요합니다.
+              </li>
+              <li>
+                버그라면 <em>링크 복사</em>로 얻은 시나리오 링크, 사용한 브라우저와 기기, 기대한
+                결과와 실제 결과를 함께 적어 주세요. 같은 링크면 같은 결과가 재현되므로 원인을
+                찾기가 훨씬 쉽습니다.
+              </li>
+            </ol>
+            <p>
+              보안 취약점은 공개 이슈 대신 저장소의
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim/security">Security 탭</a>에서
+              비공개로 제보해 주세요. 개인정보 처리에 관한 내용은
+              <a href="/privacy/">개인정보처리방침</a>을 참고하세요.
+            </p>
+          </section>
+
+          <aside class="cta">
+            <p><strong>지금 바로 실험해 보세요.</strong> 기본 시나리오는 몇 초면 계산됩니다.</p>
+            <a class="button" href="/">시뮬레이터 열기</a>
+          </aside>
+        </div>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <p>
+          T. rex와 호랑이는 같은 시대에 산 적이 없고, 이 사이트의 모든 상호작용 규칙은 가정입니다.
+          결과는 교육용 모델이 가정에 따라 어떻게 반응하는지 보여 줄 뿐, 실제 싸움을 예측하지
+          않습니다.
+        </p>
+        <ul class="footer-links">
+          <li><a href="/privacy/">개인정보처리방침</a></li>
+          <li><a href="/about/">소개 · 문의</a></li>
+          <li>
+            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+          </li>
+        </ul>
+        <p>© 2026 VinylStage · MIT 라이선스 오픈 소스</p>
+      </div>
+    </footer>
+  </body>
+</html>
