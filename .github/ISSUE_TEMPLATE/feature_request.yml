@@ -1,0 +1,21 @@
+name: Feature request
+description: Propose a new feature or model change
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Sources (for model/parameter changes)
+      description: Papers or references backing a parameter or behaviour change.

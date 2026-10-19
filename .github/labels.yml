@@ -1,0 +1,36 @@
+- name: epic
+  color: '3e4b9e'
+  description: Tracking issue grouping sub-issues
+- name: bug
+  color: 'd73a4a'
+  description: Something isn't working
+- name: enhancement
+  color: 'a2eeef'
+  description: New feature or request
+- name: documentation
+  color: '0075ca'
+  description: Improvements or additions to documentation
+- name: chore
+  color: 'c5def5'
+  description: Tooling, build, CI, maintenance
+- name: simulation
+  color: 'fbca04'
+  description: Simulation engine and model
+- name: ui
+  color: 'bfdadc'
+  description: User interface
+- name: deploy
+  color: '0e8a16'
+  description: Cloudflare Pages deployment
+- name: owner-action
+  color: 'b60205'
+  description: Requires manual action by the repository owner
+- name: dependencies
+  color: '0366d6'
+  description: Dependency updates
+- name: 'autorelease: pending'
+  color: 'ededed'
+  description: release-please pending release PR
+- name: 'autorelease: tagged'
+  color: 'ededed'
+  description: release-please tagged release PR
