@@ -4,8 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>T-Rex vs Tiger Simulator</title>
+    <meta
+      name="description"
+      content="티라노사우루스 N마리 vs 호랑이 M마리, 누가 이길까? 문헌 기반 파라미터 불확실성을 샘플링하는 몬테카를로 에이전트 기반 전투 시뮬레이터. Monte Carlo agent-based T-Rex vs tigers battle simulator that runs entirely in your browser."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="T-Rex vs Tiger Simulator" />
+    <meta
+      property="og:description"
+      content="Monte Carlo agent-based battle simulator: N Tyrannosaurus rex vs M tigers, with win probabilities, sensitivity analysis and animated replays. Runs in your browser."
+    />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
+    <noscript>
+      <p class="noscript">
+        이 시뮬레이터는 JavaScript가 필요합니다. 브라우저에서 JavaScript를 켜 주세요.<br />
+        This simulator needs JavaScript. Please enable it in your browser.
+      </p>
+    </noscript>
     <div id="app"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

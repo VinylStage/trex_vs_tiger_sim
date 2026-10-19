@@ -9,7 +9,7 @@ Running log of what is implemented, how it was verified, known gaps and deviatio
 | Toolchain (Vite 8, TS 6.0, Vitest 5, ESLint 10, Prettier 3) | Done        | `npm run check`, `npm run build` locally + CI | #2       |
 | CI / release-please / dependabot / label sync               | Done        | CI on PR                                      | #2       |
 | Simulation engine                                           | Not started | —                                             | #3       |
-| UI                                                          | Not started | —                                             | #4       |
+| UI                                                          | Done        | `npm run check`, Playwright (Chromium) + CSP  | #4       |
 | Deploy config                                               | Not started | —                                             | #5       |
 
 ## Deviations and decisions during implementation

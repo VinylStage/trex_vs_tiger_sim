@@ -1,0 +1,65 @@
+import { sanitizeConfig, type ScenarioConfig } from '../sim/config';
+import { simulateBattle } from '../sim/engine';
+import { runChunk } from '../sim/montecarlo';
+import { buildDesign, designRow, type Design } from '../sim/sampling';
+import type { WorkerRequest, WorkerResponse } from './protocol';
+
+// tsconfig `lib` is DOM-only, so type the worker global locally.
+const ctx = self as unknown as {
+  postMessage(msg: WorkerResponse, transfer?: Transferable[]): void;
+  onmessage: ((e: MessageEvent<WorkerRequest>) => void) | null;
+};
+
+const PROGRESS_INTERVAL_MS = 100;
+
+// The design only depends on the config, so it is rebuilt once per scenario, not per chunk.
+let cachedKey = '';
+let cachedDesign: Design | null = null;
+
+function designFor(config: ScenarioConfig): Design {
+  const key = JSON.stringify(config);
+  if (cachedDesign === null || key !== cachedKey) {
+    cachedDesign = buildDesign(config);
+    cachedKey = key;
+  }
+  return cachedDesign;
+}
+
+function handle(msg: WorkerRequest): void {
+  // Never trust the payload: the config may originate from a shared URL.
+  const config = sanitizeConfig(msg.config);
+  const design = designFor(config);
+  if (msg.type === 'run') {
+    const start = Math.max(0, Math.min(config.runs, Math.floor(msg.start)));
+    const end = Math.max(start, Math.min(config.runs, Math.floor(msg.end)));
+    let last = performance.now();
+    const summaries = runChunk(config, design, start, end, (done) => {
+      const now = performance.now();
+      if (now - last >= PROGRESS_INTERVAL_MS) {
+        last = now;
+        ctx.postMessage({ type: 'progress', jobId: msg.jobId, done });
+      }
+    });
+    ctx.postMessage({ type: 'result', jobId: msg.jobId, summaries });
+    return;
+  }
+  const run = Math.max(0, Math.min(config.runs - 1, Math.floor(msg.run)));
+  const { trace } = simulateBattle(config, designRow(design, run), run, true);
+  if (!trace) throw new Error('engine returned no trace');
+  const transfer: Transferable[] = [];
+  for (const f of trace.frames) transfer.push(f.trex.buffer, f.tiger.buffer);
+  ctx.postMessage({ type: 'replay', jobId: msg.jobId, trace }, transfer);
+}
+
+ctx.onmessage = (e) => {
+  const msg = e.data;
+  try {
+    handle(msg);
+  } catch (err) {
+    ctx.postMessage({
+      type: 'error',
+      jobId: typeof msg.jobId === 'number' ? msg.jobId : -1,
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+};
