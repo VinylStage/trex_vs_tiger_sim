@@ -1,4 +1,5 @@
-const app = document.querySelector<HTMLDivElement>('#app');
-if (app) {
-  app.textContent = 'T-Rex vs Tiger Simulator';
-}
+import './ui/styles.css';
+import { startApp } from './ui/app';
+
+const root = document.getElementById('app');
+if (root) startApp(root);
