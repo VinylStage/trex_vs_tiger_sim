@@ -2,7 +2,7 @@
 
 Tracking: GitHub issues. Epic for the MVP: #1.
 
-## v0.1.0 — MVP
+## v0.1.0 — MVP (released 2026-10-19)
 
 | Item                                                     | Issue | Status |
 | -------------------------------------------------------- | ----- | ------ |

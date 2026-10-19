@@ -7,6 +7,8 @@
 
 A Monte Carlo, agent-based battle simulator: N _Tyrannosaurus rex_ vs M tigers on a 2D open field, with literature-based parameter uncertainty sampling. Runs entirely in your browser.
 
+**Live:** <https://trex-vs-tiger.vinylims.com/> · **Releases:** [GitHub Releases](https://github.com/VinylStage/trex_vs_tiger_sim/releases) · [CHANGELOG](CHANGELOG.md)
+
 ## Features
 
 - Set the T-Rex and tiger counts, the number of Monte Carlo runs, the seed, the arena size, the time limit and the tiger tactic and morale options yourself
