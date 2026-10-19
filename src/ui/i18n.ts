@@ -164,6 +164,67 @@ const ko = {
   'footer.source': '소스 코드',
   'footer.privacy': '서버 전송 · 추적 없음',
 
+  'tour.start': '튜토리얼',
+  'tour.counter': '{n} / {total}',
+  'tour.back': '이전',
+  'tour.next': '다음',
+  'tour.skip': '건너뛰기',
+  'tour.done': '완료',
+  'tour.announce': '{n} / {total}단계: {title}',
+  'tour.demo': '빠른 데모 실행 ({n}회)',
+  'tour.demoRunning': '데모 실행 중… 끝나면 결과 단계로 넘어갑니다.',
+  'tour.demoFailed': '데모가 끝나지 않았습니다. 다시 실행하거나 “다음”으로 계속하세요.',
+  'tour.demoHint':
+    '지금 {n}회짜리 빠른 데모를 돌리면 다음 단계에서 실제 결과를 함께 살펴볼 수 있습니다.',
+  'tour.hasResults': '이미 결과가 있으니 다음 단계에서 바로 살펴봅니다.',
+  'tour.guide': '가이드 읽기',
+  'tour.offer.title': '처음 오셨나요?',
+  'tour.offer.body': '1분 투어로 설정, 실행, 결과 읽는 법을 차례로 알아보세요.',
+  'tour.offer.start': '투어 시작',
+  'tour.offer.dismiss': '괜찮아요',
+  'tour.welcome.title': '시뮬레이터 둘러보기',
+  'tour.welcome.body':
+    '티라노사우루스 N마리와 호랑이 M마리가 넓은 들판에서 싸우면 누가 이길까요? 이 시뮬레이터는 문헌에서 가져온 불확실한 능력치를 전투마다 새로 뽑아 수백 번 싸움을 붙이고, 승률과 신뢰구간을 보여줍니다. 모든 계산은 이 브라우저 안에서 이뤄집니다. ← → 키로 이동하고 Esc로 닫을 수 있습니다.',
+  'tour.presets.title': '프리셋',
+  'tour.presets.body':
+    '자주 쓰는 대결 구도를 한 번에 고릅니다. 프리셋은 마릿수와 실행 횟수만 바꾸고 나머지 설정은 그대로 둡니다.',
+  'tour.counts.title': '마릿수',
+  'tour.counts.body':
+    '양쪽 마릿수를 직접 정합니다. 마릿수가 많을수록 전투 한 번을 계산하는 시간이 길어지며, 무거운 설정이면 아래에 예상 시간 경고가 나타납니다.',
+  'tour.runs.title': '실행 횟수와 시드',
+  'tour.runs.body':
+    '정한 횟수만큼 전투를 반복합니다. 횟수가 많을수록 승률의 95% 신뢰구간이 좁아집니다. 시드가 같으면 결과가 똑같이 재현되므로, 링크를 공유하면 다른 사람도 같은 숫자를 봅니다.',
+  'tour.advanced.title': '고급: 파라미터 범위',
+  'tour.advanced.body':
+    '체중, 무는 힘, 속도 같은 능력치는 값 하나가 아니라 최소 · 최빈 · 최대로 정한 삼각분포에서 실행마다 새로 뽑습니다. 범위를 바꿔 가정이 결과를 어떻게 움직이는지 확인해 보세요. 바꾼 줄에는 점(•)이 붙고 ↺로 되돌릴 수 있습니다.',
+  'tour.run.title': '실행',
+  'tour.run.body':
+    '“시뮬레이션 실행”을 누르면 CPU 코어마다 워커 하나씩 일을 나눠 계산합니다. 진행률과 남은 시간이 표시되고 언제든 취소할 수 있습니다.',
+  'tour.results.title': '결과',
+  'tour.results.body':
+    '실행이 끝나면 이곳에 판정, 요약 카드, 차트(승패 확률, 전투 시간, 생존 수, 민감도)와 전투 재생이 나타납니다. 투어를 마친 뒤 실행해 보세요.',
+  'tour.verdict.title': '판정과 요약 카드',
+  'tour.verdict.body':
+    '가장 가능성이 높은 결과와 그 확률, 95% 신뢰구간(Wilson)입니다. 카드에는 결과별 확률, 전투 시간 중앙값, 평균 생존 · 사망 · 도주 수, 교환비가 있습니다.',
+  'tour.outcome.title': '승패 확률 차트',
+  'tour.outcome.body':
+    '막대는 결과별 확률, 가는 선은 95% 신뢰구간입니다. 마우스를 올리거나 탭하면 정확한 값이 나옵니다. 아래 히스토그램은 전투 시간과 T-Rex 생존 수의 분포입니다.',
+  'tour.sensitivity.title': '민감도',
+  'tour.sensitivity.body':
+    '어떤 가정이 승패를 가장 크게 좌우하는지 보여줍니다. 오른쪽(양수) 막대는 값이 클수록 T-Rex에, 왼쪽(음수)은 호랑이에 유리하다는 뜻입니다. 긴 막대의 범위를 고급 설정에서 바꿔 보세요.',
+  'tour.replay.title': '전투 재생',
+  'tour.replay.body':
+    '대표 전투(T-Rex 우세도가 중앙값에 가장 가까운 전투)나 무작위 전투를 다시 계산해 애니메이션으로 보여줍니다. 재생 · 일시정지, 속도, 보기 배율, 재생 위치를 조절할 수 있습니다.',
+  'tour.share.title': '링크 공유',
+  'tour.share.body':
+    '시드를 포함한 현재 설정 전체가 주소에 담깁니다. 링크를 보내면 받는 사람도 같은 시나리오와 같은 결과를 봅니다. 서버에는 아무것도 저장되지 않습니다.',
+  'tour.header.title': '언어와 튜토리얼',
+  'tour.header.body':
+    '한국어와 English를 전환합니다. 이 투어는 “튜토리얼” 버튼으로 언제든 다시 볼 수 있습니다.',
+  'tour.finish.title': '준비 완료',
+  'tour.finish.body':
+    '이제 시나리오를 바꿔 직접 실행해 보세요. 모델의 가정과 각 파라미터의 의미 · 출처는 가이드에서 자세히 설명합니다.',
+
   'param.trex.mass': '체중',
   'param.trex.speed': '이동 속도',
   'param.trex.turnRate': '선회 속도',
@@ -374,6 +435,67 @@ const en: Dictionary = {
   'footer.model': 'Model description (MODEL.md)',
   'footer.source': 'Source code',
   'footer.privacy': 'No server, no tracking',
+
+  'tour.start': 'Tutorial',
+  'tour.counter': '{n} / {total}',
+  'tour.back': 'Back',
+  'tour.next': 'Next',
+  'tour.skip': 'Skip',
+  'tour.done': 'Done',
+  'tour.announce': 'Step {n} of {total}: {title}',
+  'tour.demo': 'Run a quick demo ({n} runs)',
+  'tour.demoRunning': 'Running the demo… the tour moves on to the results when it finishes.',
+  'tour.demoFailed': 'The demo did not finish. Run it again, or press Next to continue.',
+  'tour.demoHint':
+    'Run a quick {n}-run demo now and the next steps will walk through real results.',
+  'tour.hasResults': 'You already have results, so the next steps use them.',
+  'tour.guide': 'Read the guide',
+  'tour.offer.title': 'New here?',
+  'tour.offer.body': 'Take a one-minute tour of the settings, the run and how to read the results.',
+  'tour.offer.start': 'Start the tour',
+  'tour.offer.dismiss': 'No thanks',
+  'tour.welcome.title': 'Welcome to the simulator',
+  'tour.welcome.body':
+    'Who wins if N Tyrannosaurus rex fight M tigers on an open field? The simulator draws uncertain, literature-based traits afresh for every battle, fights hundreds of battles and reports win probabilities with confidence intervals. Everything runs in this browser. Use the ← → keys to move and Esc to close.',
+  'tour.presets.title': 'Presets',
+  'tour.presets.body':
+    'Pick a common match-up in one click. A preset changes only the head counts and the number of runs; everything else stays as it is.',
+  'tour.counts.title': 'Head counts',
+  'tour.counts.body':
+    'Set how many animals fight on each side. Bigger battles take longer to compute; when a setting is heavy, a warning with the estimated time appears below.',
+  'tour.runs.title': 'Runs and seed',
+  'tour.runs.body':
+    'The battle is repeated this many times. More runs give a narrower 95% confidence interval for each win probability. The same seed reproduces exactly the same results, so a shared link shows others the same numbers.',
+  'tour.advanced.title': 'Advanced: parameter ranges',
+  'tour.advanced.body':
+    'Traits such as body mass, bite force and speed are not single numbers: every run draws them from a triangular distribution set by min · mode · max. Change a range to see how an assumption moves the result. Changed rows get a dot (•), and ↺ resets them.',
+  'tour.run.title': 'Run',
+  'tour.run.body':
+    'Run simulation splits the work across one Web Worker per CPU core. Progress and the time left are shown, and you can cancel at any time.',
+  'tour.results.title': 'Results',
+  'tour.results.body':
+    'When a run finishes, this panel shows the verdict, summary cards, charts (outcome, battle duration, survivors, sensitivity) and an animated battle replay. Run a simulation after the tour to see them.',
+  'tour.verdict.title': 'Verdict and summary cards',
+  'tour.verdict.body':
+    'The most likely outcome with its probability and 95% (Wilson) confidence interval. The cards add the probability of each outcome, the median battle duration, mean survivors, kills and routs, and the exchange ratio.',
+  'tour.outcome.title': 'Outcome chart',
+  'tour.outcome.body':
+    'Bars show the probability of each outcome and the thin lines its 95% confidence interval. Hover or tap for exact values. The histograms below show the distribution of battle duration and T-Rex survivors.',
+  'tour.sensitivity.title': 'Sensitivity',
+  'tour.sensitivity.body':
+    'Shows which assumptions drive the outcome most. A bar to the right (positive) means larger values favour the T-Rex; to the left, the tigers. Try changing the range of a long bar under Advanced.',
+  'tour.replay.title': 'Battle replay',
+  'tour.replay.body':
+    'Re-simulates the representative battle (closest to the median T-Rex advantage) or a random one and animates it. Use play/pause, speed, view zoom and the position slider.',
+  'tour.share.title': 'Share a link',
+  'tour.share.body':
+    'All current settings, including the seed, live in the page address. Send the link and the recipient sees the same scenario and the same results. Nothing is stored on a server.',
+  'tour.header.title': 'Language and tutorial',
+  'tour.header.body':
+    'Switch between Korean and English. Replay this tour any time with the Tutorial button.',
+  'tour.finish.title': "You're all set",
+  'tour.finish.body':
+    "Now change the scenario and run it yourself. The guide explains the model's assumptions and what every parameter means, with sources.",
 
   'param.trex.mass': 'Body mass',
   'param.trex.speed': 'Speed',
