@@ -1,5 +1,5 @@
 import './tour.css';
-import { clear, h, uniqueId } from './dom';
+import { h, uniqueId } from './dom';
 import { getLang, onLangChange, t, type MsgKey } from './i18n';
 import {
   DEMO_RUNS,
@@ -12,6 +12,7 @@ import {
   mergeRects,
   placePopover,
   readTourFlag,
+  resolveStep,
   shouldOfferTour,
   stepCounter,
   unionRect,
@@ -33,6 +34,11 @@ export interface Tour {
   /** Open the tour at its first available step (no-op while it is open). */
   start(): void;
   isOpen(): boolean;
+  /**
+   * Tell the open tour that the results or the run state changed. It re-renders the current step,
+   * or moves on when that step is no longer available (the results preview once results exist).
+   */
+  refresh(): void;
   /** The first-visit offer, or null when the visitor already started, declined or finished it. */
   createOffer(): HTMLElement | null;
 }
@@ -162,6 +168,8 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
   const skipBtn = h('button', { class: 'btn btn-ghost btn-small', attrs: { type: 'button' } });
   const backBtn = h('button', { class: 'btn btn-small', attrs: { type: 'button' } });
   const nextBtn = h('button', { class: 'btn btn-primary btn-small', attrs: { type: 'button' } });
+  // Sticky at the bottom of the popover (tour.css), so it stays visible when the popover scrolls.
+  const nav = h('div', { class: 'tour-nav' }, skipBtn, backBtn, nextBtn);
   const pop = h(
     'div',
     { class: 'tour-pop' },
@@ -169,7 +177,7 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
     titleEl,
     bodyEl,
     extraEl,
-    h('div', { class: 'tour-nav' }, skipBtn, backBtn, nextBtn),
+    nav,
   );
   const live = h('p', {
     class: 'visually-hidden',
@@ -226,6 +234,7 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
       }
     }
     render();
+    pop.scrollTop = 0;
     ro.disconnect();
     ro.observe(document.body);
     ro.observe(pop);
@@ -239,6 +248,17 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
   function go(dir: 1 | -1): void {
     const next = findStep(steps, isVisible, index, dir);
     if (next >= 0) show(next);
+  }
+
+  function refresh(): void {
+    if (!open) return;
+    const target = resolveStep(steps, isVisible, index);
+    if (target >= 0 && target !== index) {
+      show(target);
+    } else {
+      render();
+      schedule();
+    }
   }
 
   function isLast(): boolean {
@@ -264,7 +284,7 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
   }
 
   function renderExtra(s: TourStep): void {
-    clear(extraEl);
+    const items: HTMLElement[] = [];
     if (s.extra === 'demo') {
       let note: MsgKey | null = null;
       let showButton = false;
@@ -279,20 +299,34 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
       }
       if (note) {
         noteEl.textContent = t(note, { n: DEMO_RUNS });
-        extraEl.append(noteEl);
+        items.push(noteEl);
       }
       if (showButton) {
         demoBtn.textContent = t('tour.demo', { n: DEMO_RUNS });
         setDisabled(demoBtn, demo === 'running');
         demoBtn.classList.toggle('is-busy', demo === 'running');
-        extraEl.append(demoBtn);
+        items.push(demoBtn);
       }
     } else if (s.extra === 'guide') {
       guideLink.href = guideHref(getLang());
       guideLink.textContent = t('tour.guide');
-      extraEl.append(guideLink);
+      items.push(guideLink);
     }
-    extraEl.hidden = extraEl.childElementCount === 0;
+    // Re-attach only when the set of elements changes: detaching the focused demo button would
+    // drop focus to the dialog (and keepFocusInside would then move it to Next).
+    const current = [...extraEl.children];
+    if (current.length !== items.length || items.some((el, i) => current[i] !== el)) {
+      const active = document.activeElement;
+      extraEl.replaceChildren(...items);
+      if (
+        active instanceof HTMLElement &&
+        items.includes(active) &&
+        document.activeElement !== active
+      ) {
+        active.focus({ preventScroll: true });
+      }
+    }
+    extraEl.hidden = items.length === 0;
   }
 
   function announce(): void {
@@ -390,6 +424,10 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
     pop.style.left = `${Math.round(place.x)}px`;
     pop.style.top = `${Math.round(place.y)}px`;
     pop.dataset.side = place.side;
+    // Short viewports (e.g. 400% zoom): the popover scrolls under its sticky nav row. Keep a
+    // focused link or button from being scrolled into view behind that row.
+    pop.style.scrollPaddingBottom = `${nav.offsetHeight}px`;
+    pop.classList.toggle('is-scrollable', pop.scrollHeight > pop.clientHeight + 1);
   }
 
   function syncHoles(rects: readonly Rect[]): void {
@@ -489,11 +527,11 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
   function demoFinished(ok: boolean): void {
     demo = ok ? 'idle' : 'failed';
     if (!open) return;
+    // On success, go() and refresh() announce the step they move to.
     if (ok && step()?.extra === 'demo') go(1);
-    else {
-      render();
-      schedule();
-    }
+    else refresh();
+    // The page's own run status is inert behind the modal dialog, so announce the failure here.
+    if (!ok) live.textContent = t('tour.demoFailed');
   }
 
   onLangChange(() => {
@@ -582,5 +620,5 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
     return offerEl;
   }
 
-  return { start, isOpen: () => open, createOffer };
+  return { start, isOpen: () => open, refresh, createOffer };
 }

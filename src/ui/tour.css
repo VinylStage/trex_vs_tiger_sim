@@ -45,21 +45,29 @@
     0 0 0 6px rgb(42 120 214 / 0.28);
 }
 
+/* A flex column, not a grid: a sticky grid item cannot leave its own grid row, a flex item can. */
 .tour-pop {
+  --tour-pad-x: 18px;
+  --tour-pad-bottom: 14px;
   position: absolute;
   left: 0;
   top: 0;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
   width: min(380px, calc(100% - 24px));
   max-height: calc(100% - 24px);
   overflow-y: auto;
-  padding: 16px 18px 14px;
+  padding: 16px var(--tour-pad-x) var(--tour-pad-bottom);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--fg);
   box-shadow: 0 12px 40px rgb(0 0 0 / 0.28);
+}
+
+.tour-pop > * {
+  flex-shrink: 0;
 }
 
 .tour-head {
@@ -128,18 +136,36 @@
   cursor: progress;
 }
 
+/* Text colour (not the accent) for 4.5:1 on --surface-2 in both schemes; the underline marks it. */
 .tour-guide {
   justify-self: start;
+  color: var(--fg);
   font-weight: 600;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
 }
 
+/*
+ * Pinned to the bottom of the popover while its content scrolls (short viewports, 400% zoom), so
+ * the focused Next button is never clipped. The background reaches the popover's edges. The
+ * negative `bottom` is needed because a sticky box keeps clear of its scroller's padding.
+ */
 .tour-nav {
+  position: sticky;
+  bottom: calc(-1 * var(--tour-pad-bottom));
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 2px;
+  margin: -6px calc(-1 * var(--tour-pad-x)) calc(-1 * var(--tour-pad-bottom));
+  padding: 8px var(--tour-pad-x) var(--tour-pad-bottom);
+  background: var(--surface);
+}
+
+.tour-pop.is-scrollable .tour-nav {
+  box-shadow: 0 -1px 0 var(--border);
 }
 
 .tour-nav > :first-child {
@@ -202,7 +228,9 @@
   }
 
   .tour-pop {
-    padding: 14px 14px 12px;
+    --tour-pad-x: 14px;
+    --tour-pad-bottom: 12px;
+    padding-top: 14px;
   }
 }
 

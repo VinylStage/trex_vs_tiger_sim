@@ -86,15 +86,18 @@ Steps are shown in this order. "Anchor" is the `data-tour` id the step spotlight
 
 To remove a step, delete its entry and its two i18n keys. Leftover `data-tour` attributes are harmless.
 
-"Visible" means the element is connected and has at least one layout box (`getClientRects().length > 0`), so `hidden`, `display: none` and hidden ancestors all count as missing. A step that is on screen when its target disappears stays open and keeps its place in the counter.
+"Visible" means the element is connected and has at least one layout box (`getClientRects().length > 0`), so `hidden`, `display: none` and hidden ancestors all count as missing.
+
+When a run finishes while the tour is open (the quick demo, or a run started before the tour), `app.ts` calls `tour.refresh()`. The tour re-renders the current step, or, if that step is no longer available, moves to the next available one (`resolveStep`). In practice this replaces the results preview (`7 / 10`) with the verdict step (`7 / 13`). The counter never shows more steps than are available (`stepCounter`).
 
 ## The quick demo
 
 The `run` step offers **Run a quick demo (100 runs)** (`DEMO_RUNS` in `tour-model.ts`) when there are no results and no run is in progress.
 
 - Clicking it calls `runDemo()` from the app. The app sets the run count to 100 in the form and the URL, keeps every other setting, and starts the normal run path (`run()` in `app.ts`, which uses the worker pool). Progress shows inside the spotlighted run bar.
-- When the run resolves with results and the tour is still on the `run` step, the tour moves to the next step, which is now `verdict`.
-- If the run fails or is cancelled, the step shows a short message and the button again.
+- When the run resolves with results and the tour is still on the `run` step, the tour moves to the next step, which is now `verdict`. If the visitor already moved on to the results preview, that step is replaced by `verdict` (see above).
+- While the demo runs, the button stays in place (marked `aria-disabled`) and keeps focus, so pressing Enter again does nothing.
+- If the run fails or is cancelled, the step shows a short message and the button again, and the live region announces the failure.
 - When results already exist, the button is not shown and the step says that the next steps use them.
 - Closing the tour during the demo does not cancel the run.
 
@@ -103,6 +106,7 @@ The `run` step offers **Run a quick demo (100 runs)** (`DEMO_RUNS` in `tour-mode
 - The tour is a full-viewport modal `<dialog>` in the top layer. An inline SVG covers it: a dimming rectangle with an SVG `<mask>` that has one black, rounded `<rect>` per hole. A ring `<div>` outlines each hole.
 - Each target's rectangle is clipped by its scrolling ancestors (for example the sticky config panel on wide screens) and by the viewport, padded by 6 px, and merged with neighbours closer than 24 px (`mergeRects`).
 - `placePopover` puts the popover below the targets, else above, else right, else left. If none fits, it docks to the bottom edge. Without a target it is centred. It always keeps a 12 px margin inside the viewport.
+- The popover is at most the viewport height minus 24 px. On short viewports (for example 320 × 256, which is 1280 × 1024 at 400% zoom) its text scrolls, starting at the top on every step, while the **Skip / Back / Next** row stays pinned to its bottom edge (`position: sticky`). `scroll-padding-bottom` is set to the height of that row, so a focused demo button or guide link is never scrolled in behind it.
 - On step change the first target is scrolled into view (`block: 'center'`, or `'start'` for tall targets) unless all targets are already fully visible, smoothly unless reduced motion is requested. A new step first cancels any smooth scroll the previous step started (an instant `scrollTo` to the current position), so pressing Next quickly cannot carry the new target off screen. Layout is recomputed in `requestAnimationFrame` on window resize, on any scroll (a capturing `scroll` listener catches nested scroll containers), and when the body, the popover or a target changes size (`ResizeObserver`).
 - Clicks on the dimmed page do nothing. The page behind the dialog is inert, so it cannot be operated during the tour, but it can still be scrolled.
 
@@ -111,14 +115,15 @@ The `run` step offers **Run a quick demo (100 runs)** (`DEMO_RUNS` in `tour-mode
 | Behaviour         | Implementation                                                                                                                                                                             |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Dialog semantics  | Native `<dialog>` opened with `showModal()` (implicit `role="dialog"`, page behind is inert), plus `aria-modal="true"`, `aria-labelledby` (step title) and `aria-describedby` (step text). |
-| Focus on open     | Moves to **Next**.                                                                                                                                                                         |
+| Focus on open     | Moves to **Next**, which stays visible even when the popover has to scroll (the button row is sticky).                                                                                     |
 | Focus trap        | `Tab` / `Shift+Tab` cycle through the popover's buttons and links only.                                                                                                                    |
 | Focus on close    | Returns to the element that had focus when the tour started (the header button or the offer's start button), falling back to the header **Tutorial** button.                               |
 | Keyboard          | `→` next, `←` back (both ignored with Alt, Ctrl or Meta), `Esc` closes. At the first or last step the arrow keys do nothing; the last step closes only with **Done**.                      |
 | Disabled controls | **Back** on the first step and the demo button while running use `aria-disabled="true"` instead of `disabled`, so focus never drops out of the dialog.                                     |
-| Announcements     | A polite `aria-live` region inside the dialog announces "Step n of N: title" on every step change and the demo status.                                                                     |
+| Re-rendering      | A re-render updates the existing elements in place and only re-attaches the extra content when its set of elements changes, so the focused demo button or guide link keeps focus.          |
+| Announcements     | A polite `aria-live` region inside the dialog announces "Step n of N: title" on every step change, "Running the demo…" when the demo starts and the failure message if it fails.           |
 | Reduced motion    | With `prefers-reduced-motion: reduce`, scrolling is instant and the fade-in animations (Web Animations API) and the progress-bar transition are off.                                       |
-| Colour            | Uses the existing light and dark tokens; the dimming and ring colours have dark-mode variants.                                                                                             |
+| Colour            | Uses the existing light and dark tokens; the dimming and ring colours have dark-mode variants. The guide link uses the text colour with an accent underline (15:1 light, 13:1 dark).       |
 
 ## First-visit offer and storage
 
@@ -146,5 +151,5 @@ The tour runs under the production CSP (`style-src 'self'`, `script-src 'self'`)
 
 ## Testing
 
-- **Unit tests:** `tests/tour.test.ts` covers the step data, filtering, navigation and counter, `clampIndex`, the rectangle helpers, `placePopover`, the storage flag (including missing and throwing storage), the deep link and `guideHref`.
-- **Browser check (manual or Playwright):** with the production CSP injected, at 1366 px and 390 px, in light and dark mode: start from the header button, go forward and back with the keyboard and the mouse, check that focus stays inside the popover, run the demo, close with Esc and check that focus returns, confirm the offer appears once, and check that there are no console or CSP errors and no horizontal overflow.
+- **Unit tests:** `tests/tour.test.ts` covers the step data, filtering, navigation and counter, leaving a step that became unavailable (`resolveStep`), `clampIndex`, the rectangle helpers, `placePopover`, the storage flag (including missing and throwing storage), the deep link and `guideHref`.
+- **Browser check (manual or Playwright):** with the production CSP injected, at 1366 px and 390 px, in light and dark mode: start from the header button, go forward and back with the keyboard and the mouse, check that focus stays inside the popover, run the demo (focus stays on the demo button, a second Enter does nothing, the tour lands on `7 / 13` even if Next was pressed during the run, a blocked worker is announced as a failure), check at 320 × 256 that the focused **Next** is inside the popover, close with Esc and check that focus returns, confirm the offer appears once, and check that there are no console or CSP errors and no horizontal overflow.

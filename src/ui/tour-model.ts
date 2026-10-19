@@ -122,7 +122,26 @@ export function findStep(
   return -1;
 }
 
-/** "n / total" for the step at `index`, counting only the steps available right now. */
+/**
+ * The step an open tour should show after the page changed (for example when results appeared):
+ * `index` while that step is still available, else the next available step, else the previous
+ * one, or -1 when no step is available.
+ */
+export function resolveStep(
+  steps: readonly TourStep[],
+  isVisible: VisibleFn,
+  index: number,
+): number {
+  const current = steps[index];
+  if (current && isStepAvailable(current, isVisible)) return index;
+  const next = findStep(steps, isVisible, index, 1);
+  return next >= 0 ? next : findStep(steps, isVisible, index, -1);
+}
+
+/**
+ * "n / total" for the step at `index`, counting only the steps available right now. A step that
+ * is no longer available takes the place of the next available one, so `n` never exceeds `total`.
+ */
 export function stepCounter(
   steps: readonly TourStep[],
   isVisible: VisibleFn,
@@ -131,8 +150,8 @@ export function stepCounter(
   const avail = availableIndices(steps, isVisible);
   const pos = avail.indexOf(index);
   if (pos >= 0) return { n: pos + 1, total: avail.length };
-  // A step that is on screen but no longer available still counts at its place in the order.
-  return { n: avail.filter((i) => i < index).length + 1, total: avail.length + 1 };
+  const before = avail.filter((i) => i < index).length;
+  return { n: Math.min(before + 1, avail.length), total: avail.length };
 }
 
 // ---------- geometry ----------

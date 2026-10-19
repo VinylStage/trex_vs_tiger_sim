@@ -16,6 +16,7 @@ import {
   parseTourFlag,
   placePopover,
   readTourFlag,
+  resolveStep,
   shouldOfferTour,
   stepCounter,
   tourRequested,
@@ -114,6 +115,27 @@ describe('tour step data', () => {
       expect.arrayContaining(['verdict', 'outcome', 'sensitivity', 'replay']),
     );
   });
+
+  it('replaces the results preview with the verdict step when results appear', () => {
+    const always = ['presets', 'counts', 'runs', 'seed', 'advanced', 'run', 'results', 'share'];
+    const before = visibleSet(...always, 'results-empty', 'lang', 'tour');
+    const after = visibleSet(
+      ...always,
+      'verdict',
+      'stat-cards',
+      'outcome-chart',
+      'sensitivity-chart',
+      'replay',
+      'lang',
+      'tour',
+    );
+    const preview = TOUR_STEPS.findIndex((s) => s.id === 'results');
+    const verdict = TOUR_STEPS.findIndex((s) => s.id === 'verdict');
+    expect(stepCounter(TOUR_STEPS, before, preview)).toEqual({ n: 7, total: 10 });
+    expect(resolveStep(TOUR_STEPS, before, preview)).toBe(preview);
+    expect(resolveStep(TOUR_STEPS, after, preview)).toBe(verdict);
+    expect(stepCounter(TOUR_STEPS, after, verdict)).toEqual({ n: 7, total: 13 });
+  });
 });
 
 describe('step filtering', () => {
@@ -166,8 +188,19 @@ describe('navigation', () => {
     expect(stepCounter(STEPS, vis, 4)).toEqual({ n: 3, total: 3 });
   });
 
-  it('keeps a step that became unavailable in the count', () => {
-    expect(stepCounter(STEPS, vis, 1)).toEqual({ n: 2, total: 4 });
+  it('never counts more steps than are available', () => {
+    // B (index 1) and D (index 3) are unavailable: they take the place of the next available step.
+    expect(stepCounter(STEPS, vis, 1)).toEqual({ n: 2, total: 3 });
+    expect(stepCounter(STEPS, vis, 3)).toEqual({ n: 3, total: 3 });
+    expect(stepCounter([step('A', []), step('B', ['b'])], vis, 1)).toEqual({ n: 1, total: 1 });
+  });
+
+  it('stays on an available step and leaves one that became unavailable', () => {
+    expect(resolveStep(STEPS, vis, 2)).toBe(2);
+    expect(resolveStep(STEPS, vis, 1)).toBe(2);
+    expect(resolveStep(STEPS, vis, 3)).toBe(4);
+    expect(resolveStep([step('A', []), step('B', ['b'])], vis, 1)).toBe(0);
+    expect(resolveStep([step('B', ['b'])], vis, 0)).toBe(-1);
   });
 });
 

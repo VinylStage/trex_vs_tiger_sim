@@ -407,6 +407,8 @@ export function startApp(root: HTMLElement): void {
       runBtn.disabled = false;
       cancelBtn.disabled = true;
       progress.hidden = true;
+      // An open tour leaves its results preview once results exist (also for runs it did not start).
+      tour.refresh();
     }
   }
 
