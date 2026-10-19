@@ -1,0 +1,1517 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      Parameter reference: 22 model parameters and scenario settings | T-Rex vs Tiger Simulator
+    </title>
+    <meta
+      name="description"
+      content="Reference for all 22 T-Rex and tiger model parameters (mass, speed, bite force, latching, bleeding, morale and more): default ranges, bounds, units, individual variation, what each does in the engine and its source, plus every scenario setting."
+    />
+    <link rel="canonical" href="https://trex-vs-tiger.vinylims.com/en/parameters/" />
+    <link rel="alternate" hreflang="ko" href="https://trex-vs-tiger.vinylims.com/parameters/" />
+    <link rel="alternate" hreflang="en" href="https://trex-vs-tiger.vinylims.com/en/parameters/" />
+    <link
+      rel="alternate"
+      hreflang="x-default"
+      href="https://trex-vs-tiger.vinylims.com/parameters/"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="T-Rex vs Tiger Simulator" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ko_KR" />
+    <meta
+      property="og:title"
+      content="Parameter reference: 22 model parameters and scenario settings | T-Rex vs Tiger Simulator"
+    />
+    <meta
+      property="og:description"
+      content="Reference for all 22 T-Rex and tiger model parameters (mass, speed, bite force, latching, bleeding, morale and more): default ranges, bounds, units, individual variation, what each does in the engine and its source, plus every scenario setting."
+    />
+    <meta property="og:url" content="https://trex-vs-tiger.vinylims.com/en/parameters/" />
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="Parameter reference: 22 model parameters and scenario settings | T-Rex vs Tiger Simulator"
+    />
+    <meta
+      name="twitter:description"
+      content="Reference for all 22 T-Rex and tiger model parameters (mass, speed, bite force, latching, bleeding, morale and more): default ranges, bounds, units, individual variation, what each does in the engine and its source, plus every scenario setting."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/pages/site.css" />
+    <script type="module" src="/src/pages/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="site-brand" href="/">
+          <img src="/favicon.svg" alt="" width="32" height="32" />
+          <span>T-Rex vs Tigers</span>
+        </a>
+        <nav class="site-nav" aria-label="Site">
+          <ul class="site-nav-list">
+            <li><a class="site-nav-link" href="/" data-page="simulator">Simulator</a></li>
+            <li><a class="site-nav-link" href="/en/guide/" data-page="guide">Guide</a></li>
+            <li><a class="site-nav-link" href="/en/model/" data-page="model">Model</a></li>
+            <li>
+              <a class="site-nav-link" href="/en/parameters/" data-page="parameters">Parameters</a>
+            </li>
+            <li><a class="site-nav-link" href="/en/about/" data-page="about">About</a></li>
+          </ul>
+        </nav>
+        <a class="lang-switch" href="/parameters/" hreflang="ko" lang="ko" data-lang-switch
+          >한국어</a
+        >
+      </div>
+    </header>
+    <main id="main" class="site-main">
+      <article class="page">
+        <header class="page-head">
+          <p class="eyebrow">Parameters</p>
+          <h1>Parameter reference: 22 model parameters and the scenario settings</h1>
+          <p class="lead">
+            Every value you can change in the simulator. For each parameter: the default range and
+            allowed bounds, the unit, whether it varies between animals, what it does in the engine,
+            and where the range comes from.
+          </p>
+          <p class="page-meta">
+            Last updated <time datetime="2026-10-19">19 October 2026</time> · values are checked
+            against the simulator code automatically
+          </p>
+        </header>
+
+        <nav class="toc" aria-labelledby="toc-title">
+          <h2 id="toc-title">Contents</h2>
+          <ol>
+            <li><a href="#how-to-read">How to read this page</a></li>
+            <li><a href="#trex">T-Rex parameters (11)</a></li>
+            <li><a href="#tiger">Tiger parameters (11)</a></li>
+            <li><a href="#settings">Scenario settings</a></li>
+            <li><a href="#constants">Fixed constants</a></li>
+          </ol>
+        </nav>
+
+        <div class="page-body">
+          <section id="how-to-read">
+            <h2>How to read this page</h2>
+            <ul>
+              <li>
+                <strong>Default range (min · mode · max)</strong>: the triangular distribution each
+                run draws from. Values near the mode are drawn most often, values near min and max
+                more rarely. You can change it under the simulator's advanced settings.
+              </li>
+              <li>
+                <strong>Allowed bounds</strong>: typed values and values from shared links are
+                clamped to this range. Values multiplied by individual variation never leave it
+                either.
+              </li>
+              <li>
+                <strong>Individual variation</strong>: “Yes” means animals within the same run
+                differ a little (the size is set by
+                <a href="#setting-individualCV">Individual variation (CV)</a>). “No” means every
+                animal in the run shares the value.
+              </li>
+              <li>
+                <strong>Literature-based / Speculative</strong>: literature-based ranges rest on
+                published measurements or models. Speculative ranges have no direct data and are
+                deliberately wide judgement calls; treat results that depend on them with extra
+                care.
+              </li>
+              <li>
+                <strong>Units</strong>: s is seconds, 1/s a per-second rate, HP the health unit (1
+                kg = 1 HP). Probabilities and morale are values between 0 and 1.
+              </li>
+            </ul>
+            <p>
+              How the values interact in a battle is explained in
+              <a href="/en/model/">How the model works</a>; a sequence of experiments to try is in
+              the <a href="/en/guide/#tutorial">tutorial of the guide</a>.
+            </p>
+          </section>
+
+          <section id="trex">
+            <h2>T-Rex parameters (11)</h2>
+            <p>
+              Body, movement, bite and shake-off values of an adult <i>Tyrannosaurus rex</i>. The
+              T-Rex has no stamina and no morale.
+            </p>
+            <ul class="param-index">
+              <li><a href="#param-trex.mass">Body mass</a></li>
+              <li><a href="#param-trex.speed">Speed</a></li>
+              <li><a href="#param-trex.turnRate">Turn rate</a></li>
+              <li><a href="#param-trex.biteForce">Bite force</a></li>
+              <li><a href="#param-trex.biteLethality">Bite lethality</a></li>
+              <li><a href="#param-trex.biteInterval">Bite interval</a></li>
+              <li><a href="#param-trex.biteReach">Bite reach</a></li>
+              <li><a href="#param-trex.biteArc">Bite arc (half-angle)</a></li>
+              <li><a href="#param-trex.biteAccuracy">Bite accuracy</a></li>
+              <li><a href="#param-trex.shakeRate">Shake-off rate</a></li>
+              <li><a href="#param-trex.bodyRadius">Body radius</a></li>
+            </ul>
+            <section
+              class="param species-trex"
+              id="param-trex.mass"
+              data-param="trex.mass"
+              data-unit="kg"
+            >
+              <h3>Body mass <code>trex.mass</code> <span class="tag">Literature-based</span></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="5650">5,650</data> ·
+                    <data data-k="mode" value="8000">8,000</data> ·
+                    <data data-k="max" value="9500">9,500</data> kg
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="1000">1,000</data> –
+                    <data data-k="hi" value="20000">20,000</data> kg
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Sets the T-Rex maximum HP (1 kg = 1 HP). It is also
+                the denominator of the carried-mass slowdown, so a heavier T-Rex is slowed less by
+                latched tigers.
+              </p>
+              <p>
+                <strong>Basis.</strong> The minimum is close to the specimen “Sue”, about 5,654 kg
+                [Erickson 2004]; “Scotty” is about 8,870 kg [Persons 2019]; volumetric models of
+                large adults exceed 9 t [Hutchinson 2011]. The mode of 8 t is a central adult value.
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.speed"
+              data-param="trex.speed"
+              data-unit="m/s"
+            >
+              <h3>Speed <code>trex.speed</code> <span class="tag">Literature-based</span></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="3.4">3.4</data> ·
+                    <data data-k="mode" value="5.5">5.5</data> ·
+                    <data data-k="max" value="8">8</data> m/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0.5">0.5</data> –
+                    <data data-k="hi" value="25">25</data> m/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Speed while chasing a target. The T-Rex only advances
+                while the target is farther than 80% of its bite reach; latched tigers slow it by
+                their weight, and speed halves while its heading is more than 60° off the target.
+              </p>
+              <p>
+                <strong>Basis.</strong> Fast running is ruled out [Hutchinson &amp; Garcia 2002],
+                and stress-constrained models allow only walking gaits up to about 5 m/s [Sellers
+                2017], which motivates the mode. The minimum is a brisk walk above the preferred
+                1.28 m/s [van Bijlert 2021]; the 8 m/s maximum leaves room for less conservative
+                estimates. The exact numbers are judgement.
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.turnRate"
+              data-param="trex.turnRate"
+              data-unit="deg/s"
+            >
+              <h3>
+                Turn rate <code>trex.turnRate</code> <span class="tag">Literature-based</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="22">22</data> ·
+                    <data data-k="mode" value="30">30</data> ·
+                    <data data-k="max" value="45">45</data> °/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="5">5</data> –
+                    <data data-k="hi" value="360">360</data> °/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> The heading can change by at most “turn rate × 0.1”
+                every 0.1 s. The slower the turn, the harder it is to keep tigers that circle to the
+                side or rear in front of the jaws.
+              </p>
+              <p>
+                <strong>Basis.</strong> Large rotational inertia implies about 1–2 s per 45° turn
+                [Hutchinson, Ng-Thow-Hing &amp; Anderson 2007], i.e. 22.5–45 °/s.
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.biteForce"
+              data-param="trex.biteForce"
+              data-unit="kN"
+            >
+              <h3>
+                Bite force <code>trex.biteForce</code> <span class="tag">Literature-based</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="8.5">8.5</data> ·
+                    <data data-k="mode" value="35">35</data> ·
+                    <data data-k="max" value="57">57</data> kN
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="1">1</data> –
+                    <data data-k="hi" value="150">150</data> kN
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> A bite that connects deals “bite force × bite
+                lethality × U(0.7, 1.3)”. It largely decides whether one bite kills a tiger.
+              </p>
+              <p>
+                <strong>Basis.</strong> Estimates are 8,526–34,522 N [Gignac &amp; Erickson 2017]
+                and a maximum of 35–57 kN [Bates &amp; Falkingham 2012]. The minimum and mode follow
+                the first study, the maximum the second.
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.biteLethality"
+              data-param="trex.biteLethality"
+              data-unit="HP/kN"
+            >
+              <h3>
+                Bite lethality <code>trex.biteLethality</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="4">4</data> · <data data-k="mode" value="8">8</data> ·
+                    <data data-k="max" value="12">12</data> HP/kN
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0.1">0.1</data> –
+                    <data data-k="hi" value="100">100</data> HP/kN
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd><data data-k="individual" value="false">No: set per run only</data></dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Converts bite force into damage: HP per kN. At the
+                default modes one bite deals 196–364 HP, which usually kills a 180 HP tiger at once.
+              </p>
+              <p>
+                <strong>Basis.</strong> No data maps bite force to damage. The range deliberately
+                spans “one bite kills” (upper end) to “one bite only wounds” (lower end: 8.5 kN × 4
+                HP/kN = 24–44 HP per hit).
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.biteInterval"
+              data-param="trex.biteInterval"
+              data-unit="s"
+            >
+              <h3>
+                Bite interval <code>trex.biteInterval</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="1.5">1.5</data> ·
+                    <data data-k="mode" value="2.5">2.5</data> ·
+                    <data data-k="max" value="4">4</data> s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0.2">0.2</data> –
+                    <data data-k="hi" value="30">30</data> s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Time between one bite attempt and the next. The first
+                wait at the start of a battle is random between 0 and this value.
+              </p>
+              <p>
+                <strong>Basis.</strong> A judgement combining the jaw cycle and the time to re-aim
+                the head.
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.biteReach"
+              data-param="trex.biteReach"
+              data-unit="m"
+            >
+              <h3>
+                Bite reach <code>trex.biteReach</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="4.5">4.5</data> ·
+                    <data data-k="mode" value="5.5">5.5</data> ·
+                    <data data-k="max" value="6.5">6.5</data> m
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="1">1</data> – <data data-k="hi" value="15">15</data> m
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> How far from its centre the T-Rex can bite; the hit
+                test adds the tiger radius of 0.8 m. The T-Rex stops advancing once its target is
+                within 80% of this distance, and it also sets the flanking tigers’ danger zone
+                (reach + 4 m).
+              </p>
+              <p>
+                <strong>Basis.</strong> The skull is about 1.5 m long [Padian 2022; Carpenter &amp;
+                Smith 2001]. With a 2.5 m body radius, the default puts the jaws about 3 m beyond
+                the body circle, covering skull and neck. A geometric estimate.
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.biteArc"
+              data-param="trex.biteArc"
+              data-unit="deg"
+            >
+              <h3>
+                Bite arc (half-angle) <code>trex.biteArc</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="30">30</data> ·
+                    <data data-k="mode" value="45">45</data> ·
+                    <data data-k="max" value="70">70</data> °
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="5">5</data> –
+                    <data data-k="hi" value="180">180</data> °
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Half-angle either side of straight ahead in which the
+                T-Rex can bite; the full cone is twice as wide. Flanking tigers try to stay outside
+                “bite arc + 20°”.
+              </p>
+              <p>
+                <strong>Basis.</strong> The bite is the only modelled weapon. Fossil evidence of
+                tyrannosaur attacks is bite evidence: a healed bite on a hadrosaur [DePalma 2013]
+                and face-biting between tyrannosaurs [Peterson 2009]. The angle itself is judgement.
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.biteAccuracy"
+              data-param="trex.biteAccuracy"
+              data-unit="p"
+            >
+              <h3>
+                Bite accuracy <code>trex.biteAccuracy</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="0.3">0.3</data> ·
+                    <data data-k="mode" value="0.5">0.5</data> ·
+                    <data data-k="max" value="0.7">0.7</data> (probability, 0–1)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0">0</data> –
+                    <data data-k="hi" value="1">1</data> (probability, 0–1)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Chance that a bite attempt connects. Against a tiger
+                latched onto any T-Rex it is 1.5 times higher (at most 0.95).
+              </p>
+              <p>
+                <strong>Basis.</strong> A judgement of how often a bite lands on a small, agile
+                target.
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.shakeRate"
+              data-param="trex.shakeRate"
+              data-unit="1/s"
+            >
+              <h3>
+                Shake-off rate <code>trex.shakeRate</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="0.05">0.05</data> ·
+                    <data data-k="mode" value="0.12">0.12</data> ·
+                    <data data-k="max" value="0.25">0.25</data> 1/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0">0</data> –
+                    <data data-k="hi" value="10">10</data> 1/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Per-second rate of throwing off each latched tiger.
+                Every 0.1 s a tiger is thrown with probability “rate × 0.1”, so it holds on for 1 ÷
+                rate seconds on average (4–20 s across the default range). A thrown tiger loses 10%
+                of its max HP.
+              </p>
+              <p>
+                <strong>Basis.</strong> There are no skin-thickness data; preserved skin impressions
+                show only small scales [Bell 2017].
+              </p>
+            </section>
+            <section
+              class="param species-trex"
+              id="param-trex.bodyRadius"
+              data-param="trex.bodyRadius"
+              data-unit="m"
+            >
+              <h3>
+                Body radius <code>trex.bodyRadius</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="2">2</data> ·
+                    <data data-k="mode" value="2.5">2.5</data> ·
+                    <data data-k="max" value="3">3</data> m
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0.5">0.5</data> –
+                    <data data-k="hi" value="8">8</data> m
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd><data data-k="individual" value="false">No: set per run only</data></dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Radius of the circle that stands in for a roughly 12
+                m long animal. It sets the contact distance for latching (radius + 1.3 m), where
+                latched tigers sit (radius + 0.8 m) and the flanking aim point.
+              </p>
+              <p><strong>Basis.</strong> A geometric estimate.</p>
+            </section>
+          </section>
+
+          <section id="tiger">
+            <h2>Tiger parameters (11)</h2>
+            <p>
+              Body, movement and stamina, latching and attack, and morale values of an adult tiger
+              (<i>Panthera tigris</i>).
+            </p>
+            <ul class="param-index">
+              <li><a href="#param-tiger.mass">Body mass</a></li>
+              <li><a href="#param-tiger.sprintSpeed">Sprint speed</a></li>
+              <li><a href="#param-tiger.cruiseSpeed">Cruise speed</a></li>
+              <li><a href="#param-tiger.sprintEndurance">Sprint endurance</a></li>
+              <li><a href="#param-tiger.latchEndurance">Latch endurance</a></li>
+              <li><a href="#param-tiger.recoveryTime">Recovery time</a></li>
+              <li><a href="#param-tiger.latchChance">Latch chance</a></li>
+              <li><a href="#param-tiger.dps">Damage per second</a></li>
+              <li><a href="#param-tiger.bleed">Bleed rate</a></li>
+              <li><a href="#param-tiger.morale">Initial morale</a></li>
+              <li><a href="#param-tiger.moraleLoss">Morale loss</a></li>
+            </ul>
+            <section
+              class="param species-tiger"
+              id="param-tiger.mass"
+              data-param="tiger.mass"
+              data-unit="kg"
+            >
+              <h3>Body mass <code>tiger.mass</code> <span class="tag">Literature-based</span></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="100">100</data> ·
+                    <data data-k="mode" value="180">180</data> ·
+                    <data data-k="max" value="260">260</data> kg
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="30">30</data> –
+                    <data data-k="hi" value="500">500</data> kg
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Sets the tiger’s maximum HP. A latched tiger slows
+                the T-Rex by its weight, and the damage it takes when thrown (10% of max HP) scales
+                with it.
+              </p>
+              <p>
+                <strong>Basis.</strong> Bengal males are about 167–261 kg and females about 116–164
+                kg (Chitwan data via a secondary source [Wikipedia: Bengal tiger]); wild Amur males
+                average 176 kg [Slaght 2005]. The range covers both sexes.
+              </p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.sprintSpeed"
+              data-param="tiger.sprintSpeed"
+              data-unit="m/s"
+            >
+              <h3>
+                Sprint speed <code>tiger.sprintSpeed</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="11">11</data> ·
+                    <data data-k="mode" value="14">14</data> ·
+                    <data data-k="max" value="18">18</data> m/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="2">2</data> –
+                    <data data-k="hi" value="35">35</data> m/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Within 60 m of its target a tiger sprints at this
+                speed and spends stamina. A routed tiger also sprints while it has stamina left.
+              </p>
+              <p>
+                <strong>Basis.</strong> There is no peer-reviewed measurement of tiger sprint speed.
+                Popular figures of 48–65 km/h (13–18 m/s) are unsourced, so the range is set by
+                analogy with measured wild lion locomotion [Wilson 2018].
+              </p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.cruiseSpeed"
+              data-param="tiger.cruiseSpeed"
+              data-unit="m/s"
+            >
+              <h3>
+                Cruise speed <code>tiger.cruiseSpeed</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="4">4</data> · <data data-k="mode" value="6">6</data> ·
+                    <data data-k="max" value="8">8</data> m/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0.5">0.5</data> –
+                    <data data-k="hi" value="20">20</data> m/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Speed when farther than 60 m from the target, when
+                falling back to recover, and when routed with no stamina left. It is capped at the
+                same tiger’s sprint speed.
+              </p>
+              <p><strong>Basis.</strong> A judgement for a trot or canter.</p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.sprintEndurance"
+              data-param="tiger.sprintEndurance"
+              data-unit="s"
+            >
+              <h3>
+                Sprint endurance <code>tiger.sprintEndurance</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="10">10</data> ·
+                    <data data-k="mode" value="20">20</data> ·
+                    <data data-k="max" value="40">40</data> s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="1">1</data> –
+                    <data data-k="hi" value="600">600</data> s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> How long a tiger can sprint from full stamina until
+                it is exhausted. When stamina runs out it falls back to recover.
+              </p>
+              <p>
+                <strong>Basis.</strong> Tigers are ambush predators that make short charges
+                [Schaller 1967]. The exact time is judgement.
+              </p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.latchEndurance"
+              data-param="tiger.latchEndurance"
+              data-unit="s"
+            >
+              <h3>
+                Latch endurance <code>tiger.latchEndurance</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="15">15</data> ·
+                    <data data-k="mode" value="30">30</data> ·
+                    <data data-k="max" value="60">60</data> s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="1">1</data> –
+                    <data data-k="hi" value="1200">1,200</data> s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> How long a tiger can hang on. Stamina drains over
+                this time while latched; when it is gone the tiger lets go and recovers. The longer
+                the hold, the more damage per latch.
+              </p>
+              <p>
+                <strong>Basis.</strong> A judgement of how long a tiger could hold on to a moving
+                animal 20–95 times its own mass.
+              </p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.recoveryTime"
+              data-param="tiger.recoveryTime"
+              data-unit="s"
+            >
+              <h3>
+                Recovery time <code>tiger.recoveryTime</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="30">30</data> ·
+                    <data data-k="mode" value="60">60</data> ·
+                    <data data-k="max" value="120">120</data> s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="1">1</data> –
+                    <data data-k="hi" value="3600">3,600</data> s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Time to refill stamina from empty while resting. A
+                tiger re-engages at 80%, and while cruising it recovers at a quarter of this rate.
+              </p>
+              <p><strong>Basis.</strong> A judgement.</p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.latchChance"
+              data-param="tiger.latchChance"
+              data-unit="p"
+            >
+              <h3>
+                Latch chance <code>tiger.latchChance</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="0.15">0.15</data> ·
+                    <data data-k="mode" value="0.35">0.35</data> ·
+                    <data data-k="max" value="0.6">0.6</data> (probability, 0–1)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0">0</data> –
+                    <data data-k="hi" value="1">1</data> (probability, 0–1)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Chance that a contact turns into a hold. After a miss
+                the tiger retries 1 s later.
+              </p>
+              <p>
+                <strong>Basis.</strong> Tiger hunting success of about 5–50% [Schaller 1967] is only
+                a loose analogue.
+              </p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.dps"
+              data-param="tiger.dps"
+              data-unit="HP/s"
+            >
+              <h3>
+                Damage per second <code>tiger.dps</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="2">2</data> · <data data-k="mode" value="6">6</data> ·
+                    <data data-k="max" value="12">12</data> HP/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0">0</data> –
+                    <data data-k="hi" value="200">200</data> HP/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Damage per second dealt to the T-Rex while latched.
+                It also adds to the T-Rex’s accumulated wounds, which drive bleeding. In fights to
+                the death (morale off) it is the assumption the result depends on most.
+              </p>
+              <p>
+                <strong>Basis.</strong> Tiger bite force is about 1.2–1.5 kN [Wroe 2005;
+                Christiansen &amp; Wroe 2007]. With the T-Rex mapping (4–12 HP/kN) one tiger bite is
+                worth about 5–18 HP; at one bite or claw strike every 1–2 s that is about 2.4–18
+                HP/s. The default trims the upper tail because the wounds are shallow relative to a
+                T-Rex.
+              </p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.bleed"
+              data-param="tiger.bleed"
+              data-unit="1/s"
+            >
+              <h3>
+                Bleed rate <code>tiger.bleed</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="0">0</data> ·
+                    <data data-k="mode" value="0.002">0.002</data> ·
+                    <data data-k="max" value="0.005">0.005</data> 1/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0">0</data> –
+                    <data data-k="hi" value="0.1">0.1</data> 1/s
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd><data data-k="individual" value="false">No: set per run only</data></dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Makes the T-Rex lose “accumulated wounds × bleed
+                rate” HP every second. A value of 0.002 means 0.2% of the accumulated wound HP is
+                lost per second.
+              </p>
+              <p>
+                <strong>Basis.</strong> Tiger canines are about 5–7.5 cm and claws about 8–10 cm
+                [SDZWA]: shallow wounds for an animal of several tonnes, so the range starts at 0
+                (no bleeding).
+              </p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.morale"
+              data-param="tiger.morale"
+              data-unit="0-1"
+            >
+              <h3>
+                Initial morale <code>tiger.morale</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="0.4">0.4</data> ·
+                    <data data-k="mode" value="0.6">0.6</data> ·
+                    <data data-k="max" value="0.85">0.85</data> (0–1 scale)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0">0</data> – <data data-k="hi" value="1">1</data> (0–1
+                    scale)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Each tiger’s starting morale. With the morale model
+                on, a tiger whose morale is below 0.2 on its turn routs. A survived bite costs 0.25
+                and being shaken off 0.1.
+              </p>
+              <p>
+                <strong>Basis.</strong> Tigers avoid injurious fights, and their usual prey weighs
+                about 60–250 kg, occasionally a gaur of about 1 t [Hayward 2012]. An 8 t animal is
+                far outside that range.
+              </p>
+            </section>
+            <section
+              class="param species-tiger"
+              id="param-tiger.moraleLoss"
+              data-param="tiger.moraleLoss"
+              data-unit="0-1"
+            >
+              <h3>
+                Morale loss <code>tiger.moraleLoss</code>
+                <span class="tag tag-speculative">Speculative</span>
+              </h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default range (min · mode · max)</dt>
+                  <dd>
+                    <data data-k="min" value="0.03">0.03</data> ·
+                    <data data-k="mode" value="0.08">0.08</data> ·
+                    <data data-k="max" value="0.15">0.15</data> (0–1 scale)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Allowed bounds</dt>
+                  <dd>
+                    <data data-k="lo" value="0">0</data> – <data data-k="hi" value="1">1</data> (0–1
+                    scale)
+                  </dd>
+                </div>
+                <div>
+                  <dt>Individual variation</dt>
+                  <dd>
+                    <data data-k="individual" value="true"
+                      >Yes: per-animal N(1, CV) multiplier</data
+                    >
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                <strong>What it does.</strong> Morale every tiger within 40 m loses when another
+                tiger dies. Applied only with the morale model on. In preliminary runs it was one of
+                the strongest drivers of the T-Rex’s health loss under the defaults.
+              </p>
+              <p><strong>Basis.</strong> A judgement.</p>
+            </section>
+          </section>
+
+          <section id="settings">
+            <h2>Scenario settings</h2>
+            <p>
+              These are set directly in the scenario panel. Shared links store only the settings
+              that differ from the defaults, and values arriving through a link are clamped to the
+              ranges below.
+            </p>
+            <section class="setting" id="setting-trexCount" data-setting="trexCount">
+              <h3>T-Rex count <code>trexCount</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="10">10</data> animals</dd>
+                </div>
+                <div>
+                  <dt>Allowed range</dt>
+                  <dd>
+                    <data data-k="lo" value="1">1</data> –
+                    <data data-k="hi" value="500">500</data> animals
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                Number of adult T-Rex. They start in a vertical line on the left of the arena.
+                Computing time grows with the total number of animals.
+              </p>
+            </section>
+            <section class="setting" id="setting-tigerCount" data-setting="tigerCount">
+              <h3>Tiger count <code>tigerCount</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="100">100</data> animals</dd>
+                </div>
+                <div>
+                  <dt>Allowed range</dt>
+                  <dd>
+                    <data data-k="lo" value="1">1</data> –
+                    <data data-k="hi" value="5000">5,000</data> animals
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                Number of adult tigers. They start scattered at random in a disc on the right; the
+                disc grows with the head count (up to 20% of the arena side).
+              </p>
+            </section>
+            <section class="setting" id="setting-runs" data-setting="runs">
+              <h3>Monte Carlo runs <code>runs</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="500">500</data> runs</dd>
+                </div>
+                <div>
+                  <dt>Allowed range</dt>
+                  <dd>
+                    <data data-k="lo" value="1">1</data> –
+                    <data data-k="hi" value="20000">20,000</data> runs
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                How many times the scenario is repeated; more runs narrow the confidence intervals.
+                If runs × (time limit ÷ 0.1 s) × total head count would exceed
+                <data data-k="maxWork" value="50000000000">5×10¹⁰</data> agent-steps, the runs are
+                lowered automatically. Changing the run count changes the whole sampling design.
+              </p>
+            </section>
+            <section class="setting" id="setting-seed" data-setting="seed">
+              <h3>Seed <code>seed</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="20261019">20,261,019</data></dd>
+                </div>
+                <div>
+                  <dt>Allowed range</dt>
+                  <dd>
+                    <data data-k="lo" value="0">0</data> –
+                    <data data-k="hi" value="4294967295">4,294,967,295</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                Starting point of every random number. The same seed and settings give identical
+                results in the same browser engine. It is stored in shared links.
+              </p>
+            </section>
+            <section class="setting" id="setting-arenaSize" data-setting="arenaSize">
+              <h3>Arena side (m) <code>arenaSize</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="600">600</data> m</dd>
+                </div>
+                <div>
+                  <dt>Allowed range</dt>
+                  <dd>
+                    <data data-k="lo" value="100">100</data> –
+                    <data data-k="hi" value="5000">5,000</data> m
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                Side of the obstacle-free square arena. The groups start the smaller of 200 m and
+                40% of the side apart. A routed tiger that crosses the edge leaves the battle.
+              </p>
+            </section>
+            <section class="setting" id="setting-maxTime" data-setting="maxTime">
+              <h3>Time limit (s) <code>maxTime</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="1200">1,200</data> s</dd>
+                </div>
+                <div>
+                  <dt>Allowed range</dt>
+                  <dd>
+                    <data data-k="lo" value="30">30</data> –
+                    <data data-k="hi" value="3600">3,600</data> s
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                If neither side has won by then, the battle is a draw. The value is snapped to 0.1
+                s. Big fights without morale can last several minutes, so a short limit produces
+                more draws.
+              </p>
+            </section>
+            <section class="setting" id="setting-individualCV" data-setting="individualCV">
+              <h3>Individual variation (CV) <code>individualCV</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="0.08">0.08</data></dd>
+                </div>
+                <div>
+                  <dt>Allowed range</dt>
+                  <dd>
+                    <data data-k="lo" value="0">0</data> – <data data-k="hi" value="0.3">0.3</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                Size of individual variation (coefficient of variation). For every parameter with
+                individual variation, each animal gets a multiplier drawn from a normal distribution
+                with mean 1 and standard deviation CV, truncated to 0.5–1.5. At 0 there are no
+                individual differences.
+              </p>
+            </section>
+            <section class="setting" id="setting-sampling" data-setting="sampling">
+              <h3>Sampling <code>sampling</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="lhs">LHS (Latin hypercube)</data></dd>
+                </div>
+                <div>
+                  <dt>Options</dt>
+                  <dd>
+                    <data data-k="option" value="lhs">LHS (Latin hypercube)</data>,
+                    <data data-k="option" value="random">Simple random</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                How parameter values are drawn for each run. LHS cuts every range into as many
+                strata as there are runs and samples each once, covering the ranges evenly even with
+                few runs. Simple random draws every value independently.
+              </p>
+            </section>
+            <section class="setting" id="setting-tigerTactic" data-setting="tigerTactic">
+              <h3>Tiger tactic <code>tigerTactic</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="flank">Flank</data></dd>
+                </div>
+                <div>
+                  <dt>Options</dt>
+                  <dd>
+                    <data data-k="option" value="flank">Flank</data>,
+                    <data data-k="option" value="direct">Direct charge</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                How tigers choose and approach a target. Flank spreads the attack across T-Rex and
+                circles behind, avoiding the danger zone in front of the jaws. Direct charge runs
+                straight at the nearest T-Rex. Both are hypothetical.
+              </p>
+            </section>
+            <section class="setting" id="setting-morale" data-setting="morale">
+              <h3>Morale &amp; routing <code>morale</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="true">on</data></dd>
+                </div>
+                <div>
+                  <dt>Options</dt>
+                  <dd>
+                    <data data-k="option" value="true">on</data>,
+                    <data data-k="option" value="false">off</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                When on, tigers lose morale when bitten or shaken off and when a tiger within 40 m
+                dies, and they rout below 0.2. When off, tigers fight to the death. It is one of the
+                settings that changes the answer most.
+              </p>
+            </section>
+          </section>
+
+          <section id="constants">
+            <h2>Fixed constants</h2>
+            <p>
+              These values are fixed in the engine: they cannot be changed in the simulator and are
+              not sampled. They are the thresholds and distances behind the behaviour rules.
+            </p>
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-constants">
+              <table>
+                <caption id="caption-constants">
+                  Constants fixed in the engine
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Constant</th>
+                    <th scope="col">Value</th>
+                    <th scope="col">Meaning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr data-constant="DT">
+                    <th scope="row"><code>DT</code></th>
+                    <td><data data-k="value" value="0.1">0.1</data> s</td>
+                    <td>Time step: every animal is updated every 0.1 s.</td>
+                  </tr>
+                  <tr data-constant="tigerRadius">
+                    <th scope="row"><code>tigerRadius</code></th>
+                    <td><data data-k="value" value="0.8">0.8</data> m</td>
+                    <td>
+                      Tiger body radius, used for contact, bite reach padding and the latched
+                      position.
+                    </td>
+                  </tr>
+                  <tr data-constant="latchRetry">
+                    <th scope="row"><code>latchRetry</code></th>
+                    <td><data data-k="value" value="1">1</data> s</td>
+                    <td>Wait after a failed latch before the next try.</td>
+                  </tr>
+                  <tr data-constant="moraleRadius">
+                    <th scope="row"><code>moraleRadius</code></th>
+                    <td><data data-k="value" value="40">40</data> m</td>
+                    <td>Radius in which a tiger’s death shocks the others’ morale.</td>
+                  </tr>
+                  <tr data-constant="routThreshold">
+                    <th scope="row"><code>routThreshold</code></th>
+                    <td><data data-k="value" value="0.2">0.2</data></td>
+                    <td>Morale below which a tiger routs (morale model on).</td>
+                  </tr>
+                  <tr data-constant="woundMoraleLoss">
+                    <th scope="row"><code>woundMoraleLoss</code></th>
+                    <td><data data-k="value" value="0.25">0.25</data></td>
+                    <td>Morale lost when bitten and surviving.</td>
+                  </tr>
+                  <tr data-constant="throwMoraleLoss">
+                    <th scope="row"><code>throwMoraleLoss</code></th>
+                    <td><data data-k="value" value="0.1">0.1</data></td>
+                    <td>Morale lost when shaken off and surviving.</td>
+                  </tr>
+                  <tr data-constant="throwDamageFrac">
+                    <th scope="row"><code>throwDamageFrac</code></th>
+                    <td><data data-k="value" value="0.1">0.1</data></td>
+                    <td>Fraction of its max HP a tiger loses when thrown.</td>
+                  </tr>
+                  <tr data-constant="throwDistance">
+                    <th scope="row"><code>throwDistance</code></th>
+                    <td><data data-k="value" value="3">3</data> m</td>
+                    <td>Outward push when thrown.</td>
+                  </tr>
+                  <tr data-constant="recoverDistance">
+                    <th scope="row"><code>recoverDistance</code></th>
+                    <td><data data-k="value" value="40">40</data> m</td>
+                    <td>Recovering tigers closer than this to a T-Rex move away.</td>
+                  </tr>
+                  <tr data-constant="resumeStamina">
+                    <th scope="row"><code>resumeStamina</code></th>
+                    <td><data data-k="value" value="0.8">0.8</data></td>
+                    <td>Stamina at which a recovering tiger re-engages.</td>
+                  </tr>
+                  <tr data-constant="sprintTriggerDistance">
+                    <th scope="row"><code>sprintTriggerDistance</code></th>
+                    <td><data data-k="value" value="60">60</data> m</td>
+                    <td>Distance to the target within which tigers sprint.</td>
+                  </tr>
+                  <tr data-constant="cruiseRegenFactor">
+                    <th scope="row"><code>cruiseRegenFactor</code></th>
+                    <td><data data-k="value" value="0.25">0.25</data></td>
+                    <td>Stamina regeneration while cruising, relative to resting.</td>
+                  </tr>
+                  <tr data-constant="trexRetarget">
+                    <th scope="row"><code>trexRetarget</code></th>
+                    <td><data data-k="value" value="0.5">0.5</data> s</td>
+                    <td>T-Rex re-targeting interval.</td>
+                  </tr>
+                  <tr data-constant="tigerRetarget">
+                    <th scope="row"><code>tigerRetarget</code></th>
+                    <td><data data-k="value" value="1">1</data> s</td>
+                    <td>Tiger re-targeting interval.</td>
+                  </tr>
+                  <tr data-constant="minCarrySpeedFactor">
+                    <th scope="row"><code>minCarrySpeedFactor</code></th>
+                    <td><data data-k="value" value="0.3">0.3</data></td>
+                    <td>Floor of the T-Rex carried-mass speed factor.</td>
+                  </tr>
+                  <tr data-constant="latchedAccuracyBonus">
+                    <th scope="row"><code>latchedAccuracyBonus</code></th>
+                    <td><data data-k="value" value="1.5">1.5</data></td>
+                    <td>Bite-accuracy multiplier against latched tigers.</td>
+                  </tr>
+                  <tr data-constant="maxAccuracy">
+                    <th scope="row"><code>maxAccuracy</code></th>
+                    <td><data data-k="value" value="0.95">0.95</data></td>
+                    <td>Cap on the boosted accuracy.</td>
+                  </tr>
+                  <tr data-constant="dangerMargin">
+                    <th scope="row"><code>dangerMargin</code></th>
+                    <td><data data-k="value" value="4">4</data> m</td>
+                    <td>Flank: distance beyond the bite reach treated as dangerous.</td>
+                  </tr>
+                  <tr data-constant="flankLoadPenalty">
+                    <th scope="row"><code>flankLoadPenalty</code></th>
+                    <td><data data-k="value" value="20">20</data> m</td>
+                    <td>Flank: target-score penalty per tiger already latched.</td>
+                  </tr>
+                  <tr data-constant="recoverMinTime">
+                    <th scope="row"><code>recoverMinTime</code></th>
+                    <td><data data-k="value" value="5">5</data> s</td>
+                    <td>Minimum time in recovery after a bite or a throw.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <aside class="cta">
+            <p>
+              <strong>Change the ranges yourself.</strong> Every parameter is editable in the
+              advanced settings.
+            </p>
+            <a class="button" href="/">Open the simulator</a>
+          </aside>
+        </div>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <p>
+          T. rex and tigers never lived at the same time, and every interaction rule on this site is
+          an assumption. The results show how an educational model responds to its assumptions; they
+          do not predict a real fight.
+        </p>
+        <ul class="footer-links">
+          <li><a href="/en/privacy/">Privacy</a></li>
+          <li><a href="/en/about/">About & contact</a></li>
+          <li>
+            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+          </li>
+        </ul>
+        <p>© 2026 VinylStage · Open source under the MIT License</p>
+      </div>
+    </footer>
+  </body>
+</html>

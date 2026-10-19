@@ -27,3 +27,21 @@ Node version: see `.node-version`.
 - Model or parameter changes must cite sources in `docs/MODEL.md`.
 - Keep diffs minimal; no drive-by refactors.
 - Documentation (`ARCHITECTURE.md`, `ROADMAP.md`, `IMPLEMENTATION_AUDIT.md`) is updated in the same PR as the code.
+
+## Content framing rules
+
+The site is an educational Monte Carlo model and is being prepared for Google AdSense ([docs/ADSENSE.md](docs/ADSENSE.md)). Every PR that changes text, visuals or the animal roster follows these rules; the reasoning and sources are in [docs/research/ADSENSE.md §3.3](docs/research/ADSENSE.md#33-content-framing-rules-apply-now-also-guide-the-animation-and-new-animal-work).
+
+Do:
+
+- Present the method as the subject and the matchup as a toy scenario: Monte Carlo sampling, confidence intervals, sensitivity analysis, numbers effects and parameter uncertainty.
+- Keep the educational disclaimer, including that the site does not promote or endorse real animal fighting.
+- Use neutral, technical words: 전투 불능 / incapacitated, 이탈 / fled, 교전 / engagement, 물기 판정 / bite check.
+- Draw agents as abstract glyphs only (dots, triangles, diamonds, rings, arrows, lines, squares). Mark incapacitated agents with a grey cross or a fade.
+
+Do not:
+
+- Draw animal or character shapes, silhouettes, faces, blood, wounds, splatter or corpses, in the replay, icons, OG images or tutorial art. Hit effects are not red.
+- Model domestic animals or pets (dogs, cats, roosters, horses), humans, real named individuals or specific zoo animals.
+- Use words such as 학살, 도륙, 피, 잔혹, massacre, gore or "kill count" in UI, titles, alt text or share text.
+- Link to or embed real animal-fight media, or promote products made from endangered species.

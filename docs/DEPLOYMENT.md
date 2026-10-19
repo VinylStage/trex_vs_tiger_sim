@@ -40,15 +40,19 @@
 
 The deployed site is static. Cloudflare Pages only serves the files Vite writes to `dist/`:
 
-| File                      | Origin                                                                     |
-| ------------------------- | -------------------------------------------------------------------------- |
-| `index.html`              | Vite entry, rewritten to reference hashed assets                           |
-| `assets/index-<hash>.js`  | Main-thread bundle (UI)                                                    |
-| `assets/index-<hash>.css` | Extracted stylesheet (emitted as a file, never inlined)                    |
-| `assets/*-<hash>.js`      | Module Web Worker bundle(s), same origin, loaded with `{ type: 'module' }` |
-| `_headers`                | Copied verbatim from `public/_headers`                                     |
-| `version.json`            | Deployed version and commit, polled by open tabs (see VERSIONING.md)       |
-| `reset/index.html`        | Cache and storage reset page (see VERSIONING.md)                           |
+| File                                                                                 | Origin                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `index.html`                                                                         | Vite entry, rewritten to reference hashed assets                                                                                                                                                                                                          |
+| `assets/index-<hash>.js`                                                             | Main-thread bundle (UI)                                                                                                                                                                                                                                   |
+| `assets/index-<hash>.css`                                                            | Extracted stylesheet (emitted as a file, never inlined)                                                                                                                                                                                                   |
+| `assets/*-<hash>.js`                                                                 | Module Web Worker bundle(s), same origin, loaded with `{ type: 'module' }`                                                                                                                                                                                |
+| `_headers`                                                                           | Copied verbatim from `public/_headers`                                                                                                                                                                                                                    |
+| `<page>/index.html`, `en/<page>/index.html`                                          | Static content pages (guide, model, parameters, about, privacy), see [PAGES.md](PAGES.md)                                                                                                                                                                 |
+| `assets/site-<hash>.js`, `assets/site-<hash>.css`                                    | Shared script and stylesheet of the content pages                                                                                                                                                                                                         |
+| `assets/routes-<hash>.{js,css}`, `assets/PretendardVariable.subset.<n>-<hash>.woff2` | Shared chunk of the app and the content pages: the route table and the self-hosted Pretendard `@font-face` stylesheet ([ADR-0005](adr/0005-self-hosted-pretendard.md)), plus the subset font files. The chunk name comes from the bundler and may change. |
+| `robots.txt`, `sitemap.xml`                                                          | Copied verbatim from `public/`; crawler rules and the page list with hreflang alternates                                                                                                                                                                  |
+| `version.json`                                                                       | Deployed version and commit, polled by open tabs (see [VERSIONING.md](VERSIONING.md))                                                                                                                                                                     |
+| `reset/index.html`                                                                   | Cache and storage reset page (see [VERSIONING.md](VERSIONING.md))                                                                                                                                                                                         |
 
 Nothing else is deployed:
 
@@ -137,7 +141,7 @@ sequenceDiagram
 
 `public/_headers` is copied to `dist/_headers`, and Pages applies it to every response. Project rule: config files carry no comments, so the explanation lives here.
 
-Syntax: a path pattern starts at column 0, followed by indented `Name: value` lines. A `*` splat matches any characters. When several rules match a request, all of them apply. If the same header is set by two matching rules, the values are joined with a comma. `! Name` removes a header. Limits: 100 rules, 2,000 characters per line. This file uses 6 rules, and its longest line is about 260 characters.
+Syntax: a path pattern starts at column 0, followed by indented `Name: value` lines. A `*` splat matches any characters. When several rules match a request, all of them apply. If the same header is set by two matching rules, the values are joined with a comma. `! Name` removes a header. Limits: 100 rules, 2,000 characters per line. This file uses 7 rules, and its longest line is about 260 characters.
 
 ### Rule `/*` (every response)
 
@@ -147,7 +151,7 @@ Syntax: a path pattern starts at column 0, followed by indented `Name: value` li
 | `script-src 'self'`                                    | Only same-origin script files. No inline `<script>`, no `eval` / `new Function`, no CDNs. Vite emits scripts as files under `assets/`.                                                                                                                                                                                                     |
 | `style-src 'self'`                                     | Only same-origin stylesheets. `<style>` blocks, `style="…"` attributes and `setAttribute('style', …)` are blocked. Setting individual properties through the CSSOM (`el.style.width = …`) is allowed.                                                                                                                                      |
 | `img-src 'self' data:`                                 | Same-origin images plus `data:` URIs (inline SVG icons or a canvas snapshot shown as an `<img>`). Canvas drawing itself needs no permission.                                                                                                                                                                                               |
-| `font-src 'self'`                                      | Only self-hosted fonts. The UI uses system fonts.                                                                                                                                                                                                                                                                                          |
+| `font-src 'self'`                                      | Only self-hosted fonts: Pretendard from `assets/` ([ADR-0005](adr/0005-self-hosted-pretendard.md)).                                                                                                                                                                                                                                        |
 | `connect-src 'self'`                                   | `fetch` / XHR / WebSocket only to this origin. The app's only fetch is the same-origin `/version.json` ([VERSIONING.md](VERSIONING.md)), so this is defence in depth against exfiltration.                                                                                                                                                 |
 | `worker-src 'self'`                                    | Web Workers may only load from this origin. Vite's `new Worker(new URL(…, import.meta.url), { type: 'module' })` emits a same-origin file under `assets/`. `blob:` workers (Vite `?worker&inline`) would be blocked, so do not use them.                                                                                                   |
 | `object-src 'none'`                                    | No `<object>` / `<embed>` plugins.                                                                                                                                                                                                                                                                                                         |
@@ -180,12 +184,18 @@ Pages also adds `Access-Control-Allow-Origin: *` by default. It is harmless here
 
 Pages redirects `/index.html` to `/`, so the `/` rule is the one that applies in practice. The `/index.html` rule is a guard.
 
+### Rule `/*/` (content pages)
+
+| Directive                               | Why                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Cache-Control: no-cache, no-transform` | The same policy as `/` for every directory-style HTML page (`/guide/`, `/en/guide/`, a future `/reset/` and so on), so new deployments show up at once and Bot Fight Mode never injects its inline script into them. The splat matches any characters, so `/*/` matches every path that ends in `/` except `/` itself, which keeps exactly one `Cache-Control` per page. Hashed files under `/assets/` never end in `/`. Pages redirects `/guide` and `/guide/index.html` to `/guide/`. New pages need no extra rule; `tests/pages.test.ts` checks each page gets exactly this header. |
+
 ### Rules `/version.json` and `/reset/*`
 
-| Rule            | Headers                                                                        | Why                                                                                                                                                                                                             |
-| --------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/version.json` | `Cache-Control: no-store`                                                      | Open tabs poll it to detect a newer deployment, so it must never be cached.                                                                                                                                     |
-| `/reset/*`      | `Cache-Control: no-store, no-transform`, `Clear-Site-Data: "cache", "storage"` | The "load the latest version" reset page. `no-transform` keeps JavaScript Detections out of this HTML page too. `"cookies"` is deliberately omitted because it would clear cookies for all of `*.vinylims.com`. |
+| Rule            | Headers                                                          | Why                                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/version.json` | `Cache-Control: no-store`                                        | Open tabs poll it to detect a newer deployment, so it must never be cached.                                                                                                                                                                                                                                                                                                                        |
+| `/reset/*`      | `Cache-Control: no-store`, `Clear-Site-Data: "cache", "storage"` | The "load the latest version" reset page. The `/*/` rule also matches `/reset/`, so the response carries `Cache-Control: no-cache, no-transform, no-store` (Pages joins duplicate headers with a comma); `no-store` wins and `no-transform` keeps JavaScript Detections out of this HTML page too. `"cookies"` is deliberately omitted because it would clear cookies for all of `*.vinylims.com`. |
 
 Details, browser support and the cookie decision are in [VERSIONING.md](VERSIONING.md#response-headers).
 
@@ -202,9 +212,9 @@ flowchart LR
     req@{ shape: rect, label: "GET path" } --> all@{ shape: rect, label: "/* → CSP, nosniff, Referrer-Policy,<br/>Permissions-Policy, COOP, X-Frame-Options" }
     all --> q{"path?"}
     q -- "/assets/*" --> imm@{ shape: rect, label: "Cache-Control: public, max-age=31536000, immutable" }
-    q -- "/ or /index.html" --> nc@{ shape: rect, label: "Cache-Control: no-cache, no-transform" }
+    q -- "/ or /index.html or /*/" --> nc@{ shape: rect, label: "Cache-Control: no-cache, no-transform" }
     q -- "/version.json" --> vj@{ shape: rect, label: "Cache-Control: no-store" }
-    q -- "/reset/*" --> rs@{ shape: rect, label: "Cache-Control: no-store, no-transform<br/>Clear-Site-Data: cache, storage" }
+    q -- "/reset/* (also matches /*/)" --> rs@{ shape: rect, label: "Cache-Control: no-cache, no-transform, no-store<br/>Clear-Site-Data: cache, storage" }
     q -- "anything else" --> def@{ shape: rect, label: "Pages default:<br/>public, max-age=0, must-revalidate" }
     imm e1@--> resp@{ shape: dbl-circ, label: "response" }
     nc --> resp
@@ -243,7 +253,7 @@ flowchart LR
 
 **What we do.**
 
-- `_headers` sends `Cache-Control: no-cache, no-transform` on the HTML entry points (`/`, `/index.html`).
+- `_headers` sends `Cache-Control: no-cache, no-transform` on the HTML entry points (`/`, `/index.html`) and on every content page (`/*/`, for example `/guide/` and `/en/guide/`).
 - Cloudflare does not inject the JSD script when the origin response has `Cache-Control: no-transform`.
 - The strict CSP stays intact. The site has no forms, logins or APIs that would benefit from JSD.
 - Side effect: for these requests the WAF field `cf.bot_management.js_detection.passed` reads `missing`, so do not write WAF rules that require it on this hostname.
@@ -254,6 +264,7 @@ flowchart LR
 
 ```bash
 curl -s https://trex-vs-tiger.vinylims.com/ | grep -c challenge-platform
+curl -s https://trex-vs-tiger.vinylims.com/guide/ | grep -c challenge-platform
 ```
 
 ## Free-plan budget
@@ -265,7 +276,7 @@ Limits are from the Cloudflare Pages and Workers limits pages (see [Sources](#so
 | Builds                       | 500 / month                                                    | ~100–150 in a busy month (see the estimate below)                                                               | ≥ 3×         |
 | Concurrent builds            | 1                                                              | Builds queue. Pages skips a queued build that a newer push to the same branch supersedes (changelog 2026-08-11) | n/a          |
 | Build timeout                | 20 min                                                         | Install + `tsc` + `vite build`, typically 1–2 min                                                               | ~10×         |
-| Files per site               | 20,000                                                         | < 20 (`index.html`, `_headers`, a handful of hashed JS/CSS files)                                               | ~1,000×      |
+| Files per site               | 20,000                                                         | < 40 (11 HTML pages, `_headers`, `robots.txt`, `sitemap.xml`, a handful of hashed JS/CSS files)                 | ~1,000×      |
 | Max file size                | 25 MiB                                                         | Largest file is the JS bundle, tens to hundreds of KiB                                                          | ≫ 100×       |
 | Custom domains               | 100 / project                                                  | 1 (`trex-vs-tiger.vinylims.com`)                                                                                | n/a          |
 | Preview deployments          | Unlimited                                                      | One per branch push                                                                                             | n/a          |
@@ -302,8 +313,9 @@ curl -sI https://trex-vs-tiger.vinylims.com/ | grep -iE '^(content-security-poli
 asset=$(curl -s https://trex-vs-tiger.vinylims.com/ | grep -oE 'assets/[^"]+\.js' | head -n1)
 curl -sI "https://trex-vs-tiger.vinylims.com/$asset" | grep -i cache-control
 
-# No JavaScript Detections injection (must print 0)
+# No JavaScript Detections injection (each must print 0)
 curl -s https://trex-vs-tiger.vinylims.com/ | grep -c challenge-platform
+curl -s https://trex-vs-tiger.vinylims.com/en/model/ | grep -c challenge-platform
 ```
 
 Expected results:

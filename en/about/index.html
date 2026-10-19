@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      About and contact: an open-source educational simulator | T-Rex vs Tiger Simulator
+    </title>
+    <meta
+      name="description"
+      content="Why the T-Rex vs Tiger Simulator exists, what it can teach, its educational disclaimer, how it is built, the MIT-licensed open-source repository and how to get in touch through GitHub issues."
+    />
+    <link rel="canonical" href="https://trex-vs-tiger.vinylims.com/en/about/" />
+    <link rel="alternate" hreflang="ko" href="https://trex-vs-tiger.vinylims.com/about/" />
+    <link rel="alternate" hreflang="en" href="https://trex-vs-tiger.vinylims.com/en/about/" />
+    <link rel="alternate" hreflang="x-default" href="https://trex-vs-tiger.vinylims.com/about/" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="T-Rex vs Tiger Simulator" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="ko_KR" />
+    <meta
+      property="og:title"
+      content="About and contact: an open-source educational simulator | T-Rex vs Tiger Simulator"
+    />
+    <meta
+      property="og:description"
+      content="Why the T-Rex vs Tiger Simulator exists, what it can teach, its educational disclaimer, how it is built, the MIT-licensed open-source repository and how to get in touch through GitHub issues."
+    />
+    <meta property="og:url" content="https://trex-vs-tiger.vinylims.com/en/about/" />
+    <meta name="twitter:card" content="summary" />
+    <meta
+      name="twitter:title"
+      content="About and contact: an open-source educational simulator | T-Rex vs Tiger Simulator"
+    />
+    <meta
+      name="twitter:description"
+      content="Why the T-Rex vs Tiger Simulator exists, what it can teach, its educational disclaimer, how it is built, the MIT-licensed open-source repository and how to get in touch through GitHub issues."
+    />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/src/pages/site.css" />
+    <script type="module" src="/src/pages/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="site-brand" href="/">
+          <img src="/favicon.svg" alt="" width="32" height="32" />
+          <span>T-Rex vs Tigers</span>
+        </a>
+        <nav class="site-nav" aria-label="Site">
+          <ul class="site-nav-list">
+            <li><a class="site-nav-link" href="/" data-page="simulator">Simulator</a></li>
+            <li><a class="site-nav-link" href="/en/guide/" data-page="guide">Guide</a></li>
+            <li><a class="site-nav-link" href="/en/model/" data-page="model">Model</a></li>
+            <li>
+              <a class="site-nav-link" href="/en/parameters/" data-page="parameters">Parameters</a>
+            </li>
+            <li><a class="site-nav-link" href="/en/about/" data-page="about">About</a></li>
+          </ul>
+        </nav>
+        <a class="lang-switch" href="/about/" hreflang="ko" lang="ko" data-lang-switch>한국어</a>
+      </div>
+    </header>
+    <main id="main" class="site-main">
+      <article class="page">
+        <header class="page-head">
+          <p class="eyebrow">About &amp; contact</p>
+          <h1>About the T-Rex vs Tiger Simulator</h1>
+          <p class="lead">
+            An open-source educational simulator that starts from a fun question, “who would win, a
+            T-Rex or a pack of tigers?”, and uses it to show how to reason under uncertainty.
+          </p>
+          <p class="page-meta">Last updated <time datetime="2026-10-19">19 October 2026</time></p>
+        </header>
+
+        <nav class="toc" aria-labelledby="toc-title">
+          <h2 id="toc-title">Contents</h2>
+          <ol>
+            <li><a href="#what">What this site is</a></li>
+            <li><a href="#learn">What you can learn</a></li>
+            <li><a href="#disclaimer">An educational model</a></li>
+            <li><a href="#how-built">How it is built</a></li>
+            <li><a href="#open-source">Open source</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ol>
+        </nav>
+
+        <div class="page-body">
+          <section id="what">
+            <h2>What this site is</h2>
+            <p>
+              The T-Rex vs Tiger Simulator is a web tool that re-runs a clash between N adult
+              <i>Tyrannosaurus rex</i> and M adult tigers on an open plain hundreds or thousands of
+              times. Rather than showing one fight, it draws traits from published values and
+              explicit assumptions, varies them from run to run, and summarises the outcomes as win
+              probabilities, confidence intervals, distributions and a sensitivity ranking.
+            </p>
+            <p>
+              You can change the scenario (head counts, tactic, morale) and the range of every one
+              of the 22 traits, and share any setup with a single link. There is nothing to sign up
+              for or install: every calculation happens inside your browser.
+            </p>
+          </section>
+
+          <section id="learn">
+            <h2>What you can learn</h2>
+            <p>
+              The dinosaur-versus-big-cat match-up is the hook. What the site really explores is:
+            </p>
+            <ul>
+              <li>
+                <strong>Monte Carlo simulation</strong>: approximating an answer that has no simple
+                formula by repeating randomised experiments, and watching how the estimate settles
+                as runs increase.
+              </li>
+              <li>
+                <strong>Kinds of uncertainty</strong>: why “we do not know the value” (epistemic)
+                and “individuals differ” (aleatory) are handled separately.
+              </li>
+              <li>
+                <strong>Agent-based modelling</strong>: how simple rules for individuals add up to
+                group-level outcomes such as a mass rout or a long war of attrition, visible in the
+                replay.
+              </li>
+              <li>
+                <strong>Sensitivity analysis</strong>: finding which assumptions drive the result
+                with rank correlations, then testing how robust a conclusion is by changing them.
+              </li>
+              <li>
+                <strong>Honest statistics</strong>: Wilson confidence intervals, percentiles and
+                histograms, with real numbers to look at.
+              </li>
+            </ul>
+            <p>
+              It works well as a classroom or club prompt for discussing how conclusions depend on
+              assumptions. New here? Start with the tutorial in the <a href="/en/guide/">guide</a>.
+            </p>
+          </section>
+
+          <section id="disclaimer">
+            <h2>An educational model</h2>
+            <div class="warning">
+              <p>
+                <i>T. rex</i> (about 68–66 million years ago) and tigers never lived at the same
+                time, and no such fight has ever happened. Every interaction rule (latching, shaking
+                off, bleeding, morale, group tactics) is an assumption, and some traits have no
+                direct data and are estimated with wide ranges. The win probabilities are what the
+                model produces under those assumptions, not a scientific prediction about real
+                animals.
+              </p>
+            </div>
+            <p>
+              Which values are literature-based and which are speculative is marked in the
+              <a href="/en/parameters/">parameter reference</a>; the rules and their limits are
+              described in <a href="/en/model/">How the model works</a>.
+            </p>
+          </section>
+
+          <section id="how-built">
+            <h2>How it is built</h2>
+            <ul>
+              <li>
+                <strong>A static website</strong>: no server-side program, just HTML, CSS and
+                JavaScript files served by Cloudflare Pages. There are no accounts, no database and
+                no analytics.
+              </li>
+              <li>
+                <strong>Computation in your browser</strong>: battles run in Web Workers spread over
+                your CPU cores. The random numbers are designed so that a given seed gives the same
+                results whatever the number of workers.
+              </li>
+              <li>
+                <strong>No external libraries</strong>: the simulation engine, charts and replay are
+                written from scratch in TypeScript, so no third-party scripts are loaded at run
+                time.
+              </li>
+              <li>
+                <strong>A strict security policy</strong>: a Content Security Policy only allows
+                this site's own files to run.
+              </li>
+              <li>
+                <strong>Tested</strong>: the engine, the statistics and the share-link parsing are
+                covered by automated tests, and the parameter values on these help pages are checked
+                against the simulator code automatically.
+              </li>
+            </ul>
+          </section>
+
+          <section id="open-source">
+            <h2>Open source</h2>
+            <p>
+              The complete source code and documentation are on GitHub at
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim"
+                >VinylStage/trex_vs_tiger_sim</a
+              >
+              under the MIT License. You are welcome to read the code, run it on your own computer
+              and adapt it.
+            </p>
+            <ul>
+              <li>
+                Every rule, constant and reference of the model is collected in
+                <a href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/MODEL.md"
+                  >MODEL.md</a
+                >.
+              </li>
+              <li>
+                To contribute, see
+                <a href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/CONTRIBUTING.md"
+                  >CONTRIBUTING.md</a
+                >. Every change goes through an issue and a pull request.
+              </li>
+              <li>
+                New published values, better sources and reports of model errors are just as
+                valuable. Please cite a source when you propose a parameter change.
+              </li>
+            </ul>
+          </section>
+
+          <section id="contact">
+            <h2>Contact</h2>
+            <p>
+              Questions, bug reports and feature ideas are handled through GitHub issues. Issues are
+              public, so please do not include personal information.
+            </p>
+            <ol class="steps">
+              <li>
+                Search the
+                <a href="https://github.com/VinylStage/trex_vs_tiger_sim/issues">GitHub issues</a>
+                to see whether someone has already raised the same point.
+              </li>
+              <li>
+                If not, open a
+                <a href="https://github.com/VinylStage/trex_vs_tiger_sim/issues/new">new issue</a>.
+                You need a GitHub account.
+              </li>
+              <li>
+                For a bug, include the scenario link from <em>Copy link</em>, your browser and
+                device, and what you expected versus what happened. The same link reproduces the
+                same results, which makes causes much easier to find.
+              </li>
+            </ol>
+            <p>
+              Please report security vulnerabilities privately through the repository's
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim/security">Security tab</a>
+              rather than in a public issue. For how data is handled, see the
+              <a href="/en/privacy/">privacy policy</a>.
+            </p>
+          </section>
+
+          <aside class="cta">
+            <p><strong>Run an experiment now.</strong> The default scenario computes in seconds.</p>
+            <a class="button" href="/">Open the simulator</a>
+          </aside>
+        </div>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <p>
+          T. rex and tigers never lived at the same time, and every interaction rule on this site is
+          an assumption. The results show how an educational model responds to its assumptions; they
+          do not predict a real fight.
+        </p>
+        <ul class="footer-links">
+          <li><a href="/en/privacy/">Privacy</a></li>
+          <li><a href="/en/about/">About & contact</a></li>
+          <li>
+            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+          </li>
+        </ul>
+        <p>© 2026 VinylStage · Open source under the MIT License</p>
+      </div>
+    </footer>
+  </body>
+</html>

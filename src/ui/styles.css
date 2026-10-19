@@ -165,7 +165,12 @@ a {
 
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.app-header .site-nav {
+  flex-basis: 100%;
 }
 
 /* ---------- layout ---------- */

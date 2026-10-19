@@ -4,6 +4,7 @@ import { env } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
+import { findHtmlEntries } from './vite.pages.ts';
 
 interface BuildInfo {
   version: string;
@@ -67,11 +68,9 @@ export default defineConfig({
   build: {
     target: 'es2022',
     sourcemap: false,
+    modulePreload: { polyfill: false },
     rolldownOptions: {
-      input: {
-        index: fileURLToPath(new URL('./index.html', import.meta.url)),
-        reset: fileURLToPath(new URL('./reset/index.html', import.meta.url)),
-      },
+      input: findHtmlEntries(fileURLToPath(new URL('.', import.meta.url))),
     },
   },
   worker: {

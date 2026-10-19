@@ -254,13 +254,15 @@ export function createConfigForm(
 
   function buildBasic(): HTMLElement {
     const grid = h('div', { class: 'field-grid' });
-    const add = (key: NumKey, label: MsgKey, help: MsgKey): void => {
+    const add = (key: NumKey, label: MsgKey, help: MsgKey, tour?: string): void => {
       const { input, id } = numberField(key);
-      grid.append(field(label, help, input, id));
+      const el = field(label, help, input, id);
+      if (tour) el.dataset.tour = tour;
+      grid.append(el);
     };
-    add('trexCount', 'field.trexCount', 'help.trexCount');
-    add('tigerCount', 'field.tigerCount', 'help.tigerCount');
-    add('runs', 'field.runs', 'help.runs');
+    add('trexCount', 'field.trexCount', 'help.trexCount', 'counts');
+    add('tigerCount', 'field.tigerCount', 'help.tigerCount', 'counts');
+    add('runs', 'field.runs', 'help.runs', 'runs');
     add('maxTime', 'field.maxTime', 'help.maxTime');
     add('arenaSize', 'field.arenaSize', 'help.arenaSize');
     add('individualCV', 'field.individualCV', 'help.individualCV');
@@ -305,6 +307,7 @@ export function createConfigForm(
     const seedRow = h('div', { class: 'input-row' }, seed.input, randomBtn);
     const seedField = field('field.seed', 'help.seed', seedRow, seed.id, seed.input);
     seedField.classList.add('field-wide');
+    seedField.dataset.tour = 'seed';
     grid.append(seedField);
 
     const moraleId = uniqueId('f-morale');
@@ -350,7 +353,7 @@ export function createConfigForm(
     }
     return h(
       'div',
-      { class: 'presets' },
+      { class: 'presets', attrs: { 'data-tour': 'presets' } },
       h('span', { class: 'field-label', id: labelId, text: t('config.presets') }),
       group,
       h('small', { class: 'hint', text: t('preset.hint') }),
@@ -424,7 +427,7 @@ export function createConfigForm(
   }
 
   function buildAdvanced(): HTMLDetailsElement {
-    const details = h('details', { class: 'advanced' });
+    const details = h('details', { class: 'advanced', attrs: { 'data-tour': 'advanced' } });
     details.open = detailsOpen;
     details.addEventListener('toggle', () => {
       detailsOpen = details.open;

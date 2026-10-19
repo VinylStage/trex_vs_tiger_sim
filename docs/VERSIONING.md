@@ -165,15 +165,17 @@ sequenceDiagram
   Cache-Control: no-store
 
 /reset/*
-  Cache-Control: no-store, no-transform
+  Cache-Control: no-store
   Clear-Site-Data: "cache", "storage"
 ```
+
+The site-wide `/*/` rule ([DEPLOYMENT.md](DEPLOYMENT.md)) also matches `/reset/` and sets `Cache-Control: no-cache, no-transform`. Pages joins a header set by two matching rules with a comma, so `/reset/` is served with `Cache-Control: no-cache, no-transform, no-store`; `no-store` takes precedence over `no-cache` ([RFC 9111 §5.2.2.5](https://www.rfc-editor.org/rfc/rfc9111#section-5.2.2.5)). `tests/pages.test.ts` asserts the combined headers.
 
 | Rule            | Header                                | Why                                                                                                                                                                                                                                                             |
 | --------------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `/version.json` | `Cache-Control: no-store`             | Neither the browser nor any intermediary may keep a copy; every check sees the current deployment. The client also sends `cache: 'no-store'`.                                                                                                                   |
 | `/reset/*`      | `Cache-Control: no-store`             | The reset page must always come from the network, otherwise the browser would not see the `Clear-Site-Data` header again.                                                                                                                                       |
-| `/reset/*`      | `no-transform`                        | `/reset/` is HTML. On the custom domain, Bot Fight Mode would otherwise inject its inline JavaScript Detections script, which the strict CSP blocks ([DEPLOYMENT.md](DEPLOYMENT.md#bot-fight-mode-and-javascript-detections)).                                  |
+| `/*/`           | `no-transform`                        | `/reset/` is HTML. On the custom domain, Bot Fight Mode would otherwise inject its inline JavaScript Detections script, which the strict CSP blocks ([DEPLOYMENT.md](DEPLOYMENT.md#bot-fight-mode-and-javascript-detections)).                                  |
 | `/reset/*`      | `Clear-Site-Data: "cache", "storage"` | Server-side complement to the JavaScript clean-up: clears the origin's HTTP cache (which JavaScript cannot touch) and DOM storage — localStorage, sessionStorage, IndexedDB, service worker registrations and Cache Storage. Directives must be quoted strings. |
 
 The splat in `/reset/*` matches the empty string, so the rule applies to `/reset/` itself (verified on the branch preview: `clear-site-data: "cache", "storage"` on `GET /reset/`, and Chrome logs `Cleared data types: "cache", "storage".`). Pages answers `/reset` and `/reset/index.html` with a `308` to `/reset/`; the second also matches the rule, so its redirect carries the header as well, which only repeats the clearing. The app always links to `/reset/`. The CSP and other headers of the `/*` rule apply as usual. `vite preview` and `npm run dev` do not apply `_headers`; check them on a Pages preview (see [Verify](#verify)).
@@ -232,7 +234,7 @@ curl -sSI "$host/reset/" | grep -iE '^(cache-control|clear-site-data|content-sec
 curl -s "$host/version.json"
 ```
 
-Expected: `version.json` has `cache-control: no-store` and the deployed version and SHA; `/reset/` has `cache-control: no-store, no-transform` and `clear-site-data: "cache", "storage"`, plus the site CSP.
+Expected: `version.json` has `cache-control: no-store` and the deployed version and SHA; `/reset/` has `cache-control: no-cache, no-transform, no-store` and `clear-site-data: "cache", "storage"`, plus the site CSP.
 
 In the browser: the badge shows "최신" a moment after load. To see the update path without a new release, block or override `/version.json` in DevTools (Network → right-click → **Override content**) with a higher version: the badge and banner change at the next check (switch tabs away for 10 min, or open the dialog and press **다시 확인**).
 

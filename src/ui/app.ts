@@ -27,6 +27,9 @@ import {
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
 import { configFromHash, hashFromConfig } from './share';
+import { createSiteNav } from './site-nav';
+import { createTour } from './tour';
+import { DEMO_RUNS, tourRequested, withoutTourParam } from './tour-model';
 import { createVersionBadge, createVersionFooter } from './version';
 
 export const REPO_URL = 'https://github.com/VinylStage/trex_vs_tiger_sim';
@@ -73,13 +76,19 @@ export function startApp(root: HTMLElement): void {
   let replayState: ReplayState | null = null;
   let replayToken = 0;
   let lastSrDecile = -1;
+  let running = false;
 
   // ---------- header ----------
   const langBtn = h('button', {
     class: 'btn btn-ghost',
     i18n: 'lang.switch',
     i18nAria: 'lang.switchAria',
-    attrs: { type: 'button' },
+    attrs: { type: 'button', 'data-tour': 'lang' },
+  });
+  const tourBtn = h('button', {
+    class: 'btn btn-ghost',
+    i18n: 'tour.start',
+    attrs: { type: 'button', 'data-tour': 'tour' },
   });
   const otherLang = (): Lang => (getLang() === 'ko' ? 'en' : 'ko');
   // The button is labelled in the language it switches to.
@@ -89,7 +98,7 @@ export function startApp(root: HTMLElement): void {
     class: 'btn',
     i18n: 'share.copy',
     i18nTitle: 'share.hint',
-    attrs: { type: 'button' },
+    attrs: { type: 'button', 'data-tour': 'share' },
   });
   const toast = h('div', { class: 'toast', attrs: { role: 'status', 'aria-live': 'polite' } });
   toast.hidden = true;
@@ -128,8 +137,10 @@ export function startApp(root: HTMLElement): void {
         h('p', { class: 'tagline', i18n: 'app.tagline' }),
       ),
     ),
-    h('div', { class: 'header-actions' }, shareBtn, langBtn),
+    h('div', { class: 'header-actions' }, shareBtn, tourBtn, langBtn),
   );
+  let siteNav = createSiteNav(getLang());
+  header.append(siteNav);
 
   // ---------- config panel ----------
   const form = createConfigForm(config, pool.size, (c) => {
@@ -185,7 +196,7 @@ export function startApp(root: HTMLElement): void {
     form.el,
     h(
       'div',
-      { class: 'run-bar' },
+      { class: 'run-bar', attrs: { 'data-tour': 'run' } },
       h('div', { class: 'run-buttons' }, runBtn, cancelBtn),
       progress,
       statusEl,
@@ -194,12 +205,16 @@ export function startApp(root: HTMLElement): void {
   );
 
   // ---------- results panel ----------
-  const emptyEl = h('p', { class: 'results-empty', i18n: 'results.empty' });
+  const emptyEl = h('p', {
+    class: 'results-empty',
+    i18n: 'results.empty',
+    attrs: { 'data-tour': 'results-empty' },
+  });
   const staleEl = h('p', { class: 'stale-banner', i18n: 'results.stale' });
   staleEl.hidden = true;
   const verdictEl = h('p', { class: 'verdict' });
   const basisEl = h('p', { class: 'verdict-basis' });
-  const cardsEl = h('div', { class: 'stat-cards' });
+  const cardsEl = h('div', { class: 'stat-cards', attrs: { 'data-tour': 'stat-cards' } });
   const outcomeChart = new CanvasChart('chart.outcome', 'h-outcome');
   const durationChart = new CanvasChart('chart.duration', 'h-hist');
   const survivorsChart = new CanvasChart('chart.survivors', 'h-hist');
@@ -232,7 +247,10 @@ export function startApp(root: HTMLElement): void {
     staleEl,
     h(
       'div',
-      { class: 'verdict-box', attrs: { 'aria-live': 'polite', 'aria-atomic': 'true' } },
+      {
+        class: 'verdict-box',
+        attrs: { 'aria-live': 'polite', 'aria-atomic': 'true', 'data-tour': 'verdict' },
+      },
       verdictEl,
       basisEl,
     ),
@@ -240,14 +258,17 @@ export function startApp(root: HTMLElement): void {
     h(
       'div',
       { class: 'chart-grid' },
-      h('div', { class: 'span-2' }, outcomeChart.el),
+      h('div', { class: 'span-2', attrs: { 'data-tour': 'outcome-chart' } }, outcomeChart.el),
       durationChart.el,
       survivorsChart.el,
-      h('div', { class: 'span-2' }, tornadoChart.el),
+      h('div', { class: 'span-2', attrs: { 'data-tour': 'sensitivity-chart' } }, tornadoChart.el),
     ),
     h(
       'section',
-      { class: 'replay-section', attrs: { 'aria-labelledby': 'replay-title' } },
+      {
+        class: 'replay-section',
+        attrs: { 'aria-labelledby': 'replay-title', 'data-tour': 'replay' },
+      },
       h(
         'div',
         { class: 'replay-head' },
@@ -262,7 +283,10 @@ export function startApp(root: HTMLElement): void {
 
   const resultsPanel = h(
     'section',
-    { class: 'panel results-panel', attrs: { 'aria-labelledby': 'results-title' } },
+    {
+      class: 'panel results-panel',
+      attrs: { 'aria-labelledby': 'results-title', 'data-tour': 'results' },
+    },
     h('h2', { id: 'results-title', i18n: 'results.title' }),
     emptyEl,
     resultsBody,
@@ -341,7 +365,8 @@ export function startApp(root: HTMLElement): void {
     }
   }
 
-  async function run(): Promise<void> {
+  /** Resolves true when the run finished and its results are rendered. */
+  async function run(): Promise<boolean> {
     // Same validation the workers apply (incl. the work budget), so the pool's run indices
     // and the main-thread design match what the workers simulate.
     const cfg = sanitizeConfig(structuredClone(config));
@@ -350,6 +375,7 @@ export function startApp(root: HTMLElement): void {
       form.setConfig(cfg);
       writeUrl();
     }
+    running = true;
     runBtn.disabled = true;
     cancelBtn.disabled = false;
     progress.hidden = false;
@@ -371,6 +397,7 @@ export function startApp(root: HTMLElement): void {
         const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
         resultsPanel.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
       }
+      return true;
     } catch (err) {
       if (err instanceof CancelledError) setStatus({ key: 'run.cancelled' });
       else {
@@ -380,10 +407,14 @@ export function startApp(root: HTMLElement): void {
           error: true,
         });
       }
+      return false;
     } finally {
+      running = false;
       runBtn.disabled = false;
       cancelBtn.disabled = true;
       progress.hidden = true;
+      // An open tour leaves its results preview once results exist (also for runs it did not start).
+      tour.refresh();
     }
   }
 
@@ -574,7 +605,10 @@ export function startApp(root: HTMLElement): void {
     renderReplayInfo();
   }
 
-  onLangChange(() => {
+  onLangChange((lang) => {
+    const nextNav = createSiteNav(lang);
+    siteNav.replaceWith(nextNav);
+    siteNav = nextNav;
     document.title = t('app.title');
     langBtn.lang = otherLang();
     applyI18n(document.body);
@@ -593,6 +627,21 @@ export function startApp(root: HTMLElement): void {
     updateStale();
   });
 
+  // ---------- guided tour ----------
+  const tour = createTour({
+    hasResults: () => result !== null,
+    isRunning: () => running,
+    runDemo: async () => {
+      if (running) return false;
+      config = { ...config, runs: DEMO_RUNS };
+      form.setConfig(config);
+      writeUrl();
+      updateStale();
+      return run();
+    },
+  });
+  tourBtn.addEventListener('click', () => tour.start());
+
   // Canvas text does not reflow when a web font arrives; redraw once Pretendard is ready.
   void document.fonts?.ready.then(() => {
     replayView.refresh();
@@ -601,4 +650,14 @@ export function startApp(root: HTMLElement): void {
 
   renderResults();
   writeUrl();
+
+  if (tourRequested(location.search)) {
+    // Consume the deep link so a reload or a copied link does not restart the tour.
+    const url = `${location.pathname}${withoutTourParam(location.search)}${location.hash}`;
+    history.replaceState(history.state, '', url);
+    tour.start();
+  } else {
+    const offer = tour.createOffer();
+    if (offer) header.after(offer);
+  }
 }
