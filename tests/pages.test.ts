@@ -277,14 +277,17 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
       if (href.startsWith('#')) {
         expect(own.has(href.slice(1)), `${href} on this page`).toBe(true);
       } else if (href.startsWith('/')) {
-        const [path = '', frag] = href.split('#');
+        const [pathAndQuery = '', frag] = href.split('#');
+        const [path = '', query] = pathAndQuery.split('?');
         const target = parsePagePath(path);
         expect(target, href).not.toBeNull();
         if (!target || target.page === 'simulator') {
           expect(path, href).toBe('/');
           expect(frag, href).toBeUndefined();
+          if (query !== undefined) expect(query, `${href}: only the tour deep link`).toBe('tour=1');
           continue;
         }
+        expect(query, `${href}: content pages take no query`).toBeUndefined();
         expect(path, `${href}: canonical form`).toBe(pagePath(target.page, target.lang ?? 'ko'));
         const expected = 'data-lang-switch' in a.attrs ? other(lang) : lang;
         expect(target.lang, `${href}: link language`).toBe(expected);
