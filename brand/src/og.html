@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>OG card</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <style>
+      :root {
+        --bg: #f7f6f3;
+        --surface: #ffffff;
+        --fg: #1b1b1a;
+        --muted: #5f5e5a;
+        --sub: #45443f;
+        --grid: #e3e2de;
+        --border: #d9d8d2;
+        --trex: #2a78d6;
+        --tiger: #eb6834;
+        --draw: #8d8c87;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--fg);
+        font-family: 'PretendardBrand';
+        -webkit-font-smoothing: antialiased;
+        font-kerning: normal;
+      }
+      .card {
+        position: relative;
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+      #bggrid {
+        position: absolute;
+        inset: 0;
+      }
+      .frame {
+        position: absolute;
+        inset: 0;
+        border: 1px solid var(--border);
+      }
+      .band {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 1200px;
+        height: 10px;
+        background: var(--bg);
+      }
+      .band i {
+        position: absolute;
+        top: 0;
+        height: 10px;
+      }
+      .left {
+        position: absolute;
+        left: 76px;
+        top: 0;
+        width: 560px;
+        height: 630px;
+      }
+      .brand {
+        position: absolute;
+        top: 64px;
+        left: 0;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .brand img {
+        width: 40px;
+        height: 40px;
+        display: block;
+      }
+      .brand span {
+        font-weight: 600;
+        font-size: 24px;
+        letter-spacing: -0.005em;
+        color: var(--muted);
+      }
+      h1 {
+        position: absolute;
+        top: var(--title-top);
+        left: 0;
+        margin: 0;
+        font-weight: 900;
+        color: var(--fg);
+        font-size: var(--title-size);
+        line-height: 1;
+        letter-spacing: -0.035em;
+        white-space: nowrap;
+      }
+      :lang(en) h1 {
+        letter-spacing: -0.03em;
+      }
+      h1 .l {
+        display: block;
+      }
+      h1 .c {
+        font-size: 0.7em;
+        font-weight: 800;
+        color: var(--muted);
+        letter-spacing: -0.01em;
+      }
+      h1 .k {
+        letter-spacing: var(--k);
+      }
+      .rule {
+        position: absolute;
+        top: var(--rule-top);
+        left: 0;
+        display: flex;
+        gap: 12px;
+      }
+      .rule i {
+        display: block;
+        width: 72px;
+        height: 8px;
+        border-radius: 4px;
+      }
+      .sub {
+        position: absolute;
+        top: var(--sub-top);
+        left: 0;
+        margin: 0;
+        font-weight: 700;
+        font-size: 40px;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        color: var(--sub);
+        white-space: nowrap;
+      }
+      #legend {
+        position: absolute;
+        top: var(--legend-top);
+        left: 0;
+        overflow: visible;
+      }
+      .arena {
+        position: absolute;
+        left: 670px;
+        top: 64px;
+        width: 466px;
+        height: 502px;
+        border-radius: 18px;
+        background: var(--surface);
+        border: 1.5px solid var(--border);
+        box-shadow:
+          0 1px 2px rgb(0 0 0 / 0.04),
+          0 10px 30px rgb(0 0 0 / 0.05);
+        overflow: hidden;
+      }
+      #arena {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+      svg text {
+        font-family: 'PretendardBrand';
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <svg id="bggrid" width="1200" height="630" aria-hidden="true"></svg>
+      <div class="frame"></div>
+      <div class="left">
+        <div class="brand">
+          <img src="../../public/favicon.svg" alt="" /><span id="domain"
+            >trex-vs-tiger.vinylims.com</span
+          >
+        </div>
+        <h1 id="title"></h1>
+        <div class="rule">
+          <i style="background: var(--trex)"></i><i style="background: var(--tiger)"></i>
+        </div>
+        <p class="sub" id="sub"></p>
+        <svg id="legend" width="560" height="40" aria-hidden="true"></svg>
+      </div>
+      <div class="arena"><svg id="arena" width="466" height="502" aria-hidden="true"></svg></div>
+      <div class="band">
+        <i style="left: 0; width: 598px; background: var(--trex)"></i
+        ><i style="left: 601px; width: 599px; background: var(--tiger)"></i>
+      </div>
+    </div>
+    <script>
+      (async () => {
+        const q = new URLSearchParams(location.search);
+        const lang = q.get('lang') === 'en' ? 'en' : 'ko';
+        document.documentElement.lang = lang;
+
+        // vertical rhythm (px from the top of the card)
+        const LAYOUT = {
+          titleSize: 136,
+          titleTop: 124,
+          ruleTop: 414,
+          subTop: 438,
+          legendTop: 520,
+        };
+        const rootStyle = document.documentElement.style;
+        rootStyle.setProperty('--title-size', `${LAYOUT.titleSize}px`);
+        rootStyle.setProperty('--title-top', `${LAYOUT.titleTop}px`);
+        rootStyle.setProperty('--rule-top', `${LAYOUT.ruleTop}px`);
+        rootStyle.setProperty('--sub-top', `${LAYOUT.subTop}px`);
+        rootStyle.setProperty('--legend-top', `${LAYOUT.legendTop}px`);
+
+        await Promise.all(
+          [500, 600, 700, 800, 900].map((w) =>
+            document.fonts.load(
+              `${w} 16px PretendardBrand`,
+              '티렉스 대 호랑이 T-Rex vs Tiger 0123456789',
+            ),
+          ),
+        );
+
+        const T = {
+          ko: {
+            l1: '티렉스',
+            conn: '대',
+            l2: '호랑이',
+            sub: '몬테카를로 전투 시뮬레이션',
+            a: '티렉스',
+            b: '호랑이',
+            time: 't = 12.4초',
+            connGap: '0.2em',
+          },
+          en: {
+            l1: 'T-Rex',
+            conn: 'vs',
+            l2: 'Tiger',
+            sub: 'Monte Carlo battle simulator',
+            a: 'T-Rex',
+            b: 'Tiger',
+            time: 't = 12.4 s',
+            connGap: '0.14em',
+          },
+        }[lang];
+
+        // optical kerning for the Latin title: per-character letter-spacing, checked on the rendered PNG
+        const KERN = { en: { 'T-Rex': { 0: '-0.05em', 1: '-0.055em' } }, ko: {} }[lang];
+        const kern = (line) =>
+          [...line]
+            .map((ch, i) =>
+              KERN[line] && KERN[line][i] != null
+                ? `<span class="k" style="--k:${KERN[line][i]}">${ch}</span>`
+                : ch,
+            )
+            .join('');
+        // the connective word (대 / vs) is set smaller and grey, so the two names carry the title
+        document.getElementById('title').innerHTML =
+          `<span class="l" id="l1">${kern(T.l1)}</span>` +
+          `<span class="l" id="l2"><span class="c" style="margin-right:${T.connGap}">${T.conn}</span>${kern(T.l2)}</span>`;
+        document.getElementById('sub').textContent = T.sub;
+
+        // ink-edge alignment: shift each text block by its first glyph's side bearing, so the ink
+        // of the title, subtitle and domain starts exactly on the column edge (x = 76, the icon edge)
+        const ctx = document.createElement('canvas').getContext('2d');
+        const inkLeft = (el, ch) => {
+          const cs = getComputedStyle(el);
+          ctx.font = `${cs.fontWeight} ${cs.fontSize} PretendardBrand`;
+          return ctx.measureText(ch).actualBoundingBoxLeft;
+        };
+        const l1 = document.getElementById('l1');
+        const l2 = document.getElementById('l2');
+        const conn = l2.querySelector('.c');
+        l1.style.marginLeft = `${inkLeft(l1, T.l1[0])}px`;
+        l2.style.marginLeft = `${inkLeft(conn, T.conn[0])}px`;
+        const sub = document.getElementById('sub');
+        sub.style.marginLeft = `${inkLeft(sub, T.sub[0])}px`;
+
+        const NS = 'http://www.w3.org/2000/svg';
+        const el = (parent, name, attrs = {}, text) => {
+          const n = document.createElementNS(NS, name);
+          for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+          if (text != null) n.textContent = text;
+          parent.appendChild(n);
+          return n;
+        };
+        const r2 = (v) => Math.round(v * 100) / 100;
+        // deterministic PRNG (mulberry32): every render is byte-identical
+        let seed = 20261019;
+        const rnd = () => {
+          seed |= 0;
+          seed = (seed + 0x6d2b79f5) | 0;
+          let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+        const rr = (a, b) => a + (b - a) * rnd();
+        const gauss = () => {
+          let u = 0;
+          for (let i = 0; i < 4; i++) u += rnd();
+          return (u - 2) / 0.577;
+        };
+        const C = {
+          trex: '#2a78d6',
+          tiger: '#eb6834',
+          draw: '#8d8c87',
+          fg: '#1b1b1a',
+          muted: '#5f5e5a',
+          grid: '#e3e2de',
+        };
+        // oriented triangle as drawn by the replay: tip ahead of the centre, base behind it
+        const triPath = (x, y, a, L, W) => {
+          const h = [Math.cos(a), Math.sin(a)];
+          const p = [-h[1], h[0]];
+          const tip = [x + h[0] * L * 0.62, y + h[1] * L * 0.62];
+          const b = [x - h[0] * L * 0.38, y - h[1] * L * 0.38];
+          return `M${r2(tip[0])} ${r2(tip[1])}L${r2(b[0] + p[0] * W)} ${r2(b[1] + p[1] * W)}L${r2(b[0] - p[0] * W)} ${r2(b[1] - p[1] * W)}Z`;
+        };
+
+        /* ---------- faint background crosshair grid, fading out toward the title ---------- */
+        {
+          const g = document.getElementById('bggrid');
+          const defs = el(g, 'defs');
+          const lg = el(defs, 'radialGradient', { id: 'fade', cx: '0.95', cy: '0.55', r: '0.7' });
+          el(lg, 'stop', { offset: '0', 'stop-color': '#fff', 'stop-opacity': '1' });
+          el(lg, 'stop', { offset: '1', 'stop-color': '#fff', 'stop-opacity': '0' });
+          const m = el(defs, 'mask', { id: 'm' });
+          el(m, 'rect', { width: 1200, height: 630, fill: 'url(#fade)' });
+          let d = '';
+          for (let x = 12; x < 1200; x += 24)
+            for (let y = 15; y < 610; y += 24) d += `M${x - 1.6} ${y}h3.2M${x} ${y - 1.6}v3.2`;
+          el(el(g, 'g', { mask: 'url(#m)' }), 'path', {
+            d,
+            stroke: '#c9c8c2',
+            'stroke-width': 1.1,
+            'stroke-linecap': 'round',
+          });
+        }
+
+        /* ---------- legend: the replay's glyphs, named ---------- */
+        {
+          const s = document.getElementById('legend');
+          const cy = 20;
+          const L = 20;
+          // triangle ink starts at x = 0: its base sits 0.38 L behind the centre
+          el(s, 'path', { d: triPath(0.38 * L, cy, 0, L, 8.5), fill: C.trex });
+          const ta = el(
+            s,
+            'text',
+            { x: L + 10, y: cy + 9.5, 'font-size': 26, 'font-weight': 700, fill: C.fg },
+            T.a,
+          );
+          const x2 = L + 10 + ta.getComputedTextLength() + 34;
+          el(s, 'circle', { cx: x2 + 8, cy, r: 8, fill: C.tiger });
+          el(
+            s,
+            'text',
+            { x: x2 + 26, y: cy + 9.5, 'font-size': 26, 'font-weight': 700, fill: C.fg },
+            T.b,
+          );
+        }
+
+        /* ---------- the arena: one frame of the flanking tactic, top-down ---------- */
+        let nTiger = 0;
+        const nT = 10;
+        {
+          const s = document.getElementById('arena');
+          const AW = 466;
+          const AH = 502;
+          const defs = el(s, 'defs');
+          let d = '';
+          // grid: 40 m cells on the default 600 m arena drawn 466 px wide
+          for (let x = 0; x <= AW + 1; x += 31.07) d += `M${r2(x)} 0V${AH}`;
+          for (let y = 0; y <= AH + 1; y += 31.07) d += `M0 ${r2(y)}H${AW}`;
+          el(s, 'path', { d, stroke: C.grid, 'stroke-width': 1, fill: 'none' });
+          const trails = el(s, 'g', {
+            fill: 'none',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round',
+          });
+          const agents = el(s, 'g');
+          let gid = 0;
+          // a trail is one smooth path whose stroke fades in along the direction of travel
+          const trail = (pts, color, w, op) => {
+            const id = `tg${gid++}`;
+            const a = pts[0];
+            const b = pts[pts.length - 1];
+            const lg = el(defs, 'linearGradient', {
+              id,
+              gradientUnits: 'userSpaceOnUse',
+              x1: r2(a[0]),
+              y1: r2(a[1]),
+              x2: r2(b[0]),
+              y2: r2(b[1]),
+            });
+            el(lg, 'stop', { offset: 0, 'stop-color': color, 'stop-opacity': 0 });
+            el(lg, 'stop', { offset: 1, 'stop-color': color, 'stop-opacity': op });
+            el(trails, 'path', {
+              d: 'M' + pts.map((p) => `${r2(p[0])} ${r2(p[1])}`).join('L'),
+              stroke: `url(#${id})`,
+              'stroke-width': w,
+            });
+          };
+
+          // formation frame: local u runs along the T-Rex heading, w across the line. The frame is
+          // tilted a little so it reads as a snapshot of the replay rather than a diagram.
+          const A = {
+            cx: 188,
+            cy: 262,
+            rot: -0.12,
+            half: 112,
+            thMax: 2.4,
+            thMaxLow: 1.95,
+            rBase: 138,
+            rFront: 34,
+            minGap: 13.5,
+            trexGap: 30,
+          };
+          const P = (u, w) => [
+            A.cx + u * Math.cos(A.rot) - w * Math.sin(A.rot),
+            A.cy + u * Math.sin(A.rot) + w * Math.cos(A.rot),
+          ];
+          const smooth = (e0, e1, x) => {
+            const t = Math.min(1, Math.max(0, (x - e0) / (e1 - e0)));
+            return t * t * (3 - 2 * t);
+          };
+          const placedT = [];
+          const placedR = [];
+          const free = (x, y) =>
+            placedT.every((p) => Math.hypot(p[0] - x, p[1] - y) >= A.minGap) &&
+            placedR.every((p) => Math.hypot(p[0] - x, p[1] - y) >= A.trexGap);
+
+          // T-Rex: a gently bowed line; the outer agents turn toward the flanks
+          for (let i = 0; i < nT; i++) {
+            const v = (i - (nT - 1) / 2) / ((nT - 1) / 2);
+            const [x, y] = P(12 * (1 - v * v) + rr(-5, 5), v * A.half + rr(-3, 3));
+            const a = A.rot + v * 0.3 + rr(-0.06, 0.06);
+            const len = rr(56, 70);
+            const amp = -v * 10 + rr(-6, 6);
+            const pts = [];
+            const hx = Math.cos(a);
+            const hy = Math.sin(a);
+            for (let k = 0; k <= 14; k++) {
+              const u = 1 - k / 14;
+              const back = len * u + 16;
+              const wob = amp * u * u;
+              pts.push([x - hx * back - hy * wob, y - hy * back + hx * wob]);
+            }
+            trail(pts, C.trex, 3, 0.36);
+            el(agents, 'path', { d: triPath(x, y, a, 32, 10.5), fill: C.trex });
+            placedR.push([x, y]);
+          }
+
+          // tigers: two flank groups wrapping both ends of the line toward its rear, with only a
+          // few in front (the default tactic avoids the jaws). The upper flank is a little denser,
+          // so the shape never closes into a letter.
+          let guard = 0;
+          while (nTiger < 100 && guard++ < 50000) {
+            // the upper flank wraps further round the rear than the lower one
+            const th = rr(-A.thMax, A.thMaxLow);
+            const side = Math.abs(th);
+            const accept =
+              (0.1 + 0.9 * smooth(0.15, 1.05, Math.abs(th - 0.12))) * (th < 0 ? 1 : 0.86);
+            if (rnd() > accept) continue;
+            const sigma = 15 + 11 * Math.min(1, side / 1.5);
+            const r = A.rBase + A.rFront * (1 - side / A.thMax) + gauss() * sigma;
+            const [x, y] = P(r * Math.cos(th), r * Math.sin(th));
+            if (x < 20 || x > AW - 20 || y < 62 || y > AH - 56) continue;
+            if (!free(x, y)) continue;
+            // history: polar interpolation from the starting group ahead of the line, so the
+            // trails sweep around the flank
+            const su = 228 + gauss() * 14;
+            const sw = gauss() * 20;
+            const ths = Math.atan2(sw, su);
+            const rs = Math.hypot(su, sw);
+            const keep = rr(0.38, 0.55);
+            const pts = [];
+            for (let k = 0; k <= 18; k++) {
+              const s0 = 1 - keep + keep * (k / 18);
+              const e = 1 - Math.pow(1 - s0, 1.8);
+              const tt = ths + (th - ths) * e;
+              const rad = rs + (r - rs) * s0;
+              pts.push(P(rad * Math.cos(tt), rad * Math.sin(tt)));
+            }
+            trail(pts, C.tiger, 1.8, 0.28);
+            if (rnd() < 0.1)
+              el(agents, 'circle', {
+                cx: r2(x),
+                cy: r2(y),
+                r: 5,
+                fill: '#fff',
+                stroke: C.tiger,
+                'stroke-width': 2.4,
+              });
+            else el(agents, 'circle', { cx: r2(x), cy: r2(y), r: 6, fill: C.tiger });
+            placedT.push([x, y]);
+            nTiger++;
+          }
+
+          // HUD: time stamp, live counts, scale bar
+          const hudY = 36;
+          const hudFont = { 'font-size': 18, 'font-weight': 600, fill: C.muted };
+          el(s, 'text', { x: 20, y: hudY, ...hudFont }, T.time);
+          const hud = el(s, 'g', { transform: `translate(${AW - 20} ${hudY})` });
+          const tNum = el(
+            hud,
+            'text',
+            { x: 0, y: 0, ...hudFont, 'text-anchor': 'end' },
+            String(nTiger),
+          );
+          const w2 = tNum.getComputedTextLength();
+          el(hud, 'circle', { cx: r2(-w2 - 12), cy: -6.2, r: 5.6, fill: C.tiger });
+          const rNum = el(
+            hud,
+            'text',
+            { x: r2(-w2 - 32), y: 0, ...hudFont, 'text-anchor': 'end' },
+            String(nT),
+          );
+          const w1 = rNum.getComputedTextLength();
+          el(hud, 'path', { d: triPath(r2(-w2 - 32 - w1 - 13), -6.2, 0, 17, 6), fill: C.trex });
+          const sb = 77.7; // 100 m on the default 600 m arena drawn 466 px wide
+          el(s, 'path', {
+            d: `M20 ${AH - 26}h${sb}M20 ${AH - 31}v10M${20 + sb} ${AH - 31}v10`,
+            stroke: C.draw,
+            'stroke-width': 2,
+            fill: 'none',
+          });
+          el(s, 'text', { x: 30 + sb, y: AH - 19.5, ...hudFont }, '100 m');
+        }
+
+        // layout report for render.mjs: text boxes (advance boxes, plus the first glyph's ink edge)
+        const box = (node) => {
+          const r = document.createRange();
+          r.selectNodeContents(node);
+          const b = r.getBoundingClientRect();
+          return { left: b.left, right: b.right, top: b.top, bottom: b.bottom };
+        };
+        const inkStart = (node, ch) => box(node).left - inkLeft(node, ch);
+        const legendBox = document.getElementById('legend').getBBox();
+        const legendRect = document.getElementById('legend').getBoundingClientRect();
+        window.__layout = {
+          lang,
+          counts: { trex: nT, tigers: nTiger },
+          column: { left: 76, right: 76 + 560 },
+          arenaLeft: 670,
+          bandTop: 620,
+          items: {
+            domain: box(document.getElementById('domain')),
+            line1: { ...box(l1), ink: inkStart(l1, T.l1[0]) },
+            line2: { ...box(l2), ink: box(l2).left - inkLeft(conn, T.conn[0]) },
+            sub: { ...box(sub), ink: inkStart(sub, T.sub[0]) },
+            rule: box(document.querySelector('.rule')),
+            legend: {
+              left: legendRect.left + legendBox.x,
+              right: legendRect.left + legendBox.x + legendBox.width,
+              top: legendRect.top + legendBox.y,
+              bottom: legendRect.top + legendBox.y + legendBox.height,
+              ink: legendRect.left + legendBox.x,
+            },
+          },
+        };
+        document.body.dataset.ready = '1';
+      })();
+    </script>
+  </body>
+</html>
