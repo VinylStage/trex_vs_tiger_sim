@@ -610,7 +610,7 @@ Ads
 ## Appendix A — reproduction
 
 ```
-SP=/tmp/claude-0/-home-user-trex-vs-tiger-sim/984a8a44-eb4d-53ff-a9c5-7e1dac2ca18c/scratchpad
+SP=<local-workspace>
 cd $SP/ux-copy && npx vite build && npx vite preview --port 4317 --strictPort &
 cd $SP/uxscripts
 node audit.mjs $SP     # axe (light/dark), target sizes, tab order, CLS/long tasks, mobile, reduced motion -> audit-out.json
