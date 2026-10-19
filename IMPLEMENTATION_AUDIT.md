@@ -42,6 +42,23 @@ Reviewers: engine logic, statistics, determinism/performance/edge cases, input v
 | 2026-10-19 | HTML `no-transform`              | Bot Fight Mode on the `vinylims.com` zone injects an inline JavaScript Detections script that `script-src 'self'` blocks; `/` sends `no-cache, no-transform` to opt out (docs/DEPLOYMENT.md). Verified live.   |
 | 2026-10-19 | release-please `initial-version` | First release defaulted to 1.0.0; set to 0.1.0 (#13).                                                                                                                                                          |
 
+## Release v0.1.0 (2026-10-19)
+
+- Tag `trex-vs-tiger-sim-v0.1.0` and GitHub Release created by release-please. The component name is included in tags (release-please manifest default); later tags follow the same format.
+- Production E2E (Playwright/Chromium against `https://trex-vs-tiger.vinylims.com/`, real `_headers`): 0 console/page/request/CSP problems; run, verdict, charts, replay, share round-trip, ko/en toggle, cancel, work-budget cap, mobile layout all pass. Each security header is served exactly once, and no `challenge-platform` script is injected.
+
+### Merges during the GitHub Actions incident
+
+On 2026-10-19 GitHub reported "Incident with Actions and Pages", and later "Degraded availability for GitHub Actions, GitHub Pages and Webhooks". PR `check` jobs stayed queued, and one job's status stuck at in_progress after its steps had passed. To keep delivery moving:
+
+| PR            | Evidence used instead of the queued `check` job                                                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #14           | Job log showed every step (typecheck, lint, format, test, build) passing; only the status was stuck                                                                                                     |
+| #8, #15, #17  | Exact `ci.yml` steps (`npm ci`, typecheck, lint, format:check, test, build) run locally on Node v24.22.0 (CI runtime) at the PR head SHA; #15 also passed Playwright E2E on the live Cloudflare preview |
+| #12 (release) | Same local CI-equivalent run on the post-merge `main` commit                                                                                                                                            |
+
+Each PR carries a comment with the head SHA and the commands. The `main` CI runs queued during the incident are to be confirmed green once Actions recovers (#18).
+
 ## Known gaps
 
 - Default parameters make T-Rex win ~100% for 10 vs 100 (tigers rout fast under morale; even without morale tiger damage is too low). This is a model outcome, not a bug; calibration rationale in docs/MODEL.md. Sensitivity is dominated by `tiger.dps`.

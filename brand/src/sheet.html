@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <title>Brand contact sheet</title>
+    <link rel="stylesheet" href="fonts.css" />
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        width: 1480px;
+        background: #e9e8e3;
+        color: #1b1b1a;
+        font-family: 'PretendardBrand';
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap {
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        gap: 40px;
+      }
+      h1 {
+        margin: 0;
+        font-weight: 900;
+        font-size: 34px;
+        letter-spacing: -0.03em;
+      }
+      h2 {
+        margin: 0 0 4px;
+        font-weight: 800;
+        font-size: 24px;
+        letter-spacing: -0.02em;
+      }
+      .cap {
+        margin: 0 0 14px;
+        font-weight: 500;
+        font-size: 15px;
+        color: #5f5e5a;
+      }
+      .row {
+        display: flex;
+        gap: 28px;
+        align-items: flex-end;
+        flex-wrap: wrap;
+      }
+      .shot {
+        display: block;
+      }
+      .panel {
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        gap: 24px;
+        align-items: flex-end;
+      }
+      .light {
+        background: #f7f6f3;
+      }
+      .dark {
+        background: #141413;
+        color: #f0efec;
+      }
+      .white {
+        background: #ffffff;
+      }
+      .slack-dark {
+        background: #1a1d21;
+        color: #d1d2d3;
+      }
+      .lbl {
+        margin: 8px 0 0;
+        font-weight: 600;
+        font-size: 13px;
+        text-align: center;
+        opacity: 0.75;
+      }
+      .pix {
+        image-rendering: pixelated;
+      }
+      .link {
+        width: var(--w);
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgb(0 0 0 / 0.1);
+        background: #fff;
+      }
+      .slack-dark .link {
+        background: #222529;
+        border-color: rgb(255 255 255 / 0.1);
+      }
+      .link img {
+        display: block;
+        width: 100%;
+      }
+      .link b {
+        display: block;
+        padding: 10px 12px 2px;
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .link span {
+        display: block;
+        padding: 0 12px 10px;
+        font-weight: 500;
+        font-size: 12px;
+        opacity: 0.65;
+      }
+      .strip {
+        padding: 10px 10px 0;
+        border-radius: 10px;
+        display: flex;
+        gap: 4px;
+      }
+      .tab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 12px;
+        border-radius: 8px 8px 0 0;
+        width: 230px;
+        font-weight: 500;
+        font-size: 12.5px;
+        white-space: nowrap;
+        overflow: hidden;
+      }
+      .home {
+        background: linear-gradient(160deg, #6c8fb8, #a99ad0);
+        border-radius: 16px;
+        padding: 24px;
+        display: flex;
+        gap: 28px;
+        align-items: flex-end;
+        color: #fff;
+      }
+      .ring {
+        position: relative;
+      }
+      .ring::after {
+        content: '';
+        position: absolute;
+        left: 10%;
+        top: 10%;
+        width: 80%;
+        height: 80%;
+        border-radius: 50%;
+        border: 2px dashed #f7f6f3;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>티렉스 대 호랑이 · 브랜드 에셋</h1>
+        <p class="cap">
+          node brand/render.mjs 결과물 (public/). 모든 글자는 Pretendard, 그림은 시뮬레이터 재생
+          화면의 도형(삼각형, 점)만 씁니다.
+        </p>
+      </header>
+
+      <section>
+        <h2>og-image-ko.png · 1200×630</h2>
+        <p class="cap">실제 크기</p>
+        <img class="shot" src="../../public/og-image-ko.png" width="1200" height="630" alt="" />
+      </section>
+      <section>
+        <h2>og-image-en.png · 1200×630</h2>
+        <p class="cap">Same layout, English copy</p>
+        <img class="shot" src="../../public/og-image-en.png" width="1200" height="630" alt="" />
+      </section>
+
+      <section>
+        <h2>링크 미리보기 · 600px</h2>
+        <p class="cap">
+          흰 채팅 화면(카카오톡, 슬랙 라이트)과 어두운 채팅 화면. 가장자리 1px 선이 흰 바탕과 카드를
+          구분합니다.
+        </p>
+        <div class="row">
+          <div class="panel white">
+            <div class="link" style="--w: 600px">
+              <img src="../../public/og-image-ko.png" alt="" /><b>티렉스 대 호랑이</b
+              ><span>trex-vs-tiger.vinylims.com</span>
+            </div>
+          </div>
+          <div class="panel slack-dark">
+            <div class="link" style="--w: 600px">
+              <img src="../../public/og-image-en.png" alt="" /><b>T-Rex vs Tiger</b
+              ><span>trex-vs-tiger.vinylims.com</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>작은 썸네일 · 300px</h2>
+        <p class="cap">Smallest common preview width</p>
+        <div class="row">
+          <div class="panel white">
+            <div class="link" style="--w: 300px">
+              <img src="../../public/og-image-ko.png" alt="" /><b>티렉스 대 호랑이</b
+              ><span>trex-vs-tiger.vinylims.com</span>
+            </div>
+            <div class="link" style="--w: 300px">
+              <img src="../../public/og-image-en.png" alt="" /><b>T-Rex vs Tiger</b
+              ><span>trex-vs-tiger.vinylims.com</span>
+            </div>
+          </div>
+          <div class="panel slack-dark">
+            <div class="link" style="--w: 300px">
+              <img src="../../public/og-image-ko.png" alt="" /><b>티렉스 대 호랑이</b
+              ><span>trex-vs-tiger.vinylims.com</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>favicon.svg · 512 / 64 / 48 / 32 / 16</h2>
+        <p class="cap">
+          SVG drawn live by the browser. 40px 이하에서는 작은 변형(삼각형 2개, 점 3개)으로 바뀝니다.
+          오른쪽 두 칸은 실제 16px, 32px 래스터를 8배, 4배 확대한 것입니다.
+        </p>
+        <div class="row">
+          <div class="panel light">
+            <div>
+              <img src="../../public/favicon.svg" width="512" height="512" alt="" />
+              <p class="lbl">512</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.svg" width="64" height="64" alt="" />
+              <p class="lbl">64</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.svg" width="48" height="48" alt="" />
+              <p class="lbl">48</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.svg" width="32" height="32" alt="" />
+              <p class="lbl">32</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.svg" width="16" height="16" alt="" />
+              <p class="lbl">16</p>
+            </div>
+            <div>
+              <img class="pix" src="../.cache/raw/icon-16.png" width="128" height="128" alt="" />
+              <p class="lbl">16 ×8</p>
+            </div>
+            <div>
+              <img class="pix" src="../.cache/raw/icon-32.png" width="128" height="128" alt="" />
+              <p class="lbl">32 ×4</p>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="margin-top: 20px">
+          <div class="panel dark">
+            <div>
+              <img src="../../public/favicon.svg" width="128" height="128" alt="" />
+              <p class="lbl">128</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.svg" width="64" height="64" alt="" />
+              <p class="lbl">64</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.svg" width="48" height="48" alt="" />
+              <p class="lbl">48</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.svg" width="32" height="32" alt="" />
+              <p class="lbl">32</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.svg" width="16" height="16" alt="" />
+              <p class="lbl">16</p>
+            </div>
+            <div>
+              <img class="pix" src="../.cache/raw/icon-16.png" width="128" height="128" alt="" />
+              <p class="lbl">16 ×8</p>
+            </div>
+            <div>
+              <img class="pix" src="../.cache/raw/icon-32.png" width="128" height="128" alt="" />
+              <p class="lbl">32 ×4</p>
+            </div>
+          </div>
+          <div class="panel" style="background: #202124; color: #e8eaed">
+            <div>
+              <img src="../../public/favicon.svg" width="32" height="32" alt="" />
+              <p class="lbl">32</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.svg" width="16" height="16" alt="" />
+              <p class="lbl">16</p>
+            </div>
+            <div>
+              <img class="pix" src="../.cache/raw/icon-16.png" width="128" height="128" alt="" />
+              <p class="lbl">#202124</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>브라우저 탭 · 16px</h2>
+        <p class="cap">
+          Chrome light, Chrome dark (active and inactive tab), and the site's dark background
+        </p>
+        <div class="row">
+          <div class="strip" style="background: #dee1e6">
+            <div class="tab" style="background: #fff">
+              <img src="../../public/favicon.svg" width="16" height="16" alt="" />티렉스 대 호랑이
+              시뮬레이터
+            </div>
+            <div class="tab" style="color: #3c4043">
+              <img src="../../public/favicon.ico" width="16" height="16" alt="" />favicon.ico
+            </div>
+          </div>
+          <div class="strip" style="background: #202124">
+            <div class="tab" style="background: #35363a; color: #e8eaed">
+              <img src="../../public/favicon.svg" width="16" height="16" alt="" />T-Rex vs Tiger
+              simulator
+            </div>
+            <div class="tab" style="color: #bdc1c6">
+              <img src="../../public/favicon.svg" width="16" height="16" alt="" />Inactive tab
+            </div>
+          </div>
+          <div class="strip" style="background: #141413">
+            <div class="tab" style="background: #1d1d1c; color: #f0efec">
+              <img src="../../public/favicon.svg" width="16" height="16" alt="" />티렉스 대 호랑이
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>홈 화면 · apple-touch-icon / manifest</h2>
+        <p class="cap">
+          apple-touch-icon.png 180 (iOS가 모서리를 깎음), icon-maskable-512.png (점선 = 80% 안전
+          영역, 원형과 둥근 사각 마스크), icon-192.png (purpose any), favicon.ico 16/32/48
+        </p>
+        <div class="row">
+          <div class="home">
+            <div>
+              <img
+                src="../../public/apple-touch-icon.png"
+                width="120"
+                height="120"
+                style="border-radius: 27px; display: block"
+                alt=""
+              />
+              <p class="lbl">apple-touch-icon</p>
+            </div>
+            <div class="ring">
+              <img
+                src="../../public/icon-maskable-512.png"
+                width="160"
+                height="160"
+                style="display: block"
+                alt=""
+              />
+              <p class="lbl">maskable, raw</p>
+            </div>
+            <div>
+              <img
+                src="../../public/icon-maskable-512.png"
+                width="120"
+                height="120"
+                style="border-radius: 50%; display: block"
+                alt=""
+              />
+              <p class="lbl">maskable, circle</p>
+            </div>
+            <div>
+              <img
+                src="../../public/icon-maskable-512.png"
+                width="120"
+                height="120"
+                style="border-radius: 34px; display: block"
+                alt=""
+              />
+              <p class="lbl">maskable, squircle</p>
+            </div>
+            <div>
+              <img
+                src="../../public/icon-192.png"
+                width="120"
+                height="120"
+                style="display: block"
+                alt=""
+              />
+              <p class="lbl">icon-192 (any)</p>
+            </div>
+          </div>
+          <div class="panel light">
+            <div>
+              <img src="../../public/favicon.ico" width="48" height="48" alt="" />
+              <p class="lbl">ico 48</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.ico" width="32" height="32" alt="" />
+              <p class="lbl">ico 32</p>
+            </div>
+            <div>
+              <img src="../../public/favicon.ico" width="16" height="16" alt="" />
+              <p class="lbl">ico 16</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <script>
+      document.body.dataset.ready = '1';
+    </script>
+  </body>
+</html>

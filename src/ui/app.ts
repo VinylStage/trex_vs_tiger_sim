@@ -27,6 +27,7 @@ import {
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
 import { configFromHash, hashFromConfig } from './share';
+import { createSiteNav } from './site-nav';
 import { createTour } from './tour';
 import { DEMO_RUNS, tourRequested, withoutTourParam } from './tour-model';
 
@@ -137,6 +138,8 @@ export function startApp(root: HTMLElement): void {
     ),
     h('div', { class: 'header-actions' }, shareBtn, tourBtn, langBtn),
   );
+  let siteNav = createSiteNav(getLang());
+  header.append(siteNav);
 
   // ---------- config panel ----------
   const form = createConfigForm(config, pool.size, (c) => {
@@ -599,7 +602,10 @@ export function startApp(root: HTMLElement): void {
     renderReplayInfo();
   }
 
-  onLangChange(() => {
+  onLangChange((lang) => {
+    const nextNav = createSiteNav(lang);
+    siteNav.replaceWith(nextNav);
+    siteNav = nextNav;
     document.title = t('app.title');
     langBtn.lang = otherLang();
     applyI18n(document.body);
@@ -632,6 +638,12 @@ export function startApp(root: HTMLElement): void {
     },
   });
   tourBtn.addEventListener('click', () => tour.start());
+
+  // Canvas text does not reflow when a web font arrives; redraw once Pretendard is ready.
+  void document.fonts?.ready.then(() => {
+    replayView.refresh();
+    redrawAllCharts();
+  });
 
   renderResults();
   writeUrl();

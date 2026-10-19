@@ -14,3 +14,6 @@
 
 /index.html
   Cache-Control: no-cache, no-transform
+
+/*/
+  Cache-Control: no-cache, no-transform

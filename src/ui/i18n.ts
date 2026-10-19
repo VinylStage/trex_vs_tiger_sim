@@ -3,7 +3,8 @@ import type { ParamId } from '../sim/params';
 export type Lang = 'ko' | 'en';
 export const LANGS: readonly Lang[] = ['ko', 'en'];
 export const DEFAULT_LANG: Lang = 'ko';
-const STORAGE_KEY = 'trexsim.lang';
+/** localStorage key of the language preference (also written by the static content pages). */
+export const STORAGE_KEY = 'trexsim.lang';
 
 const ko = {
   'app.title': '티라노사우루스 vs 호랑이 시뮬레이터',
@@ -15,6 +16,14 @@ const ko = {
   'share.hint': '현재 설정을 URL로 공유합니다. 시드가 포함되므로 같은 결과가 재현됩니다.',
   'share.copied': '링크를 복사했습니다.',
   'share.failed': '복사하지 못했습니다. 주소창의 URL을 직접 복사하세요.',
+
+  'nav.label': '사이트 메뉴',
+  'nav.simulator': '시뮬레이터',
+  'nav.guide': '사용 방법',
+  'nav.model': '모델 설명',
+  'nav.parameters': '파라미터',
+  'nav.about': '소개',
+  'nav.privacy': '개인정보처리방침',
 
   'config.title': '시나리오',
   'config.presets': '프리셋',
@@ -287,6 +296,14 @@ const en: Dictionary = {
   'share.hint': 'Share the current settings as a URL. The seed is included, so results reproduce.',
   'share.copied': 'Link copied.',
   'share.failed': 'Could not copy. Copy the URL from the address bar instead.',
+
+  'nav.label': 'Site',
+  'nav.simulator': 'Simulator',
+  'nav.guide': 'Guide',
+  'nav.model': 'Model',
+  'nav.parameters': 'Parameters',
+  'nav.about': 'About',
+  'nav.privacy': 'Privacy',
 
   'config.title': 'Scenario',
   'config.presets': 'Presets',

@@ -1,3 +1,4 @@
+import './assets/fonts/pretendard/pretendard-variable-dynamic-subset.css';
 import './ui/styles.css';
 import { startApp } from './ui/app';
 
