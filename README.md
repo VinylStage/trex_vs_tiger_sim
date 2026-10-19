@@ -20,8 +20,10 @@ A Monte Carlo, agent-based battle simulator: N _Tyrannosaurus rex_ vs M tigers o
   - Spearman sensitivity (tornado chart) of each parameter
 - Animated replay of a single battle
 - Share any scenario as a URL; the seed is included, so results reproduce exactly in the same browser engine (and statistically across engines)
-- Korean / English UI
-- No backend and no tracking
+- Korean / English UI, plus static guide, model, parameter, about and privacy pages in both languages
+- Interactive guided tour (header **튜토리얼 / Tutorial** button or `?tour=1`)
+- Release version badge that detects newer deployments and can reload the latest version after clearing this site's cache and storage
+- No backend: every simulation runs in your browser
 
 ## Quick start
 
@@ -43,6 +45,9 @@ Node: see `.node-version` (24).
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)           | Cloudflare Pages setup and free-plan budget                               |
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md)     | Every config file explained                                               |
 | [docs/adr/](docs/adr/README.md)                    | Architecture Decision Records                                             |
+| [docs/PAGES.md](docs/PAGES.md)                     | Static content pages, URL scheme, drift guard                             |
+| [docs/TUTORIAL.md](docs/TUTORIAL.md)               | Guided tour steps, accessibility, deep link                               |
+| [docs/VERSIONING.md](docs/VERSIONING.md)           | Version badge, update detection, cache/storage reset                      |
 | [docs/BRANDING.md](docs/BRANDING.md)               | Title, OG cards, icon set and how to re-render them                       |
 | [docs/ADSENSE.md](docs/ADSENSE.md)                 | AdSense readiness gates, owner actions, checklist                         |
 | [docs/research/](docs/research/README.md)          | Research records (UX, performance, SEO/GEO, AdSense, species, animation)  |
