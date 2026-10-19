@@ -1,13 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <title>T-Rex vs Tiger</title>
-  <defs>
-    <clipPath id="tile"><rect width="64" height="64" rx="14"/></clipPath>
-  </defs>
-  <g clip-path="url(#tile)">
-    <rect width="64" height="64" fill="#2a78d6"/>
-    <path d="M64 0V64H0z" fill="#eb6834"/>
-    <path d="M46 31l13-6M40 44l17-6M35 56l15-4" stroke="#1b1b1a" stroke-width="4" stroke-linecap="round"/>
+  <style>@media (max-width: 40px) { .lg { display: none } .sm { display: inline } }</style>
+  <defs><clipPath id="tile"><rect width="64" height="64" rx="14"/></clipPath></defs>
+  <rect width="64" height="64" rx="14" fill="#1b1b1a"/>
+  <g class="lg">
+    <path d="M16 3V61M32 3V61M48 3V61M3 16H61M3 32H61M3 48H61" stroke="#ffffff" stroke-opacity=".09" stroke-width="1" vector-effect="non-scaling-stroke"/>
+    <g fill="#3987e5"><path d="M30.4 22.9L7.5 26.4L10.1 11.7Z"/><path d="M30.4 41.1L10.1 52.3L7.5 37.6Z"/></g>
+    <g fill="#eb6834"><circle cx="42.5" cy="19.5" r="4.8"/><circle cx="52" cy="27" r="4.8"/><circle cx="40.5" cy="32" r="4.8"/><circle cx="51" cy="38.5" r="4.8"/><circle cx="42.5" cy="44.5" r="4.8"/></g>
   </g>
-  <path d="M8 32L16 15L37 13L39 19L25 22L31 27L14 37z" fill="#ffffff"/>
-  <circle cx="21" cy="19" r="2.2" fill="#2a78d6"/>
+  <g class="sm" display="none">
+    <g fill="#3987e5"><path d="M30 22L6 28L10 12Z"/><path d="M30 42L10 52L6 36Z"/></g>
+    <g fill="#eb6834"><circle cx="42" cy="14" r="6"/><circle cx="50" cy="30" r="6"/><circle cx="42" cy="50" r="6"/></g>
+  </g>
+  <rect width="64" height="64" rx="14" fill="none" stroke="#3b3b38" stroke-width="2" vector-effect="non-scaling-stroke" clip-path="url(#tile)"/>
 </svg>

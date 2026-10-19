@@ -11,4 +11,10 @@ export default tseslint.config(
       globals: { ...globals.browser, ...globals.worker },
     },
   },
+  {
+    files: ['brand/**/*.mjs'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
 );
