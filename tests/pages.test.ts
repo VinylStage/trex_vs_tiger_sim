@@ -256,6 +256,20 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
     expect(sectionIds(html)).toEqual(sectionIds(read(sourceOf(page, other(lang)))));
   });
 
+  it('makes every table a focusable scroll region named by its caption', () => {
+    const wraps = elements(html, 'div').filter((d) =>
+      (d.attrs['class'] ?? '').split(/\s+/).includes('table-wrap'),
+    );
+    expect(wraps.length, 'every table sits in a .table-wrap').toBe(tags(html, 'table').length);
+    for (const w of wraps) {
+      const label = w.attrs['aria-labelledby'] ?? '';
+      expect(w.attrs, label).toMatchObject({ role: 'region', tabindex: '0' });
+      const caption = one(tags(w.inner, 'caption'), `caption in .table-wrap ${label}`);
+      expect(caption.attrs['id'], 'aria-labelledby names the caption').toBe(label);
+      expect(textOf(one(elements(w.inner, 'caption'), 'caption').inner).length).toBeGreaterThan(5);
+    }
+  });
+
   it('only links to pages and anchors that exist', () => {
     const own = new Set(ids(html));
     for (const a of tags(html, 'a')) {
@@ -425,7 +439,81 @@ describe('src/pages/site.css', () => {
     for (const [name, value] of mine)
       expect(`${name}: ${value}`).toBe(`${name}: ${theirs.get(name)}`);
   });
+
+  /*
+   * Text colour / background pairs the page rules use (docs/PAGES.md#colour-contrast). All are
+   * normal-size text, so WCAG 2.x AA needs 4.5:1. Colours resolve through var() against the
+   * light or dark :root tokens plus the page-only roles in the top-level `html { }` block.
+   */
+  const PAIRS: readonly (readonly [text: string, background: string, where: string])[] = [
+    ['--fg', '--bg', 'body text'],
+    ['--fg', '--surface', 'cards, notes, tables, header'],
+    ['--fg', '--surface-2', 'table heads, code, current nav item'],
+    ['--muted', '--bg', 'lead, page meta, footer'],
+    ['--muted', '--surface', 'captions, fact labels, nav links'],
+    ['--muted', '--surface-2', 'tags'],
+    ['--accent-text', '--bg', 'links, eyebrow'],
+    ['--accent-text', '--surface', 'links in cards and notes, parameter chips, TOC hover'],
+    ['--accent-text', '--surface-2', 'code inside links'],
+    ['--accent-fill-fg', '--accent-fill', 'button, skip link, step numbers'],
+    ['--accent-fill-fg', '--accent-fill-hover', 'button hover'],
+    ['--warn-fg', '--warn-bg', 'warning text and its links, speculative tag'],
+  ];
+
+  function palette(dark: boolean): Map<string, string> {
+    const vars = tokens(site, false);
+    if (dark) for (const [name, value] of tokens(site, true)) vars.set(name, value);
+    for (const block of site.matchAll(/^html\s*\{([^}]*)\}/gm)) {
+      for (const m of (block[1] ?? '').matchAll(/(--[\w-]+)\s*:\s*([^;]+);/g)) {
+        vars.set(m[1] ?? '', (m[2] ?? '').trim());
+      }
+    }
+    return vars;
+  }
+
+  function colour(vars: ReadonlyMap<string, string>, name: string): string {
+    let value = vars.get(name) ?? '';
+    for (let hops = 0; hops < 5; hops++) {
+      const ref = /^var\((--[\w-]+)\)$/.exec(value);
+      if (!ref) break;
+      value = vars.get(ref[1] ?? '') ?? '';
+    }
+    expect(value, `${name} resolves to #rrggbb`).toMatch(/^#[0-9a-f]{6}$/i);
+    return value;
+  }
+
+  it.each(
+    [false, true].flatMap((dark) => PAIRS.map(([text, bg, where]) => ({ dark, text, bg, where }))),
+  )('$text on $bg ($where) meets 4.5:1 (dark: $dark)', ({ dark, text, bg }) => {
+    const vars = palette(dark);
+    expect(contrastRatio(colour(vars, text), colour(vars, bg))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('computes WCAG contrast ratios', () => {
+    expect(contrastRatio('#000000', '#ffffff')).toBeCloseTo(21, 5);
+    expect(contrastRatio('#ffffff', '#ffffff')).toBeCloseTo(1, 5);
+    expect(contrastRatio('#2a78d6', '#f7f6f3')).toBeCloseTo(4.09, 2);
+    expect(contrastRatio('#ffffff', '#256abf')).toBeCloseTo(5.39, 2);
+  });
 });
+
+/** WCAG 2.x contrast ratio of two `#rrggbb` colours (1 to 21). */
+function contrastRatio(a: string, b: string): number {
+  const luminance = (hex: string): number => {
+    const n = parseInt(hex.slice(1), 16);
+    const channel = (c: number): number => {
+      const s = c / 255;
+      return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+    };
+    return (
+      0.2126 * channel((n >> 16) & 255) +
+      0.7152 * channel((n >> 8) & 255) +
+      0.0722 * channel(n & 255)
+    );
+  };
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return ((hi ?? 0) + 0.05) / ((lo ?? 0) + 0.05);
+}
 
 // ---------- deployment files ----------
 

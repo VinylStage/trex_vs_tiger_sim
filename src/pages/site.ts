@@ -1,3 +1,7 @@
+// Self-hosted Pretendard (ADR-0005). src/main.ts imports the same file, so the build emits one
+// @font-face stylesheet shared by the app and the pages and links it from each page's HTML
+// (it applies without JavaScript too).
+import '../assets/fonts/pretendard/pretendard-variable-dynamic-subset.css';
 import { LANG_STORAGE_KEY, counterpartPath, parsePagePath } from './routes';
 
 /*

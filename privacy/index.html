@@ -133,8 +133,11 @@
 
           <section id="storage">
             <h2>브라우저에 저장하는 정보</h2>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-storage">
               <table>
+                <caption id="caption-storage">
+                  브라우저에 저장하는 항목
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">이름</th>
@@ -206,8 +209,16 @@
               사이트를 보호하는 봇 방어 기능 때문에 Cloudflare가 다음과 같은 꼭 필요한 쿠키를 설정할
               수 있습니다.
             </p>
-            <div class="table-wrap">
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-cloudflare-cookies"
+            >
               <table>
+                <caption id="caption-cloudflare-cookies">
+                  Cloudflare가 설정할 수 있는 쿠키
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">쿠키</th>

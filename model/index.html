@@ -356,8 +356,16 @@
           <section id="tigers">
             <h2>호랑이의 행동</h2>
             <p>호랑이는 아래 상태 가운데 하나에 있으며, 상태에 따라 행동이 달라집니다.</p>
-            <div class="table-wrap">
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-tiger-states"
+            >
               <table>
+                <caption id="caption-tiger-states">
+                  호랑이의 행동 상태와 전환 조건
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">상태</th>
@@ -456,8 +464,11 @@
               사기는 호랑이에게만 있으며, 각 개체의 “초기 사기” 값에서 시작합니다. 호랑이가 자신을
               크게 다치게 할 싸움을 피한다는 관찰을 단순화한 규칙입니다.
             </p>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-morale">
               <table>
+                <caption id="caption-morale">
+                  사기를 바꾸는 사건
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">사건</th>
@@ -598,8 +609,11 @@
               10 vs 호랑이 100, 경기장 600 m, 제한 시간 1,200초, CV 0.08). 시드나 실행 횟수가 다르면
               수치가 조금 달라질 수 있으니 참고용으로만 보세요.
             </p>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-results">
               <table>
+                <caption id="caption-results">
+                  시나리오별 예비 결과 (각 500회)
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">시나리오</th>
@@ -665,8 +679,11 @@
               기본값에서 한 가지씩만 바꿔 각 100회씩 점검한 결과입니다(시드 20261019, 측면 포위).
               신뢰구간이 ±10%포인트 정도로 넓으니 경향만 보세요.
             </p>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-tigers-win">
               <table>
+                <caption id="caption-tigers-win">
+                  가정을 하나씩 바꾼 결과 (각 100회)
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">바꾼 가정</th>

@@ -164,9 +164,9 @@
               둡니다. 그래서 파라미터를 바꿔 둔 상태에서 마릿수만 빠르게 바꿔 비교할 때도
               유용합니다.
             </p>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-presets">
               <table>
-                <caption>
+                <caption id="caption-presets">
                   프리셋 다섯 가지
                 </caption>
                 <thead>
@@ -370,8 +370,11 @@
               있습니다.
             </p>
             <h3>통계 카드</h3>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-cards">
               <table>
+                <caption id="caption-cards">
+                  통계 카드별 의미
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">카드</th>
@@ -617,8 +620,16 @@
 
           <section id="troubleshooting">
             <h2>문제 해결</h2>
-            <div class="table-wrap">
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-troubleshooting"
+            >
               <table>
+                <caption id="caption-troubleshooting">
+                  증상별 해결 방법
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">증상</th>

@@ -361,8 +361,16 @@
           <section id="tigers">
             <h2>Tiger behaviour</h2>
             <p>Each tiger is in one of these states, and its behaviour depends on the state.</p>
-            <div class="table-wrap">
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-tiger-states"
+            >
               <table>
+                <caption id="caption-tiger-states">
+                  Tiger states and when they change
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">State</th>
@@ -461,8 +469,11 @@
               Only tigers have morale, starting at each animal's “initial morale”. It is a simple
               stand-in for the observation that tigers avoid fights that could injure them.
             </p>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-morale">
               <table>
+                <caption id="caption-morale">
+                  Events that change morale
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">Event</th>
@@ -607,8 +618,11 @@
               500 runs, LHS, 10 T-Rex vs 100 tigers, 600 m arena, 1,200 s limit, CV 0.08). Other
               seeds or run counts move them slightly, so treat them as indicative.
             </p>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-results">
               <table>
+                <caption id="caption-results">
+                  Preliminary results by scenario (500 runs each)
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">Scenario</th>
@@ -676,8 +690,11 @@
               defaults). Their confidence intervals are about ±10 percentage points wide, so read
               them as trends.
             </p>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-tigers-win">
               <table>
+                <caption id="caption-tigers-win">
+                  One change at a time (100 runs each)
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">Change from the defaults</th>

@@ -137,8 +137,11 @@
 
           <section id="storage">
             <h2>What is stored in your browser</h2>
-            <div class="table-wrap">
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-storage">
               <table>
+                <caption id="caption-storage">
+                  What the site stores in your browser
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">Name</th>
@@ -212,8 +215,16 @@
               Because of the bot protection that guards the site, Cloudflare may set these strictly
               necessary cookies:
             </p>
-            <div class="table-wrap">
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-cloudflare-cookies"
+            >
               <table>
+                <caption id="caption-cloudflare-cookies">
+                  Cookies Cloudflare may set
+                </caption>
                 <thead>
                   <tr>
                     <th scope="col">Cookie</th>
