@@ -551,6 +551,14 @@ describe('public/_headers', () => {
     expect(h['cache-control']).toEqual(['no-cache, no-transform']);
   });
 
+  it('never stores /reset/ and clears cache and storage there, not cookies', () => {
+    const h = headersFor(src, '/reset/');
+    expect(h['content-security-policy']).toHaveLength(1);
+    expect(h['cache-control']?.join(', ')).toBe('no-cache, no-transform, no-store');
+    expect(h['clear-site-data']).toEqual(['"cache", "storage"']);
+    expect(headersFor(src, '/version.json')['cache-control']).toEqual(['no-store']);
+  });
+
   it('keeps long-lived caching on hashed assets', () => {
     expect(headersFor(src, '/assets/site-abc123.js')['cache-control']).toEqual([
       'public, max-age=31536000, immutable',

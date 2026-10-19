@@ -51,6 +51,8 @@ The deployed site is static. Cloudflare Pages only serves the files Vite writes 
 | `assets/site-<hash>.js`, `assets/site-<hash>.css`                                    | Shared script and stylesheet of the content pages                                                                                                                                                                                                         |
 | `assets/routes-<hash>.{js,css}`, `assets/PretendardVariable.subset.<n>-<hash>.woff2` | Shared chunk of the app and the content pages: the route table and the self-hosted Pretendard `@font-face` stylesheet ([ADR-0005](adr/0005-self-hosted-pretendard.md)), plus the subset font files. The chunk name comes from the bundler and may change. |
 | `robots.txt`, `sitemap.xml`                                                          | Copied verbatim from `public/`; crawler rules and the page list with hreflang alternates                                                                                                                                                                  |
+| `version.json`                                                                       | Deployed version and commit, polled by open tabs (see [VERSIONING.md](VERSIONING.md))                                                                                                                                                                     |
+| `reset/index.html`                                                                   | Cache and storage reset page (see [VERSIONING.md](VERSIONING.md))                                                                                                                                                                                         |
 
 Nothing else is deployed:
 
@@ -139,7 +141,7 @@ sequenceDiagram
 
 `public/_headers` is copied to `dist/_headers`, and Pages applies it to every response. Project rule: config files carry no comments, so the explanation lives here.
 
-Syntax: a path pattern starts at column 0, followed by indented `Name: value` lines. A `*` splat matches any characters. When several rules match a request, all of them apply. If the same header is set by two matching rules, the values are joined with a comma. `! Name` removes a header. Limits: 100 rules, 2,000 characters per line. This file uses 5 rules, and its longest line is about 260 characters.
+Syntax: a path pattern starts at column 0, followed by indented `Name: value` lines. A `*` splat matches any characters. When several rules match a request, all of them apply. If the same header is set by two matching rules, the values are joined with a comma. `! Name` removes a header. Limits: 100 rules, 2,000 characters per line. This file uses 7 rules, and its longest line is about 260 characters.
 
 ### Rule `/*` (every response)
 
@@ -150,7 +152,7 @@ Syntax: a path pattern starts at column 0, followed by indented `Name: value` li
 | `style-src 'self'`                                     | Only same-origin stylesheets. `<style>` blocks, `style="…"` attributes and `setAttribute('style', …)` are blocked. Setting individual properties through the CSSOM (`el.style.width = …`) is allowed.                                                                                                                                      |
 | `img-src 'self' data:`                                 | Same-origin images plus `data:` URIs (inline SVG icons or a canvas snapshot shown as an `<img>`). Canvas drawing itself needs no permission.                                                                                                                                                                                               |
 | `font-src 'self'`                                      | Only self-hosted fonts: Pretendard from `assets/` ([ADR-0005](adr/0005-self-hosted-pretendard.md)).                                                                                                                                                                                                                                        |
-| `connect-src 'self'`                                   | `fetch` / XHR / WebSocket only to this origin. The app makes no network calls, so this is defence in depth against exfiltration.                                                                                                                                                                                                           |
+| `connect-src 'self'`                                   | `fetch` / XHR / WebSocket only to this origin. The app's only fetch is the same-origin `/version.json` ([VERSIONING.md](VERSIONING.md)), so this is defence in depth against exfiltration.                                                                                                                                                 |
 | `worker-src 'self'`                                    | Web Workers may only load from this origin. Vite's `new Worker(new URL(…, import.meta.url), { type: 'module' })` emits a same-origin file under `assets/`. `blob:` workers (Vite `?worker&inline`) would be blocked, so do not use them.                                                                                                   |
 | `object-src 'none'`                                    | No `<object>` / `<embed>` plugins.                                                                                                                                                                                                                                                                                                         |
 | `base-uri 'self'`                                      | A `<base>` tag cannot point relative URLs at another origin.                                                                                                                                                                                                                                                                               |
@@ -188,6 +190,15 @@ Pages redirects `/index.html` to `/`, so the `/` rule is the one that applies in
 | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Cache-Control: no-cache, no-transform` | The same policy as `/` for every directory-style HTML page (`/guide/`, `/en/guide/`, a future `/reset/` and so on), so new deployments show up at once and Bot Fight Mode never injects its inline script into them. The splat matches any characters, so `/*/` matches every path that ends in `/` except `/` itself, which keeps exactly one `Cache-Control` per page. Hashed files under `/assets/` never end in `/`. Pages redirects `/guide` and `/guide/index.html` to `/guide/`. New pages need no extra rule; `tests/pages.test.ts` checks each page gets exactly this header. |
 
+### Rules `/version.json` and `/reset/*`
+
+| Rule            | Headers                                                          | Why                                                                                                                                                                                                                                                                                                                                                                                                |
+| --------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/version.json` | `Cache-Control: no-store`                                        | Open tabs poll it to detect a newer deployment, so it must never be cached.                                                                                                                                                                                                                                                                                                                        |
+| `/reset/*`      | `Cache-Control: no-store`, `Clear-Site-Data: "cache", "storage"` | The "load the latest version" reset page. The `/*/` rule also matches `/reset/`, so the response carries `Cache-Control: no-cache, no-transform, no-store` (Pages joins duplicate headers with a comma); `no-store` wins and `no-transform` keeps JavaScript Detections out of this HTML page too. `"cookies"` is deliberately omitted because it would clear cookies for all of `*.vinylims.com`. |
+
+Details, browser support and the cookie decision are in [VERSIONING.md](VERSIONING.md#response-headers).
+
 All other paths keep the Pages default `public, max-age=0, must-revalidate`. That includes future files in `public/` such as a `favicon.svg`. It also includes the single-page-app fallback: there is no `404.html`, so Pages serves `index.html` for unknown paths.
 
 ```mermaid
@@ -202,9 +213,13 @@ flowchart LR
     all --> q{"path?"}
     q -- "/assets/*" --> imm@{ shape: rect, label: "Cache-Control: public, max-age=31536000, immutable" }
     q -- "/ or /index.html or /*/" --> nc@{ shape: rect, label: "Cache-Control: no-cache, no-transform" }
+    q -- "/version.json" --> vj@{ shape: rect, label: "Cache-Control: no-store" }
+    q -- "/reset/* (also matches /*/)" --> rs@{ shape: rect, label: "Cache-Control: no-cache, no-transform, no-store<br/>Clear-Site-Data: cache, storage" }
     q -- "anything else" --> def@{ shape: rect, label: "Pages default:<br/>public, max-age=0, must-revalidate" }
     imm e1@--> resp@{ shape: dbl-circ, label: "response" }
     nc --> resp
+    vj --> resp
+    rs --> resp
     def --> resp
     e1@{ animate: true }
 ```
