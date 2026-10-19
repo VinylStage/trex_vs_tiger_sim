@@ -1,4 +1,4 @@
-import { defaultConfig, type ScenarioConfig } from '../sim/config';
+import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { Outcome, type RunSummary } from '../sim/engine';
 import { aggregate, type AggregateResult } from '../sim/montecarlo';
 import { buildDesign } from '../sim/sampling';
@@ -339,7 +339,14 @@ export function startApp(root: HTMLElement): void {
   }
 
   async function run(): Promise<void> {
-    const cfg = structuredClone(config);
+    // Same validation the workers apply (incl. the work budget), so the pool's run indices
+    // and the main-thread design match what the workers simulate.
+    const cfg = sanitizeConfig(structuredClone(config));
+    if (cfg.runs !== config.runs) {
+      config = structuredClone(cfg);
+      form.setConfig(cfg);
+      writeUrl();
+    }
     runBtn.disabled = true;
     cancelBtn.disabled = false;
     progress.hidden = false;
@@ -505,8 +512,16 @@ export function startApp(root: HTMLElement): void {
       ),
       card(
         t('stat.exchange'),
-        Number.isFinite(agg.exchangeRatio) ? formatNum(agg.exchangeRatio, 1) : '∞',
-        Number.isFinite(agg.exchangeRatio) ? t('stat.exchangeSub') : t('stat.exchangeInf'),
+        Number.isFinite(agg.exchangeRatio)
+          ? formatNum(agg.exchangeRatio, 1)
+          : Number.isNaN(agg.exchangeRatio)
+            ? '—'
+            : '∞',
+        Number.isFinite(agg.exchangeRatio)
+          ? t('stat.exchangeSub')
+          : Number.isNaN(agg.exchangeRatio)
+            ? t('stat.exchangeNone')
+            : t('stat.exchangeInf'),
       ),
     );
 

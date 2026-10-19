@@ -117,7 +117,7 @@ describe('share codec', () => {
     expect(c.sampling).toBe(d.sampling);
     expect(c.morale).toBe(d.morale);
     expect(c.seed).toBe(d.seed);
-    expect(c.runs).toBe(42);
+    expect(c.runs).toBe(d.runs);
   });
 
   it('keeps the URL reasonably short even when every parameter is overridden', () => {

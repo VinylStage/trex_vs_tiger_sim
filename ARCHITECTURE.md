@@ -55,9 +55,11 @@ flowchart LR
         charts@{ shape: rect, label: "charts.ts<br/>canvas charts" }
         replay@{ shape: rect, label: "replay.ts<br/>battle replay" }
         pool@{ shape: rect, label: "pool.ts<br/>worker pool" }
+        helpers@{ shape: rect, label: "chunks.ts · cost.ts<br/>dom.ts · format.ts" }
     end
     subgraph W["src/workers"]
         worker@{ shape: hex, label: "sim.worker.ts" }
+        protocol@{ shape: doc, label: "protocol.ts<br/>message types" }
     end
     subgraph SIM["src/sim (pure, DOM-free)"]
         config@{ shape: doc, label: "config.ts<br/>schema + clamp" }
@@ -73,6 +75,8 @@ flowchart LR
     share --> config
     form --> config & params
     pool e1@--> worker
+    app --> helpers
+    pool & worker --> protocol
     worker --> mc
     app --> mc
     mc --> sampling & engine & stats

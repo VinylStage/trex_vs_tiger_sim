@@ -3,6 +3,7 @@ import {
   SAMPLING_METHODS,
   TIGER_TACTICS,
   defaultConfig,
+  maxRunsFor,
   type SamplingMethod,
   type ScenarioConfig,
   type TigerTactic,
@@ -137,13 +138,19 @@ export function createConfigForm(
 
   function updateDerived(): void {
     if (costEl) {
-      const level = costLevel(cfg, workers);
-      costEl.hidden = level === 'ok';
-      costEl.className = `cost-warning cost-${level}`;
+      const cap = maxRunsFor(cfg);
+      const capped = cfg.runs > cap;
+      const effective = capped ? { ...cfg, runs: cap } : cfg;
+      const level = costLevel(effective, workers);
+      costEl.hidden = level === 'ok' && !capped;
+      costEl.className = `cost-warning cost-${level === 'ok' ? 'heavy' : level}`;
+      const parts: string[] = [];
+      if (capped) parts.push(t('cost.capped', { n: cap.toLocaleString() }));
       if (level !== 'ok') {
-        const eta = formatDuration(estimateTotalMs(cfg, workers) / 1000, 0);
-        costEl.textContent = t(level === 'heavy' ? 'cost.heavy' : 'cost.extreme', { eta });
+        const eta = formatDuration(estimateTotalMs(effective, workers) / 1000, 0);
+        parts.push(t(level === 'heavy' ? 'cost.heavy' : 'cost.extreme', { eta }));
       }
+      costEl.textContent = parts.join(' ');
     }
     let modified = 0;
     for (const p of PARAMS) {

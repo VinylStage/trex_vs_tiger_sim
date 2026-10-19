@@ -71,6 +71,7 @@ const ko = {
   'species.trex': '티라노사우루스',
   'species.tiger': '호랑이',
 
+  'cost.capped': '작업량 한도 때문에 실행 시 반복 횟수가 {n}회로 줄어듭니다.',
   'cost.heavy':
     '무거운 시나리오입니다 (대략 {eta} 예상). 기기에 따라 더 걸릴 수 있으니 실행 횟수를 줄이는 것을 고려하세요.',
   'cost.extreme':
@@ -110,6 +111,7 @@ const ko = {
   'stat.exchange': '교환비',
   'stat.exchangeSub': 'T-Rex 1마리 손실당 죽은 호랑이',
   'stat.exchangeInf': 'T-Rex 손실 없음',
+  'stat.exchangeNone': '사망 없음',
 
   'chart.outcome': '승패 확률과 95% 신뢰구간',
   'chart.duration': '전투 시간 분포',
@@ -280,6 +282,7 @@ const en: Dictionary = {
   'species.trex': 'Tyrannosaurus rex',
   'species.tiger': 'Tiger',
 
+  'cost.capped': 'Runs will be reduced to {n} to stay within the work budget.',
   'cost.heavy':
     'Heavy scenario (roughly {eta}). It may take longer on your device; consider fewer runs.',
   'cost.extreme':
@@ -319,6 +322,7 @@ const en: Dictionary = {
   'stat.exchange': 'Exchange ratio',
   'stat.exchangeSub': 'tigers killed per T-Rex lost',
   'stat.exchangeInf': 'no T-Rex lost',
+  'stat.exchangeNone': 'no deaths',
 
   'chart.outcome': 'Outcome probability with 95% CI',
   'chart.duration': 'Battle duration distribution',
