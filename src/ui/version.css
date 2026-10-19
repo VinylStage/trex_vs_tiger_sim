@@ -36,9 +36,21 @@
   font-weight: 650;
 }
 
-/* Reserve room for the longest short status so "확인 중" → "최신" never reflows the header. */
+/*
+ * All status labels share one grid cell, so the slot is as wide as the longest label from the first
+ * paint and a status change never resizes the badge or reflows the header (no layout shift).
+ */
 .version-badge-status {
-  min-width: 3.2em;
+  display: inline-grid;
+  justify-items: start;
+}
+
+.version-badge-status > * {
+  grid-area: 1 / 1;
+}
+
+.version-badge-status > :not(.is-current) {
+  visibility: hidden;
 }
 
 .version-badge-dot {
@@ -53,9 +65,10 @@
   background: var(--c-latched);
 }
 
+/* The accent marks the border and the dot only: as label colour it is below 4.5:1 on the badge. */
 .version-badge[data-state='update'] {
   border-color: var(--accent);
-  color: var(--accent);
+  color: var(--fg);
 }
 
 .version-badge[data-state='update'] .version-badge-dot {
@@ -153,6 +166,17 @@
   font-size: 0.875rem;
 }
 
+/* --accent is 4.42:1 on the light dialog surface; this shade reaches 6:1 (dark: 4.64:1 as is). */
+.version-links a {
+  color: #1f62b8;
+}
+
+@media (prefers-color-scheme: dark) {
+  .version-links a {
+    color: var(--accent);
+  }
+}
+
 .version-actions {
   display: flex;
   flex-wrap: wrap;
@@ -206,17 +230,18 @@
 
 /*
  * ---------- update banner ----------
- * Fixed, so it never shifts the layout. It sits where it cannot hide the Run button: bottom right
- * (over the results column) on the two-column layout, top of the viewport on narrower screens,
- * where the config panel's sticky run bar occupies the bottom edge.
+ * Fixed, so it never shifts the layout, and docked to the bottom edge, so it never covers the header.
+ * On the two-column layout it sits bottom right, over the results column. Below 1000 px it is
+ * centred and rises above the config panel's run bar while that bar is stuck to the bottom edge:
+ * version.ts measures the bar into --update-banner-lift, applied with `translate`, which does not
+ * count as a layout shift. version.ts also sets scroll-padding-bottom while the banner is shown.
  */
 
 .update-banner {
-  --banner-enter: -8px;
   position: fixed;
-  top: 12px;
   left: 12px;
   right: 12px;
+  bottom: 12px;
   z-index: 9;
   display: flex;
   flex-wrap: wrap;
@@ -232,6 +257,8 @@
   color: var(--fg);
   font-size: 0.875rem;
   box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
+  translate: 0 calc(-1 * var(--update-banner-lift, 0px));
+  transition: translate 0.15s ease-out;
   animation: update-banner-in 0.2s ease-out;
 }
 
@@ -249,19 +276,18 @@
 @keyframes update-banner-in {
   from {
     opacity: 0;
-    transform: translateY(var(--banner-enter));
+    transform: translateY(8px);
   }
 }
 
 @media (min-width: 1000px) {
   .update-banner {
-    --banner-enter: 8px;
-    top: auto;
     left: auto;
     right: 16px;
     bottom: 16px;
     max-width: min(30rem, calc(100vw - 32px));
     margin: 0;
+    translate: none;
   }
 }
 
@@ -269,6 +295,7 @@
   .version-badge[data-state='checking'] .version-badge-dot,
   .update-banner {
     animation: none;
+    transition: none;
   }
 }
 

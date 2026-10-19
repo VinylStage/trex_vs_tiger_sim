@@ -4,7 +4,9 @@ import { clearSiteData } from './site-data';
 import {
   POLL_INTERVAL_MS,
   RELEASES_URL,
+  STATUS_LABELS,
   VERSION_JSON_PATH,
+  bottomInset,
   deploymentKey,
   parseBuildInfo,
   reduceStatus,
@@ -12,9 +14,13 @@ import {
   shortSha,
   shouldCheck,
   shouldShowBanner,
+  statusDetail,
+  statusLabel,
   stripReloadParam,
+  stuckBarLift,
   type BuildInfo,
   type CheckTrigger,
+  type StatusLabel,
   type VersionStatus,
 } from './version-model';
 import './version.css';
@@ -30,6 +36,14 @@ const FETCH_TIMEOUT_MS = 10_000;
 /** Opening the dialog refreshes the status when the last check is older than this. */
 const DIALOG_REFRESH_MS = 60_000;
 const NOTICE_MS = 6000;
+/**
+ * Bar that sticks to the bottom of the viewport on the single-column layout (the config panel's
+ * run bar, src/ui/app.ts). The update banner sits above it instead of covering it.
+ */
+const STICKY_BOTTOM_BAR = '.run-bar';
+const LIFT_PROPERTY = '--update-banner-lift';
+/** Clearance kept between the banner and focused content or the end of the page. */
+const BANNER_GAP_PX = 8;
 
 const versionLabel = (b: BuildInfo): string => `v${b.version} (${shortSha(b.sha)})`;
 
@@ -47,21 +61,14 @@ function formatDate(iso: string, withDate: boolean): string {
   ).format(d);
 }
 
-function statusText(s: VersionStatus): string {
-  switch (s.kind) {
-    case 'checking':
-      return t('version.status.checking');
-    case 'error':
-      return t('version.status.error');
-    case 'latest':
-      return t('version.status.latest');
-    case 'update':
-      if (s.reason === 'rebuild') return t('version.status.rebuild');
-      return t(s.reason === 'newer' ? 'version.status.newer' : 'version.status.changed', {
-        version: s.deployed.version,
-      });
-  }
-}
+const LABEL_KEYS: Readonly<Record<StatusLabel, MsgKey>> = {
+  checking: 'version.status.checking',
+  latest: 'version.status.latest',
+  newer: 'version.status.newer',
+  rebuild: 'version.status.rebuild',
+  changed: 'version.status.changed',
+  error: 'version.status.error',
+};
 
 function messageKey(s: VersionStatus): MsgKey {
   switch (s.kind) {
@@ -112,7 +119,12 @@ export function createVersionBadge(): HTMLButtonElement {
   let resetting = false;
 
   const num = h('span', { class: 'version-badge-num', text: `v${CURRENT_BUILD.version}` });
-  const label = h('span', { class: 'version-badge-status' });
+  // Every label is rendered in the same grid cell and only the current one is visible, so the
+  // badge is as wide as the longest label from the first paint and never reflows the header.
+  const labels = new Map(
+    STATUS_LABELS.map((k) => [k, h('span', { i18n: LABEL_KEYS[k] })] as const),
+  );
+  const detail = h('span', { class: 'visually-hidden' });
   const badge = h(
     'button',
     {
@@ -122,7 +134,8 @@ export function createVersionBadge(): HTMLButtonElement {
     },
     num,
     h('span', { class: 'version-badge-dot', attrs: { 'aria-hidden': 'true' } }),
-    label,
+    h('span', { class: 'version-badge-status' }, ...labels.values()),
+    detail,
   );
 
   // ---------- dialog (built on first open) ----------
@@ -289,8 +302,19 @@ export function createVersionBadge(): HTMLButtonElement {
   let bannerParts: ReturnType<typeof buildBanner> | null = null;
   let noticeTimer = 0;
 
+  function dismissBanner(): void {
+    if (bannerMode === 'update' && status.kind === 'update') {
+      dismissedKey = deploymentKey(status.deployed);
+    }
+    bannerMode = null;
+    paintBanner();
+  }
+
   function buildBanner() {
-    const text = h('p', { class: 'update-banner-text', attrs: { role: 'status' } });
+    // The visible text is set before the banner is revealed, so its size is final from its first
+    // frame. Screen readers get the same text from a separate live region filled just after.
+    const text = h('p', { class: 'update-banner-text', attrs: { 'aria-hidden': 'true' } });
+    const live = h('p', { class: 'visually-hidden', attrs: { role: 'status' } });
     const updateBtn = h('button', {
       class: 'btn btn-small btn-primary',
       i18n: 'version.bannerAction',
@@ -301,19 +325,16 @@ export function createVersionBadge(): HTMLButtonElement {
       'section',
       { class: 'update-banner', i18nAria: 'version.bannerRegion' },
       text,
+      live,
       h('div', { class: 'update-banner-actions' }, updateBtn, dismissBtn),
     );
     el.hidden = true;
     updateBtn.addEventListener('click', () => openDialog(true));
-    dismissBtn.addEventListener('click', () => {
-      if (bannerMode === 'update' && status.kind === 'update') {
-        dismissedKey = deploymentKey(status.deployed);
-      }
-      bannerMode = null;
-      paintBanner();
-    });
+    dismissBtn.addEventListener('click', dismissBanner);
+    el.addEventListener('animationend', schedulePlace);
+    el.addEventListener('transitionend', schedulePlace);
     document.body.append(el);
-    return { el, text, updateBtn, dismissBtn };
+    return { el, text, live, updateBtn, dismissBtn };
   }
 
   function bannerText(): string {
@@ -327,6 +348,72 @@ export function createVersionBadge(): HTMLButtonElement {
     return '';
   }
 
+  // The banner is docked to the bottom of the viewport. On the single-column layout it rises above
+  // the config panel's run bar while that bar is stuck to the bottom edge (version.css applies the
+  // lift below 1000 px). While it is shown, `scroll-padding-bottom` keeps focused elements clear of
+  // the band it covers, body padding lets the end of the page scroll above it, and Esc dismisses it.
+  let placeFrame = 0;
+  let observer: ResizeObserver | null = null;
+  let observedBar: Element | null = null;
+
+  function placeBanner(): void {
+    const el = bannerParts?.el;
+    if (!el || el.hidden) return;
+    const vh = document.documentElement.clientHeight;
+    // Looked up on every pass: the post-reset notice can be revealed before the app is mounted.
+    const barEl = document.querySelector(STICKY_BOTTOM_BAR);
+    if (barEl && barEl !== observedBar && observer) {
+      observer.observe(barEl);
+      observedBar = barEl;
+    }
+    const lift = `${stuckBarLift(barEl?.getBoundingClientRect() ?? null, vh)}px`;
+    if (el.style.getPropertyValue(LIFT_PROPERTY) !== lift)
+      el.style.setProperty(LIFT_PROPERTY, lift);
+    const inset = bottomInset(el.getBoundingClientRect().top, vh, BANNER_GAP_PX);
+    document.documentElement.style.scrollPaddingBottom = `${inset}px`;
+    const docked = (Number.parseFloat(getComputedStyle(el).bottom) || 0) + el.offsetHeight;
+    document.body.style.paddingBottom = `${Math.ceil(docked + BANNER_GAP_PX)}px`;
+  }
+
+  function schedulePlace(): void {
+    if (placeFrame) return;
+    placeFrame = window.requestAnimationFrame(() => {
+      placeFrame = 0;
+      placeBanner();
+    });
+  }
+
+  function onBannerKeydown(e: KeyboardEvent): void {
+    if (e.key !== 'Escape' || e.isComposing || e.defaultPrevented) return;
+    // An open modal dialog handles its own Esc.
+    if (document.querySelector('dialog[open]')) return;
+    dismissBanner();
+  }
+
+  function trackBanner(on: boolean): void {
+    if (on) {
+      window.addEventListener('scroll', schedulePlace, { passive: true });
+      window.addEventListener('resize', schedulePlace);
+      document.addEventListener('keydown', onBannerKeydown);
+      if (typeof ResizeObserver === 'function') {
+        observer ??= new ResizeObserver(schedulePlace);
+        if (bannerParts) observer.observe(bannerParts.el);
+      }
+      placeBanner();
+      schedulePlace();
+      return;
+    }
+    window.removeEventListener('scroll', schedulePlace);
+    window.removeEventListener('resize', schedulePlace);
+    document.removeEventListener('keydown', onBannerKeydown);
+    observer?.disconnect();
+    observedBar = null;
+    window.cancelAnimationFrame(placeFrame);
+    placeFrame = 0;
+    document.documentElement.style.removeProperty('scroll-padding-bottom');
+    document.body.style.removeProperty('padding-bottom');
+  }
+
   function paintBanner(): void {
     const b = bannerParts ?? (bannerMode ? (bannerParts = buildBanner()) : null);
     if (!b) return;
@@ -334,21 +421,24 @@ export function createVersionBadge(): HTMLButtonElement {
       if (b.el.hidden) return;
       const hadFocus = b.el.contains(document.activeElement);
       b.el.hidden = true;
+      trackBanner(false);
       if (hadFocus) badge.focus();
       return;
     }
     const withActions = bannerMode === 'update';
     b.updateBtn.hidden = !withActions;
     b.dismissBtn.textContent = t(withActions ? 'version.bannerDismiss' : 'version.close');
+    setText(b.text, bannerText());
     if (b.el.hidden) {
       // Reveal first, fill the live region a moment later so screen readers announce it.
-      b.text.textContent = '';
+      b.live.textContent = '';
       b.el.hidden = false;
+      trackBanner(true);
       window.setTimeout(() => {
-        b.text.textContent = bannerText();
+        b.live.textContent = bannerText();
       }, 50);
     } else {
-      setText(b.text, bannerText());
+      setText(b.live, bannerText());
     }
   }
 
@@ -365,7 +455,9 @@ export function createVersionBadge(): HTMLButtonElement {
   // ---------- status ----------
   function render(): void {
     badge.dataset.state = status.kind;
-    setText(label, statusText(status));
+    const current = statusLabel(status);
+    for (const [k, el] of labels) el.classList.toggle('is-current', k === current);
+    setText(detail, statusDetail(status));
     renderDialog();
     renderBanner();
   }

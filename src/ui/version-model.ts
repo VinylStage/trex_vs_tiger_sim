@@ -173,6 +173,58 @@ export function shouldShowBanner(status: VersionStatus, dismissedKey: string | n
   return status.kind === 'update' && deploymentKey(status.deployed) !== dismissedKey;
 }
 
+/** Which of the badge's fixed set of short labels a status shows. */
+export type StatusLabel = 'checking' | 'latest' | 'error' | UpdateReason;
+
+export const STATUS_LABELS: readonly StatusLabel[] = [
+  'checking',
+  'latest',
+  'newer',
+  'rebuild',
+  'changed',
+  'error',
+];
+
+export function statusLabel(status: VersionStatus): StatusLabel {
+  return status.kind === 'update' ? status.reason : status.kind;
+}
+
+/**
+ * Detail that the badge only gives to assistive technology: the deployed version when it differs.
+ * The visible label stays from a fixed set so the badge never changes width.
+ */
+export function statusDetail(status: VersionStatus): string {
+  if (status.kind !== 'update') return '';
+  return status.reason === 'rebuild'
+    ? ` (${shortSha(status.deployed.sha)})`
+    : ` v${status.deployed.version}`;
+}
+
+/** Vertical extent of an element in viewport coordinates (a DOMRect fits). */
+export interface VerticalBox {
+  top: number;
+  bottom: number;
+}
+
+/**
+ * How far a banner docked to the bottom of the viewport has to rise to sit above a bar that is
+ * stuck to the bottom edge (the config panel's sticky run bar): 0 when the bar is elsewhere.
+ */
+export function stuckBarLift(bar: VerticalBox | null, viewportHeight: number): number {
+  if (!bar || bar.bottom <= bar.top) return 0;
+  const stuck = bar.top < viewportHeight && bar.bottom >= viewportHeight - 1;
+  return stuck ? Math.ceil(viewportHeight - bar.top) : 0;
+}
+
+/**
+ * Space to keep clear at the bottom of the viewport while a bottom-docked banner is shown: from the
+ * banner's top edge down, plus a gap. Used as `scroll-padding-bottom`, so focused elements scroll
+ * clear of the banner.
+ */
+export function bottomInset(bannerTop: number, viewportHeight: number, gap: number): number {
+  return Math.max(0, Math.ceil(viewportHeight - bannerTop + gap));
+}
+
 /** Cookie names visible in `document.cookie` (`a=1; b=2`), deduplicated, nameless ones skipped. */
 export function parseCookieNames(cookie: string): string[] {
   const names = new Set<string>();

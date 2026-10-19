@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   MIN_CHECK_GAP_MS,
+  STATUS_LABELS,
+  bottomInset,
   compareBuilds,
   compareSemver,
   deploymentKey,
@@ -15,9 +17,13 @@ import {
   shortSha,
   shouldCheck,
   shouldShowBanner,
+  statusDetail,
+  statusLabel,
   stripReloadParam,
+  stuckBarLift,
   type BuildInfo,
   type SemVer,
+  type UpdateReason,
   type VersionStatus,
 } from '../src/ui/version-model';
 
@@ -231,6 +237,61 @@ describe('shouldShowBanner', () => {
     expect(shouldShowBanner({ kind: 'checking' }, null)).toBe(false);
     expect(shouldShowBanner({ kind: 'error' }, null)).toBe(false);
     expect(shouldShowBanner({ kind: 'latest', deployed: newer, checkedAt: 1 }, null)).toBe(false);
+  });
+});
+
+describe('badge label', () => {
+  const update = (reason: UpdateReason, deployed: BuildInfo): VersionStatus => ({
+    kind: 'update',
+    deployed,
+    reason,
+    checkedAt: 1,
+  });
+
+  it('maps every status onto one of a fixed set of labels', () => {
+    const statuses: VersionStatus[] = [
+      { kind: 'checking' },
+      { kind: 'error' },
+      { kind: 'latest', deployed: build('0.1.0'), checkedAt: 1 },
+      update('newer', build('0.10.0-beta.12', SHA_B)),
+      update('rebuild', build('0.1.0', SHA_B)),
+      update('changed', build('0.0.9', SHA_B)),
+    ];
+    const labels = statuses.map(statusLabel);
+    expect(labels).toEqual(['checking', 'error', 'latest', 'newer', 'rebuild', 'changed']);
+    for (const l of labels) expect(STATUS_LABELS).toContain(l);
+    expect(new Set(STATUS_LABELS).size).toBe(STATUS_LABELS.length);
+  });
+
+  it('keeps the deployed version out of the label and in the screen-reader detail', () => {
+    expect(statusDetail(update('newer', build('0.10.0-beta.12', SHA_B)))).toBe(' v0.10.0-beta.12');
+    expect(statusDetail(update('changed', build('0.0.9', SHA_B)))).toBe(' v0.0.9');
+    expect(statusDetail(update('rebuild', build('0.1.0', SHA_B)))).toBe(' (bbbbbbb)');
+    expect(statusDetail({ kind: 'latest', deployed: build('0.1.0'), checkedAt: 1 })).toBe('');
+    expect(statusDetail({ kind: 'checking' })).toBe('');
+    expect(statusDetail({ kind: 'error' })).toBe('');
+  });
+});
+
+describe('banner placement', () => {
+  const vh = 844;
+
+  it('rises above a bar that is stuck to the bottom edge', () => {
+    expect(stuckBarLift({ top: 743, bottom: 844 }, vh)).toBe(101);
+    expect(stuckBarLift({ top: 742.4, bottom: 843.6 }, vh)).toBe(102);
+  });
+
+  it('stays at the bottom edge when the bar is elsewhere or missing', () => {
+    expect(stuckBarLift(null, vh)).toBe(0);
+    expect(stuckBarLift({ top: 500, bottom: 601 }, vh)).toBe(0);
+    expect(stuckBarLift({ top: 900, bottom: 1001 }, vh)).toBe(0);
+    expect(stuckBarLift({ top: 844, bottom: 844 }, vh)).toBe(0);
+  });
+
+  it('keeps the band from the banner top down clear, plus a gap', () => {
+    expect(bottomInset(642, vh, 8)).toBe(210);
+    expect(bottomInset(642.2, vh, 8)).toBe(210);
+    expect(bottomInset(900, vh, 8)).toBe(0);
   });
 });
 
