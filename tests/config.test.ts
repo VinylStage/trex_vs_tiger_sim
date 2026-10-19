@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { LIMITS, defaultConfig, sanitizeConfig } from '../src/sim/config';
+import {
+  LIMITS,
+  MAX_WORK,
+  defaultConfig,
+  maxRunsFor,
+  sanitizeConfig,
+  workEstimate,
+} from '../src/sim/config';
 import { PARAMS, paramDef } from '../src/sim/params';
 
 describe('sanitizeConfig', () => {
@@ -41,6 +48,48 @@ describe('sanitizeConfig', () => {
     });
     const [, hi] = paramDef('trex.mass').bounds;
     expect(c.params['trex.mass']).toEqual({ min: 2000, mode: 9000, max: hi });
+  });
+});
+
+describe('sanitizeConfig hardening', () => {
+  it('accepts only JSON numbers, not numeric strings', () => {
+    const d = defaultConfig();
+    const c = sanitizeConfig({ seed: '', individualCV: '  ', runs: '0x10', trexCount: '7' });
+    expect(c.seed).toBe(d.seed);
+    expect(c.individualCV).toBe(d.individualCV);
+    expect(c.runs).toBe(d.runs);
+    expect(c.trexCount).toBe(d.trexCount);
+  });
+
+  it('rejects partial triangular ranges as a whole', () => {
+    const d = defaultConfig();
+    expect(sanitizeConfig({ params: { 'tiger.dps': { min: 20 } } }).params['tiger.dps']).toEqual(
+      d.params['tiger.dps'],
+    );
+    expect(
+      sanitizeConfig({ params: { 'trex.mass': { min: 1, mode: 2, max: 'x' } } }).params[
+        'trex.mass'
+      ],
+    ).toEqual(d.params['trex.mass']);
+  });
+
+  it('snaps maxTime to the 0.1 s time step', () => {
+    expect(sanitizeConfig({ maxTime: 30.05 }).maxTime).toBeCloseTo(30.1, 10);
+    expect(sanitizeConfig({ maxTime: 30.04 }).maxTime).toBeCloseTo(30, 10);
+  });
+
+  it('caps runs so the combined work stays within MAX_WORK', () => {
+    const c = sanitizeConfig({ trexCount: 500, tigerCount: 5000, runs: 20000, maxTime: 3600 });
+    expect(c.runs).toBe(maxRunsFor(c));
+    expect(c.runs).toBeLessThan(20000);
+    expect(workEstimate(c)).toBeLessThanOrEqual(MAX_WORK);
+    expect(sanitizeConfig({ runs: 20000 }).runs).toBe(20000);
+  });
+
+  it('ignores prototype keys', () => {
+    const c = sanitizeConfig(JSON.parse('{"__proto__":{"polluted":1},"params":{"__proto__":{}}}'));
+    expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
+    expect(c).toEqual(defaultConfig());
   });
 });
 

@@ -17,7 +17,7 @@ A Monte Carlo, agent-based battle simulator: N _Tyrannosaurus rex_ vs M tigers o
   - histograms of battle duration and survivors
   - Spearman sensitivity (tornado chart) of each parameter
 - Animated replay of a single battle
-- Share any scenario as a URL; the seed is included, so the results reproduce exactly
+- Share any scenario as a URL; the seed is included, so results reproduce exactly in the same browser engine (and statistically across engines)
 - Korean / English UI
 - No backend and no tracking
 

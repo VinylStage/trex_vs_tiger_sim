@@ -67,6 +67,27 @@ describe('simulateBattle', () => {
   });
 });
 
+describe('engine edge cases', () => {
+  it('never reports a draw longer than maxTime', () => {
+    const c = small({ trexCount: 1, tigerCount: 1, runs: 1, maxTime: 30.1, morale: false });
+    c.params['tiger.latchChance'] = { min: 0, mode: 0, max: 0 };
+    c.params['trex.biteAccuracy'] = { min: 0, mode: 0, max: 0 };
+    const d = buildDesign(c);
+    const s = simulateBattle(c, designRow(d, 0), 0).summary;
+    expect(s.duration).toBeLessThanOrEqual(c.maxTime + 1e-9);
+  });
+
+  it('bounds trace memory and keeps frames dense for large battles', () => {
+    const c = small({ trexCount: 50, tigerCount: 2000, runs: 1, maxTime: 600 });
+    const d = buildDesign(c);
+    const out = simulateBattle(c, designRow(d, 0), 0, true);
+    const frames = out.trace?.frames ?? [];
+    const floats = frames.reduce((a, f) => a + f.trex.length + f.tiger.length, 0);
+    expect(floats).toBeLessThanOrEqual(6_000_000 + 4 * 50 + 3 * 2000);
+    expect(frames.length).toBeGreaterThanOrEqual(Math.min(20, out.summary.duration / 0.5));
+  });
+});
+
 describe('Monte Carlo runner', () => {
   it('is independent of chunk boundaries', () => {
     const c = small();
@@ -86,5 +107,16 @@ describe('Monte Carlo runner', () => {
     expect(a.sensitivity).toHaveLength(d.dims);
     expect(a.representativeRun).toBeGreaterThanOrEqual(0);
     expect(a.representativeRun).toBeLessThan(c.runs);
+    expect(a.duration.hist.counts.reduce((x, y) => x + y, 0)).toBe(c.runs);
+    const binWidth = a.duration.hist.max / a.duration.hist.counts.length;
+    expect(Math.abs(binWidth / 0.1 - Math.round(binWidth / 0.1))).toBeLessThan(1e-9);
+  });
+
+  it('reports NaN exchange ratio when nobody dies', () => {
+    const c = small({ trexCount: 1, tigerCount: 1, runs: 3, maxTime: 30, morale: false });
+    c.params['tiger.latchChance'] = { min: 0, mode: 0, max: 0 };
+    c.params['trex.biteAccuracy'] = { min: 0, mode: 0, max: 0 };
+    const d = buildDesign(c);
+    expect(aggregate(c, d, runChunk(c, d, 0, c.runs)).exchangeRatio).toBeNaN();
   });
 });

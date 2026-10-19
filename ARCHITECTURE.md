@@ -154,7 +154,7 @@ stateDiagram-v2
 ```mermaid
 flowchart TD
     tick@{ shape: circle, label: "tick" } --> latched{"tigers latched?"}
-    latched -- yes --> shake@{ shape: rect, label: "shake-off roll per latched tiger" }
+    latched -- yes --> shake@{ shape: rect, label: "shake-off roll per latched tiger<br/>(evaluated in the tiger update)" }
     latched -- no --> target
     shake --> target@{ shape: rect, label: "steer toward nearest free tiger<br/>(turn-rate limited)" }
     target --> ready{"bite cooldown ready<br/>and tiger in frontal cone?"}
