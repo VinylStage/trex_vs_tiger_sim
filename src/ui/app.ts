@@ -39,7 +39,7 @@ import { heavyLengthForRadius } from './replay/glyphs';
 import { configFromHash, hashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
-import { freeConfigFromHash, hashFromFreeConfig } from './share-free';
+import { freeConfigFromHash, hashFromFreeConfig, parseFreeConfigInput } from './share-free';
 import { copyText } from '../share/share-ui';
 import { createConfigTransfer } from './config-transfer';
 import { createReproduceCheck, createResultShare } from './result-share';
@@ -309,6 +309,14 @@ export function startApp(root: HTMLElement): void {
     runBar,
     createConfigTransfer({
       getConfig: () => config,
+      applyFreeInput: (text) => {
+        const fc = parseFreeConfigInput(text);
+        if (!fc) return false;
+        free.setConfig(fc);
+        setMode('free');
+        writeUrl();
+        return true;
+      },
       applyConfig: (c) => {
         config = c;
         form.setConfig(c);

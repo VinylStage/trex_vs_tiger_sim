@@ -1,12 +1,6 @@
-import { LIMITS, SAMPLING_METHODS, type SamplingMethod } from '../sim/config';
+import { LIMITS, SAMPLING_METHODS } from '../sim/config';
 import { aggregateFree, type FreeAggregate } from '../sim/free/aggregate';
-import {
-  FREE_LIMITS,
-  defaultSide,
-  sanitizeFreeConfig,
-  type FreeConfig,
-  type SideConfig,
-} from '../sim/free/config';
+import { FREE_LIMITS, sanitizeFreeConfig, type FreeConfig } from '../sim/free/config';
 import { FREE_SPECIES, FREE_SPECIES_IDS, type FreeSpeciesId } from '../sim/free/species';
 import type { Interval } from '../sim/stats';
 import { HEAVY_SPECIES, PACK_SPECIES, type Era, type SpeciesId } from '../sim/species';
@@ -17,6 +11,13 @@ import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import { getLang, speciesCounter, speciesName, t, teamLabel, type MsgKey } from './i18n';
 import { CancelledError, type PoolProgress, type SimPool } from './pool';
 import { formatBound, formatShare } from './verdict';
+import {
+  withMorale,
+  withNumber,
+  withSampling,
+  withSideCount,
+  withSideSpecies,
+} from './free-form-model';
 import './free-mode.css';
 
 /*
@@ -226,11 +227,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     }
     el.value = cfg.sides[i].species;
     el.addEventListener('change', () => {
-      const id2 = el.value;
-      if (!(FREE_SPECIES_IDS as readonly string[]).includes(id2)) return;
-      const sides = [...cfg.sides] as [SideConfig, SideConfig];
-      sides[i] = defaultSide(id2 as FreeSpeciesId, cfg.sides[i].count);
-      cfg = { ...cfg, sides };
+      cfg = withSideSpecies(cfg, i, el.value);
       commit(id);
     });
     return el;
@@ -254,9 +251,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     const sid = nextId(`free-${i}-species`);
     const cid = nextId(`free-${i}-count`);
     const count = numberInput(side.count, FREE_LIMITS.sideCount, 1, true, (n) => {
-      const sides = [...cfg.sides] as [SideConfig, SideConfig];
-      sides[i] = { ...cfg.sides[i], count: n };
-      cfg = { ...cfg, sides };
+      cfg = withSideCount(cfg, i, n);
     });
     count.id = cid;
     return h(
@@ -288,7 +283,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     ): void => {
       const id = nextId(`free-${key}`);
       const input = numberInput(cfg[key], LIMITS[key], step, int, (n) => {
-        cfg = { ...cfg, [key]: n };
+        cfg = withNumber(cfg, key, n);
       });
       input.id = id;
       grid.append(field(t(label), help, input, id));
@@ -306,7 +301,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     }
     sel.value = cfg.sampling;
     sel.addEventListener('change', () => {
-      cfg = { ...cfg, sampling: sel.value as SamplingMethod };
+      cfg = withSampling(cfg, sel.value);
       commit(sid);
     });
     grid.append(field(t('field.sampling'), t('help.sampling'), sel, sid));
@@ -318,7 +313,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     });
     box.checked = cfg.morale;
     box.addEventListener('change', () => {
-      cfg = { ...cfg, morale: box.checked };
+      cfg = withMorale(cfg, box.checked);
       commit(mid);
     });
     grid.append(
@@ -352,18 +347,35 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   }
 
   /** Rebuild the form from `cfg`, keeping focus on the control with `focusId`'s role. */
+  // Replacing the form removes a focused input, whose blur can fire `change` and so a nested
+  // commit; that rebuild is queued instead of running inside replaceChildren.
+  let building = false;
+  let rebuildQueued = false;
   function build(focusId?: string): void {
-    const focusIndex = focusId
-      ? [...formEl.querySelectorAll('[id]')].findIndex((e) => e.id === focusId)
-      : -1;
-    formEl.replaceChildren(
-      h('div', { class: 'free-sides' }, sideFieldset(0), sideFieldset(1)),
-      ...matchupNotes(),
-      sharedSettings(),
-    );
-    if (focusIndex >= 0) {
-      const next = formEl.querySelectorAll<HTMLElement>('[id]')[focusIndex];
-      next?.focus();
+    if (building) {
+      rebuildQueued = true;
+      return;
+    }
+    building = true;
+    try {
+      const focusIndex = focusId
+        ? [...formEl.querySelectorAll('[id]')].findIndex((e) => e.id === focusId)
+        : -1;
+      formEl.replaceChildren(
+        h('div', { class: 'free-sides' }, sideFieldset(0), sideFieldset(1)),
+        ...matchupNotes(),
+        sharedSettings(),
+      );
+      if (focusIndex >= 0) {
+        const next = formEl.querySelectorAll<HTMLElement>('[id]')[focusIndex];
+        next?.focus();
+      }
+    } finally {
+      building = false;
+    }
+    if (rebuildQueued) {
+      rebuildQueued = false;
+      build();
     }
   }
 

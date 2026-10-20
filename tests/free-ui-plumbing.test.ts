@@ -15,8 +15,66 @@ import {
   parseFreeConfigInput,
 } from '../src/ui/share-free';
 import type { WorkerRequest, WorkerResponse } from '../src/workers/protocol';
+import {
+  withMorale,
+  withNumber,
+  withSampling,
+  withSideCount,
+  withSideSpecies,
+} from '../src/ui/free-form-model';
 
 /** Free mode plumbing for the UI: v3 links, TVT3 codes, worker dispatch, aggregation (#50). */
+
+describe('form to config (free-form-model)', () => {
+  it('turns form edits into a sanitized config that survives a v3 link', () => {
+    let c = defaultFreeConfig();
+    c = withSideSpecies(c, 0, 'tiger');
+    c = withSideSpecies(c, 1, 'tiger');
+    c = withSideCount(c, 0, 3);
+    c = withSideCount(c, 1, 4.6);
+    c = withNumber(c, 'runs', 250);
+    c = withNumber(c, 'seed', 7);
+    c = withNumber(c, 'arenaSize', 800);
+    c = withNumber(c, 'maxTime', 600);
+    c = withNumber(c, 'individualCV', 0.1);
+    c = withSampling(c, 'random');
+    c = withMorale(c, false);
+    expect(c.sides.map((s) => [s.species, s.count])).toEqual([
+      ['tiger', 3],
+      ['tiger', 5],
+    ]);
+    expect([c.runs, c.seed, c.arenaSize, c.maxTime, c.individualCV, c.sampling, c.morale]).toEqual([
+      250,
+      7,
+      800,
+      600,
+      0.1,
+      'random',
+      false,
+    ]);
+    expect(c).toEqual(sanitizeFreeConfig(c));
+    expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
+  });
+
+  it('keeps the count and resets the ranges when the species changes', () => {
+    let c = sanitizeFreeConfig({
+      sides: [{ species: 'lion', count: 6, params: { mass: { min: 120, mode: 130, max: 140 } } }],
+    });
+    c = withSideSpecies(c, 0, 'wolf');
+    expect(c.sides[0].count).toBe(6);
+    const wolf = sanitizeFreeConfig({ sides: [{ species: 'wolf' }] });
+    expect(c.sides[0].params.mass).toEqual(wolf.sides[0].params.mass);
+  });
+
+  it('ignores invalid input and clamps out-of-range values', () => {
+    const d = defaultFreeConfig();
+    expect(withSideSpecies(d, 0, 'dragon')).toBe(d);
+    expect(withSideCount(d, 0, Number.NaN)).toBe(d);
+    expect(withNumber(d, 'runs', Number.POSITIVE_INFINITY)).toBe(d);
+    expect(withSideCount(d, 1, 99999).sides[1].count).toBe(5000);
+    expect(withSampling(d, 'bogus').sampling).toBe(d.sampling);
+  });
+});
 
 const tigersVsLions = (): FreeConfig =>
   sanitizeFreeConfig({
