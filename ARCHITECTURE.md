@@ -132,14 +132,15 @@ Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run insi
 
 `vite.pages.ts` `findHtmlEntries()` turns every `index.html` in the repository into a build input, so a new page needs no config change ([docs/PAGES.md](docs/PAGES.md)).
 
-| Entry                                         | Script                          | Purpose                                                                                                               |
-| --------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `index.html`, `en/index.html`                 | `src/main.ts` → `src/ui/app.ts` | The simulator in Korean (`/`) and English (`/en/`); language comes from the URL ([SEO.md](docs/SEO.md))               |
-| `<page>/index.html`, `en/<page>/index.html`   | `src/pages/site.ts`             | Static, crawlable guide, model, parameters, about and privacy pages in Korean and English ([PAGES.md](docs/PAGES.md)) |
-| `reset/index.html`                            | `src/reset.ts`                  | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                 |
-| `license/index.html`, `en/license/index.html` | `src/pages/site.ts`             | MIT text and third-party notices                                                                                      |
-| `404.html`, `en/404.html`                     | `src/pages/site.ts`             | Real 404 pages (disable the Pages SPA fallback)                                                                       |
-| `r/index.html`, `en/r/index.html`             | `src/share/result-page.ts`      | Shared-result pages (`?r=`): noindex, not in the sitemap, never load the simulator ([SHARING.md](docs/SHARING.md))    |
+| Entry                                                 | Script                          | Purpose                                                                                                                                    |
+| ----------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `index.html`, `en/index.html`                         | `src/main.ts` → `src/ui/app.ts` | The simulator in Korean (`/`) and English (`/en/`); language comes from the URL ([SEO.md](docs/SEO.md))                                    |
+| `<page>/index.html`, `en/<page>/index.html`           | `src/pages/site.ts`             | Static, crawlable guide, model, parameters, about and privacy pages in Korean and English ([PAGES.md](docs/PAGES.md))                      |
+| `patch-notes/index.html`, `en/patch-notes/index.html` | `src/pages/site.ts`             | Patch notes board: one card per release, generated at build time from `src/content/patch-notes.ts` ([PAGES.md](docs/PAGES.md#patch-notes)) |
+| `reset/index.html`                                    | `src/reset.ts`                  | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                                      |
+| `license/index.html`, `en/license/index.html`         | `src/pages/site.ts`             | MIT text and third-party notices                                                                                                           |
+| `404.html`, `en/404.html`                             | `src/pages/site.ts`             | Real 404 pages (disable the Pages SPA fallback)                                                                                            |
+| `r/index.html`, `en/r/index.html`                     | `src/share/result-page.ts`      | Shared-result pages (`?r=`): noindex, not in the sitemap, never load the simulator ([SHARING.md](docs/SHARING.md))                         |
 
 At build time `vite.seo.ts` (code in `src/seo/`) writes the head tags, JSON-LD, `sitemap.xml`, `robots.txt` and `llms*.txt` from the page registry ([SEO.md](docs/SEO.md)). Species presets and bounds live in `src/sim/species.ts` ([SPECIES.md](docs/SPECIES.md)); the replay renderer and its event log are described in [REPLAY.md](docs/REPLAY.md) and MODEL.md §2.6.
 

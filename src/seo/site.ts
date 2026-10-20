@@ -87,6 +87,7 @@ export const PAGE_TYPE: Readonly<Record<Exclude<PageId, 'simulator'>, string>> =
   model: 'TechArticle',
   parameters: 'TechArticle',
   about: 'AboutPage',
+  'patch-notes': 'WebPage',
   privacy: 'WebPage',
   license: 'WebPage',
 };

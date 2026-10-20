@@ -2,7 +2,9 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import type { Plugin } from 'vite';
+import { expandPatchNotes } from './src/pages/patch-notes-page.ts';
 import { notFoundLang, parsePagePath, type PageId } from './src/pages/routes.ts';
+import { headerRouteOf } from './src/pages/site-header.ts';
 import { extractPageFacts } from './src/seo/extract.ts';
 import { injectHead } from './src/seo/head.ts';
 import { llmsFullTxt, llmsTxt, type LlmsPage } from './src/seo/llms.ts';
@@ -136,8 +138,12 @@ export function seo({ root, version, deepen }: SeoOptions): Plugin {
     }
     return gitDates.get(file) ?? null;
   };
-  const sourceOf = (page: PageId, lang: Lang): string =>
-    readFileSync(join(root, pageSource(page, lang)), 'utf8');
+  // Generated page content (the patch notes board) is filled in, so llms-full.txt carries it.
+  const sourceOf = (page: PageId, lang: Lang): string => {
+    const file = pageSource(page, lang);
+    const html = readFileSync(join(root, file), 'utf8');
+    return expandPatchNotes(html, headerRouteOf(`/${file}`), version, file);
+  };
   const lastmod = (page: PageId, lang: Lang): string | null =>
     pageLastmod(extractPageFacts(sourceOf(page, lang)).updated, gitDate(page, lang));
   const pages = (): LlmsPage[] =>

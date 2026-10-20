@@ -48,15 +48,22 @@
   }
 }
 
-/* 320–360 px: all items on one line. */
+/* 320–360 px: one line in Korean; the longer English labels may wrap to a second line. */
 @media (max-width: 360px) {
   .site-nav-list {
     gap: 0;
   }
 
   .site-nav-link {
-    padding: 0 4px;
+    padding: 0 2px;
+    font-size: 0.78rem;
+    letter-spacing: -0.01em;
+  }
+
+  .site-nav:lang(en) .site-nav-link {
+    padding: 0 5px;
     font-size: 0.84rem;
+    letter-spacing: normal;
   }
 }
 

@@ -163,6 +163,9 @@
 }
 
 .version-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
   font-size: 0.875rem;
 }
 
@@ -263,8 +266,25 @@
 
 .update-banner-actions {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
   gap: 6px;
   margin-left: auto;
+}
+
+/* Link to the deployed version's patch notes card, beside the update buttons. */
+.update-banner-notes {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 6px;
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+
+.update-banner-notes[hidden] {
+  display: none;
 }
 
 @keyframes update-banner-in {
