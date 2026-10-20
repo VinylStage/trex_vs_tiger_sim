@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.5...trex-vs-tiger-sim-v0.2.6) (2026-10-20)
+
+
+### Features
+
+* **sim:** symmetric free engine, individual layer ([#83](https://github.com/VinylStage/trex_vs_tiger_sim/issues/83)) ([8a629c7](https://github.com/VinylStage/trex_vs_tiger_sim/commit/8a629c722f178c285737453e4fc519cd54a7f306))
+
 ## [0.2.5](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.4...trex-vs-tiger-sim-v0.2.5) (2026-10-20)
 
 
