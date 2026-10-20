@@ -620,7 +620,14 @@ export function paintTornado(
       Math.max(...rows.map((r) => ctx.measureText(label(r.id)).width)),
     );
     const measure = (s: string): number => ctx.measureText(s).width;
-    const headH = 20;
+    ctx.font = font(theme, 12);
+    const packHead = t('chart.favPack');
+    const heavyHead = t('chart.favHeavy');
+    const headW = measure(packHead) + measure(heavyHead) + 12;
+    // The direction labels sit over the plot; when they do not fit there they may use the label
+    // column's width too, and failing that take a row each.
+    const twoRowHead = headW > w - 4;
+    const headH = twoRowHead ? 36 : 20;
     const left = labelW + 12;
     const right = w - 4;
     const valueRoom = ctx.measureText('−0.00').width + 8;
@@ -630,12 +637,12 @@ export function paintTornado(
     const barH = Math.min(18, bandH * 0.6);
 
     ctx.fillStyle = theme.muted;
-    ctx.font = font(theme, 12);
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
-    ctx.fillText(t('chart.favPack'), left, headH / 2);
+    const packX = headW <= right - left ? left : 0;
+    ctx.fillText(packHead, packX, twoRowHead ? 9 : headH / 2);
     ctx.textAlign = 'right';
-    ctx.fillText(t('chart.favHeavy'), right, headH / 2);
+    ctx.fillText(heavyHead, right, twoRowHead ? 27 : headH / 2);
 
     ctx.strokeStyle = theme.grid;
     ctx.lineWidth = 1;
