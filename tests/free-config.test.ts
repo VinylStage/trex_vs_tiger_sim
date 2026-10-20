@@ -12,6 +12,8 @@ import {
   defaultFreeConfig,
   freeRanges,
   freeWorkEstimate,
+  freeWorkWeight,
+  FREE_WORK_WEIGHT_BUFF,
   isFreeConfig,
   sanitizeFreeConfig,
   type FreeConfig,
@@ -266,5 +268,42 @@ describe('free design', () => {
     );
     expect(fnv(legacy.values)).toBe(fnv(direct.values));
     expect(legacy.dims).toBe(PARAMS.length);
+  });
+});
+
+describe('work weight of the pack buff (design §7)', () => {
+  const OFF = { coordinate: false, focus: false, groupLatch: false, morale: false, relief: false };
+  const pair = (a: string, b: string, packBuff?: object) =>
+    sanitizeFreeConfig({
+      sides: [{ species: a }, { species: b }],
+      ...(packBuff ? { packBuff } : {}),
+    });
+
+  it('counts an agent-step once without an active pack buff', () => {
+    expect(freeWorkWeight(pair('tiger', 'brownBear'))).toBe(1);
+    expect(freeWorkWeight(pair('wolf', 'buffalo', OFF))).toBe(1);
+  });
+
+  it('weights configs with a social side and any effect on', () => {
+    expect(freeWorkWeight(pair('wolf', 'buffalo', { ...OFF, relief: true }))).toBe(
+      FREE_WORK_WEIGHT_BUFF,
+    );
+  });
+
+  it('caps runs by the weighted work', () => {
+    const input = {
+      runs: 20000,
+      maxTime: 3600,
+      sides: [
+        { species: 'wolf', count: 5000 },
+        { species: 'trex', count: 500 },
+      ],
+    };
+    const buffed = sanitizeFreeConfig(input);
+    const plain = sanitizeFreeConfig({ ...input, packBuff: OFF });
+    const perRun = Math.round(3600 / DT) * 5500 * FREE_WORK_WEIGHT_BUFF;
+    expect(buffed.runs).toBe(Math.max(1, Math.floor(MAX_WORK / perRun)));
+    expect(buffed.runs).toBeLessThan(plain.runs);
+    expect(freeWorkEstimate(buffed)).toBeLessThanOrEqual(MAX_WORK);
   });
 });

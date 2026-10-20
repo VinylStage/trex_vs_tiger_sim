@@ -97,6 +97,44 @@
   border-color: var(--accent);
 }
 
+.free-badges li.is-buff {
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+.free-rules {
+  margin: 0 0 12px;
+}
+
+.free-rules summary {
+  cursor: pointer;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+}
+
+.free-rules ul {
+  margin: 4px 0 0;
+  padding-left: 1.2em;
+}
+
+.free-rules li {
+  margin: 4px 0;
+  overflow-wrap: anywhere;
+}
+
+.free-buff-switches {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 4px 12px;
+}
+
+.free-buff .hint {
+  display: block;
+  margin-top: 6px;
+}
+
 .free-note {
   color: var(--muted);
   font-size: 0.9rem;
@@ -110,4 +148,9 @@
 
 .free-tools {
   margin-top: 12px;
+}
+
+/* Pack-buff result card marker (abstract, accent colour). */
+.mk-buff {
+  background: var(--accent);
 }

@@ -344,6 +344,17 @@ All sampled triangulars `min / mode / max`, `individual: false`, tag **S** unles
 
 A non-social species gets **none** of E1–E5, at any count: each agent targets its own nearest enemy, approaches directly, has no morale support and feels no allies' deaths or routs. Crowding instead **interferes**: when `k ≥ 2` unbuffed allies are within strike reach of the same target, each one's strike accuracy and latch chance are multiplied by `1 / (1 + interference × (k − 1))`, `interference` = **0.1** (**S**, 0–0.3). The same rule applies to a social agent whose buff is inactive, which is what makes §5.5 hold. Basis: assumption; even wolves show falling individual effort as group size grows [MacNulty 2012], and uncoordinated animals obstruct each other at a target.
 
+### 5.7 Implementation notes (P4)
+
+Decisions taken while implementing the layer (`src/sim/free/engine.ts`):
+
+- **E1 only against larger prey.** The slot approach applies when the target is at least `K_knock` times heavier than the attacker. Against an agile animal of similar size (5 lions v 5 tigers) circling to the rear only delayed the fight and cost the lions wins (118 → 75 of 200); with the condition the effect is neutral there and still helps against buffalo and bears.
+- **Crowding.** Coordinated (E1) buffed agents are exempt from interference and not counted; the exemption follows the `coordinate` switch, so every effect stays separately switchable.
+- **Caps as constants.** The group-latch cap (2×), restraint (0.1 per rider, floor 0.5) and the support bound `c_max` (0.1) are constants, not sampled columns: a new column would change the free design layout and the P3 golden. Their sensitivity ranges stay as stated in §5.2.
+- **Contagion.** Bounded per agent and tick: at most 3 allies' deaths (**S**, sensitivity 1–5) and 1 ally's rout (**S**, 1–3) cost morale in one tick; both are assumptions (constants `contagionDeathCap`, `contagionRoutCap`). Without the bound a few routs in a large pack cascaded into a rout of nearly all 5,000 wolves within about a second. Sources are counted on a coarse grid with cell size R, so "within R" means "in the surrounding 3×3 block of cells" (every source within R, some up to about 2R).
+- **Refresh and search bounds.** Status every 0.5 s, morale support every 2 s with counts capped at 16, relief checks every 0.5 s among the 32 nearest candidates; lone agents are rejected in O(1) by a coarse count. See docs/PERFORMANCE.md "Pack buff (P4)".
+- **Work weight.** Configs with an active buff count 2.5 agent-steps per agent-step in the work budget (§7).
+
 ## 6. UI and transparency
 
 - **Pickers.** The two species selects become "Side A" / "Side B" (ko: "진영 A" / "진영 B"), each listing every species with the existing extant/extinct optgroups, plus a count field per side. Changing a species resets that side's ranges (as today, `form.ts` 191–193).

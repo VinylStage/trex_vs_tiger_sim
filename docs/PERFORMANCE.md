@@ -104,9 +104,29 @@ The free (symmetric) engine of [#50](https://github.com/VinylStage/trex_vs_tiger
 | 50 v 1,000               |    8 |                    349 |                                    244 |          0.70 |
 | 500 v 5,000              |    2 |                    951 |                                    439 |          0.46 |
 
-The free engine is cheaper per agent-step at every size. The largest difference is at 500 v 5,000, where the legacy flank tactic scans every heavy linearly once per pack animal per second (`chooseHeavy`); the free individual layer has no flank targeting and uses the grid for every neighbour query. These numbers cover the individual layer (P3). The pack buff (P4) adds capped cohesion queries for social sides and must be re-measured against the same 1.5× gate (design §7).
+The free engine is cheaper per agent-step at every size. The largest difference is at 500 v 5,000, where the legacy flank tactic scans every heavy linearly once per pack animal per second (`chooseHeavy`); the free individual layer has no flank targeting and uses the grid for every neighbour query. These numbers cover the individual layer (P3); the pack buff follows.
 
-**Regression test.** `tests/free-perf.test.ts` has two halves. In every `npm test` it checks the deterministic part of the claim: `freeWorkEstimate` counts the same agent-steps as `workEstimate` for the same matchup, and a seeded 10 v 100 batch never simulates more agent-steps than the budget counted. The timing gate (the free engine costs at most 1.5× the legacy engine per agent-step at 10 v 100, median of 7 interleaved rounds after a warm-up) runs only with `BENCH=1 npx vitest run tests/free-perf.test.ts`: wall time is not deterministic, and in the default suite a single slow round on a loaded machine failed it although the measured ratio is about 0.7 (#82). Run the gate whenever `src/sim/free/engine.ts` changes.
+### Pack buff (P4)
+
+The pack-buff layer adds per-agent cohesion checks, morale support counts, shared-target scans, slot geometry, contagion and relief searches for social sides. What keeps them bounded:
+
+- **Staggered refresh.** Buff status and cohesion every 0.5 s (5 ticks), morale support every 2 s, relief checks on the agent's refresh ticks, each staggered by agent index.
+- **Capped and early-exit queries.** `SpatialGrid.countWithin` stops at its cap (16 for morale support); `hasWithin` checks the agent's own cell first; `firstWithin` searches rings of cells outward and stops after 32 candidates (relief).
+- **Exact coarse rejects.** A per-tick count of active allies on a grid with cell size R_coh: an empty 3×3 block proves there is no ally within R_coh, so lone agents in a sparse late battle cost O(1).
+- **Contagion field.** Deaths and routs of a tick are counted into a coarse grid, and each buffed ally sums its 3×3 block, at most 3 deaths and 1 rout per tick (design §5, these caps also stop a few routs from collapsing a whole large pack within a second).
+- **Exact optimizations shared with the individual layer.** `wrap()` skips the float modulo when |a| < 2π, `SpatialGrid.query`/`countWithin` are clipped to the occupied box, and search scratch values live in a `Float64Array` (no boxed numbers). All goldens are unchanged.
+
+Even so, with an active buff a free agent-step costs more than a legacy one: per raw agent-step 2.7× at 10 _T. rex_ v 100 wolves, 1.6× at 50 v 1,000 and 1.8× at 500 v 5,000 (and up to 2.4× in long morale-off battles). As design §7 provides, the work budget therefore counts such configs at **`FREE_WORK_WEIGHT_BUFF` = 2.5** agent-steps per agent-step (`freeWorkWeight`, `src/sim/free/config.ts`): `sanitizeFreeConfig` lowers `runs` accordingly and `MAX_WORK` keeps its meaning. Per weighted agent-step:
+
+| Size, buff on (wolves) | Legacy (ns/agent-step) | Free (ns/weighted agent-step) | Free / legacy |
+| ---------------------- | ---------------------: | ----------------------------: | ------------: |
+| 10 v 100               |                    192 |                           205 |          1.07 |
+| 50 v 1,000             |                    335 |                           214 |          0.64 |
+| 500 v 5,000            |                  1,012 |                           745 |          0.74 |
+
+The non-social rows (tigers) re-measured on the same run: 0.93, 0.61 and 0.44.
+
+**Regression test.** `tests/free-perf.test.ts` has two halves. In every `npm test` it checks the deterministic part of the claim: `freeWorkEstimate` counts the same agent-steps as `workEstimate` for the same matchup (and exactly `FREE_WORK_WEIGHT_BUFF` times as many with an active pack buff), and seeded 10 v 100 batches (tigers, and wolves with the buff on) never simulate more (weighted) agent-steps than the budget counted. The timing gates (the free engine costs at most 1.5× the legacy engine per agent-step at 10 v 100 with tigers, and per weighted agent-step with wolves and the buff on; median of 7 interleaved rounds after a warm-up) run only with `BENCH=1 npx vitest run tests/free-perf.test.ts`: wall time is not deterministic, and in the default suite a single slow round on a loaded machine failed them (#82). Run the gates whenever `src/sim/free/engine.ts` changes.
 
 ## Not changed
 

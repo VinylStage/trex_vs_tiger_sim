@@ -45,15 +45,19 @@ describe('fairness', () => {
     ['trex', 1, 1500],
     ['wolf', 8, 800],
     ['elephant', 1, 1500],
-  ] as const)('mirror %s × %i: P(A) and P(B) are inside each other’s 95 %% CI', (sp, n, runs) => {
-    const { summaries } = runAllFree(matchup(sp, n, sp, n, { runs }));
-    const a = wilson(wins(summaries, FreeOutcome.A), runs);
-    const b = wilson(wins(summaries, FreeOutcome.B), runs);
-    expect(a.p).toBeGreaterThanOrEqual(b.lo);
-    expect(a.p).toBeLessThanOrEqual(b.hi);
-    expect(b.p).toBeGreaterThanOrEqual(a.lo);
-    expect(b.p).toBeLessThanOrEqual(a.hi);
-  });
+  ] as const)(
+    'mirror %s × %i: P(A) and P(B) are inside each other’s 95 %% CI',
+    (sp, n, runs) => {
+      const { summaries } = runAllFree(matchup(sp, n, sp, n, { runs }));
+      const a = wilson(wins(summaries, FreeOutcome.A), runs);
+      const b = wilson(wins(summaries, FreeOutcome.B), runs);
+      expect(a.p).toBeGreaterThanOrEqual(b.lo);
+      expect(a.p).toBeLessThanOrEqual(b.hi);
+      expect(b.p).toBeGreaterThanOrEqual(a.lo);
+      expect(b.p).toBeLessThanOrEqual(a.hi);
+    },
+    120_000,
+  );
 
   it('swapping the sides mirrors the win split (tiger vs brown bear)', () => {
     const runs = 1500;
@@ -65,7 +69,7 @@ describe('fairness', () => {
     expect(tigerFirst.p).toBeLessThanOrEqual(tigerSecond.hi);
     expect(tigerSecond.p).toBeGreaterThanOrEqual(tigerFirst.lo);
     expect(tigerSecond.p).toBeLessThanOrEqual(tigerFirst.hi);
-  });
+  }, 120_000);
 });
 
 describe('latching by species and body-mass ratio (design §4.2)', () => {

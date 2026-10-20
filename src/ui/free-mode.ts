@@ -1,6 +1,12 @@
 import { LIMITS, SAMPLING_METHODS } from '../sim/config';
 import type { FreeAggregate } from '../sim/free/aggregate';
-import { FREE_LIMITS, sanitizeFreeConfig, type FreeConfig } from '../sim/free/config';
+import {
+  FREE_LIMITS,
+  GLOBALS,
+  PACK_BUFF_EFFECTS,
+  sanitizeFreeConfig,
+  type FreeConfig,
+} from '../sim/free/config';
 import { FREE_SPECIES, FREE_SPECIES_IDS, type FreeSpeciesId } from '../sim/free/species';
 import type { Interval } from '../sim/stats';
 import { HEAVY_SPECIES, PACK_SPECIES, type Era, type SpeciesId } from '../sim/species';
@@ -12,6 +18,8 @@ import { getLang, speciesCounter, speciesName, t, teamLabel, type MsgKey } from 
 import { CancelledError, type PoolProgress, type SimPool } from './pool';
 import { formatBound, formatShare } from './verdict';
 import {
+  sideBuffState,
+  withBuffSwitch,
   withMorale,
   withNumber,
   withSampling,
@@ -233,16 +241,90 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     return el;
   }
 
-  function badges(species: FreeSpeciesId): HTMLElement {
+  function badges(i: SideIndex): HTMLElement {
+    const species = cfg.sides[i].species;
     const s = FREE_SPECIES[species];
+    const buff = sideBuffState(cfg, i, s.social);
+    const buffKey: MsgKey | null =
+      buff === 'active'
+        ? 'free.badge.buffActive'
+        : buff === 'off'
+          ? 'free.badge.buffOff'
+          : buff === 'alone'
+            ? 'free.badge.alone'
+            : null;
     return h(
       'ul',
       { class: 'free-badges' },
+      buffKey ? h('li', { class: buff === 'active' ? 'is-buff' : '', text: t(buffKey) }) : null,
       h('li', {
         class: s.social ? 'is-social' : '',
         text: t(s.social ? 'free.badge.social' : 'free.badge.solitary'),
       }),
       h('li', { text: t(s.canLatch ? 'free.badge.latch' : 'free.badge.strike') }),
+    );
+  }
+
+  /** The pack-buff rules (design §5) as a disclosure, with this matchup's cohesion radius. */
+  function rules(): HTMLElement {
+    const social = cfg.sides.filter((x) => FREE_SPECIES[x.species].social);
+    const radius =
+      social.length > 0
+        ? Math.round(Math.max(...social.map((x) => x.buff.cohesionRadius.mode)))
+        : 60;
+    const grace = GLOBALS.find((g) => g.id === 'buffGrace')?.preset.mode ?? 2;
+    const keys: MsgKey[] = [
+      'free.rules.activation',
+      'free.rules.coordinate',
+      'free.rules.focus',
+      'free.rules.groupLatch',
+      'free.rules.morale',
+      'free.rules.relief',
+      'free.rules.deactivation',
+      'free.rules.loners',
+    ];
+    return h(
+      'details',
+      { class: 'free-rules' },
+      h('summary', { text: t('free.rules.summary') }),
+      h(
+        'ul',
+        {},
+        ...keys.map((k) =>
+          h('li', { text: t(k, { r: formatInt(radius), grace: formatNum(grace, 0) }) }),
+        ),
+      ),
+    );
+  }
+
+  /** One checkbox per pack-buff effect; shown when either side is a social species. */
+  function buffSwitches(): HTMLElement | null {
+    if (!cfg.sides.some((x) => FREE_SPECIES[x.species].social)) return null;
+    const list = h('div', { class: 'free-buff-switches' });
+    for (const e of PACK_BUFF_EFFECTS) {
+      const id = nextId(`free-buff-${e}`);
+      const box = h('input', { id, attrs: { type: 'checkbox' } });
+      box.checked = cfg.packBuff[e];
+      box.addEventListener('change', () => {
+        cfg = withBuffSwitch(cfg, e, box.checked);
+        commit(id);
+      });
+      list.append(
+        h(
+          'label',
+          { class: 'check', attrs: { for: id } },
+          box,
+          h('span', { text: t(`free.buff.${e}`) }),
+        ),
+      );
+    }
+    const hintId = nextId('free-buff-hint');
+    return h(
+      'fieldset',
+      { class: 'free-shared free-buff', attrs: { 'aria-describedby': hintId } },
+      h('legend', { text: t('free.buff.title') }),
+      list,
+      h('small', { class: 'hint', id: hintId, text: t('free.buff.help') }),
     );
   }
 
@@ -268,7 +350,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
         count,
         cid,
       ),
-      badges(side.species),
+      badges(i),
     );
   }
 
@@ -364,6 +446,8 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       formEl.replaceChildren(
         h('div', { class: 'free-sides' }, sideFieldset(0), sideFieldset(1)),
         ...matchupNotes(),
+        rules(),
+        ...[buffSwitches()].filter((e): e is HTMLElement => e !== null),
         sharedSettings(),
       );
       if (focusIndex >= 0) {
@@ -536,24 +620,37 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     const sideCards = (i: SideIndex): HTMLElement[] => {
       const s = i === 0 ? agg.a : agg.b;
       const side = t(sideKey(i));
-      return [
+      const out = [
         card(t('free.stat.survivors', { side }), formatNum(s.survivors, 2), of(i)),
         card(t('free.stat.killed', { side }), formatNum(s.killed, 1), of(i)),
         card(t('free.stat.routed', { side }), formatNum(s.routed, 1), of(i)),
       ];
+      // Pack buff (design §6): only where it could apply, a social side of two or more.
+      if (sideBuffState(c, i, FREE_SPECIES[c.sides[i].species].social) === 'active') {
+        const b = i === 0 ? agg.buffA : agg.buffB;
+        out.push(
+          card(
+            t('free.stat.buff', { side }),
+            formatPct(b.mean.activeFrac, 0),
+            t('free.stat.buffSub', { t: formatDuration(b.anyTimeMedian) }),
+            'mk-buff',
+          ),
+        );
+      }
+      return out;
     };
     cardsEl.replaceChildren(
       card(
         t('free.win', { side: t('free.sideA') }),
         formatShare(agg.aWins, agg.n),
         shareSub(agg.aWins, agg.n, agg.pA),
-        'mk-trex',
+        'mk-heavy',
       ),
       card(
         t('free.win', { side: t('free.sideB') }),
         formatShare(agg.bWins, agg.n),
         shareSub(agg.bWins, agg.n, agg.pB),
-        'mk-tiger',
+        'mk-pack',
       ),
       card(
         t('outcome.draw'),
