@@ -9,6 +9,17 @@
 5. CI must be green. PRs are **squash-merged**; the PR title becomes the commit subject, so it must be a valid conventional commit.
 6. [release-please](https://github.com/googleapis/release-please) opens a release PR from the commit history; merging it tags a release and updates `CHANGELOG.md`.
 
+## Release cadence
+
+Releasing is part of every work cycle, not a separate milestone:
+
+1. After each merged `feat` or `fix` PR (or a small batch merged together), check the open release-please PR.
+2. Validate it: the diff touches only `package.json`, `package-lock.json`, `.release-please-manifest.json` and `CHANGELOG.md`; run `npm run check` and `npm run build` on its head and confirm `dist/version.json` shows the new version. Its own CI does not run, because release-please creates it with `GITHUB_TOKEN`.
+3. Squash-merge it. release-please then creates the tag (`trex-vs-tiger-sim-vX.Y.Z`) and the GitHub Release, and the IndexNow job submits the sitemap once production serves the new version.
+4. Confirm the GitHub Release exists and that `https://trex-vs-tiger.vinylims.com/version.json` reports the new version; the site's version badge then offers the update to open tabs.
+
+While the version is below 1.0.0, `feat` bumps the minor version and `fix` the patch version (`bump-minor-pre-major`).
+
 ## Local development
 
 ```bash
