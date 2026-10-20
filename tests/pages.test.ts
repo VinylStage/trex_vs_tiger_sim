@@ -913,6 +913,11 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
         HEAVY_SPECIES_IDS.map((id) => [id, String(HEAVY_SPECIES[id].constants.hide)]),
       ),
     );
+    expect(facts('intimidation')).toEqual(
+      Object.fromEntries(
+        HEAVY_SPECIES_IDS.map((id) => [id, String(HEAVY_SPECIES[id].constants.intimidation)]),
+      ),
+    );
     expect(facts('weapon')).toEqual(
       Object.fromEntries(HEAVY_SPECIES_IDS.map((id) => [id, HEAVY_SPECIES[id].weapon])),
     );

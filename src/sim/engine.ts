@@ -163,6 +163,12 @@ export function simulateBattle(
   // Species constants: no random draws, and exact identities for T. rex (hide 1) and the pack animal
   // (radius 0.8 m, the former engine constant), so v1 links reproduce bit-identically.
   const hide = HEAVY_SPECIES[config.heavySpecies].constants.hide;
+  // Morale lost to this heavy's hits and shake-offs. x × 1 is exact, so every species that
+  // shipped with intimidation 1 is unchanged.
+  const intimidation = HEAVY_SPECIES[config.heavySpecies].constants.intimidation;
+  const woundMoraleLoss = C.woundMoraleLoss * intimidation;
+  const throwMoraleLoss = C.throwMoraleLoss * intimidation;
+  const hitRecoverTime = C.recoverMinTime * intimidation;
   const packRadius = PACK_SPECIES[config.packSpecies].constants.radius;
   const bounds = boundsTable(config.heavySpecies, config.packSpecies);
 
@@ -473,7 +479,7 @@ export function simulateBattle(
             log?.emit(EventType.BiteHit, damageByte(dmg, tMaxHp[best] as number), i, best);
             tHp[best] = (tHp[best] as number) - dmg;
             if ((tHp[best] as number) <= 0) kill(best, DeathCause.Bite, i);
-            else toRecover(best, C.woundMoraleLoss, C.recoverMinTime);
+            else toRecover(best, woundMoraleLoss, hitRecoverTime);
           } else {
             log?.emit(EventType.BiteMiss, 0, i, best);
           }
@@ -601,7 +607,7 @@ export function simulateBattle(
               kill(j, DeathCause.Throw, h);
               break;
             }
-            toRecover(j, C.throwMoraleLoss, C.recoverMinTime);
+            toRecover(j, throwMoraleLoss, C.recoverMinTime);
             moveToward(j, a, C.throwDistance);
             break;
           }

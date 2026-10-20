@@ -1168,7 +1168,11 @@
               years ago, is modelled on the same terms as every animal: no clothing, tools, weapons,
               fire or trained fighting skill, only the physical capability of an average adult. It
               is a thought experiment on physical capability and does not depict or endorse real
-              violence. As the large animal, its attack is bare-hand striking and gripping.
+              violence. As the large animal, its attack is bare-hand striking and gripping. A third
+              constant, <code>intimidation</code>, scales the morale a pack animal loses, and its
+              minimum recovery time, when this large animal hits or throws it off: 1 for every
+              earlier species and 0.02 (speculative) for Homo erectus, whose bare hands do little
+              harm.
             </p>
             <p>
               Two constants are not sampled. <code>hide</code> multiplies the damage a large animal
@@ -1541,8 +1545,8 @@
                         data-species="homoErectus"
                         data-param="heavy.biteLethality"
                         data-ev="S"
-                        value="0.3 1 2"
-                        >0.3 · 1 · 2</data
+                        value="0.2 0.5 1"
+                        >0.2 · 0.5 · 1</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -1817,8 +1821,8 @@
                         data-species="homoErectus"
                         data-param="heavy.biteAccuracy"
                         data-ev="S"
-                        value="0.2 0.35 0.55"
-                        >0.2 · 0.35 · 0.55</data
+                        value="0.15 0.25 0.4"
+                        >0.15 · 0.25 · 0.4</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -1886,8 +1890,8 @@
                         data-species="homoErectus"
                         data-param="heavy.shakeRate"
                         data-ev="S"
-                        value="0.1 0.25 0.5"
-                        >0.1 · 0.25 · 0.5</data
+                        value="0.03 0.08 0.15"
+                        >0.03 · 0.08 · 0.15</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -1994,6 +1998,19 @@
                     <td><data data-k="hide" data-species="brownBear" value="0.5">0.5</data></td>
                     <td><data data-k="hide" data-species="mammoth" value="0.25">0.25</data></td>
                     <td><data data-k="hide" data-species="homoErectus" value="1">1</data></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Intimidation <code>intimidation</code></th>
+                    <td><data data-k="intimidation" data-species="trex" value="1">1</data></td>
+                    <td><data data-k="intimidation" data-species="elephant" value="1">1</data></td>
+                    <td><data data-k="intimidation" data-species="buffalo" value="1">1</data></td>
+                    <td><data data-k="intimidation" data-species="brownBear" value="1">1</data></td>
+                    <td><data data-k="intimidation" data-species="mammoth" value="1">1</data></td>
+                    <td>
+                      <data data-k="intimidation" data-species="homoErectus" value="0.02"
+                        >0.02</data
+                      >
+                    </td>
                   </tr>
                 </tbody>
               </table>

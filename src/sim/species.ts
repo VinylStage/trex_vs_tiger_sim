@@ -96,6 +96,12 @@ export interface HeavySpecies extends SpeciesBase<HeavyKey> {
   readonly constants: {
     /** Multiplier on pack damage taken (thick skin, fat, fur). 1 = none. */
     readonly hide: number;
+    /**
+     * Multiplier on the morale a pack animal loses when this heavy's attack hits it
+     * (`woundMoraleLoss`). 1 for every species that shipped before #47 (an exact identity);
+     * below 1 for a heavy whose hits do little harm and so frighten a predator less.
+     */
+    readonly intimidation: number;
   };
 }
 
@@ -159,6 +165,13 @@ const HEAVY_HOMININ_BOUNDS = {
   bodyRadius: [0.1, 8],
 } as const;
 
+/**
+ * Morale effect of an unarmed hominin's hit on a predator, relative to every other heavy
+ * (docs/SPECIES.md §4.10, **S**): a bare-hand blow costs a 40–180 kg carnivore a few HP, far
+ * from the bites, tusks and horns the shared `woundMoraleLoss` was set for.
+ */
+const HOMO_ERECTUS_INTIMIDATION = 0.02;
+
 /** _Homo erectus_ era: first appearance about 1.9 Ma, last at Ngandong 117–108 ka. */
 const ERA_HOMO_ERECTUS: Era = { fromMa: 1.9, toMa: 0.11 };
 
@@ -184,6 +197,7 @@ function heavy(
   hide: number,
   rows: Readonly<Record<HeavyKey, Row>>,
   bounds: Readonly<Record<HeavyKey, readonly [number, number]>> = HEAVY_WIDE_BOUNDS,
+  intimidation = 1,
 ): HeavySpecies {
   return {
     id,
@@ -192,7 +206,7 @@ function heavy(
     adSafe: true,
     hominin: isHominin(id),
     weapon,
-    constants: { hide },
+    constants: { hide, intimidation },
     bounds,
     ...split(rows),
   };
@@ -300,15 +314,16 @@ export const HEAVY_SPECIES: Readonly<Record<HeavySpeciesId, HeavySpecies>> = {
       speed: [5, 6.5, 8.5, 'S'],
       turnRate: [120, 200, 300, 'S'],
       biteForce: [0.8, 1.5, 2.4, 'D'],
-      biteLethality: [0.3, 1, 2, 'S'],
+      biteLethality: [0.2, 0.5, 1, 'S'],
       biteInterval: [0.6, 1, 2, 'S'],
       biteReach: [0.7, 0.85, 1, 'S'],
       biteArc: [50, 70, 100, 'S'],
-      biteAccuracy: [0.2, 0.35, 0.55, 'S'],
-      shakeRate: [0.1, 0.25, 0.5, 'S'],
+      biteAccuracy: [0.15, 0.25, 0.4, 'S'],
+      shakeRate: [0.03, 0.08, 0.15, 'S'],
       bodyRadius: [0.2, 0.25, 0.3, 'S'],
     },
     HEAVY_HOMININ_BOUNDS,
+    HOMO_ERECTUS_INTIMIDATION,
   ),
 };
 

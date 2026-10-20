@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { CONSTANTS } from '../src/sim/engine';
 import { PARAMS } from '../src/sim/params';
 import {
   COEXISTING_MATCHUPS,
@@ -178,5 +179,30 @@ describe('matchups', () => {
       expect(HEAVY_SPECIES_IDS).toContain(m.heavy);
       expect(PACK_SPECIES_IDS).toContain(m.pack);
     }
+  });
+});
+
+describe('intimidation (morale effect of heavy hits)', () => {
+  // Heavies that shipped before #47: their morale effects must stay exact identities.
+  const shipped = ['trex', 'elephant', 'buffalo', 'brownBear'] as const;
+
+  it('is exactly 1 for every shipped heavy, so earlier results are bit-identical', () => {
+    for (const id of shipped) {
+      const k = HEAVY_SPECIES[id].constants.intimidation;
+      expect(Object.is(k, 1)).toBe(true);
+      expect(Object.is(CONSTANTS.woundMoraleLoss * k, CONSTANTS.woundMoraleLoss)).toBe(true);
+      expect(Object.is(CONSTANTS.throwMoraleLoss * k, CONSTANTS.throwMoraleLoss)).toBe(true);
+      expect(Object.is(CONSTANTS.recoverMinTime * k, CONSTANTS.recoverMinTime)).toBe(true);
+    }
+    expect(HEAVY_SPECIES.mammoth.constants.intimidation).toBe(1);
+  });
+
+  it('is below 1 only for the unarmed hominin', () => {
+    const k = HEAVY_SPECIES.homoErectus.constants.intimidation;
+    expect(k).toBeGreaterThanOrEqual(0);
+    expect(k).toBeLessThan(1);
+    expect(
+      HEAVY_SPECIES_IDS.filter((id) => HEAVY_SPECIES[id].constants.intimidation !== 1),
+    ).toEqual(['homoErectus']);
   });
 });
