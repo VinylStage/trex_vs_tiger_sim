@@ -6,7 +6,7 @@ import { CameraRig, CameraTarget, ZOOM_AUTO, ZOOM_FIT } from './replay/camera';
 import { StagePainter, makeViewport, paintOverview, type DrawOptions } from './replay/draw';
 import { ReplayLegend } from './replay/legend';
 import { overviewCamera } from './replay/overview';
-import { prepare, type Prepared } from './replay/prepare';
+import { prepare, type Prepared, type PrepareOptions } from './replay/prepare';
 import { QualityGovernor, TIERS } from './replay/quality';
 import { TimelineStrip } from './replay/strip';
 import { readReplayTheme, type ReplayTheme } from './replay/theme';
@@ -28,7 +28,7 @@ import { World } from './replay/world';
 
 export { SPEEDS } from './replay/timeline';
 
-/** View modes: 0 = auto (follow the fight), 1 = whole arena, n > 1 = n× on the T-Rex centroid. */
+/** View modes: 0 = auto (follow the fight), 1 = whole arena, n > 1 = n× on the heavy centroid. */
 const ZOOMS: readonly { value: number; key: MsgKey }[] = [
   { value: ZOOM_AUTO, key: 'replay.zoomAuto' },
   { value: ZOOM_FIT, key: 'replay.zoomFit' },
@@ -83,7 +83,7 @@ interface DebugStats {
   fills: number;
   flashArea: number;
   maxFlashArea: number;
-  /** Most fill flashes one T-Rex started within any 1 s of real time, since the last reset. */
+  /** Most fill flashes one heavy started within any 1 s of real time, since the last reset. */
   maxFillsPerSecond: number;
   fillStarts: number;
   heavyTrails: number;
@@ -384,8 +384,8 @@ export class ReplayView {
    * Show a new trace from the start. Autoplays unless the viewer prefers reduced motion; then
    * a static overview is drawn and nothing animates until Play or a seek.
    */
-  load(trace: BattleTrace, autoplay = true): void {
-    const prep = prepare(trace);
+  load(trace: BattleTrace, autoplay = true, options: PrepareOptions = {}): void {
+    const prep = prepare(trace, options);
     this.prep = prep;
     this.world = new World(prep);
     this.painter = new StagePainter(prep);
@@ -804,7 +804,7 @@ export class ReplayView {
 
   // ---------- debug (?debug=fps) ----------
 
-  /** Record fill-flash starts per T-Rex (real time) to check ≤ 3 per second. */
+  /** Record fill-flash starts per heavy (real time) to check ≤ 3 per second. */
   private readonly onFill = (event: number, heavy: number): void => {
     const d = this.debug;
     if (!d || this.lastFillEvent[heavy] === event) return;

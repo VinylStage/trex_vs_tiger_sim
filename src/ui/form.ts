@@ -222,14 +222,22 @@ export interface ConfigForm {
   refresh(): void;
 }
 
-/** A short message with an optional undo action (the app shows it as a toast). */
-export type Notify = (message: string, undo?: () => void) => void;
+/** Where focus goes after a rebuild: a species picker or a preset chip (by index). */
+type FocusTarget = { role: Role } | { preset: number };
+
+/**
+ * The inline notice after a change that discarded edited ranges. It stays until the next such
+ * change, Undo or Dismiss (no timer, WCAG 2.2.1), right after the pickers and presets.
+ */
+interface Notice {
+  message: string;
+  undo?: { previous: ScenarioConfig; focus: FocusTarget };
+}
 
 export function createConfigForm(
   initial: ScenarioConfig,
   workers: number,
   onChange: (c: ScenarioConfig) => void,
-  notify: Notify = () => undefined,
 ): ConfigForm {
   let cfg: ScenarioConfig = structuredClone(initial);
   const root = h('form', { class: 'config-form', attrs: { novalidate: '' } });
@@ -245,6 +253,8 @@ export function createConfigForm(
   let costEl: HTMLParagraphElement | null = null;
   let modifiedEl: HTMLSpanElement | null = null;
   let detailsOpen = false;
+  let notice: Notice | null = null;
+  const presetBtns: HTMLButtonElement[] = [];
 
   /** Name placeholders of the edited config's species (the app's may name the shown results). */
   const names = (): Record<string, string> => speciesVars(cfg);
@@ -254,11 +264,17 @@ export function createConfigForm(
     onChange(structuredClone(cfg));
   };
 
+  function focusOn(target: FocusTarget): void {
+    if ('role' in target) speciesSels.get(target.role)?.focus();
+    else presetBtns[target.preset]?.focus();
+  }
+
   /** Replace the whole config (species changes relabel everything) and keep focus in place. */
-  function replace(next: ScenarioConfig, focusRole?: Role): void {
+  function replace(next: ScenarioConfig, focus: FocusTarget, nextNotice: Notice | null): void {
     cfg = next;
+    notice = nextNotice;
     build();
-    if (focusRole) speciesSels.get(focusRole)?.focus();
+    focusOn(focus);
     emit();
   }
 
@@ -384,11 +400,41 @@ export function createConfigForm(
   }
 
   /** Offer to undo a change that discarded edited ranges. */
-  function offerUndo(message: string, previous: ScenarioConfig): void {
-    notify(message, () => {
-      replace(previous);
-      notify(t('toast.restored'));
+  function buildNotice(): HTMLElement {
+    const region = h('div', {
+      class: 'undo-notice',
+      attrs: { role: 'status', 'aria-live': 'polite' },
     });
+    const n = notice;
+    if (!n) {
+      region.hidden = true;
+      return region;
+    }
+    region.append(h('span', { class: 'undo-text', text: n.message }));
+    const undo = n.undo;
+    if (undo) {
+      const undoBtn = h('button', {
+        class: 'btn btn-small',
+        text: t('toast.undo'),
+        attrs: { type: 'button' },
+      });
+      undoBtn.addEventListener('click', () => {
+        replace(undo.previous, undo.focus, { message: t('toast.restored') });
+      });
+      const dismiss = h('button', {
+        class: 'btn btn-small btn-ghost',
+        text: t('toast.dismiss'),
+        attrs: { type: 'button' },
+      });
+      dismiss.addEventListener('click', () => {
+        notice = null;
+        region.hidden = true;
+        clear(region);
+        focusOn(undo.focus);
+      });
+      region.append(undoBtn, dismiss);
+    }
+    return region;
   }
 
   function speciesField(role: Role): HTMLElement {
@@ -418,11 +464,14 @@ export function createConfigForm(
       if (!ids.includes(el.value)) return;
       const previous = structuredClone(cfg);
       const edited = roleEdited(previous, role);
-      replace(withSpecies(previous, role, el.value), role);
-      if (edited) {
-        const name = speciesName(role === 'heavy' ? cfg.heavySpecies : cfg.packSpecies);
-        offerUndo(t('toast.rangesReset', { name }), previous);
-      }
+      const next = withSpecies(previous, role, el.value);
+      const name = speciesName(role === 'heavy' ? next.heavySpecies : next.packSpecies);
+      const focus = { role };
+      replace(
+        next,
+        focus,
+        edited ? { message: t('toast.rangesReset', { name }), undo: { previous, focus } } : null,
+      );
     });
     speciesSels.set(role, el);
     const label = t(role === 'heavy' ? 'field.heavySpecies' : 'field.packSpecies');
@@ -530,15 +579,19 @@ export function createConfigForm(
     const group = h('div', { class: 'preset-buttons', attrs: { role: 'group' } });
     const labelId = uniqueId('presets');
     group.setAttribute('aria-labelledby', labelId);
-    for (const p of PRESETS) {
+    for (const [index, p] of PRESETS.entries()) {
       const label = presetLabel(p);
       const btn = h('button', { class: 'btn btn-chip', text: label, attrs: { type: 'button' } });
+      presetBtns.push(btn);
       btn.addEventListener('click', () => {
         const previous = structuredClone(cfg);
-        replace(withPreset(previous, p));
-        if (roleEdited(previous)) {
-          offerUndo(t('toast.presetApplied', { label: matchupLabel(p) }), previous);
-        }
+        const focus = { preset: index };
+        const message = t('toast.presetApplied', { label: matchupLabel(p) });
+        replace(
+          withPreset(previous, p),
+          focus,
+          roleEdited(previous) ? { message, undo: { previous, focus } } : null,
+        );
       });
       group.append(btn);
     }
@@ -697,6 +750,7 @@ export function createConfigForm(
     paramInputs.clear();
     paramRows.clear();
     speciesSels.clear();
+    presetBtns.length = 0;
     costEl = h('p', { class: 'cost-warning', attrs: { role: 'status' } });
     root.append(
       h(
@@ -704,6 +758,7 @@ export function createConfigForm(
         { class: 'matchup', attrs: { 'data-tour': 'presets' } },
         buildSpecies(),
         buildPresets(),
+        buildNotice(),
       ),
       buildBasic(),
       costEl,

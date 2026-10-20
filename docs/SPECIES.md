@@ -322,7 +322,7 @@ Findings carried over from the research runs:
 ## 9. Content rules
 
 - No humans and no domestic animals anywhere in the roster. Gorilla is excluded (not a predator, no heavy-vs-pack data).
-- The replay keeps abstract glyphs and role colours for every species (heavy = blue triangle, pack = orange dot sized from `radius`); no gore.
+- The replay keeps abstract glyphs and role colours for every species (heavy = blue triangle scaled from the species body radius, exactly 7 m for _T. rex_; pack = orange dot sized from `radius`); no gore.
 - Cross-era pairings are labelled "never met"; documented pairings link to sourced notes. Elephant copy mentions tusks only as anatomy.
 - Korean UI strings never put a particle after a species name; English strings use singular/plural forms chosen with `Intl.PluralRules`.
 

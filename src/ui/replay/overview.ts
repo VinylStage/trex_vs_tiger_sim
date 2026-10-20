@@ -16,21 +16,21 @@ import { heavyPose } from './world';
 
 /**
  * Static overview of the whole battle (docs/REPLAY.md §11), shown instead of an animation when
- * the viewer prefers reduced motion: T-Rex paths and tiger paths (both thinned when there are
+ * the viewer prefers reduced motion: heavy paths and pack animal paths (both thinned when there are
  * many), where latches happened,
- * where tigers died, and each T-Rex's final pose. Built once per trace and viewport; no rAF.
+ * where pack animals died, and each heavy's final pose. Built once per trace and viewport; no rAF.
  */
 export const OVERVIEW = {
-  /** At most this many tiger paths (evenly strided). */
+  /** At most this many pack animal paths (evenly strided). */
   maxPack: 600,
   /** At most this many path vertices in total; frames are strided to fit. */
   maxPoints: 150_000,
-  /** At most this many T-Rex paths; above thinTrexOver T-Rex they are drawn thin and lighter. */
+  /** At most this many heavy paths; above thinHeavyOver heavy they are drawn thin and lighter. */
   maxHeavy: 100,
   thinHeavyOver: 50,
   /** At most this many latch marks (evenly strided). */
   maxLatches: 2000,
-  /** Framing: margin around every T-Rex position (m) and the smallest view. */
+  /** Framing: margin around every heavy position (m) and the smallest view. */
   padM: 40,
   minViewM: 80,
   /** Latch marks are diamonds of 0.7 r. */
@@ -48,7 +48,7 @@ export const OVERVIEW_ORDER: readonly Bucket[] = [
   'heavyHalo',
 ];
 
-/** The camera framing every recorded T-Rex position (pure). */
+/** The camera framing every recorded heavy position (pure). */
 export function overviewCamera(p: Prepared): Camera {
   const L = p.L;
   let x0 = Infinity;
@@ -118,7 +118,7 @@ export function buildOverview(p: Prepared, vp: Viewport, sink: (b: Bucket) => Pa
   }
 
   const r = packRadiusPx(p.trace.meta.packRadius, scale);
-  // Latch marks: where each latch put the tiger on its host (ride position at the latch time).
+  // Latch marks: where each latch put the pack animal on its host (ride position at the latch time).
   let latches = 0;
   for (let k = 0; k < p.evCount; k++) {
     if (p.evType[k] === EventType.Latch && (p.evStep[k] as number) <= p.completeStep) latches++;
@@ -140,7 +140,7 @@ export function buildOverview(p: Prepared, vp: Viewport, sink: (b: Bucket) => Pa
     }
   }
 
-  // Kill marks: grey crosses where tigers died.
+  // Kill marks: grey crosses where pack animals died.
   const last = frames[F - 1] as TraceFrame;
   const kp = sink('deadCross');
   for (let j = 0; j < p.M; j++) {
@@ -155,8 +155,8 @@ export function buildOverview(p: Prepared, vp: Viewport, sink: (b: Bucket) => Pa
     );
   }
 
-  // Final T-Rex poses.
-  const len = heavyLengthPx(scale);
+  // Final heavy poses.
+  const len = heavyLengthPx(scale, p.heavyLengthM);
   for (let i = 0; i < p.N; i++) {
     const o = i * 4;
     const dead = (last.heavy[o + 3] as number) <= 0;

@@ -11,11 +11,11 @@ export interface QualityTier {
   readonly fills: boolean;
   /** Backing-store density cap. */
   readonly dprCap: number;
-  /** Draw tigers as LOD squares at any zoom. */
+  /** Draw pack animals as LOD squares at any zoom. */
   readonly forceLod: boolean;
 }
 
-/** T0 full · T1 no tiger trails · T2 + outline-only effects, DPR ≤ 2 · T3 + LOD squares, no trails. */
+/** T0 full · T1 no pack animal trails · T2 + outline-only effects, DPR ≤ 2 · T3 + LOD squares, no trails. */
 export const TIERS: readonly QualityTier[] = [
   { heavyTrails: true, packTrails: true, fills: true, dprCap: 3, forceLod: false },
   { heavyTrails: true, packTrails: false, fills: true, dprCap: 3, forceLod: false },

@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { defaultConfig } from '../src/sim/config';
-import { speciesRanges } from '../src/sim/species';
+import { HEAVY_SPECIES, speciesRanges } from '../src/sim/species';
+import { GLYPH, heavyLengthForRadius, heavyLengthPx } from '../src/ui/replay/glyphs';
 import {
   PRESETS,
   matchupInfo,
@@ -122,5 +123,19 @@ describe('matchup presets and species changes', () => {
     expect(roleEdited(next, 'heavy')).toBe(false);
     expect(roleEdited(next, 'pack')).toBe(true);
     expect(c.heavySpecies).toBe('trex');
+  });
+});
+
+describe('replay glyph sizes per species', () => {
+  it('keeps the T. rex triangle at exactly 7 m and scales others by body radius', () => {
+    expect(heavyLengthForRadius(HEAVY_SPECIES.trex.ranges.bodyRadius.mode)).toBe(7);
+    expect(heavyLengthPx(10)).toBe(70);
+    expect(heavyLengthPx(10, heavyLengthForRadius(2.5))).toBe(heavyLengthPx(10));
+    for (const id of ['elephant', 'buffalo', 'brownBear'] as const) {
+      const s = HEAVY_SPECIES[id];
+      const len = heavyLengthForRadius(s.ranges.bodyRadius.mode);
+      // The half-base stays inside the ring where the smallest pack animal latches.
+      expect(GLYPH.heavyHalfBase * len).toBeLessThan(s.ranges.bodyRadius.min + 0.5);
+    }
   });
 });

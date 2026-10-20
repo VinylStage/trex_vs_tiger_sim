@@ -44,28 +44,28 @@ export const BLEND = {
   biteLine: 0.55,
   lodRecover: 0.45,
   lodRouted: 0.75,
-  /** Trail segments by age (newest → oldest); tiger trails at 0.8 × these. */
+  /** Trail segments by age (newest → oldest); pack animal trails at 0.8 × these. */
   trail0: 0.38,
   trail1: 0.25,
   trail2: 0.13,
   packTrail: 0.8,
-  /** Reduced-motion overview: tiger paths. */
+  /** Reduced-motion overview: pack animal paths. */
   ovPack: 0.3,
 } as const;
 
 export interface ReplayTheme extends BaseColors {
   font: string;
-  /** Hollow (damaged) T-Rex fill: T-Rex blue at 16 %. */
+  /** Hollow (damaged) heavy fill: heavy blue at 16 %. */
   heavyTint: string;
-  /** Dead-tiger crosses and LOD squares: grey at 50 %. */
+  /** Dead-pack animal crosses and LOD squares: grey at 50 %. */
   deadMark: string;
-  /** Dead T-Rex outline: muted at 60 %. */
+  /** Dead heavy outline: muted at 60 %. */
   deadHeavy: string;
-  /** Latch tether: tiger orange at 85 %. */
+  /** Latch tether: pack animal orange at 85 %. */
   tether: string;
-  /** Bite-cone outline: T-Rex blue at 55 %. */
+  /** Bite-cone outline: heavy blue at 55 %. */
   biteLine: string;
-  /** LOD squares of recovering tigers (orange at 45 %) and routed tigers (grey at 75 %). */
+  /** LOD squares of recovering pack animals (orange at 45 %) and routed pack animals (grey at 75 %). */
   lodRecover: string;
   lodRouted: string;
   /** Trail tones by age, newest (0) to oldest (2). */
@@ -75,7 +75,7 @@ export interface ReplayTheme extends BaseColors {
   trailPack0: string;
   trailPack1: string;
   trailPack2: string;
-  /** Overview tiger paths: tiger orange at 30 %. */
+  /** Overview pack animal paths: pack animal orange at 30 %. */
   ovPack: string;
 }
 

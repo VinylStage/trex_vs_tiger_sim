@@ -8,7 +8,7 @@ export interface Camera {
   view: number;
 }
 
-/** Zoom modes: 0 = auto (follow the fight), 1 = whole arena, n > 1 = n× on the T-Rex centroid. */
+/** Zoom modes: 0 = auto (follow the fight), 1 = whole arena, n > 1 = n× on the heavy centroid. */
 export const ZOOM_AUTO = 0;
 export const ZOOM_FIT = 1;
 
@@ -20,7 +20,7 @@ export const CAMERA = {
   /** Trim the 2 % outliers on each side once the box has more than trimMinPoints points. */
   trim: 0.02,
   trimMinPoints: 40,
-  /** At most this many tigers (evenly strided) feed the auto box. */
+  /** At most this many pack animals (evenly strided) feed the auto box. */
   maxPack: 1500,
   /** SmoothDamp times for the centre and for log(view). */
   centreTime: 0.45,
@@ -158,7 +158,7 @@ export class CameraTarget {
       out.view = L / zoom;
       return out;
     }
-    // Auto: trimmed box of living T-Rex and tigers still in the fight (approach, latched, recover).
+    // Auto: trimmed box of living heavy and pack animals still in the fight (approach, latched, recover).
     const xs = this.xs;
     const ys = this.ys;
     let n = 0;

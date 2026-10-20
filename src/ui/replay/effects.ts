@@ -40,7 +40,7 @@ export const FX_MAX_PER_FRAME = 300;
 
 /**
  * Flash safety (WCAG 2.3.1; ANIMATION.md §3.4). A bite cone is filled only if
- * - the same T-Rex's previous bite was at least FLASH_GAP_S real seconds earlier, so one T-Rex
+ * - the same heavy's previous bite was at least FLASH_GAP_S real seconds earlier, so one heavy
  *   starts at most 3 fills in any second (0, 0.34, 0.68 s);
  * - playback is at most FLASH_MAX_SPEED× (above it every cone is an outline);
  * - the wedge is at most FLASH_WEDGE_MAX_PX, and the frame's filled area stays at most
@@ -68,7 +68,7 @@ export const TRAIL = {
   simSeconds: 3,
   maxHeavy: 100,
   maxPack: 400,
-  /** Tiger trails only when tigers are drawn as glyphs at least this large (r, CSS px). */
+  /** Pack animal trails only when pack animals are drawn as glyphs at least this large (r, CSS px). */
   minPackPx: 3,
   /** Off-screen margin (CSS px) inside which trails are still built. */
   cullPx: 50,
@@ -102,7 +102,7 @@ export interface FxOptions {
   speed: number;
   /** Adaptive quality may forbid fills altogether (outline-only effects). */
   fills: boolean;
-  /** Debug hook: called for every filled bite cone (event index, T-Rex). */
+  /** Debug hook: called for every filled bite cone (event index, heavy). */
   onFill?: ((event: number, heavy: number) => void) | undefined;
 }
 
@@ -247,7 +247,7 @@ export function collectEffects(
  * Trails: a polyline from each agent's drawn position back through the frames of the last
  * TRAIL.simSeconds of sim time, split into three age buckets (pre-blended tones, newest darkest).
  * Drawn deterministically from the trace, so scrubbing and camera moves never smear.
- * At most TRAIL.maxTrex T-Rex and TRAIL.maxTigers tigers (approaching or routed, only while the
+ * At most TRAIL.maxHeavy heavy and TRAIL.maxPack pack animals (approaching or routed, only while the
  * frames show the same state) get a trail.
  */
 export function collectTrails(

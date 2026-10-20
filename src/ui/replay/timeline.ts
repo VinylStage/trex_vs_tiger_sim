@@ -32,7 +32,7 @@ export const CLUSTER_MAX_S = 5;
 /** Columns of the timeline strip's count model. */
 export const TIMELINE_BINS = 480;
 
-/** Where "skip to contact" lands, or null if no T-Rex and tiger ever met. */
+/** Where "skip to contact" lands, or null if no heavy and pack animal ever met. */
 export function contactSeekTime(p: Prepared): number | null {
   if (p.firstContact < 0) return null;
   return Math.min(p.duration, Math.max(0, p.firstContact - CONTACT_LEAD_S));
@@ -47,7 +47,7 @@ export interface Marker {
   readonly count: number;
 }
 
-/** Count channels per bin: tigers by state (routed and left together), then living T-Rex. */
+/** Count channels per bin: pack animals by state (routed and left together), then living heavy. */
 export const CH = { approach: 0, latched: 1, recover: 2, out: 3, dead: 4, heavy: 5 } as const;
 export const CHANNELS = 6;
 
@@ -83,7 +83,7 @@ function cluster(times: readonly number[], kind: MarkerKind, out: Marker[]): voi
   if (count > 0) out.push({ t: start, kind, count });
 }
 
-/** Event markers: first contact, each T-Rex death, clusters of tiger kills and of routs. */
+/** Event markers: first contact, each heavy death, clusters of pack animal kills and of routs. */
 export function extractMarkers(p: Prepared): Marker[] {
   const out: Marker[] = [];
   if (p.firstContact >= 0) out.push({ t: p.firstContact, kind: 'contact', count: 1 });

@@ -74,15 +74,15 @@ export interface RunSummary {
   packRouted: number;
   packActive: number;
   heavyHpFrac: number;
-  /** trexHpFrac − (active tigers / initial tigers), in [−1, 1]. Used for sensitivity. */
+  /** trexHpFrac − (active pack animals / initial pack animals), in [−1, 1]. Used for sensitivity. */
   heavyAdvantage: number;
 }
 
 export interface TraceFrame {
   t: number;
-  /** Per T-Rex: x, y, heading, hpFrac (hpFrac ≤ 0 → dead). */
+  /** Per heavy: x, y, heading, hpFrac (hpFrac ≤ 0 → dead). */
   heavy: Float32Array<ArrayBuffer>;
-  /** Per tiger: x, y, state. */
+  /** Per pack animal: x, y, state. */
   pack: Float32Array<ArrayBuffer>;
 }
 
@@ -92,9 +92,9 @@ export interface TraceMeta {
   dt: number;
   bodyRadius: number;
   packRadius: number;
-  /** Per T-Rex bite reach (m). */
+  /** Per heavy bite reach (m). */
   reach: Float32Array<ArrayBuffer>;
-  /** Per T-Rex bite half-angle (rad). */
+  /** Per heavy bite half-angle (rad). */
   arc: Float32Array<ArrayBuffer>;
 }
 
@@ -160,7 +160,7 @@ export function simulateBattle(
   const M = config.packCount;
   const L = config.arenaSize;
   const cv = config.individualCV;
-  // Species constants: no random draws, and exact identities for T. rex (hide 1) and the tiger
+  // Species constants: no random draws, and exact identities for T. rex (hide 1) and the pack animal
   // (radius 0.8 m, the former engine constant), so v1 links reproduce bit-identically.
   const hide = HEAVY_SPECIES[config.heavySpecies].constants.hide;
   const packRadius = PACK_SPECIES[config.packSpecies].constants.radius;
@@ -175,7 +175,7 @@ export function simulateBattle(
   };
   const runVal = (k: number): number => row[k] as number;
 
-  // --- T-Rex state (SoA) ---
+  // --- heavy state (SoA) ---
   const rx = new Float64Array(N);
   const ry = new Float64Array(N);
   const rh = new Float64Array(N);
@@ -222,7 +222,7 @@ export function simulateBattle(
     rAlive[i] = 1;
   }
 
-  // --- Tiger state (SoA) ---
+  // --- Pack animal state (SoA) ---
   const tx = new Float64Array(M);
   const ty = new Float64Array(M);
   const tHp = new Float64Array(M);
@@ -276,7 +276,7 @@ export function simulateBattle(
   const presentFilter = (j: number): boolean => (tState[j] as number) < PackState.Dead;
   let killed = 0;
 
-  // Morale shock around a dead tiger.
+  // Morale shock around a dead pack animal.
   let shockX = 0;
   let shockY = 0;
   let shockSelf = -1;
@@ -333,7 +333,7 @@ export function simulateBattle(
     let px = tx[j] as number;
     let py = ty[j] as number;
     if (s === PackState.Latched) {
-      // Latched tigers ride their host; use the host's current pose, not last tick's position.
+      // Latched pack animals ride their host; use the host's current pose, not last tick's position.
       const h = tHost[j] as number;
       const a = (rh[h] as number) + (tLatchAng[j] as number);
       px = (rx[h] as number) + Math.cos(a) * (radius + packRadius);
@@ -422,7 +422,7 @@ export function simulateBattle(
       }
     }
 
-    // --- T-Rex ---
+    // --- heavy ---
     for (let i = 0; i < N; i++) {
       if (!rAlive[i]) continue;
       rTimer[i] = (rTimer[i] as number) - DT;
@@ -484,7 +484,7 @@ export function simulateBattle(
     }
     heavyGrid.rebuild(N, rx, ry, heavyAliveFilter);
 
-    // --- Tigers ---
+    // --- Pack animals ---
     for (let j = 0; j < M; j++) {
       const s = tState[j] as number;
       if (s >= PackState.Dead) continue;

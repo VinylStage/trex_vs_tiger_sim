@@ -8,7 +8,7 @@ const LATCHED: number = PackState.Latched;
 const ROUTED: number = PackState.Routed;
 const DEAD: number = PackState.Dead;
 const LEFT: number = PackState.Left;
-/** A thrown tiger lands this far beyond its latch point (CONSTANTS.throwDistance). */
+/** A thrown pack animal lands this far beyond its latch point (CONSTANTS.throwDistance). */
 const THROW_DISTANCE = 3;
 /** Parameter step for the finite-difference heading along a spline segment. */
 const HEADING_DF = 0.02;
@@ -16,9 +16,9 @@ const HEADING_DF = 0.02;
 const kn = new Float64Array(3);
 
 /**
- * Pose of T-Rex `i` at `time` into `out` = [x, y, heading, hpFrac, alive (1/0)].
+ * Pose of heavy `i` at `time` into `out` = [x, y, heading, hpFrac, alive (1/0)].
  * Position: centripetal Catmull-Rom through the frames (clamped to the arena). Heading: the
- * recorded heading, shortest-arc interpolated. A T-Rex that dies inside a frame interval moves
+ * recorded heading, shortest-arc interpolated. A heavy that dies inside a frame interval moves
  * straight to its final pose at the exact death time and stays there.
  */
 export function heavyPose(p: Prepared, i: number, time: number, out: Float64Array): void {
@@ -49,7 +49,7 @@ function heavyPoseAt(p: Prepared, i: number, time: number, k: number, out: Float
   }
   const hpA = a.heavy[o + 3] as number;
   if (hpA <= 0) {
-    // Died after the event log stopped: frames only (dead T-Rex do not move).
+    // Died after the event log stopped: frames only (dead heavy do not move).
     out[0] = a.heavy[o] as number;
     out[1] = a.heavy[o + 1] as number;
     out[2] = a.heavy[o + 2] as number;
@@ -84,13 +84,13 @@ function heavyPoseAt(p: Prepared, i: number, time: number, k: number, out: Float
  */
 export class World {
   readonly p: Prepared;
-  /** T-Rex position (m), heading (rad), HP fraction and alive flag. */
+  /** Heavy position (m), heading (rad), HP fraction and alive flag. */
   readonly rx: Float64Array;
   readonly ry: Float64Array;
   readonly rh: Float64Array;
   readonly rhp: Float64Array;
   readonly ralive: Uint8Array;
-  /** Tiger position (m), state, unit heading and host (−1 unless latched with a known host). */
+  /** Pack animal position (m), state, unit heading and host (−1 unless latched with a known host). */
   readonly tx: Float64Array;
   readonly ty: Float64Array;
   readonly ts: Uint8Array;
@@ -122,7 +122,7 @@ export class World {
     return this.p.reduced && time > this.p.completeTime + 1e-9;
   }
 
-  /** Position of a tiger latched to `host` at angle `ang` (host frame) at `time`, clamped. */
+  /** Position of a pack animal latched to `host` at angle `ang` (host frame) at `time`, clamped. */
   private ridePosition(host: number, ang: number, time: number, extra: number): void {
     const p = this.p;
     heavyPose(p, host, time, this.pose);
@@ -205,7 +205,7 @@ export class World {
       const frameEnd = li >= liLo ? (p.liFrameEnd[li] as number) : Infinity;
       const riding = now >= rideFrom && now <= detach && now <= frameEnd + 1e-9;
       if (s === LATCHED && riding && (exact || p.liEnd[li] === NO_STEP)) {
-        // Ride the host: same pose as the drawn T-Rex, at the recorded latch angle.
+        // Ride the host: same pose as the drawn heavy, at the recorded latch angle.
         const h = p.liHost[li] as number;
         const ang = (this.rh[h] as number) + (p.liAng[li] as number);
         const cos = Math.cos(ang);
@@ -218,8 +218,8 @@ export class World {
         continue;
       }
 
-      // Free motion between anchors: frame samples, plus exact anchors where the tiger leaves a
-      // host (its detach time; a thrown tiger lands 3 m out), starts riding one (the tick after
+      // Free motion between anchors: frame samples, plus exact anchors where the pack animal leaves a
+      // host (its detach time; a thrown pack animal lands 3 m out), starts riding one (the tick after
       // its latch), or stops for good (death or exit).
       const ax = a.pack[o] as number;
       const ay = a.pack[o + 1] as number;
@@ -246,7 +246,7 @@ export class World {
         ly = this.anchor[1] as number;
         anchored = true;
       }
-      // Also when the tiger detaches right at frame a, so it leaves from the drawn ride
+      // Also when the pack animal detaches right at frame a, so it leaves from the drawn ride
       // position rather than the frame's (which differs by the quantised latch angle). These
       // anchors come from the log, so they also hold in the frame interval after it stopped.
       if (Number.isFinite(rideFrom) && detach <= now && detach >= ta - 1e-9) {
@@ -302,7 +302,7 @@ export class World {
       let hx: number;
       let hy: number;
       if (smooth) {
-        // Mirrored end points at the ends of the trace, as for the T-Rex.
+        // Mirrored end points at the ends of the trace, as for the heavy.
         const zx = k > 0 ? (z.pack[o] as number) : 2 * ax - bx;
         const zy = k > 0 ? (z.pack[o + 1] as number) : 2 * ay - by;
         const cx = k + 2 < F ? (c.pack[o] as number) : 2 * bx - ax;

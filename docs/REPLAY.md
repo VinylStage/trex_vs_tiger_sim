@@ -113,7 +113,7 @@ Known approximations, all within one simulation tick (0.1 s): the latch-tick mov
 
 ## 4. Visual language
 
-Rule: **hue = side, shape = state, grey = out of the fight.** r = pack-animal radius on screen = max(2.2 px, `meta.packRadius` × scale), so the dot follows the species constant (tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5 m; MODEL.md §2.7); len = T-Rex length = max(11 px, 7 m × scale). Sizes are `GLYPH` in `glyphs.ts`.
+Rule: **hue = side, shape = state, grey = out of the fight.** r = pack-animal radius on screen = max(2.2 px, `meta.packRadius` × scale), so the dot follows the species constant (tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5 m; MODEL.md §2.7); len = heavy length = max(11 px, L × scale), where L = 7 m × (species modal `bodyRadius` / 2.5 m): exactly 7 m for T. rex, about 4.8 m for the elephant, 2.4 m for the buffalo and 2.1 m for the brown bear, so latched pack animals stay outside the triangle (`heavyLengthForRadius`). Pack animals switch to LOD squares when a reference 0.8 m radius would be below 3 px, the same zoom threshold for every species. Sizes are `GLYPH` in `glyphs.ts`.
 
 | Entity or state    | Glyph                                            | Size                                                       | Paint                                                                   |
 | ------------------ | ------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------- |

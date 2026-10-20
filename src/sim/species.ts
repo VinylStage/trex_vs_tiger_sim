@@ -1,4 +1,4 @@
-import { PARAMS, type ParamId, type Role, type Triangular } from './params';
+import { PARAMS, type ParamId, type Role, type Triangular } from './params.ts';
 
 /**
  * Species registry (docs/SPECIES.md). Every species fills one role with presets for that role's

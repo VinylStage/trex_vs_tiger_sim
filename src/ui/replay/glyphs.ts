@@ -14,14 +14,18 @@ export interface PathSink {
   closePath(): void;
 }
 
-/** Sizes, in CSS px or as multiples of the on-screen tiger radius r. */
+/** Sizes, in CSS px or as multiples of the on-screen pack animal radius r. */
 export const GLYPH = {
-  /** r = max(minTigerPx, tigerRadius × scale). */
+  /** r = max(minPackPx, packRadius × scale). */
   minPackPx: 2.2,
-  /** Below this r, tigers are drawn as LOD squares (shape detail would not be legible). */
+  /** Below this r, pack animals are drawn as LOD squares (shape detail would not be legible). */
   lodBelowPx: 3,
-  /** T-Rex length = max(minTrexPx, trexLengthM × scale). */
+  /** Reference pack radius (m) for the LOD switch, the same for every species. */
+  lodRadiusM: 0.8,
+  /** Heavy length = max(minHeavyPx, heavyLengthM × scale). */
   heavyLengthM: 7,
+  /** T. rex modal body radius the 7 m length belongs to. */
+  heavyRadiusM: 2.5,
   minHeavyPx: 11,
   /** Triangle: nose 0.6·len ahead of the centre, tail 0.4·len behind, base 0.64·len. */
   heavyNose: 0.6,
@@ -29,7 +33,7 @@ export const GLYPH = {
   heavyHalfBase: 0.32,
   /** The HP gauge replaces the solid fill below this HP fraction. */
   gaugeBelow: 0.995,
-  /** Surface-coloured outline between overlapping triangles (few T-Rex or large glyphs). */
+  /** Surface-coloured outline between overlapping triangles (few heavy or large glyphs). */
   haloMaxHeavy: 50,
   haloMinLen: 18,
   /** Approach: dot of radius 0.8r plus a heading tick from r to 2.3r. */
@@ -60,13 +64,21 @@ export const GLYPH = {
 
 const TAU = Math.PI * 2;
 
-/** Tiger glyph radius on screen. */
+/** Pack animal glyph radius on screen. */
 export const packRadiusPx = (packRadiusM: number, scale: number): number =>
   Math.max(GLYPH.minPackPx, packRadiusM * scale);
 
-/** T-Rex glyph length on screen. */
-export const heavyLengthPx = (scale: number): number =>
-  Math.max(GLYPH.minHeavyPx, GLYPH.heavyLengthM * scale);
+/** Heavy glyph length on screen; `lengthM` is the species' length (7 m for T. rex). */
+export const heavyLengthPx = (scale: number, lengthM: number = GLYPH.heavyLengthM): number =>
+  Math.max(GLYPH.minHeavyPx, lengthM * scale);
+
+/**
+ * Heavy glyph length for a species with modal body radius `bodyRadiusM`: the T. rex proportion
+ * (7 m for a 2.5 m radius), so the triangle's half-base stays inside the ring where pack
+ * animals latch. Exactly 7 m for T. rex.
+ */
+export const heavyLengthForRadius = (bodyRadiusM: number): number =>
+  GLYPH.heavyLengthM * (bodyRadiusM / GLYPH.heavyRadiusM);
 
 /** Isosceles triangle with its nose along the heading (cos, sin). */
 export function heavyTriangle(
@@ -141,7 +153,7 @@ export function approachDot(s: PathSink, x: number, y: number, r: number): void 
   s.closePath();
 }
 
-/** Heading tick of an approaching tiger, along its unit direction (dx, dy). */
+/** Heading tick of an approaching pack animal, along its unit direction (dx, dy). */
 export function approachTick(
   s: PathSink,
   x: number,
@@ -163,7 +175,7 @@ export function latchedDiamond(s: PathSink, x: number, y: number, r: number): vo
   s.closePath();
 }
 
-/** Line from a latched tiger to its host's centre. */
+/** Line from a latched pack animal to its host's centre. */
 export function tether(s: PathSink, x: number, y: number, hx: number, hy: number): void {
   s.moveTo(x, y);
   s.lineTo(hx, hy);
@@ -251,7 +263,7 @@ export const PAINTS = {
   recover: [{ mode: 'stroke', color: 'pack', width: 1.4 }],
   approach: [{ mode: 'fill', color: 'pack' }],
   approachTick: [{ mode: 'stroke', color: 'pack', width: 1.2 }],
-  // The halo goes first, so it only widens the diamond's edge against the T-Rex underneath.
+  // The halo goes first, so it only widens the diamond's edge against the heavy underneath.
   latched: [
     { mode: 'stroke', color: 'surface', width: 2.4 },
     { mode: 'fill', color: 'pack' },
@@ -299,7 +311,7 @@ export const PAINTS = {
 export type Bucket = keyof typeof PAINTS;
 
 /**
- * A tiger glyph by state: which builders feed which bucket. Used by the stage, the legend and the
+ * A pack animal glyph by state: which builders feed which bucket. Used by the stage, the legend and the
  * V1 shape-separability test. (dx, dy) is the unit heading; (hx, hy) the host centre if latched.
  */
 export function packGlyph(

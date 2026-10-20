@@ -6,7 +6,7 @@ type CostInput = Pick<ScenarioConfig, 'heavyCount' | 'packCount' | 'runs'>;
 
 /**
  * Rough single-thread milliseconds per run on a typical laptop. Empirical fit of the engine
- * (fixed overhead + O(M) tiger updates scaled by periodic O(N·M) target searches); battle length
+ * (fixed overhead + O(M) pack animal updates scaled by periodic O(N·M) target searches); battle length
  * varies a lot with parameters, so treat this as an order of magnitude.
  */
 export function estimateRunMs(heavyCount: number, packCount: number): number {

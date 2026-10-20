@@ -57,8 +57,8 @@ export interface AggregateResult {
   packKilled: Distribution;
   packRouted: Distribution;
   /**
-   * Pooled ratio: total tigers killed / total T-Rex lost across all runs.
-   * Infinity when tigers died but no T-Rex did; NaN when nobody died.
+   * Pooled ratio: total pack animals killed / total heavy lost across all runs.
+   * Infinity when pack animals died but no heavy did; NaN when nobody died.
    */
   exchangeRatio: number;
   sensitivity: Sensitivity[];

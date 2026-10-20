@@ -2,6 +2,7 @@ import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/confi
 import { Outcome, type RunSummary } from '../sim/engine';
 import { aggregate, type AggregateResult } from '../sim/montecarlo';
 import { buildDesign } from '../sim/sampling';
+import { HEAVY_SPECIES } from '../sim/species';
 import {
   CanvasChart,
   durationHistogram,
@@ -28,6 +29,7 @@ import {
 } from './i18n';
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
+import { heavyLengthForRadius } from './replay/glyphs';
 import { configFromHash, hashFromConfig } from './share';
 import { pageLang, switchedAppUrl } from '../pages/routes';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
@@ -106,31 +108,13 @@ export function startApp(root: HTMLElement): void {
   const toast = h('div', { class: 'toast', attrs: { role: 'status', 'aria-live': 'polite' } });
   toast.hidden = true;
   let toastTimer = 0;
-  /** A short notice; with `undo`, an Undo button that stays a little longer. */
-  const showToast = (text: string, undo?: () => void): void => {
-    clear(toast);
-    toast.append(h('span', { text }));
-    if (undo) {
-      const btn = h('button', {
-        class: 'btn btn-small toast-action',
-        text: t('toast.undo'),
-        attrs: { type: 'button' },
-      });
-      btn.addEventListener('click', () => {
-        toast.hidden = true;
-        clearTimeout(toastTimer);
-        undo();
-      });
-      toast.append(btn);
-    }
+  const showToast = (text: string): void => {
+    toast.textContent = text;
     toast.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(
-      () => {
-        toast.hidden = true;
-      },
-      undo ? 8000 : 2500,
-    );
+    toastTimer = window.setTimeout(() => {
+      toast.hidden = true;
+    }, 2500);
   };
   shareBtn.addEventListener('click', () => {
     writeUrl();
@@ -171,17 +155,12 @@ export function startApp(root: HTMLElement): void {
   header.append(siteNav);
 
   // ---------- config panel ----------
-  const form = createConfigForm(
-    config,
-    pool.size,
-    (c) => {
-      config = c;
-      writeUrl();
-      updateStale();
-      syncNames();
-    },
-    showToast,
-  );
+  const form = createConfigForm(config, pool.size, (c) => {
+    config = c;
+    writeUrl();
+    updateStale();
+    syncNames();
+  });
 
   /**
    * Messages without explicit names (results, charts, replay, tour) name the species of the shown
@@ -452,7 +431,10 @@ export function startApp(root: HTMLElement): void {
       if (token !== replayToken) return;
       replayState = { kind, run, loading: false };
       renderReplayInfo();
-      replayView.load(trace);
+      const heavy = HEAVY_SPECIES[result.config.heavySpecies];
+      replayView.load(trace, true, {
+        heavyLengthM: heavyLengthForRadius(heavy.ranges.bodyRadius.mode),
+      });
     } catch (err) {
       if (err instanceof CancelledError || token !== replayToken) return;
       replayState = {

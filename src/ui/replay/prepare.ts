@@ -7,6 +7,7 @@ import {
   isCosmeticEvent,
   packStateAfter,
 } from '../../sim/events';
+import { GLYPH } from './glyphs';
 import { heavyPose } from './world';
 
 /** "No stamp" in the Uint16 step arrays below. */
@@ -26,7 +27,7 @@ export interface Prepared {
   readonly duration: number;
   /** Frame times, for binary search. */
   readonly frameT: Float64Array;
-  /** Distance from a host's centre to a latched tiger: bodyRadius + tigerRadius (m). */
+  /** Distance from a host's centre to a latched pack animal: bodyRadius + packRadius (m). */
   readonly attachR: number;
 
   /** Decoded events (structure of arrays, log order). */
@@ -37,7 +38,7 @@ export interface Prepared {
   readonly evA: Uint16Array;
   readonly evB: Uint16Array;
   /**
-   * For bites (BiteHit / BiteMiss): sim seconds since the same T-Rex's previous logged bite
+   * For bites (BiteHit / BiteMiss): sim seconds since the same heavy's previous logged bite
    * (Infinity for its first). 0 for other events. Used to rate-limit filled bite cones.
    */
   readonly evGap: Float32Array;
@@ -48,14 +49,14 @@ export interface Prepared {
   /** True when the event log stopped before the end of the battle (budget reached). */
   readonly reduced: boolean;
 
-  /** Per-tiger state transitions (stamp, new state). */
+  /** Per-pack animal state transitions (stamp, new state). */
   readonly trOff: Int32Array;
   readonly trStep: Uint16Array;
   readonly trState: Uint8Array;
-  /** Tiger state after the last recorded event (the state at `completeStep`). */
+  /** Pack animal state after the last recorded event (the state at `completeStep`). */
   readonly stateAtComplete: Uint8Array;
 
-  /** Per-tiger latch intervals: start/end stamp (end NO_STEP = still latched), host, angle. */
+  /** Per-pack animal latch intervals: start/end stamp (end NO_STEP = still latched), host, angle. */
   readonly liOff: Int32Array;
   readonly liStart: Uint16Array;
   readonly liEnd: Uint16Array;
@@ -65,45 +66,52 @@ export interface Prepared {
   /** Event type that ended the interval (0 while open). */
   readonly liEndKind: Uint8Array;
   /**
-   * When the tiger rides its host (s). The engine pins a latched tiger to its host in the tick
+   * When the pack animal rides its host (s). The engine pins a latched pack animal to its host in the tick
    * after the latch (on the latch tick it is still where it made contact), so riding starts one
    * tick after the Latch event. Infinity if the interval ended before that.
    */
   readonly liRide: Float64Array;
   /**
-   * Time the tiger stops riding (s; Infinity while open). A throw or a stamina release happens
+   * Time the pack animal stops riding (s; Infinity while open). A throw or a stamina release happens
    * after the latched position update of its tick, so riding lasts until the event's own time.
-   * A rout, a bite or a dead host comes before that update: the tiger was last on its host one
+   * A rout, a bite or a dead host comes before that update: the pack animal was last on its host one
    * tick earlier and spends the event's tick moving off or lying where it was.
    */
   readonly liDetach: Float64Array;
   /**
    * For an interval still open when the log stopped: the time up to which the frames confirm the
    * ride (s). The replay walks the frames after `completeTime` and stops at the last one in which
-   * the tiger is still Latched at its ride position; a later detach, or a re-latch onto another
+   * the pack animal is still Latched at its ride position; a later detach, or a re-latch onto another
    * host or angle, is only visible in the frames. Infinity if every later frame agrees, and
    * Infinity for closed intervals (they end at `liDetach`).
    */
   readonly liFrameEnd: Float64Array;
 
-  /** Stamp at which a tiger died or left the arena (NO_STEP if never, or not recorded). */
+  /** Stamp at which a pack animal died or left the arena (NO_STEP if never, or not recorded). */
   readonly goneStep: Uint16Array;
   /** Where it stays from then on (NaN if unknown). */
   readonly goneX: Float64Array;
   readonly goneY: Float64Array;
 
-  /** T-Rex death time (s), Infinity if it survives or died after `completeTime`. */
+  /** Heavy death time (s), Infinity if it survives or died after `completeTime`. */
   readonly heavyDeathTime: Float64Array;
   /** First frame at or after the death; that frame holds the final pose. −1 if none. */
   readonly heavyDeathFrame: Int32Array;
 
   /** Time of the first bite or latch attempt (s), −1 if there was none. */
   readonly firstContact: number;
+  /** Heavy glyph length in metres (species-dependent; 7 m for T. rex). */
+  readonly heavyLengthM: number;
+}
+
+export interface PrepareOptions {
+  /** Heavy glyph length in metres; defaults to `GLYPH.heavyLengthM` (T. rex). */
+  heavyLengthM?: number;
 }
 
 const LATCHED: number = PackState.Latched;
 /**
- * A frame confirms a ride when the tiger lies within this distance of its drawn ride position
+ * A frame confirms a ride when the pack animal lies within this distance of its drawn ride position
  * (m). The quantised latch angle alone moves it by attachR × π/256 (a few centimetres).
  */
 const RIDE_FRAME_TOLERANCE = 0.5;
@@ -123,7 +131,7 @@ function firstFrameAtOrAfter(frameT: Float64Array, time: number): number {
 }
 
 /** Build the replay indexes for one trace. Linear in events + agents (+ one frame scan). */
-export function prepare(trace: BattleTrace): Prepared {
+export function prepare(trace: BattleTrace, options: PrepareOptions = {}): Prepared {
   const N = trace.heavyCount;
   const M = trace.packCount;
   const dt = trace.meta.dt;
@@ -162,7 +170,7 @@ export function prepare(trace: BattleTrace): Prepared {
   const finalStep = Math.round(duration / dt);
   const completeStep = Math.min(trace.eventsCompleteUntilStep, finalStep);
 
-  // --- pass 1: count transitions and latches per tiger ---
+  // --- pass 1: count transitions and latches per pack animal ---
   const trCount = new Int32Array(M);
   const liCount = new Int32Array(M);
   const packOf = (k: number): number => {
@@ -304,6 +312,7 @@ export function prepare(trace: BattleTrace): Prepared {
     heavyDeathTime,
     heavyDeathFrame,
     firstContact,
+    heavyLengthM: options.heavyLengthM ?? GLYPH.heavyLengthM,
   };
 
   const pose = new Float64Array(5);
@@ -338,7 +347,7 @@ export function prepare(trace: BattleTrace): Prepared {
     liFrameEnd[l] = f >= F ? Infinity : end;
   }
 
-  // Final positions of dead and departed tigers. A tiger killed while latched stays where it last
+  // Final positions of dead and departed pack animals. A pack animal killed while latched stays where it last
   // rode (the drawn ride position, so the glyph does not jump); every other one stays at its frame
   // position, which no longer changes after death or exit.
   for (let j = 0; j < M; j++) {

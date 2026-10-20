@@ -75,7 +75,7 @@ export function paintPath(
 
 /** What the last frame showed (for the legend, the debug overlay and tests). */
 export interface FrameInfo {
-  /** Tigers were drawn as LOD squares. */
+  /** Pack animals were drawn as LOD squares. */
   lod: boolean;
   /** Agents inside the view. */
   pack: number;
@@ -96,8 +96,8 @@ export interface DrawOptions {
 }
 
 /**
- * Draws the stage (docs/REPLAY.md §6): arena and grid, dead marks, trails, tethers, tigers by
- * state, T-Rex with HP gauges, latched diamonds, event effects and the scale bar. One Path2D per
+ * Draws the stage (docs/REPLAY.md §6): arena and grid, dead marks, trails, tethers, pack animals by
+ * state, heavy with HP gauges, latched diamonds, event effects and the scale bar. One Path2D per
  * bucket per frame, colours precomputed per theme, no typed-array allocation.
  */
 export class StagePainter {
@@ -131,8 +131,10 @@ export class StagePainter {
     this.drawArena(ctx, vp, theme);
 
     const r = packRadiusPx(p.trace.meta.packRadius, scale);
-    const lod = opt.forceLod || r < GLYPH.lodBelowPx;
-    const len = heavyLengthPx(scale);
+    // LOD switches on a role-constant reference radius (the pack animal's 0.8 m), so smaller species
+    // such as wolves still reach the shape glyphs when zoomed in.
+    const lod = opt.forceLod || packRadiusPx(GLYPH.lodRadiusM, scale) < GLYPH.lodBelowPx;
+    const len = heavyLengthPx(scale, p.heavyLengthM);
     const info = this.info;
     info.lod = lod;
     info.pack = 0;
@@ -140,7 +142,7 @@ export class StagePainter {
     const mT = lod ? 3 : 3 * r + 2;
     const mR = len;
 
-    // Tigers (glyph buckets; LOD squares are drawn directly below).
+    // Pack animals (glyph buckets; LOD squares are drawn directly below).
     if (!lod) {
       for (let j = 0; j < p.M; j++) {
         const s = w.ts[j] as number;
@@ -164,7 +166,7 @@ export class StagePainter {
       }
     }
 
-    // T-Rex: solid triangle at full HP, otherwise a tinted hollow with an area-true HP gauge.
+    // Heavy: solid triangle at full HP, otherwise a tinted hollow with an area-true HP gauge.
     const halo = p.N <= GLYPH.haloMaxHeavy || len >= GLYPH.haloMinLen;
     for (let i = 0; i < p.N; i++) {
       const x = ox + (w.rx[i] as number) * scale;
@@ -281,7 +283,7 @@ export class StagePainter {
     ctx.strokeRect(bx, by, snap(ox + size) - bx, snap(oy + size) - by);
   }
 
-  /** LOD: device-pixel-snapped squares for every tiger in one state, in one colour. */
+  /** LOD: device-pixel-snapped squares for every pack animal in one state, in one colour. */
   private squares(
     ctx: CanvasRenderingContext2D,
     w: World,
