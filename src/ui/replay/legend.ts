@@ -4,7 +4,11 @@ import { paintPath } from './draw';
 import {
   BUCKET_ORDER,
   PAINTS,
+  FX_BUCKETS,
+  TRAIL_BUCKETS,
   biteCone,
+  burst,
+  ring,
   tigerGlyph,
   trexGauge,
   trexTriangle,
@@ -48,9 +52,46 @@ export const LEGEND_ITEMS: readonly { key: MsgKey; head?: true; build?: SwatchBu
   { key: 'state.recover', build: (s) => tigerGlyph('recover', s, cx, cy, TIGER_R, 1, 0) },
   { key: 'state.routed', build: (s) => tigerGlyph('routed', s, cx, cy, TIGER_R, 1, 0) },
   { key: 'state.dead', build: (s) => tigerGlyph('dead', s, cx, cy, TIGER_R, 1, 0) },
+  { key: 'replay.legendEvents', head: true },
   {
     key: 'replay.legendBite',
     build: (s) => biteCone(s('biteHit'), 4, cy, 0, SWATCH_W - 8, 0.32),
+  },
+  {
+    key: 'replay.legendLatchRing',
+    build: (s) => {
+      tigerGlyph('latched', s, cx, cy, 3, 1, 0);
+      ring(s(FX_BUCKETS.tiger[0]), cx, cy, 7.5);
+    },
+  },
+  {
+    key: 'replay.legendOutRing',
+    build: (s) => {
+      tigerGlyph('routed', s, cx, cy, 3.4, 1, 0);
+      ring(s(FX_BUCKETS.out[0]), cx, cy, 7.5);
+    },
+  },
+  {
+    key: 'replay.legendThrow',
+    build: (s) => {
+      tigerGlyph('recover', s, cx - 5, cy, TIGER_R, 1, 0);
+      burst(s(FX_BUCKETS.trex[0]), cx - 5, cy, 1, 0, 6, 13);
+    },
+  },
+  {
+    key: 'replay.legendTrail',
+    build: (s) => {
+      const y = (x: number): number => cy + 3 * Math.sin(x / 5);
+      const xs = [3, 9, 15, 21] as const;
+      for (let k = 0; k < 3; k++) {
+        const a = xs[k] as number;
+        const b = xs[k + 1] as number;
+        const path = s(TRAIL_BUCKETS.tiger[2 - k] ?? TRAIL_BUCKETS.tiger[0]);
+        path.moveTo(a, y(a));
+        path.lineTo(b, y(b));
+      }
+      tigerGlyph('approach', s, 21, y(21), TIGER_R * 0.8, 1, 0);
+    },
   },
 ];
 

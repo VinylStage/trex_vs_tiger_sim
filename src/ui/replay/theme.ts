@@ -44,6 +44,13 @@ export const BLEND = {
   biteLine: 0.55,
   lodRecover: 0.45,
   lodRouted: 0.75,
+  /** Trail segments by age (newest → oldest); tiger trails at 0.8 × these. */
+  trail0: 0.38,
+  trail1: 0.25,
+  trail2: 0.13,
+  tigerTrail: 0.8,
+  /** Reduced-motion overview: tiger paths. */
+  ovTiger: 0.3,
 } as const;
 
 export interface ReplayTheme extends BaseColors {
@@ -61,6 +68,15 @@ export interface ReplayTheme extends BaseColors {
   /** LOD squares of recovering tigers (orange at 45 %) and routed tigers (grey at 75 %). */
   lodRecover: string;
   lodRouted: string;
+  /** Trail tones by age, newest (0) to oldest (2). */
+  trailTrex0: string;
+  trailTrex1: string;
+  trailTrex2: string;
+  trailTiger0: string;
+  trailTiger1: string;
+  trailTiger2: string;
+  /** Overview tiger paths: tiger orange at 30 %. */
+  ovTiger: string;
 }
 
 export type ColorRole = Exclude<keyof ReplayTheme, 'font'>;
@@ -117,6 +133,13 @@ export function deriveTheme(base: BaseColors, font: string): ReplayTheme {
     biteLine: over(base.trex, BLEND.biteLine),
     lodRecover: over(base.tiger, BLEND.lodRecover),
     lodRouted: over(base.out, BLEND.lodRouted),
+    trailTrex0: over(base.trex, BLEND.trail0),
+    trailTrex1: over(base.trex, BLEND.trail1),
+    trailTrex2: over(base.trex, BLEND.trail2),
+    trailTiger0: over(base.tiger, BLEND.trail0 * BLEND.tigerTrail),
+    trailTiger1: over(base.tiger, BLEND.trail1 * BLEND.tigerTrail),
+    trailTiger2: over(base.tiger, BLEND.trail2 * BLEND.tigerTrail),
+    ovTiger: over(base.tiger, BLEND.ovTiger),
   };
 }
 

@@ -198,6 +198,33 @@ export function routedArrow(
   s.closePath();
 }
 
+/** Effect ring (latch, impact, rout, death): a circle outline of radius `radius`. */
+export function ring(s: PathSink, x: number, y: number, radius: number): void {
+  s.moveTo(x + radius, y);
+  s.arc(x, y, radius, 0, TAU);
+}
+
+const BURST_RAYS = [-0.45, 0, 0.45] as const;
+
+/** Throw burst: three short rays (−26°, 0°, +26°) along the unit direction (ux, uy). */
+export function burst(
+  s: PathSink,
+  x: number,
+  y: number,
+  ux: number,
+  uy: number,
+  from: number,
+  to: number,
+): void {
+  for (const rot of BURST_RAYS) {
+    const c = Math.cos(rot);
+    const n = Math.sin(rot);
+    const vx = ux * c - uy * n;
+    const vy = ux * n + uy * c;
+    s.moveTo(x + vx * from, y + vy * from);
+    s.lineTo(x + vx * to, y + vy * to);
+  }
+}
 export function deadCross(s: PathSink, x: number, y: number, r: number): void {
   const d = r * GLYPH.cross;
   s.moveTo(x - d, y - d);
@@ -242,6 +269,31 @@ export const PAINTS = {
     { mode: 'stroke', color: 'biteLine', width: 1 },
   ],
   biteMiss: [{ mode: 'stroke', color: 'biteLine', width: 1 }],
+  // Trails: pre-blended opaque tones, oldest segment bucket (2) drawn first.
+  trailTrex2: [{ mode: 'stroke', color: 'trailTrex2', width: 2 }],
+  trailTrex1: [{ mode: 'stroke', color: 'trailTrex1', width: 2 }],
+  trailTrex0: [{ mode: 'stroke', color: 'trailTrex0', width: 2 }],
+  trailTiger2: [{ mode: 'stroke', color: 'trailTiger2', width: 1 }],
+  trailTiger1: [{ mode: 'stroke', color: 'trailTiger1', width: 1 }],
+  trailTiger0: [{ mode: 'stroke', color: 'trailTiger0', width: 1 }],
+  // Event effects: outlines only, alpha quantised to three steps (fresh → old).
+  fxTrex0: [{ mode: 'stroke', color: 'trex', width: 1.5, alpha: 0.9 }],
+  fxTrex1: [{ mode: 'stroke', color: 'trex', width: 1.5, alpha: 0.6 }],
+  fxTrex2: [{ mode: 'stroke', color: 'trex', width: 1.5, alpha: 0.3 }],
+  fxTiger0: [{ mode: 'stroke', color: 'tiger', width: 1.5, alpha: 0.9 }],
+  fxTiger1: [{ mode: 'stroke', color: 'tiger', width: 1.5, alpha: 0.6 }],
+  fxTiger2: [{ mode: 'stroke', color: 'tiger', width: 1.5, alpha: 0.3 }],
+  fxOut0: [{ mode: 'stroke', color: 'out', width: 1.5, alpha: 0.9 }],
+  fxOut1: [{ mode: 'stroke', color: 'out', width: 1.5, alpha: 0.6 }],
+  fxOut2: [{ mode: 'stroke', color: 'out', width: 1.5, alpha: 0.3 }],
+  fxDead0: [{ mode: 'stroke', color: 'dead', width: 1.5, alpha: 0.9 }],
+  fxDead1: [{ mode: 'stroke', color: 'dead', width: 1.5, alpha: 0.6 }],
+  fxDead2: [{ mode: 'stroke', color: 'dead', width: 1.5, alpha: 0.3 }],
+  // Reduced-motion overview (drawn once): whole-battle paths and where latches and kills happened.
+  ovTiger: [{ mode: 'stroke', color: 'ovTiger', width: 1 }],
+  ovTrex: [{ mode: 'stroke', color: 'trex', width: 2 }],
+  ovTrexThin: [{ mode: 'stroke', color: 'trailTrex0', width: 1 }],
+  ovLatch: [{ mode: 'fill', color: 'tiger' }],
 } as const satisfies Record<string, readonly Paint[]>;
 
 export type Bucket = keyof typeof PAINTS;
@@ -282,10 +334,30 @@ export function tigerGlyph(
   }
 }
 
-/** Bucket drawing order (layers 2–7 of docs/REPLAY.md §6). */
+/** Effect buckets by colour, each with three alpha steps. */
+export const FX_BUCKETS = {
+  trex: ['fxTrex0', 'fxTrex1', 'fxTrex2'],
+  tiger: ['fxTiger0', 'fxTiger1', 'fxTiger2'],
+  out: ['fxOut0', 'fxOut1', 'fxOut2'],
+  dead: ['fxDead0', 'fxDead1', 'fxDead2'],
+} as const satisfies Record<string, readonly [Bucket, Bucket, Bucket]>;
+
+/** Trail buckets by side, indexed by age step (0 = newest). */
+export const TRAIL_BUCKETS = {
+  trex: ['trailTrex0', 'trailTrex1', 'trailTrex2'],
+  tiger: ['trailTiger0', 'trailTiger1', 'trailTiger2'],
+} as const satisfies Record<string, readonly [Bucket, Bucket, Bucket]>;
+
+/** Bucket drawing order (layers 2–8 of docs/REPLAY.md §6). */
 export const BUCKET_ORDER: readonly Bucket[] = [
   'deadCross',
   'deadTrex',
+  'trailTrex2',
+  'trailTiger2',
+  'trailTrex1',
+  'trailTiger1',
+  'trailTrex0',
+  'trailTiger0',
   'tether',
   'routed',
   'recover',
@@ -299,4 +371,16 @@ export const BUCKET_ORDER: readonly Bucket[] = [
   'latched',
   'biteHit',
   'biteMiss',
+  'fxDead2',
+  'fxOut2',
+  'fxTiger2',
+  'fxTrex2',
+  'fxDead1',
+  'fxOut1',
+  'fxTiger1',
+  'fxTrex1',
+  'fxDead0',
+  'fxOut0',
+  'fxTiger0',
+  'fxTrex0',
 ];

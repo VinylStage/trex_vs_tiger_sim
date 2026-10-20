@@ -1,10 +1,9 @@
 import { TigerState } from '../../sim/engine';
-import { EventType } from '../../sim/events';
+import { TRAIL, collectEffects, collectTrails, newFxCounters, type FxCounters } from './effects';
 import {
   BUCKET_ORDER,
   GLYPH,
   PAINTS,
-  biteCone,
   tigerGlyph,
   tigerRadiusPx,
   trexGauge,
@@ -14,6 +13,7 @@ import {
   type Paint,
   type PathSink,
 } from './glyphs';
+import { OVERVIEW_ORDER, buildOverview } from './overview';
 import type { Prepared } from './prepare';
 import type { ReplayTheme } from './theme';
 import type { World } from './world';
@@ -43,20 +43,6 @@ export function makeViewport(
   return { cssW, cssH, dpr, scale, ox: cssW / 2 - cx * scale, oy: cssH / 2 - cy * scale };
 }
 
-/** Bite-cone lifetime in real seconds (effects are timed in real time, so they read at 16×). */
-export const BITE_HIT_S = 0.32;
-export const BITE_MISS_S = 0.22;
-/**
- * Flash safety (WCAG 2.3.1): a T-Rex's bite cone is filled only if its previous bite was at
- * least FLASH_GAP_S real seconds earlier (≤ 3 fills/s), only up to FLASH_MAX_SPEED×, and only
- * while the frame's filled area stays under FLASH_AREA_PX (CSS px², < 21,824 = 25 % of the
- * 341 × 256 px "10° field"). Everything else is drawn as an outline.
- */
-export const FLASH_GAP_S = 0.34;
-export const FLASH_MAX_SPEED = 4;
-export const FLASH_AREA_PX = 20_000;
-export const FLASH_WEDGE_MAX_PX = 4_000;
-
 /** Grid spacings (m); the finest one whose cells are ≥ 48 px is drawn. */
 const GRID_STEPS = [10, 25, 50, 100, 250, 500, 1000, 2500] as const;
 const GRID_MIN_PX = 48;
@@ -64,6 +50,7 @@ const GRID_MIN_PX = 48;
 const SCALE_STEPS = [2, 5, 10] as const;
 
 const TIGER_STATE_NAME = ['approach', 'latched', 'recover', 'routed'] as const;
+const LAST_BUCKET = BUCKET_ORDER[BUCKET_ORDER.length - 1] as Bucket;
 
 /** Apply one bucket's paints to a path. */
 export function paintPath(
@@ -86,25 +73,35 @@ export function paintPath(
   }
 }
 
-/** What the last frame showed (for the legend and tests). */
+/** What the last frame showed (for the legend, the debug overlay and tests). */
 export interface FrameInfo {
   /** Tigers were drawn as LOD squares. */
   lod: boolean;
   /** Agents inside the view. */
   tigers: number;
   trex: number;
-  /** Bite cones drawn, filled area (CSS px²). */
-  wedges: number;
-  flashArea: number;
+  /** Effects, bite cones, fills and trails (see effects.ts). */
+  fx: FxCounters;
+}
+
+/** Per-frame drawing switches (playback speed, reduced motion, adaptive quality tier). */
+export interface DrawOptions {
+  speed: number;
+  effects: boolean;
+  fills: boolean;
+  trexTrails: boolean;
+  tigerTrails: boolean;
+  forceLod: boolean;
+  onFill?: ((event: number, trex: number) => void) | undefined;
 }
 
 /**
- * Draws the stage (docs/REPLAY.md §6): arena and grid, dead marks, tethers, tigers by state,
- * T-Rex with HP gauges, latched diamonds, bite cones and the scale bar. One Path2D per bucket per
- * frame, colours precomputed per theme, no typed-array allocation.
+ * Draws the stage (docs/REPLAY.md §6): arena and grid, dead marks, trails, tethers, tigers by
+ * state, T-Rex with HP gauges, latched diamonds, event effects and the scale bar. One Path2D per
+ * bucket per frame, colours precomputed per theme, no typed-array allocation.
  */
 export class StagePainter {
-  readonly info: FrameInfo = { lod: false, tigers: 0, trex: 0, wedges: 0, flashArea: 0 };
+  readonly info: FrameInfo = { lod: false, tigers: 0, trex: 0, fx: newFxCounters() };
   private readonly paths = new Map<Bucket, Path2D>();
   private readonly sink = (b: Bucket): PathSink => {
     let path = this.paths.get(b);
@@ -122,8 +119,7 @@ export class StagePainter {
     w: World,
     vp: Viewport,
     theme: ReplayTheme,
-    speed: number,
-    effects: boolean,
+    opt: DrawOptions,
   ): void {
     const p = this.p;
     const { cssW, cssH, dpr, scale, ox, oy } = vp;
@@ -135,7 +131,7 @@ export class StagePainter {
     this.drawArena(ctx, vp, theme);
 
     const r = tigerRadiusPx(p.trace.meta.tigerRadius, scale);
-    const lod = r < GLYPH.lodBelowPx;
+    const lod = opt.forceLod || r < GLYPH.lodBelowPx;
     const len = trexLengthPx(scale);
     const info = this.info;
     info.lod = lod;
@@ -192,9 +188,26 @@ export class StagePainter {
       }
     }
 
-    info.wedges = 0;
-    info.flashArea = 0;
-    if (effects) this.collectBites(w, vp, speed);
+    const fx = info.fx;
+    fx.effects = 0;
+    fx.capped = 0;
+    fx.wedges = 0;
+    fx.fills = 0;
+    fx.flashArea = 0;
+    fx.trexTrails = 0;
+    fx.tigerTrails = 0;
+    const tigerTrails = opt.tigerTrails && !lod && r >= TRAIL.minTigerPx;
+    if (opt.trexTrails || tigerTrails)
+      collectTrails(p, w, vp, { trex: opt.trexTrails, tigers: tigerTrails }, this.sink, fx);
+    if (opt.effects)
+      collectEffects(
+        p,
+        w,
+        vp,
+        { speed: opt.speed, fills: opt.fills, onFill: opt.onFill },
+        this.sink,
+        fx,
+      );
 
     // Paint in layer order, with LOD squares slotted in where their glyphs would be.
     const paint = (from: Bucket, to: Bucket): void => {
@@ -215,9 +228,9 @@ export class StagePainter {
       this.squares(ctx, w, vp, TigerState.Approach, theme.tiger, side);
       paint('trexHollow', 'trexHalo');
       this.squares(ctx, w, vp, TigerState.Latched, theme.tiger, side * GLYPH.lodLatched);
-      paint('latched', 'biteMiss');
+      paint('latched', LAST_BUCKET);
     } else {
-      paint('deadCross', 'biteMiss');
+      paint('deadCross', LAST_BUCKET);
     }
     this.drawScaleBar(ctx, vp, theme);
   }
@@ -291,55 +304,6 @@ export class StagePainter {
     }
   }
 
-  /**
-   * Bite cones of recent BiteHit / BiteMiss events, on the biting T-Rex's current pose. Events are
-   * found by binary search over the sorted log; hits are filled within the flash limits.
-   */
-  private collectBites(w: World, vp: Viewport, speed: number): void {
-    const p = this.p;
-    if (p.evCount === 0) return;
-    const { cssW, cssH, scale, ox, oy } = vp;
-    const sp = Math.max(0.25, speed);
-    const time = w.time;
-    const from = Math.ceil((time - BITE_HIT_S * sp) / p.dt - 1e-6);
-    const until = Math.floor(time / p.dt + 1e-6);
-    let lo = 0;
-    let hi = p.evCount;
-    while (lo < hi) {
-      const mid = (lo + hi) >> 1;
-      if ((p.evStep[mid] as number) < from) lo = mid + 1;
-      else hi = mid;
-    }
-    const meta = p.trace.meta;
-    const info = this.info;
-    for (let k = lo; k < p.evCount; k++) {
-      const step = p.evStep[k] as number;
-      if (step > until) break;
-      const type = p.evType[k] as number;
-      if (type !== EventType.BiteHit && type !== EventType.BiteMiss) continue;
-      const hit = type === EventType.BiteHit;
-      const age = (time - step * p.dt) / sp;
-      if (age < 0 || age > (hit ? BITE_HIT_S : BITE_MISS_S)) continue;
-      const i = p.evA[k] as number;
-      if (i >= p.N || !w.ralive[i]) continue;
-      const reach = (meta.reach[i] as number) * scale;
-      const x = ox + (w.rx[i] as number) * scale;
-      const y = oy + (w.ry[i] as number) * scale;
-      if (x < -reach || y < -reach || x > cssW + reach || y > cssH + reach) continue;
-      const arc = meta.arc[i] as number;
-      const area = reach * reach * arc;
-      const fill =
-        hit &&
-        speed <= FLASH_MAX_SPEED &&
-        (p.evGap[k] as number) >= FLASH_GAP_S * sp &&
-        area <= FLASH_WEDGE_MAX_PX &&
-        info.flashArea + area <= FLASH_AREA_PX;
-      if (fill) info.flashArea += area;
-      biteCone(this.sink(fill ? 'biteHit' : 'biteMiss'), x, y, w.rh[i] as number, reach, arc);
-      info.wedges++;
-    }
-  }
-
   private drawScaleBar(ctx: CanvasRenderingContext2D, vp: Viewport, theme: ReplayTheme): void {
     const { cssW, cssH, scale } = vp;
     const raw = Math.min(120, cssW * 0.25) / scale;
@@ -362,5 +326,40 @@ export class StagePainter {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
     ctx.fillText(`${meters} m`, x + px + 6, y + 1);
+  }
+}
+
+/**
+ * Paint the reduced-motion overview (overview.ts) framed by `vp`. Called on load, resize and
+ * theme change only; there is no animation.
+ */
+export function paintOverview(
+  ctx: CanvasRenderingContext2D,
+  p: Prepared,
+  vp: Viewport,
+  theme: ReplayTheme,
+): void {
+  const { cssW, cssH, dpr, scale, ox, oy } = vp;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = theme.surface;
+  ctx.fillRect(0, 0, cssW, cssH);
+  ctx.fillStyle = theme.arena;
+  ctx.fillRect(ox, oy, p.L * scale, p.L * scale);
+  ctx.strokeStyle = theme.border;
+  ctx.lineWidth = 1;
+  ctx.strokeRect(ox, oy, p.L * scale, p.L * scale);
+  const paths = new Map<Bucket, Path2D>();
+  buildOverview(p, vp, (b) => {
+    let path = paths.get(b);
+    if (!path) {
+      path = new Path2D();
+      paths.set(b, path);
+    }
+    return path;
+  });
+  for (const b of OVERVIEW_ORDER) {
+    const path = paths.get(b);
+    if (path) paintPath(ctx, path, PAINTS[b], theme);
   }
 }
