@@ -77,6 +77,14 @@ export interface Prepared {
    * tick earlier and spends the event's tick moving off or lying where it was.
    */
   readonly liDetach: Float64Array;
+  /**
+   * For an interval still open when the log stopped: the time up to which the frames confirm the
+   * ride (s). The replay walks the frames after `completeTime` and stops at the last one in which
+   * the tiger is still Latched at its ride position; a later detach, or a re-latch onto another
+   * host or angle, is only visible in the frames. Infinity if every later frame agrees, and
+   * Infinity for closed intervals (they end at `liDetach`).
+   */
+  readonly liFrameEnd: Float64Array;
 
   /** Stamp at which a tiger died or left the arena (NO_STEP if never, or not recorded). */
   readonly goneStep: Uint16Array;
@@ -94,6 +102,11 @@ export interface Prepared {
 }
 
 const LATCHED: number = TigerState.Latched;
+/**
+ * A frame confirms a ride when the tiger lies within this distance of its drawn ride position
+ * (m). The quantised latch angle alone moves it by attachR × π/256 (a few centimetres).
+ */
+const RIDE_FRAME_TOLERANCE = 0.5;
 const DEAD: number = TigerState.Dead;
 const LEFT: number = TigerState.Left;
 
@@ -184,6 +197,7 @@ export function prepare(trace: BattleTrace): Prepared {
   const liEndKind = new Uint8Array(nLi);
   const liRide = new Float64Array(nLi).fill(Infinity);
   const liDetach = new Float64Array(nLi).fill(Infinity);
+  const liFrameEnd = new Float64Array(nLi).fill(Infinity);
   const trCur = trOff.slice(0, M);
   const liCur = liOff.slice(0, M);
   const openLatch = new Int32Array(M).fill(-1);
@@ -283,6 +297,7 @@ export function prepare(trace: BattleTrace): Prepared {
     liEndKind,
     liRide,
     liDetach,
+    liFrameEnd,
     goneStep,
     goneX,
     goneY,
@@ -291,11 +306,41 @@ export function prepare(trace: BattleTrace): Prepared {
     firstContact,
   };
 
+  const pose = new Float64Array(5);
+  const L = trace.arenaSize;
+  // Latches still open when the log stopped: ride only while the frames agree (see liFrameEnd).
+  const completeTime = completeStep * dt;
+  const firstAfter = firstFrameAtOrAfter(frameT, completeTime + 1e-6 * dt);
+  for (let j = 0; j < M; j++) {
+    const l = openLatch[j] as number;
+    if (l < 0) continue;
+    const host = liHost[l] as number;
+    const rideFrom = liRide[l] as number;
+    let end = completeTime;
+    let f = firstAfter;
+    for (; f < F; f++) {
+      const fr = frames[f] as TraceFrame;
+      const t = frameT[f] as number;
+      if (fr.tiger[j * 3 + 2] !== LATCHED) break;
+      if (t >= rideFrom - 1e-9) {
+        trexPose(prepared, host, t, pose);
+        const a = (pose[2] as number) + (liAng[l] as number);
+        const ex = Math.min(L, Math.max(0, (pose[0] as number) + Math.cos(a) * prepared.attachR));
+        const ey = Math.min(L, Math.max(0, (pose[1] as number) + Math.sin(a) * prepared.attachR));
+        const err = Math.hypot(
+          (fr.tiger[j * 3] as number) - ex,
+          (fr.tiger[j * 3 + 1] as number) - ey,
+        );
+        if (err > RIDE_FRAME_TOLERANCE) break;
+      }
+      end = t;
+    }
+    liFrameEnd[l] = f >= F ? Infinity : end;
+  }
+
   // Final positions of dead and departed tigers. A tiger killed while latched stays where it last
   // rode (the drawn ride position, so the glyph does not jump); every other one stays at its frame
   // position, which no longer changes after death or exit.
-  const pose = new Float64Array(5);
-  const L = trace.arenaSize;
   for (let j = 0; j < M; j++) {
     const s = goneStep[j] as number;
     if (s === NO_STEP) continue;

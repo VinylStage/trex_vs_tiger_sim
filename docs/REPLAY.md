@@ -103,6 +103,7 @@ Events with a stamp after `eventsCompleteUntilStep` are ignored for states.
 - Riding starts at `liRide` = one tick after the `Latch` event: the engine pins a tiger to its host in the tick after it latches, and on the latch tick it is still at its contact point (up to bodyRadius away from the ride position). During that tick the diamond moves onto the host along a straight line.
 - Riding ends at `liDetach`. A `Throw` or a stamina `Release` happens after the latched position update, so riding lasts until the event's time; a thrown tiger is then anchored 3 m farther out on the same bearing (the one intended jump). A `Rout`, a `BiteHit` or a `Release` because the host died happens before that update, so riding ends one tick earlier and the event's tick is spent moving off.
 - An interval that ends before `liRide` (latched, then bitten on the next tick) never rides; the tiger stays at its frame positions.
+- An interval still open when the log stopped (C5 fallback) has no end event. It rides only while the frames confirm it: `prepare()` walks the frames after `completeTime` and records in `liFrameEnd` the last one in which the tiger is still Latched within 0.5 m of its drawn ride position. From then on the tiger leaves from that ride position on a straight line to the next frame and follows the frames, so a detach, or a re-latch onto another host or at another angle, that only the frames saw does not make it ride the stale latch (that had shown jumps of up to 40 m). The anchors that come from the log (detach, ride start, death) also hold in the frame interval that straddles `completeTime`, so the switch to frame states does not jump either.
 
 **Free tigers** (approaching, recovering, routed) move between anchors: frame samples, plus exact anchors where a tiger leaves a host (`liDetach`), starts riding one (`liRide`), or stops for good (death or exit, at the `goneX/Y` position). With no anchor and no state change anywhere in frames a−1 … b+1 they follow the centripetal Catmull-Rom curve, otherwise a straight line between the anchors. Non-routed tigers are clamped to the arena. The heading (approach tick, rout arrow) is the curve's tangent (finite difference), or the anchor-to-anchor direction.
 
@@ -162,13 +163,13 @@ One stage canvas (`alpha: false`), drawn back to front:
 
 Each layer is one or two buckets in `BUCKET_ORDER`; every bucket is one `Path2D` per frame painted with its entry in `PAINTS`. Agents outside the view are culled. `draw()` allocates no typed arrays.
 
-**LOD.** When r < 3 CSS px, tigers are drawn as `fillRect` squares grouped by state and snapped to device pixels (the fastest primitive on CPU raster, ANIMATION.md §3.6): side 1.6r (at least 2 device px); latched 1.2× in `--replay-tiger` (drawn above the T-Rex), recovering in tiger orange at 45 %, routed 0.8× in grey at 75 %, dead as 2-device-px grey dots. Shape coding then degrades to tone and size, and the note under the legend says so.
+**LOD.** When r < 3 CSS px, tigers are drawn as `fillRect` squares grouped by state and snapped to device pixels (the fastest primitive on CPU raster, ANIMATION.md §3.6): side 1.6r (at least 2 device px); latched 1.2× in `--replay-tiger` (drawn above the T-Rex), recovering in tiger orange at 45 %, routed 0.8× in grey at 75 %, dead as 2-device-px grey dots. Shape coding then degrades to tone and size, and a hint overlaid on the stage says so.
 
 **Backing store.** See §11.
 
 ## 7. Legend and notes
 
-The legend is a DOM list (translatable, crisp, CSP-safe) with labels from the `replay.*` and `state.*` i18n keys, in three groups: T-Rex, tigers (states) and events (bite cone, latch ring, rout or death ring, throw burst, trail). Each swatch is a 30 × 18 px canvas painted by the stage's own builders and `PAINTS` on an arena-coloured background (`LEGEND_ITEMS` in `legend.ts`), so legend and stage cannot drift apart. Under it, one paragraph with two reserved lines shows the overview notice (reduced motion) or the LOD hint and, for a trace whose event log stopped early, from which time detail is reduced; reserving the space keeps the page from shifting when a note appears.
+The legend is a DOM list (translatable, crisp, CSP-safe) with labels from the `replay.*` and `state.*` i18n keys, in three groups: T-Rex, tigers (states) and events (bite cone, latch ring, rout or death ring, throw burst, trail). Each swatch is a 30 × 18 px canvas painted by the stage's own builders and `PAINTS` on an arena-coloured background (`LEGEND_ITEMS` in `legend.ts`), so legend and stage cannot drift apart. Under it, one paragraph with three reserved lines (`min-height: 4.5em` at line-height 1.5) shows the overview notice (reduced motion) and, for a trace whose event log stopped early, from which time detail is reduced. Both only change when a trace loads, and each fits in three lines at a 360 px viewport in both languages. The LOD hint, which the auto camera can switch on and off during playback, is an overlay at the bottom of the stage (`.replay-lod`, absolutely positioned), so it never moves the page.
 
 ## 8. Camera, timeline and controls
 
@@ -186,15 +187,15 @@ The legend is a DOM list (translatable, crisp, CSP-safe) with labels from the `r
 - Counts come from `buildTimeline` at 480 evenly spaced times: event-exact up to the end of the event log (tested equal to `World` at every bin), from the frames after it.
 - Click or drag on the strip seeks (`touch-action: pan-y` keeps vertical scrolling). The strip is `aria-hidden`; the native slider is the accessible control.
 
-**Markers and stops** (`extractMarkers`, `eventStops`): first contact, each T-Rex death, and clusters of tiger kills and of routs. A cluster continues while the next event is within 2 s and is cut after 5 s, so a long continuous fight still gets a stop every few seconds (without the cut, 500v5000 had a single kill marker). Each marker gives a stop 1 s before it, so the event is seen happening.
+**Markers and stops** (`extractMarkers`, `eventStops`): first contact, each T-Rex death, and clusters of tiger kills and of routs. A cluster continues while the next event is within 2 s and is cut after 5 s, so a long continuous fight still gets a stop every few seconds (without the cut, 500v5000 had a single kill marker). Each marker gives a stop 1 s before it, so the event is seen happening. Markers come from the event log only, so for a trace whose log stopped early they end at the dotted reduced-detail line: kills, routs and T-Rex deaths after it are visible on the stage and in the stacked counts but get no marker or stop.
 
-**Buttons.** **First contact** jumps to exactly `first contact − 2 s` (V8 asks for ±0.1 s) and is disabled when nothing ever met. **Previous / Next event** jump between stops and are disabled when there is none in that direction.
+**Buttons.** **First contact** jumps to exactly `first contact − 2 s` (V8 asks for ±0.1 s) and is disabled when nothing ever met. **Previous / Next event** jump between stops and switch off when there is none in that direction. The three jump buttons switch off with `aria-disabled="true"`, not the `disabled` property: a disabled button that has focus hands focus to `<body>`, where the shortcuts stop working (WCAG 2.4.3). They stay focusable; a press while off announces "no more events". The play button is a plain button whose label says what it does (Play or Pause), without `aria-pressed`.
 
 **Speeds.** 0.25×, 0.5×, 1×, 2× (default), 4×, 8×, 16×.
 
 **Seeking never re-simulates**: one `World.update` and one draw (P5, §12).
 
-**Keyboard.** Shortcuts work while focus is inside the replay, except where a key is native (Space/Enter on a button, any key on a select or the shortcuts summary). Keys match `KeyboardEvent.code`, so they work with a Korean IME active. Ctrl, Alt and Meta combinations are ignored.
+**Keyboard.** Shortcuts work while focus is inside the replay, except where a key is native (Space/Enter on a button, any key on a select or the shortcuts summary). A printable ASCII `KeyboardEvent.key` decides first, so the keys follow the characters printed on AZERTY or Dvorak keyboards, as the list and `aria-keyshortcuts` advertise them; while a Korean IME is active (`key` is 'Process' or a Hangul jamo) the physical `KeyboardEvent.code` decides instead. Ctrl, Alt and Meta combinations are ignored.
 
 | Keys                 | Action                                           |
 | -------------------- | ------------------------------------------------ |
@@ -277,7 +278,7 @@ ANIMATION.md writes the up rule as "p95 below 12 ms"; a 60 Hz rAF interval never
 
 - A `ResizeObserver` with `box: 'device-pixel-content-box'` (Chromium, Firefox) reports resizes and DPR changes before paint, in the same frame; its exact size is used when it agrees with `css × dpr` within 2 px (Chromium's mobile emulation reports CSS-sized boxes, which are ignored).
 - A `matchMedia('(resolution: …dppx)')` listener covers Safari.
-- The stage, the strip and the note keep reserved boxes (1:1 aspect, 40 px, two lines), so loading a trace shifts nothing.
+- The stage, the strip and the note keep reserved boxes (1:1 aspect, 40 px, three lines), and the LOD hint is an overlay, so loading a trace or zooming shifts nothing. The playback clock under a minute always prints one decimal ("4.0초"), so its width does not change every half second.
 
 **Debug counters.** With `?debug=fps`, an overlay shows fps, p95 draw time, quality tier, effects (and capped), fills, filled flash area and the most fill flashes one T-Rex started within any real second; the same counters plus replay time and last seek duration are on `window.__fx`. Without the parameter none of this exists.
 

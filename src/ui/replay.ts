@@ -1,6 +1,6 @@
 import type { BattleTrace } from '../sim/engine';
 import { h, uniqueId } from './dom';
-import { formatDuration, formatInt } from './format';
+import { formatDuration, formatFixed, formatInt } from './format';
 import { t, type MsgKey } from './i18n';
 import { CameraRig, CameraTarget, ZOOM_AUTO, ZOOM_FIT } from './replay/camera';
 import { StagePainter, makeViewport, paintOverview, type DrawOptions } from './replay/draw';
@@ -39,6 +39,16 @@ const ZOOMS: readonly { value: number; key: MsgKey }[] = [
  * Backing-store density cap. Above DENSE_AGENTS agents the cap drops to 2: CPU raster cost grows
  * about 1.4× from DPR 2 to 3 (docs/research/ANIMATION.md §3.8). Adaptive quality may lower it.
  */
+/**
+ * Playback clock: like formatDuration, but always one decimal under a minute ("4.0초", not
+ * "4초"), so the label keeps its width while playing and does not shift the slider row.
+ */
+function clockText(seconds: number): string {
+  return seconds >= 0 && seconds < 59.95
+    ? t('time.sec', { s: formatFixed(seconds, 1) })
+    : formatDuration(seconds);
+}
+
 const DPR_CAP = 3;
 const DPR_CAP_DENSE = 2;
 const DENSE_AGENTS = 2000;
@@ -102,6 +112,8 @@ export class ReplayView {
   private readonly slider: HTMLInputElement;
   private readonly timeLabel: HTMLSpanElement;
   private readonly note: HTMLParagraphElement;
+  /** Zoom-out hint, overlaid on the stage so that toggling it never moves the page. */
+  private readonly lodHint: HTMLParagraphElement;
   private readonly live: HTMLParagraphElement;
   private readonly legend = new ReplayLegend();
   private readonly debugEl: HTMLParagraphElement | null;
@@ -232,19 +244,21 @@ export class ReplayView {
       i18n: 'replay.prevEvent',
       attrs: { type: 'button', 'aria-keyshortcuts': ',' },
     });
-    this.prevBtn.addEventListener('click', () => this.jumpEvent(-1, false));
+    this.prevBtn.addEventListener('click', () => this.jumpEvent(-1, this.isOff(this.prevBtn)));
     this.contactBtn = h('button', {
       class: 'btn btn-small',
       i18n: 'replay.skipContact',
       attrs: { type: 'button', 'aria-keyshortcuts': 'C' },
     });
-    this.contactBtn.addEventListener('click', () => this.jumpContact(false));
+    this.contactBtn.addEventListener('click', () => {
+      if (!this.isOff(this.contactBtn)) this.jumpContact(false);
+    });
     this.nextBtn = h('button', {
       class: 'btn btn-small',
       i18n: 'replay.nextEvent',
       attrs: { type: 'button', 'aria-keyshortcuts': '.' },
     });
-    this.nextBtn.addEventListener('click', () => this.jumpEvent(1, false));
+    this.nextBtn.addEventListener('click', () => this.jumpEvent(1, this.isOff(this.nextBtn)));
 
     const speedId = uniqueId('replay-speed');
     this.speedSel = h('select', { id: speedId, attrs: { 'aria-keyshortcuts': '[ ]' } });
@@ -282,6 +296,7 @@ export class ReplayView {
     this.timeLabel = h('span', { class: 'replay-time', attrs: { 'aria-hidden': 'true' } });
     this.strip = new TimelineStrip((time) => this.seek(time));
     this.note = h('p', { class: 'replay-note is-empty' });
+    this.lodHint = h('p', { class: 'replay-lod is-empty' });
     this.live = h('p', {
       class: 'visually-hidden',
       attrs: { role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' },
@@ -300,7 +315,7 @@ export class ReplayView {
     this.el = h(
       'div',
       { class: 'replay' },
-      h('div', { class: 'replay-stage' }, this.canvas, this.debugEl),
+      h('div', { class: 'replay-stage' }, this.canvas, this.lodHint, this.debugEl),
       h(
         'div',
         { class: 'replay-controls' },
@@ -626,7 +641,6 @@ export class ReplayView {
     const key: MsgKey = this.playing ? 'replay.pause' : 'replay.play';
     const text = `${this.playing ? '❚❚' : '▶'} ${t(key)}`;
     if (this.playBtn.textContent !== text) this.playBtn.textContent = text;
-    this.playBtn.setAttribute('aria-pressed', String(this.playing));
     this.playBtn.disabled = !prep;
     this.slider.disabled = !prep;
     this.speedSel.disabled = !prep;
@@ -635,11 +649,11 @@ export class ReplayView {
     const prevOff = !m || prevStop(m.stops, this.time) === null;
     const nextOff = !m || nextStop(m.stops, this.time) === null;
     const contactOff = !prep || contactSeekTime(prep) === null;
-    if (this.prevBtn.disabled !== prevOff) this.prevBtn.disabled = prevOff;
-    if (this.nextBtn.disabled !== nextOff) this.nextBtn.disabled = nextOff;
-    if (this.contactBtn.disabled !== contactOff) this.contactBtn.disabled = contactOff;
-    const cur = formatDuration(this.time);
-    const total = formatDuration(this.duration());
+    this.setOff(this.prevBtn, prevOff);
+    this.setOff(this.nextBtn, nextOff);
+    this.setOff(this.contactBtn, contactOff);
+    const cur = clockText(this.time);
+    const total = clockText(this.duration());
     this.timeLabel.textContent = prep ? `${cur} / ${total}` : '';
     // aria-valuetext: every change while paused, once per whole second while playing.
     const sec = Math.floor(this.time);
@@ -648,6 +662,19 @@ export class ReplayView {
       if (prep) this.slider.setAttribute('aria-valuetext', t('replay.valueText', { cur, total }));
       else this.slider.removeAttribute('aria-valuetext');
     }
+  }
+
+  /**
+   * The jump buttons switch off with aria-disabled, not `disabled`: a disabled button drops
+   * keyboard focus to <body>, where the replay's shortcuts no longer reach (WCAG 2.4.3). They stay
+   * focusable; a press while off only announces that there is no further event.
+   */
+  private setOff(btn: HTMLButtonElement, off: boolean): void {
+    if (this.isOff(btn) !== off) btn.setAttribute('aria-disabled', String(off));
+  }
+
+  private isOff(btn: HTMLButtonElement): boolean {
+    return btn.getAttribute('aria-disabled') === 'true';
   }
 
   private sceneText(): string {
@@ -678,11 +705,17 @@ export class ReplayView {
     this.canvas.setAttribute('aria-label', text);
   }
 
-  /** One reserved two-line note under the legend: overview, LOD and reduced-detail notices. */
+  /**
+   * The note under the legend (overview and reduced-detail notices, which only change when a trace
+   * loads, in a box reserved for three lines) and the zoom-out hint, which the auto camera can
+   * toggle during playback and therefore lives in an overlay on the stage.
+   */
   private updateNote(): void {
+    const lod = this.prep && !this.overview && this.lod ? t('replay.lodNote') : '';
+    if (this.lodHint.textContent !== lod) this.lodHint.textContent = lod;
+    this.lodHint.classList.toggle('is-empty', lod === '');
     const parts: string[] = [];
     if (this.prep && this.overview) parts.push(t('replay.overviewNote'));
-    else if (this.prep && this.lod) parts.push(t('replay.lodNote'));
     if (this.prep?.reduced)
       parts.push(t('replay.reducedNote', { time: formatDuration(this.prep.completeTime) }));
     const text = parts.join(' ');

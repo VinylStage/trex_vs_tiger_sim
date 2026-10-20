@@ -263,12 +263,27 @@ export const SEEK_BIG_S = 5;
 /** Page Up / Page Down step, as a fraction of the battle's length. */
 export const SEEK_PAGE = 0.1;
 
+/** KeyboardEvent.code name of a printable ASCII character, as a US layout types it. */
+const CHAR_CODES: Readonly<Record<string, string>> = {
+  ' ': 'Space',
+  '[': 'BracketLeft',
+  ']': 'BracketRight',
+  ',': 'Comma',
+  '.': 'Period',
+};
+
 /**
- * Keyboard map. `code` is KeyboardEvent.code (layout independent, so it also works while a Korean
- * IME is active); `key` is the fallback for navigation keys.
+ * Keyboard map. A printable ASCII `key` (KeyboardEvent.key) wins, so the shortcuts follow the
+ * characters printed on AZERTY or Dvorak keys, as the shortcut list and aria-keyshortcuts
+ * advertise them. Otherwise (`key` is 'Process' or a Hangul jamo while a Korean IME is active,
+ * or a navigation key) the physical `code` (KeyboardEvent.code) decides.
  */
 export function keyAction(code: string, key: string, shift: boolean): ReplayAction | null {
-  switch (code || key) {
+  const ascii = key.length === 1 && key >= ' ' && key <= '~';
+  const name = ascii
+    ? (CHAR_CODES[key] ?? (/[a-z]/i.test(key) ? `Key${key.toUpperCase()}` : key))
+    : code || key;
+  switch (name) {
     case 'Space':
     case ' ':
     case 'KeyK':

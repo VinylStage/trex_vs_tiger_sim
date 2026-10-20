@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DT, TigerState, type TraceFrame } from '../src/sim/engine';
 import { EventType, byteAngle } from '../src/sim/events';
 import { crEval, crKnots, frameIndex, lastAtMost, lerpAngle } from '../src/ui/replay/interp';
-import { prepare } from '../src/ui/replay/prepare';
+import { NO_STEP, prepare } from '../src/ui/replay/prepare';
 import { World, trexPose } from '../src/ui/replay/world';
 import { checkMotion, synthTrace, traceOf } from './replay-helpers';
 import { noAttackParams } from './trace-helpers';
@@ -451,5 +451,43 @@ describe('real traces', () => {
     const a = trace.frames[k] as TraceFrame;
     w.update(a.t + 0.2);
     for (let j = 0; j < p.M; j++) expect(w.ts[j]).toBe(a.tiger[j * 3 + 2] as number);
+  });
+
+  it('fallback trace: open latches stop riding where the frames disagree (V4)', () => {
+    // The log stops at 19.3 s with tiger 33 latched to T-Rex 1; in the frames it later detaches
+    // and latches again onto another host. Before the fix it rode the stale latch, jumping 18 m.
+    const over = { trexCount: 3, tigerCount: 200, morale: false, seed: 9999, runs: 2 };
+    const { trace } = traceOf(over, 1, { eventLimits: { p0Cap: 150 } });
+    const p = prepare(trace);
+    expect(p.reduced).toBe(true);
+    const lo = p.liOff[33] as number;
+    const li = (p.liOff[34] as number) - 1;
+    expect(li).toBeGreaterThanOrEqual(lo);
+    expect(p.liEnd[li]).toBe(NO_STEP);
+    expect(p.liFrameEnd[li]).toBeLessThan(30.5);
+    const w = new World(p);
+    for (const t of [30.517, 31, 35]) {
+      w.update(t);
+      expect(w.thost[33], `t=${t}`).not.toBe(p.liHost[li]);
+    }
+    for (const run of [0, 1]) {
+      const r = checkMotion(traceOf(over, run, { eventLimits: { p0Cap: 150 } }).trace);
+      expect(r.violations, `run ${run}`).toEqual([]);
+    }
+    // Every frame after the stop agrees with the drawn position when the tiger is not riding.
+    for (const f of trace.frames) {
+      if (f.t <= p.completeTime) continue;
+      w.update(f.t);
+      for (let j = 0; j < p.M; j++) {
+        if (w.thost[j] !== -1 || w.ts[j] === TigerState.Left) continue;
+        const err = Math.hypot(
+          (w.tx[j] as number) - (f.tiger[j * 3] as number),
+          (w.ty[j] as number) - (f.tiger[j * 3 + 1] as number),
+        );
+        // Up to the quantised latch angle where it leaves a host at this frame.
+        const quant = (p.attachR + 3) * (Math.PI / 256) + 1e-3;
+        if (w.ts[j] !== TigerState.Dead) expect(err, `t=${f.t} tiger ${j}`).toBeLessThan(quant);
+      }
+    }
   });
 });

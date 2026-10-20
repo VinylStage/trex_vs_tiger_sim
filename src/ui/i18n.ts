@@ -151,11 +151,10 @@ const ko = {
   'replay.legendTrex': 'T-Rex',
   'replay.legendHp': '다친 T-Rex (채운 면적 = 남은 체력)',
   'replay.legendTrexDead': '쓰러진 T-Rex',
-  'replay.legendBite': '물기 범위 (명중하면 채워짐)',
-  'replay.lodNote':
-    '멀리서 볼 때는 호랑이를 작은 사각형으로 그려 상태를 색과 크기로만 구분합니다. 확대하면 모양이 보입니다.',
+  'replay.legendBite': '물기 범위 (명중은 채워 표시, 빠른 재생에서는 윤곽만)',
+  'replay.lodNote': '멀리서는 호랑이를 작은 사각형으로 그립니다. 확대하면 상태별 모양이 보입니다.',
   'replay.reducedNote':
-    '{time} 이후는 이벤트 기록 한도를 넘어, 저장해 둔 표본 사이를 이어서 그립니다. 상태 변화가 늦게 보이거나 빠질 수 있습니다.',
+    '{time} 이후는 기록 한도를 넘어 저장된 표본 사이를 이어 그립니다. 상태 변화가 늦게 보이거나 빠질 수 있습니다.',
   'replay.failed': '재생을 불러오지 못했습니다: {msg}',
   'replay.prevEvent': '◀ 이전 사건',
   'replay.nextEvent': '다음 사건 ▶',
@@ -166,7 +165,7 @@ const ko = {
   'replay.overviewLabel':
     '전투 전체 요약 그림: 선은 이동 경로, 마름모는 호랑이가 매달린 곳, ×는 호랑이가 쓰러진 곳, 삼각형은 T-Rex의 마지막 위치입니다',
   'replay.overviewNote':
-    '동작 줄이기 설정에 따라 자동 재생하지 않고 전투 전체를 한 장으로 보여 줍니다. 선은 이동 경로, 마름모는 매달린 곳, ×는 쓰러진 곳입니다. 재생을 누르면 효과 없이 재생합니다.',
+    '동작 줄이기 설정이 켜져 있어 전투 전체를 한 장으로 보여 줍니다(선: 이동 경로, 마름모: 매달린 곳, ×: 쓰러진 곳). 재생을 누르면 효과 없이 재생합니다.',
   'replay.announceSpeed': '재생 속도 {speed}',
   'replay.announceView': '보기: {view}',
   'replay.noMoreEvents': '그쪽으로는 더 이상 사건이 없습니다',
@@ -399,11 +398,10 @@ const en: Dictionary = {
   'replay.legendTrex': 'T-Rex',
   'replay.legendHp': 'Wounded T-Rex (filled area = HP left)',
   'replay.legendTrexDead': 'Dead T-Rex',
-  'replay.legendBite': 'Bite reach (filled on a hit)',
-  'replay.lodNote':
-    'Zoomed out, tigers are small squares and their state shows only as colour and size. Zoom in to see the shapes.',
+  'replay.legendBite': 'Bite reach (filled on a hit; outline only at high speed)',
+  'replay.lodNote': 'Zoomed out, tigers are small squares. Zoom in to see their shapes.',
   'replay.reducedNote':
-    'After {time} the event log was full, so the replay only joins stored samples: state changes may show late or not at all.',
+    'After {time} the event log was full, so the replay joins stored samples: state changes may show late or not at all.',
   'replay.failed': 'Could not load the replay: {msg}',
   'replay.prevEvent': '◀ Previous event',
   'replay.nextEvent': 'Next event ▶',
@@ -414,7 +412,7 @@ const en: Dictionary = {
   'replay.overviewLabel':
     'Summary of the whole battle: lines are paths, diamonds mark where tigers latched, crosses where tigers died, triangles the final T-Rex positions',
   'replay.overviewNote':
-    'Reduced motion is on, so the replay does not start by itself and shows the whole battle in one picture: lines are paths, diamonds are latches, crosses are deaths. Press Play to animate it without effects.',
+    'Reduced motion is on, so the whole battle is shown in one picture (lines: paths, diamonds: latches, crosses: deaths). Press Play to animate it without effects.',
   'replay.announceSpeed': 'Playback speed {speed}',
   'replay.announceView': 'View: {view}',
   'replay.noMoreEvents': 'No more events in that direction',

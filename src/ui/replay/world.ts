@@ -200,7 +200,10 @@ export class World {
       const li = lastAtMost(p.liStart, liLo, liHi, exact ? step : p.completeStep);
       const rideFrom = li >= liLo ? (p.liRide[li] as number) : Infinity;
       const detach = li >= liLo ? (p.liDetach[li] as number) : -Infinity;
-      const riding = now >= rideFrom && now <= detach;
+      // An interval still open when the log stopped rides only while the frames confirm it
+      // (Infinity for closed intervals).
+      const frameEnd = li >= liLo ? (p.liFrameEnd[li] as number) : Infinity;
+      const riding = now >= rideFrom && now <= detach && now <= frameEnd + 1e-9;
       if (s === LATCHED && riding && (exact || p.liEnd[li] === NO_STEP)) {
         // Ride the host: same pose as the drawn T-Rex, at the recorded latch angle.
         const h = p.liHost[li] as number;
@@ -229,43 +232,56 @@ export class World {
       let rx = bx;
       let ry = by;
       let anchored = false;
-      if (exact) {
-        // Also when the tiger detaches right at frame a, so it leaves from the drawn ride
-        // position rather than the frame's (which differs by the quantised latch angle).
-        if (Number.isFinite(rideFrom) && detach <= now && detach >= ta - 1e-9) {
-          const thrown = p.liEndKind[li] === EventType.Throw && p.goneStep[j] !== p.liEnd[li];
-          this.ridePosition(
-            p.liHost[li] as number,
-            p.liAng[li] as number,
-            detach,
-            thrown ? THROW_DISTANCE : 0,
-          );
-          lt = detach;
-          lx = this.anchor[0] as number;
-          ly = this.anchor[1] as number;
+      if (
+        li >= liLo &&
+        p.liEnd[li] === NO_STEP &&
+        frameEnd >= rideFrom - 1e-9 &&
+        frameEnd <= now &&
+        frameEnd >= ta - 1e-9
+      ) {
+        // The frames stopped confirming the open ride: leave from where it was last drawn.
+        this.ridePosition(p.liHost[li] as number, p.liAng[li] as number, frameEnd, 0);
+        lt = frameEnd;
+        lx = this.anchor[0] as number;
+        ly = this.anchor[1] as number;
+        anchored = true;
+      }
+      // Also when the tiger detaches right at frame a, so it leaves from the drawn ride
+      // position rather than the frame's (which differs by the quantised latch angle). These
+      // anchors come from the log, so they also hold in the frame interval after it stopped.
+      if (Number.isFinite(rideFrom) && detach <= now && detach >= ta - 1e-9) {
+        const thrown = p.liEndKind[li] === EventType.Throw && p.goneStep[j] !== p.liEnd[li];
+        this.ridePosition(
+          p.liHost[li] as number,
+          p.liAng[li] as number,
+          detach,
+          thrown ? THROW_DISTANCE : 0,
+        );
+        lt = detach;
+        lx = this.anchor[0] as number;
+        ly = this.anchor[1] as number;
+        anchored = true;
+      }
+      // The next ride start: this interval's if it has not begun yet, else the next one's.
+      const ni = li >= liLo && rideFrom > now && Number.isFinite(rideFrom) ? li : li + 1;
+      if (ni < liHi) {
+        const ts0 = p.liRide[ni] as number;
+        if (ts0 > now && ts0 <= tb && ts0 <= (p.liFrameEnd[ni] as number) + 1e-9) {
+          this.ridePosition(p.liHost[ni] as number, p.liAng[ni] as number, ts0, 0);
+          rt = ts0;
+          rx = this.anchor[0] as number;
+          ry = this.anchor[1] as number;
           anchored = true;
         }
-        // The next ride start: this interval's if it has not begun yet, else the next one's.
-        const ni = li >= liLo && rideFrom > now && Number.isFinite(rideFrom) ? li : li + 1;
-        if (ni < liHi) {
-          const ts0 = p.liRide[ni] as number;
-          if (ts0 > now && ts0 <= tb) {
-            this.ridePosition(p.liHost[ni] as number, p.liAng[ni] as number, ts0, 0);
-            rt = ts0;
-            rx = this.anchor[0] as number;
-            ry = this.anchor[1] as number;
-            anchored = true;
-          }
-        }
-        const gs = p.goneStep[j] as number;
-        if (gs !== NO_STEP) {
-          const tg = gs * dt;
-          if (tg > now && tg < rt) {
-            rt = tg;
-            rx = p.goneX[j] as number;
-            ry = p.goneY[j] as number;
-            anchored = true;
-          }
+      }
+      const gs = p.goneStep[j] as number;
+      if (gs !== NO_STEP) {
+        const tg = gs * dt;
+        if (tg > now && tg < rt) {
+          rt = tg;
+          rx = p.goneX[j] as number;
+          ry = p.goneY[j] as number;
+          anchored = true;
         }
       }
 

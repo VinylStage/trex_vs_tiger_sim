@@ -71,6 +71,13 @@ describe('keyboard map', () => {
     expect(keyAction('', ']', false)).toEqual({ kind: 'speed', dir: 1 });
     expect(keyAction('KeyQ', 'q', false)).toBeNull();
     expect(keyAction('Tab', 'Tab', false)).toBeNull();
+    // Printable characters follow the layout (AZERTY: the key labelled ',' sits on KeyM; the
+    // physical KeyC position types 'c' on both); IME input falls back to the physical key.
+    expect(keyAction('KeyM', ',', false)).toEqual({ kind: 'event', dir: -1 });
+    expect(keyAction('Comma', ';', false)).toBeNull();
+    expect(keyAction('KeyI', 'c', false)).toEqual({ kind: 'contact' });
+    expect(keyAction('KeyF', 'F', true)).toEqual({ kind: 'view' });
+    expect(keyAction('KeyC', 'Process', false)).toEqual({ kind: 'contact' });
   });
 });
 

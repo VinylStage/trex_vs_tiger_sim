@@ -827,6 +827,15 @@ input[type='checkbox'] {
   gap: 8px 10px;
 }
 
+.replay-actions .btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.replay-actions .btn[aria-disabled='true']:hover {
+  background: var(--surface);
+}
+
 .inline-field {
   display: inline-flex;
   align-items: center;
@@ -927,6 +936,27 @@ input[type='checkbox'] {
 }
 
 /* Only rendered with ?debug=fps. */
+.replay-lod {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.replay-lod.is-empty {
+  display: none;
+}
+
 .replay-debug {
   position: absolute;
   top: 6px;
@@ -977,12 +1007,13 @@ input[type='checkbox'] {
 
 /* Two lines are always reserved, so showing or hiding a note never shifts the page. */
 .replay-note {
-  min-height: 2.8em;
+  min-height: 4.5em;
   max-width: 620px;
   width: 100%;
   margin: 0 auto;
   color: var(--muted);
   font-size: 0.78rem;
+  line-height: 1.5;
   text-align: center;
 }
 
