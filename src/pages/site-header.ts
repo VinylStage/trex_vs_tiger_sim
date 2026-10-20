@@ -4,6 +4,7 @@ import {
   NAV_LABEL_KEYS,
   NAV_PAGES,
   notFoundLang,
+  otherLang,
   pagePath,
   parsePagePath,
   resultPageLang,
@@ -37,8 +38,6 @@ export const BRAND_TEXT_KEY = 'app.shortTitle';
 export const SITE_HEADER_PLACEHOLDER = '<!-- site-header -->';
 /** Placeholder in the static head of index.html / en/index.html, replaced by {@link renderAppLogo}. */
 export const APP_LOGO_PLACEHOLDER = '<!-- app-logo -->';
-
-const otherLang = (lang: Lang): Lang => (lang === 'ko' ? 'en' : 'ko');
 
 export interface SiteNavItem {
   page: PageId;
