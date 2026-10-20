@@ -1,0 +1,288 @@
+/*
+ * The shared-result page /r/ and /en/r/ (docs/SHARING.md#result-page): the content-page styles
+ * plus a mobile-first result layout. Colours are the page tokens; the draw grey is page-local.
+ */
+
+@import '../pages/site.css';
+
+.result-page {
+  display: block;
+  max-width: 40rem;
+  --rp-draw: #8d8c87;
+  --rp-heavy: var(--c-trex);
+  --rp-pack: var(--c-tiger);
+}
+
+.result-page h1 {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.rp-winlabel {
+  font-size: clamp(1.4rem, 5vw, 1.9rem);
+}
+
+.rp-pct {
+  font-size: clamp(4rem, 22vw, 7rem);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.rp-pct.rp-heavy {
+  color: var(--rp-heavy);
+}
+
+.rp-pct.rp-pack {
+  color: var(--rp-pack);
+}
+
+.rp-pct.rp-draw {
+  color: var(--muted);
+}
+
+.rp-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 16px;
+}
+
+.rp-tier {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: var(--accent-fill);
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.rp-tier.rp-pack {
+  background: #b2471c;
+}
+
+.rp-tier.rp-draw {
+  background: #5f5e5a;
+}
+
+.rp-diff {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.rp-matchup {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.rp-runs {
+  margin: 2px 0 16px;
+  color: var(--muted);
+}
+
+.rp-bar {
+  display: flex;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--grid);
+  gap: 3px;
+}
+
+.rp-seg {
+  display: block;
+  min-width: 0;
+  height: 100%;
+}
+
+.rp-seg.rp-heavy,
+.rp-marker.rp-heavy {
+  background: var(--rp-heavy);
+}
+
+.rp-seg.rp-pack,
+.rp-marker.rp-pack {
+  background: var(--rp-pack);
+}
+
+.rp-seg.rp-draw,
+.rp-marker.rp-draw {
+  background: var(--rp-draw);
+}
+
+.rp-legend {
+  display: grid;
+  gap: 6px;
+  margin: 12px 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.rp-legend li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.rp-marker {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.rp-legend-ci {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.rp-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 8px;
+  margin: 0 0 16px;
+}
+
+.rp-stats div {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.rp-stats dt {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.rp-stats dd {
+  margin: 2px 0 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.rp-note,
+.rp-disclaimer {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.rp-error {
+  padding: 12px 14px;
+  border: 1px solid var(--warn-border);
+  border-radius: var(--radius-small);
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  font-weight: 600;
+}
+
+.rp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.rp-btn,
+.rp-chip {
+  display: inline-flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.rp-btn:hover:not(:disabled),
+.rp-chip:hover {
+  background: var(--surface-2);
+}
+
+.rp-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+.rp-btn.rp-primary {
+  border-color: var(--accent-fill);
+  background: var(--accent-fill);
+  color: var(--accent-fill-fg);
+}
+
+.rp-btn.rp-primary:hover:not(:disabled) {
+  background: var(--accent-fill-hover);
+}
+
+.rp-chip {
+  min-height: 38px;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.rp-chip[aria-checked='true'] {
+  border-color: var(--accent-fill);
+  background: var(--accent-fill);
+  color: var(--accent-fill-fg);
+}
+
+.rp-card {
+  margin: 20px 0 8px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.rp-format {
+  display: flex;
+  gap: 8px;
+}
+
+.rp-card-frame {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0 0;
+}
+
+.rp-card-preview {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 60vh;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--bg);
+}
+
+.rp-card-preview:not([src]) {
+  visibility: hidden;
+}
+
+.rp-status {
+  min-height: 1.4em;
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+@media (min-width: 640px) {
+  .rp-btn,
+  .rp-chip {
+    flex: 0 1 auto;
+  }
+}

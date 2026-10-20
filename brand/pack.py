@@ -17,6 +17,8 @@ OG_LIMIT = 300 * 1024
 PNGS = {
     "og-ko.png": ("og-image-ko.png", "RGB"),
     "og-en.png": ("og-image-en.png", "RGB"),
+    "og-result-ko.png": ("og-result-ko.png", "RGB"),
+    "og-result-en.png": ("og-result-en.png", "RGB"),
     "apple-touch-icon.png": ("apple-touch-icon.png", "RGB"),
     "icon-maskable-512.png": ("icon-maskable-512.png", "RGB"),
     "icon-192.png": ("icon-192.png", "RGBA"),
@@ -33,7 +35,7 @@ def main(raw: str, out: str) -> int:
             im.save(path, "PNG", optimize=True)
         size = os.path.getsize(path)
         print(f"[pack] {dst:24} {im.width}x{im.height} {mode:4} {size / 1024:7.1f} KB")
-        if dst.startswith("og-image") and size > OG_LIMIT:
+        if dst.startswith("og-") and size > OG_LIMIT:
             print(f"[pack] {dst} is over {OG_LIMIT // 1024} KB", file=sys.stderr)
             failed = True
 

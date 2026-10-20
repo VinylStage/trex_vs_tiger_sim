@@ -270,6 +270,23 @@ try {
     await page.close();
   }
 
+  // result-page link previews (/r/, /en/r/): a static card, the same for every shared result
+  for (const lang of ['ko', 'en']) {
+    const page = await browser.newPage({
+      viewport: { width: 1200, height: 630 },
+      deviceScaleFactor: 1,
+    });
+    await page.goto(fileUrl(path.join(SRC, 'og-result.html'), `?lang=${lang}`));
+    await page.waitForSelector('body[data-ready="1"]');
+    await page.evaluate(() => Promise.all([...document.images].map((i) => i.decode())));
+    await verifyFonts(page, `og-result-${lang}`, { expectHangul: lang === 'ko' });
+    await page.screenshot({
+      path: path.join(RAW, `og-result-${lang}.png`),
+      clip: { x: 0, y: 0, width: 1200, height: 630 },
+    });
+    await page.close();
+  }
+
   const py = spawnSync(
     process.env.PYTHON ?? 'python3',
     ['-I', path.join(BRAND, 'pack.py'), RAW, PUBLIC],
