@@ -1,14 +1,19 @@
 import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { Outcome, type RunSummary } from '../sim/engine';
 import type { AggregateResult } from '../sim/montecarlo';
+import type { ParamId } from '../sim/params';
 import { HEAVY_SPECIES } from '../sim/species';
 import {
   CanvasChart,
   durationHistogram,
+  histogramTable,
+  outcomeTable,
   paintHistogram,
   paintOutcome,
   paintTornado,
   redrawAllCharts,
+  tornadoTable,
+  type HistogramOptions,
 } from './charts';
 import { clear, h } from './dom';
 import { createConfigForm, matchupBadge, qualifiedParamLabel } from './form';
@@ -30,12 +35,21 @@ import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
 import { heavyLengthForRadius } from './replay/glyphs';
 import { configFromHash, hashFromConfig } from './share';
-import { pageLang, switchedAppUrl } from '../pages/routes';
+import { pageLang, pagePath, switchedAppUrl } from '../pages/routes';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
 import './site-footer.css';
 import { createTour } from './tour';
 import { DEMO_RUNS, tourRequested, withoutTourParam } from './tour-model';
 import { createVersionBadge, fillVersionFooter } from './version';
+import {
+  formatShare,
+  headline,
+  intervalVars,
+  leadingOutcome,
+  outcomes,
+  precisionLine,
+  type OutcomeKind,
+} from './verdict';
 
 interface RunResult {
   config: ScenarioConfig;
@@ -50,11 +64,23 @@ interface Message {
   error?: boolean;
 }
 
+/**
+ * What the results panel shows while there are no results yet: the skeleton of a running first
+ * run, or that run's cancellation or failure. The skeleton has the final block sizes, so results
+ * arriving seconds after the click shift nothing below them (docs/research/UX_AUDIT.md P0-4).
+ */
+type Placeholder = 'pending' | 'cancelled' | 'failed';
+
 interface ReplayState {
   kind: 'representative' | 'random';
   run: number;
   loading: boolean;
   error?: string;
+}
+
+/** CSS height of the sensitivity chart for `rows` bars (styles.css reserves it for 10). */
+function tornadoHeight(rows: number): number {
+  return Math.max(120, 24 + rows * 28);
 }
 
 function outcomeKey(o: number): MsgKey {
@@ -78,6 +104,10 @@ export function startApp(root: HTMLElement): void {
   let replayToken = 0;
   let lastSrDecile = -1;
   let running = false;
+  let placeholder: Placeholder | null = null;
+  let lastProgress: PoolProgress | null = null;
+  /** Wall time of the last finished run; null while running or after a cancel or error. */
+  let lastElapsedMs: number | null = null;
 
   // ---------- header ----------
   const langBtn = h('button', {
@@ -185,6 +215,8 @@ export function startApp(root: HTMLElement): void {
         'aria-valuemin': '0',
         'aria-valuemax': '100',
         'aria-valuenow': '0',
+        // Run moves focus here, so keyboard and screen-reader users follow the run (WCAG 2.4.3).
+        tabindex: '-1',
       },
     },
     progressFill,
@@ -207,20 +239,31 @@ export function startApp(root: HTMLElement): void {
     attrs: { role: 'status', 'aria-live': 'polite' },
   });
 
+  const runBar = h(
+    'div',
+    { class: 'run-bar', attrs: { 'data-tour': 'run' } },
+    h('div', { class: 'run-buttons' }, runBtn, cancelBtn),
+    progress,
+    statusEl,
+    srProgress,
+  );
   const configPanel = h(
     'section',
     { class: 'panel config-panel', attrs: { 'aria-labelledby': 'config-title' } },
     h('h2', { id: 'config-title', i18n: 'config.title' }),
     form.el,
-    h(
-      'div',
-      { class: 'run-bar', attrs: { 'data-tour': 'run' } },
-      h('div', { class: 'run-buttons' }, runBtn, cancelBtn),
-      progress,
-      statusEl,
-      srProgress,
-    ),
+    runBar,
   );
+  // The sticky run bar must never cover a focused field (WCAG 2.4.11): its height feeds
+  // `scroll-padding-bottom` of the page (single column) and of the config panel (two columns).
+  if (typeof ResizeObserver === 'function') {
+    new ResizeObserver(() => {
+      document.documentElement.style.setProperty(
+        '--runbar-h',
+        `${Math.ceil(runBar.offsetHeight)}px`,
+      );
+    }).observe(runBar);
+  }
 
   // ---------- results panel ----------
   const emptyEl = h('p', {
@@ -231,6 +274,15 @@ export function startApp(root: HTMLElement): void {
   const staleEl = h('p', { class: 'stale-banner', i18n: 'results.stale' });
   staleEl.hidden = true;
   const verdictEl = h('p', { class: 'verdict' });
+  const precisionEl = h('p', { class: 'verdict-precision' });
+  const caveatLink = h('a', { i18n: 'verdict.caveatLink' });
+  const caveatEl = h(
+    'p',
+    { class: 'verdict-caveat' },
+    h('span', { i18n: 'verdict.caveat' }),
+    ' ',
+    caveatLink,
+  );
   const basisEl = h('p', { class: 'verdict-basis' });
   const badgeSlot = h('div', { class: 'verdict-badge' });
   const cardsEl = h('div', { class: 'stat-cards', attrs: { 'data-tour': 'stat-cards' } });
@@ -260,6 +312,12 @@ export function startApp(root: HTMLElement): void {
     if (pick) void loadReplay(pick.run, 'random');
   });
 
+  // Completion moves focus here (tabindex -1: focusable by script, not a tab stop).
+  const resultsTitle = h('h2', {
+    id: 'results-title',
+    i18n: 'results.title',
+    attrs: { tabindex: '-1' },
+  });
   const resultsBody = h(
     'div',
     { class: 'results-body' },
@@ -271,6 +329,8 @@ export function startApp(root: HTMLElement): void {
         attrs: { 'aria-live': 'polite', 'aria-atomic': 'true', 'data-tour': 'verdict' },
       },
       verdictEl,
+      precisionEl,
+      caveatEl,
       basisEl,
       badgeSlot,
     ),
@@ -307,7 +367,7 @@ export function startApp(root: HTMLElement): void {
       class: 'panel results-panel',
       attrs: { 'aria-labelledby': 'results-title', 'data-tour': 'results' },
     },
-    h('h2', { id: 'results-title', i18n: 'results.title' }),
+    resultsTitle,
     emptyEl,
     resultsBody,
   );
@@ -342,6 +402,23 @@ export function startApp(root: HTMLElement): void {
   }
 
   function onProgress(p: PoolProgress): void {
+    lastProgress = p;
+    renderProgress();
+    const frac = p.total > 0 ? p.done / p.total : 0;
+    const decile = Math.floor(frac * 10);
+    if (decile !== lastSrDecile) {
+      lastSrDecile = decile;
+      srProgress.textContent = `${t('progress.label')} ${formatPct(frac, 0)}`;
+    }
+  }
+
+  /**
+   * The progress bar stays visible once a run has started, showing how the last run ended:
+   * hiding it again would move everything below the config panel (layout shift).
+   */
+  function renderProgress(): void {
+    const p = lastProgress;
+    if (!p) return;
     const frac = p.total > 0 ? p.done / p.total : 0;
     progressFill.style.transform = `scaleX(${frac})`;
     progressTrack.setAttribute('aria-valuenow', String(Math.round(frac * 100)));
@@ -350,15 +427,38 @@ export function startApp(root: HTMLElement): void {
       total: formatInt(p.total),
       pct: formatPct(frac, 0),
     });
-    progressEta.textContent =
-      p.etaMs === null
-        ? t('progress.etaPending')
-        : t('progress.eta', { eta: formatDuration(p.etaMs / 1000, 0) });
-    const decile = Math.floor(frac * 10);
-    if (decile !== lastSrDecile) {
-      lastSrDecile = decile;
-      srProgress.textContent = `${t('progress.label')} ${formatPct(frac, 0)}`;
+    if (!running) {
+      progressEta.textContent =
+        lastElapsedMs === null
+          ? ''
+          : t('progress.done', { elapsed: formatDuration(lastElapsedMs / 1000) });
+    } else {
+      progressEta.textContent =
+        p.etaMs === null
+          ? t('progress.etaPending')
+          : t('progress.eta', { eta: formatDuration(p.etaMs / 1000, 0) });
     }
+  }
+
+  /**
+   * Whether focus is still where the run put it (or nowhere), so moving it is expected. A run the
+   * tour starts, or a user who tabbed elsewhere meanwhile, keeps focus where it is.
+   */
+  function focusFollowsRun(): boolean {
+    const a = document.activeElement;
+    return (
+      a === null || a === document.body || a === runBtn || a === cancelBtn || a === progressTrack
+    );
+  }
+
+  /** Move focus to the results heading and bring it into view (smoothly unless reduced motion). */
+  function focusResults(): void {
+    resultsTitle.focus({ preventScroll: true });
+    const r = resultsTitle.getBoundingClientRect();
+    const single = matchMedia('(max-width: 999px)').matches;
+    if (!single && r.top >= 0 && r.bottom <= innerHeight) return;
+    const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    resultsPanel.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
   }
 
   /** Resolves true when the run finished and its results are rendered. */
@@ -371,28 +471,36 @@ export function startApp(root: HTMLElement): void {
       form.setConfig(cfg);
       writeUrl();
     }
+    const moveFocus = focusFollowsRun();
     running = true;
+    lastElapsedMs = null;
+    progress.hidden = false;
+    // Focus moves to the progress bar before Run is disabled, so it never drops to <body>.
+    if (moveFocus) progressTrack.focus();
     runBtn.disabled = true;
     cancelBtn.disabled = false;
-    progress.hidden = false;
     lastSrDecile = -1;
     onProgress({ done: 0, total: cfg.runs, elapsedMs: 0, etaMs: null });
     setStatus({ key: 'progress.workers', vars: { n: pool.size } });
+    if (!result) {
+      // First run: show the results skeleton now, within the click's input window.
+      placeholder = 'pending';
+      renderResults();
+    }
     const t0 = performance.now();
+    let ok = false;
     try {
       const summaries = await pool.run(cfg, onProgress);
       setStatus({ key: 'run.aggregating' });
       // In a worker: Spearman sensitivities over 20,000 runs would block the page for 100s of ms.
       const agg = await pool.aggregate(cfg, summaries);
       result = { config: cfg, agg, summaries, elapsedMs: performance.now() - t0 };
+      lastElapsedMs = result.elapsedMs;
+      placeholder = null;
       setStatus(null);
       renderResults();
       void loadReplay(agg.representativeRun, 'representative');
-      // Single-column layout: bring the freshly computed results into view.
-      if (matchMedia('(max-width: 999px)').matches) {
-        const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
-        resultsPanel.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
-      }
+      ok = true;
       return true;
     } catch (err) {
       if (err instanceof CancelledError) setStatus({ key: 'run.cancelled' });
@@ -403,12 +511,25 @@ export function startApp(root: HTMLElement): void {
           error: true,
         });
       }
+      if (!result) {
+        placeholder = err instanceof CancelledError ? 'cancelled' : 'failed';
+        renderResults();
+      }
       return false;
     } finally {
       running = false;
+      const follow = focusFollowsRun();
       runBtn.disabled = false;
       cancelBtn.disabled = true;
-      progress.hidden = true;
+      if (follow) {
+        if (ok) focusResults();
+        else runBtn.focus();
+      } else if (ok && matchMedia('(max-width: 999px)').matches) {
+        // Single-column layout: bring the freshly computed results into view.
+        const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+        resultsPanel.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
+      }
+      renderProgress();
       // An open tour leaves its results preview once results exist (also for runs it did not start).
       tour.refresh();
     }
@@ -485,125 +606,160 @@ export function startApp(root: HTMLElement): void {
     );
   }
 
-  function renderResults(): void {
-    emptyEl.hidden = result !== null;
-    resultsBody.hidden = result === null;
-    updateStale();
-    if (!result) return;
-    const { agg, config: cfg } = result;
-    syncNames();
-    // Static bindings (replay legend and controls) name the species of these results.
-    applyI18n(resultsBody);
-    const ivText = (iv: { lo: number; hi: number }): Vars => ({
-      lo: formatPct(iv.lo),
-      hi: formatPct(iv.hi),
-    });
+  const OUTCOME_CARD: Readonly<Record<OutcomeKind, { label: MsgKey; marker: string }>> = {
+    heavy: { label: 'outcome.heavy', marker: 'mk-trex' },
+    pack: { label: 'outcome.pack', marker: 'mk-tiger' },
+    draw: { label: 'outcome.draw', marker: 'mk-draw' },
+  };
 
-    const best = [
-      { key: 'verdict.heavy' as const, iv: agg.pHeavy },
-      { key: 'verdict.pack' as const, iv: agg.pPack },
-      { key: 'verdict.draw' as const, iv: agg.pDraw },
-    ].reduce((a, b) => (b.iv.p > a.iv.p ? b : a));
-    verdictEl.textContent = t(best.key, { p: formatPct(best.iv.p), ...ivText(best.iv) });
-    badgeSlot.replaceChildren(matchupBadge(cfg));
-    basisEl.textContent = t('verdict.basis', {
-      heavyTeam: teamLabel(cfg.heavySpecies, cfg.heavyCount),
-      packTeam: teamLabel(cfg.packSpecies, cfg.packCount),
-      n: formatInt(agg.n),
-      seed: String(cfg.seed),
-      elapsed: formatDuration(result.elapsedMs / 1000),
-    });
-
-    clear(cardsEl);
-    cardsEl.append(
-      card(
-        t('outcome.heavy'),
-        formatPct(agg.pHeavy.p),
-        t('stat.ci', ivText(agg.pHeavy)),
-        'mk-trex',
-      ),
-      card(t('outcome.pack'), formatPct(agg.pPack.p), t('stat.ci', ivText(agg.pPack)), 'mk-tiger'),
-      card(t('outcome.draw'), formatPct(agg.pDraw.p), t('stat.ci', ivText(agg.pDraw)), 'mk-draw'),
+  /** The eight summary cards; values are placeholders until `agg` exists. */
+  function renderCards(agg: AggregateResult | null, cfg: ScenarioConfig): void {
+    const blank = '…';
+    const none = '\u00a0';
+    const of = (n: number): string => t('stat.ofN', { n: formatInt(n) });
+    // Skeleton sub-lines carry text as long as the final ones, hidden (.is-pending .stat-sub),
+    // so the cards keep their final height.
+    const runs = formatInt(cfg.runs);
+    const shareSkeleton = t('stat.share', { k: runs, n: runs, lo: '00%', hi: '00%' });
+    const shares = agg
+      ? outcomes(agg).map((o) =>
+          card(
+            t(OUTCOME_CARD[o.kind].label),
+            formatShare(o.k, o.n),
+            t('stat.share', { k: formatInt(o.k), n: formatInt(o.n), ...intervalVars(o) }),
+            OUTCOME_CARD[o.kind].marker,
+          ),
+        )
+      : (['heavy', 'pack', 'draw'] as const).map((k) =>
+          card(t(OUTCOME_CARD[k].label), blank, shareSkeleton, OUTCOME_CARD[k].marker),
+        );
+    let exchange: [string, string] = [blank, none];
+    if (agg) {
+      const r = agg.exchangeRatio;
+      exchange = Number.isFinite(r)
+        ? [formatNum(r, 1), t('stat.exchangeSub')]
+        : Number.isNaN(r)
+          ? ['—', t('stat.exchangeNone')]
+          : ['—', t('stat.exchangeInf')];
+    }
+    cardsEl.replaceChildren(
+      ...shares,
       card(
         t('stat.duration'),
-        formatDuration(agg.duration.p50),
-        t('stat.durationSub', {
-          p5: formatDuration(agg.duration.p5, 0),
-          p95: formatDuration(agg.duration.p95, 0),
-        }),
+        agg ? formatDuration(agg.duration.p50) : blank,
+        agg
+          ? t('stat.durationSub', {
+              p5: formatDuration(agg.duration.p5, 0),
+              p95: formatDuration(agg.duration.p95, 0),
+            })
+          : t('stat.durationSub', { p5: formatDuration(10, 0), p95: formatDuration(10, 0) }),
       ),
       card(
         t('stat.survivors'),
-        formatNum(agg.heavySurvivors.mean, 2),
-        t('stat.ofN', { n: formatInt(cfg.heavyCount) }),
+        agg ? formatNum(agg.heavySurvivors.mean, 2) : blank,
+        of(cfg.heavyCount),
       ),
-      card(
-        t('stat.killed'),
-        formatNum(agg.packKilled.mean, 1),
-        t('stat.ofN', { n: formatInt(cfg.packCount) }),
-      ),
-      card(
-        t('stat.routed'),
-        formatNum(agg.packRouted.mean, 1),
-        t('stat.ofN', { n: formatInt(cfg.packCount) }),
-      ),
-      card(
-        t('stat.exchange'),
-        Number.isFinite(agg.exchangeRatio)
-          ? formatNum(agg.exchangeRatio, 1)
-          : Number.isNaN(agg.exchangeRatio)
-            ? '—'
-            : '∞',
-        Number.isFinite(agg.exchangeRatio)
-          ? t('stat.exchangeSub')
-          : Number.isNaN(agg.exchangeRatio)
-            ? t('stat.exchangeNone')
-            : t('stat.exchangeInf'),
-      ),
+      card(t('stat.killed'), agg ? formatNum(agg.packKilled.mean, 1) : blank, of(cfg.packCount)),
+      card(t('stat.routed'), agg ? formatNum(agg.packRouted.mean, 1) : blank, of(cfg.packCount)),
+      card(t('stat.exchange'), exchange[0], exchange[1]),
     );
+  }
+
+  /** The verdict box: headline, plain-language precision, the toy-model caveat and the basis. */
+  function renderVerdict(
+    cfg: ScenarioConfig,
+    agg: AggregateResult | null,
+    elapsedMs: number,
+  ): void {
+    caveatLink.href = pagePath('model', getLang());
+    badgeSlot.replaceChildren(matchupBadge(cfg));
+    const basis = (elapsed: string): string =>
+      t('verdict.basis', {
+        heavyTeam: teamLabel(cfg.heavySpecies, cfg.heavyCount),
+        packTeam: teamLabel(cfg.packSpecies, cfg.packCount),
+        n: formatInt(agg ? agg.n : cfg.runs),
+        seed: String(cfg.seed),
+        elapsed,
+      });
+    if (!agg) {
+      verdictEl.textContent = t(`results.${placeholder ?? 'pending'}`);
+      // Same text length as the final line, kept invisible: it holds the line's height.
+      precisionEl.textContent = t('verdict.precision', { lo: '00%', hi: '00%' });
+      basisEl.textContent = basis('…');
+      return;
+    }
+    const lead = leadingOutcome(agg);
+    verdictEl.textContent = headline(lead);
+    precisionEl.textContent = precisionLine(lead);
+    basisEl.textContent = basis(formatDuration(elapsedMs / 1000));
+  }
+
+  function renderResults(opts: { deferCharts?: boolean } = {}): void {
+    const showBody = result !== null || placeholder !== null;
+    emptyEl.hidden = showBody;
+    resultsBody.hidden = !showBody;
+    resultsBody.classList.toggle('is-pending', result === null);
+    updateStale();
+    if (!showBody) return;
+    syncNames();
+    // Static bindings (replay legend and controls) name the species of these results.
+    applyI18n(resultsBody);
+    if (!result) {
+      renderVerdict(config, null, 0);
+      renderCards(null, config);
+      for (const c of [outcomeChart, durationChart, survivorsChart, tornadoChart]) c.reset();
+      replayInfo.textContent = '';
+      return;
+    }
+    const { agg, config: cfg } = result;
+    const deferPaint = opts.deferCharts === true;
+    renderVerdict(cfg, agg, result.elapsedMs);
+    renderCards(agg, cfg);
 
     outcomeChart.set(
       paintOutcome(agg),
-      [
-        `${t('outcome.heavy')} ${formatPct(agg.pHeavy.p)}`,
-        `${t('outcome.pack')} ${formatPct(agg.pPack.p)}`,
-        `${t('outcome.draw')} ${formatPct(agg.pDraw.p)}`,
-      ].join(', '),
+      outcomes(agg)
+        .map((o) => `${t(OUTCOME_CARD[o.kind].label)} ${formatShare(o.k, o.n)}`)
+        .join(', '),
+      { table: outcomeTable(agg), deferPaint },
+    );
+    const durationOpts: HistogramOptions = {
+      color: (th) => th.neutral,
+      discrete: false,
+      axisTitle: t('chart.seconds'),
+      tickLabel: (v) => formatNum(v, 0),
+      binLabel: (lo, hi) => `${formatNum(lo, 0)}–${formatNum(hi, 0)} ${t('chart.seconds')}`,
+    };
+    const durHist = durationHistogram(
+      result.summaries.map((s) => s.duration),
+      cfg.maxTime,
     );
     durationChart.set(
-      paintHistogram(
-        durationHistogram(
-          result.summaries.map((s) => s.duration),
-          cfg.maxTime,
-        ),
-        {
-          color: (th) => th.neutral,
-          discrete: false,
-          axisTitle: t('chart.seconds'),
-          tickLabel: (v) => formatNum(v, 0),
-          binLabel: (lo, hi) => `${formatNum(lo, 0)}–${formatNum(hi, 0)} ${t('chart.seconds')}`,
-        },
-      ),
+      paintHistogram(durHist, durationOpts),
       `${t('chart.duration')}: ${t('stat.duration')} ${formatDuration(agg.duration.p50)}`,
+      { table: histogramTable(durHist, durationOpts.binLabel), deferPaint },
     );
+    const survivorOpts: HistogramOptions = {
+      color: (th) => th.heavy,
+      discrete: true,
+      axisTitle: t('chart.heavyAlive'),
+      tickLabel: (v) => formatInt(v),
+      binLabel: (lo) => `${t('chart.heavyAlive')} ${formatInt(lo + 0.5)}`,
+    };
     survivorsChart.set(
-      paintHistogram(agg.heavySurvivors.hist, {
-        color: (th) => th.heavy,
-        discrete: true,
-        axisTitle: t('chart.heavyAlive'),
-        tickLabel: (v) => formatInt(v),
-        binLabel: (lo) => `${t('chart.heavyAlive')} ${formatInt(lo + 0.5)}`,
-      }),
+      paintHistogram(agg.heavySurvivors.hist, survivorOpts),
       `${t('chart.survivors')}: ${t('stat.survivors')} ${formatNum(agg.heavySurvivors.mean, 2)}`,
+      { table: histogramTable(agg.heavySurvivors.hist, survivorOpts.binLabel), deferPaint },
     );
     const top = agg.sensitivity.slice(0, 10);
+    const label = (id: ParamId): string => qualifiedParamLabel(id, cfg);
     tornadoChart.set(
-      paintTornado(top, (id) => qualifiedParamLabel(id, cfg)),
+      paintTornado(top, label),
       top
-        .slice(0, 5)
-        .map((s) => `${qualifiedParamLabel(s.id, cfg)} ${formatNum(s.rho, 2)}`)
+        .slice(0, 3)
+        .map((s) => `${label(s.id)} ${formatNum(s.rho, 2)}`)
         .join(', '),
-      Math.max(120, 24 + top.length * 28),
+      { cssHeight: tornadoHeight(top.length), table: tornadoTable(top, label), deferPaint },
     );
     renderReplayInfo();
   }
@@ -623,6 +779,7 @@ export function startApp(root: HTMLElement): void {
     applyI18n(document.body);
     form.refresh();
     renderStatus();
+    renderProgress();
     renderResults();
     replayView.refresh();
     redrawAllCharts();

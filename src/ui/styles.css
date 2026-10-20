@@ -95,6 +95,17 @@ html {
   text-size-adjust: 100%;
 }
 
+/*
+ * Focused fields never hide under the sticky run bar (WCAG 2.4.11, technique C43). app.ts keeps
+ * --runbar-h equal to the bar's height. The page scrolls in the single-column layout and the
+ * config panel scrolls in the two-column one.
+ */
+@media (max-width: 999px) {
+  html {
+    scroll-padding-bottom: calc(var(--runbar-h, 0px) + 12px);
+  }
+}
+
 body {
   --page-max: 1360px;
 
@@ -692,6 +703,7 @@ input[type='checkbox'] {
     top: 12px;
     max-height: calc(100vh - 24px);
     overflow-y: auto;
+    scroll-padding-bottom: calc(var(--runbar-h, 0px) + 12px);
   }
 
   .run-bar {
@@ -730,9 +742,10 @@ input[type='checkbox'] {
 }
 
 .run-status {
-  min-height: 1.2em;
+  min-height: 1.4em;
   color: var(--muted);
   font-size: 0.85rem;
+  line-height: 1.4;
 }
 
 .run-status.is-error,
@@ -763,17 +776,60 @@ input[type='checkbox'] {
 }
 
 .verdict {
-  font-size: clamp(1.25rem, 2.4vw, 1.7rem);
+  /* Two lines reserved (three on phones), so the headline replacing the skeleton shifts nothing. */
+  min-height: 2.6em;
+  font-size: clamp(1.15rem, 2.2vw, 1.5rem);
   font-weight: 700;
   line-height: 1.3;
   letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+  text-wrap: balance;
+}
+
+@media (max-width: 560px) {
+  .verdict {
+    min-height: 3.9em;
+  }
+}
+
+.verdict-precision {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.verdict-caveat {
+  margin-top: 8px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--warn-border);
+  border-radius: 0 var(--radius-small) var(--radius-small) 0;
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  font-size: 0.85rem;
+  line-height: 1.45;
+}
+
+.verdict-caveat a {
+  color: var(--warn-fg);
+  font-weight: 600;
 }
 
 .verdict-basis {
-  margin-top: 4px;
+  margin-top: 8px;
   color: var(--muted);
   font-size: 0.85rem;
+}
+
+/* Results skeleton of a running first run (app.ts `Placeholder`): final sizes, no values yet. */
+.is-pending .verdict {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.is-pending .verdict-precision,
+.is-pending .stat-sub {
+  visibility: hidden;
 }
 
 .stat-cards {
@@ -806,8 +862,11 @@ input[type='checkbox'] {
 }
 
 .stat-sub {
+  /* Two lines reserved: a sub-line that wraps must not grow its row when results arrive. */
+  min-height: 2.8em;
   color: var(--muted);
   font-size: 0.75rem;
+  line-height: 1.4;
   font-variant-numeric: tabular-nums;
 }
 
@@ -881,8 +940,54 @@ input[type='checkbox'] {
   height: 200px;
 }
 
+/* tornadoHeight(10) in app.ts: the size is reserved before results arrive. */
 .h-tornado canvas {
-  height: 300px;
+  height: 304px;
+}
+
+.chart-data {
+  margin-top: 6px;
+  font-size: 0.8rem;
+}
+
+.chart-data > summary {
+  width: max-content;
+  max-width: 100%;
+  min-height: 24px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.chart-table-wrap {
+  max-height: 22rem;
+  margin-top: 6px;
+  overflow: auto;
+}
+
+.chart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-table th,
+.chart-table td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--grid);
+  text-align: right;
+}
+
+.chart-table th:first-child {
+  text-align: left;
+  font-weight: 500;
+}
+
+.chart-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .chart-tip {
@@ -926,9 +1031,17 @@ input[type='checkbox'] {
 }
 
 .replay-info {
+  /* Reserved before the replay loads; the run line wraps to two lines on narrow screens. */
+  min-height: 1.4em;
   color: var(--muted);
   font-size: 0.85rem;
-  min-height: 1.3em;
+  line-height: 1.4;
+}
+
+@media (max-width: 720px) {
+  .replay-info {
+    min-height: 2.8em;
+  }
 }
 
 .replay {
@@ -964,6 +1077,11 @@ input[type='checkbox'] {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 10px;
+}
+
+/* Wide enough for both labels (Play / Pause), so toggling playback never rewraps the row. */
+.replay-actions .btn:first-child {
+  min-width: 6.75rem;
 }
 
 .replay-actions .btn[aria-disabled='true'] {
@@ -1017,6 +1135,12 @@ input[type='checkbox'] {
   flex: 1;
   min-width: 0;
   accent-color: var(--accent);
+}
+
+.replay-time:empty::before {
+  /* Holds the clock's size before a trace loads. */
+  content: '0:00 / 0:00';
+  visibility: hidden;
 }
 
 .replay-time {

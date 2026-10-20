@@ -58,8 +58,8 @@ describe('species names in messages', () => {
     expect(t('stat.killed')).toBe('Lions killed (mean)');
     expect(t('outcome.heavy', { Heavy: 'X' })).toBe('X victory');
     initLang('ko');
-    expect(t('verdict.pack', { p: '5%', lo: '1%', hi: '9%' })).toBe(
-      '사자 승리 확률 5% (95% CI 1%–9%)',
+    expect(t('verdict.pack', { n: '20', k: '1', pct: '5%' })).toBe(
+      '이 모델로 20번 싸워 보니 사자 쪽이 1번 이겼습니다 (5%).',
     );
   });
 
