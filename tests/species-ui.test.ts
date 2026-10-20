@@ -5,6 +5,7 @@ import { GLYPH, heavyLengthForRadius, heavyLengthPx } from '../src/ui/replay/gly
 import {
   PRESETS,
   matchupInfo,
+  matchupNoteText,
   presetLabel,
   qualifiedParamLabel,
   roleEdited,
@@ -55,7 +56,7 @@ describe('species names in messages', () => {
     setNamePair({ heavySpecies: 'elephant', packSpecies: 'lion' });
     expect(getNamePair()).toEqual({ heavySpecies: 'elephant', packSpecies: 'lion' });
     expect(t('outcome.heavy')).toBe('Elephant victory');
-    expect(t('stat.killed')).toBe('Lions killed (mean)');
+    expect(t('stat.killed')).toBe('Lions incapacitated (mean)');
     expect(t('outcome.heavy', { Heavy: 'X' })).toBe('X victory');
     initLang('ko');
     expect(t('verdict.pack', { p: '5%', lo: '1%', hi: '9%' })).toBe(
@@ -65,9 +66,32 @@ describe('species names in messages', () => {
 
   it('keeps the default English texts for T-Rex and tigers', () => {
     initLang('en');
-    expect(t('stat.exchangeSub')).toBe('tigers killed per T-Rex lost');
+    expect(t('stat.exchangeSub')).toBe('tigers incapacitated per T-Rex lost');
     expect(t('chart.favHeavy')).toBe('favours T-Rex →');
     expect(t('field.packCount')).toBe('Tiger count');
+  });
+
+  it('names the woolly mammoth and Homo erectus in both languages', () => {
+    initLang('en');
+    expect(teamLabel('mammoth', 1)).toBe('1 mammoth');
+    expect(teamLabel('mammoth', 12)).toBe('12 mammoths');
+    expect(teamLabel('homoErectus', 1)).toBe('1 Homo erectus');
+    expect(teamLabel('homoErectus', 100)).toBe('100 Homo erectus');
+    expect(paramLabel('heavy.biteForce', 'hands')).toBe('Bare-hand strike and grip force');
+    initLang('ko');
+    expect(teamLabel('homoErectus', 100)).toBe('호모 에렉투스 100마리');
+    expect(teamLabel('mammoth', 1)).toBe('매머드 1마리');
+    expect(paramLabel('heavy.biteForce', 'hands')).toBe('맨손 타격 · 붙잡기 힘');
+  });
+
+  it('adds the thought-experiment note only to matchups with a hominin', () => {
+    initLang('en');
+    expect(matchupNoteText({ heavySpecies: 'trex', packSpecies: 'homoErectus' })).toContain(
+      'does not depict or endorse real violence',
+    );
+    expect(matchupNoteText({ heavySpecies: 'homoErectus', packSpecies: 'wolf' })).not.toBeNull();
+    expect(matchupNoteText({ heavySpecies: 'mammoth', packSpecies: 'wolf' })).toBeNull();
+    expect(matchupNoteText({ heavySpecies: 'trex', packSpecies: 'tiger' })).toBeNull();
   });
 
   it('relabels the weapon of non-biting heavies', () => {
@@ -131,7 +155,7 @@ describe('replay glyph sizes per species', () => {
     expect(heavyLengthForRadius(HEAVY_SPECIES.trex.ranges.bodyRadius.mode)).toBe(7);
     expect(heavyLengthPx(10)).toBe(70);
     expect(heavyLengthPx(10, heavyLengthForRadius(2.5))).toBe(heavyLengthPx(10));
-    for (const id of ['elephant', 'buffalo', 'brownBear'] as const) {
+    for (const id of ['elephant', 'buffalo', 'brownBear', 'mammoth', 'homoErectus'] as const) {
       const s = HEAVY_SPECIES[id];
       const len = heavyLengthForRadius(s.ranges.bodyRadius.mode);
       // The half-base stays inside the ring where the smallest pack animal latches.

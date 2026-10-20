@@ -928,8 +928,12 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
     // ends that differ from the T. rex/tiger (v1) bounds.
     const wide = (id: (typeof PARAMS)[number]['id']): readonly [number, number] =>
       paramBounds(id, 'elephant', 'lion');
+    // Heavy hominins have their own, wider bounds (checked below).
+    const ordinaryHeavies = HEAVY_SPECIES_IDS.filter(
+      (s) => s !== DEFAULT_HEAVY && !HEAVY_SPECIES[s].hominin,
+    );
     for (const p of PARAMS) {
-      for (const h of HEAVY_SPECIES_IDS.filter((s) => s !== DEFAULT_HEAVY)) {
+      for (const h of ordinaryHeavies) {
         for (const pk of PACK_SPECIES_IDS.filter((s) => s !== DEFAULT_PACK)) {
           expect(paramBounds(p.id, h, pk), `${h}/${pk} ${p.id}`).toEqual(wide(p.id));
         }
@@ -953,6 +957,27 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
       .map((d) => `${d.attrs['data-param']} ${d.attrs['data-end']} ${Number(d.attrs['value'])}`);
     expect(stated).toHaveLength(named.length);
     expect([...named].sort()).toEqual([...expected].sort());
+  });
+
+  it('states the hominin bounds that differ from the widened ones', () => {
+    const hominins = HEAVY_SPECIES_IDS.filter((s) => HEAVY_SPECIES[s].hominin);
+    expect(hominins.length).toBeGreaterThan(0);
+    for (const h of hominins) {
+      const expected: string[] = [];
+      for (const p of PARAMS.filter((x) => x.role === 'heavy')) {
+        const own = paramBounds(p.id, h, DEFAULT_PACK);
+        const w = paramBounds(p.id, 'elephant', DEFAULT_PACK);
+        if (own[0] !== w[0]) expected.push(`${p.id} lo ${own[0]}`);
+        if (own[1] !== w[1]) expected.push(`${p.id} hi ${own[1]}`);
+      }
+      const named = elements(html, 'data')
+        .filter((d) => d.attrs['data-k'] === 'hominin')
+        .map((d) => {
+          expect(shownNumber(textOf(d.inner))).toBe(Number(d.attrs['value']));
+          return `${d.attrs['data-param']} ${d.attrs['data-end']} ${Number(d.attrs['value'])}`;
+        });
+      expect([...named].sort()).toEqual([...expected].sort());
+    }
   });
 
   it('lists engine constants with their code values', () => {

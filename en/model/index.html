@@ -139,6 +139,11 @@
                   The win probabilities on screen are what the model produces under its assumptions.
                   Do not read them as predictions about real animals.
                 </li>
+                <li>
+                  Match-ups with Homo erectus, an extinct human species, are a thought experiment
+                  that compares physical capability alone, without clothing, tools, weapons or fire.
+                  They do not depict or endorse real violence.
+                </li>
               </ul>
             </div>
           </section>
@@ -608,7 +613,7 @@
                     <th scope="col">Scenario</th>
                     <th scope="col">T-Rex win (95% CI)</th>
                     <th scope="col">Duration p5 / p50 / p95 (s)</th>
-                    <th scope="col">Tigers killed (mean)</th>
+                    <th scope="col">Tigers incapacitated (mean)</th>
                     <th scope="col">Tigers routed (mean)</th>
                   </tr>
                 </thead>
@@ -775,26 +780,42 @@
               latching and damage per second, morale and routing). The rules above are the same for
               every species; choosing a species changes the ranges and hard bounds of the 22
               parameters and two constants. The large animals are T. rex, the African bush elephant,
-              the African buffalo and the brown bear; the pack animals are the tiger, the lion, the
-              gray wolf and the spotted hyena. Humans and domestic animals are not included.
+              the African buffalo, the brown bear, the woolly mammoth and Homo erectus; the pack
+              animals are the tiger, the lion, the gray wolf, the spotted hyena and Homo erectus.
+              Modern humans and domestic animals are not included.
+            </p>
+            <p>
+              <strong>Homo erectus</strong>, an extinct human species of about 1.9 million to
+              110,000 years ago, is modelled on the same terms as every animal: no clothing, tools,
+              weapons, fire or trained fighting skill, only the physical capability of an average
+              adult. As the large animal, its attack is bare-hand striking and gripping. Body mass
+              comes from fossil estimates (about 40–68 kg); running and striking values borrow
+              modern-human measurements and are marked derived (D) or speculative (S). It is a
+              thought experiment on physical capability and does not depict or endorse real
+              violence. The <strong>woolly mammoth</strong> (about 400,000 to 4,000 years ago) uses
+              the elephant's tusk weapon, and its hide multiplier of 0.25 stands for dense fur and a
+              fat layer up to 10 cm thick.
             </p>
             <p>
               With 1 HP per kilogram, mid-sized large animals fall to a pack far too easily, so each
               large animal has a hide multiplier <code>hide</code> on the damage it takes from the
-              pack (elephant 0.3, buffalo and brown bear 0.5, T. rex 1). Each pack animal has a body
-              radius constant <code>radius</code> that sets its contact distance and latched
-              position (tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5 m). Neither constant draws
-              random numbers, and both compute exactly as before for T. rex and the tiger, so older
-              share links keep their results. Values and evidence levels are under
+              pack (woolly mammoth 0.25, elephant 0.3, buffalo and brown bear 0.5, T. rex and Homo
+              erectus 1). Each pack animal has a body radius constant <code>radius</code> that sets
+              its contact distance and latched position (tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5
+              m, Homo erectus 0.3 m). Neither constant draws random numbers, and both compute
+              exactly as before for T. rex and the tiger, so older share links keep their results.
+              Values and evidence levels are under
               <a href="/en/parameters/#species">Species presets</a> in the parameter reference.
             </p>
             <p>
               The simulator labels every match-up. <strong>Documented in the wild</strong> marks the
               pairings below, which have field records. T. rex and any other species
               <strong>never met</strong>; pairings that share an era but have no records are marked
-              <strong>no recorded encounters</strong>. Documented match-ups are still heavily
-              simplified, and the simulation figures below are indicative 60-run checks of the
-              presets.
+              <strong>no recorded encounters</strong>. An extinct and a living species count as no
+              recorded encounters only where their fossil records overlap in time and place (Homo
+              erectus with spotted hyenas, tigers and African bush elephants; woolly mammoths with
+              gray wolves and spotted hyenas). Documented match-ups are still heavily simplified,
+              and the simulation figures below are indicative 60-run checks of the presets.
             </p>
             <section id="matchup-elephants-and-lions">
               <h3>African bush elephants and lions</h3>

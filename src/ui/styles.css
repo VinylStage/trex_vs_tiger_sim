@@ -394,6 +394,17 @@ input[type='checkbox'] {
   background: var(--c-neutral);
 }
 
+.matchup-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85em;
+  line-height: 1.45;
+}
+
+.verdict-badge .matchup-note {
+  margin-top: 6px;
+}
+
 .matchup-link {
   color: var(--fg);
   font-weight: 600;

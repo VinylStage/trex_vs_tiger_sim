@@ -12,7 +12,7 @@ import {
   redrawAllCharts,
 } from './charts';
 import { clear, h } from './dom';
-import { createConfigForm, matchupBadge, qualifiedParamLabel } from './form';
+import { createConfigForm, matchupBadge, matchupNote, qualifiedParamLabel } from './form';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import {
   applyI18n,
@@ -509,7 +509,8 @@ export function startApp(root: HTMLElement): void {
       { key: 'verdict.draw' as const, iv: agg.pDraw },
     ].reduce((a, b) => (b.iv.p > a.iv.p ? b : a));
     verdictEl.textContent = t(best.key, { p: formatPct(best.iv.p), ...ivText(best.iv) });
-    badgeSlot.replaceChildren(matchupBadge(cfg));
+    const note = matchupNote(cfg);
+    badgeSlot.replaceChildren(matchupBadge(cfg), ...(note ? [note] : []));
     basisEl.textContent = t('verdict.basis', {
       heavyTeam: teamLabel(cfg.heavySpecies, cfg.heavyCount),
       packTeam: teamLabel(cfg.packSpecies, cfg.packCount),
