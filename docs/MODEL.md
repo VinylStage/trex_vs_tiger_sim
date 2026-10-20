@@ -81,7 +81,7 @@ value = clamp(runValue × f, bounds)
 - **Consequences:**
   - A run's result depends only on `(config, i)`. Splitting runs across any number of Web Workers gives identical results.
   - Results are bit-identical within the same JavaScript engine. Across engines (e.g. V8 vs JavaScriptCore) they agree statistically but may differ run-by-run, because `Math.atan2/sin/cos/log` are not required to be correctly rounded. Distances use `Math.sqrt` (correctly rounded) rather than `Math.hypot`.
-  - Re-running battle `i` with `trace = true` (the replay) reproduces the same battle, because tracing consumes no random numbers.
+  - Re-running battle `i` with `trace = true` (the replay) reproduces the same battle, because tracing, including the event log (§2.6), consumes no random numbers.
   - The design depends on `runs`. Changing the run count changes every row, so run 7 of a 100-run batch is not run 7 of a 500-run batch.
 
 ### 2.3 Scenario settings
@@ -141,6 +141,86 @@ How to read the sensitivity:
 - When the T-Rex win every run, `tigersActive = 0` at the end, so `trexAdvantage` equals `trexHpFrac`. ρ then measures what drives the HP the T-Rex lose.
 - Spearman ρ captures monotonic one-at-a-time association only. Interactions are not captured; Sobol indices are on the roadmap.
 - As a rough guide, the standard error is about `1/√(runs−1)`, which is ≈ 0.045 at 500 runs. Treat \|ρ\| ≲ 0.1 as noise.
+
+### 2.6 Replay trace and event log
+
+The UI replays the representative run (§2.5) by simulating it again with `trace = true` in a Web Worker. Only that run records a trace. Monte Carlo runs use `trace = false` and record nothing.
+
+**Trace contents** (`BattleTrace` in `engine.ts`, `version: 2`):
+
+| Field                                  | Content                                                                                                                                                                                                                                                                                                                                                                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `frames`                               | State samples `{ t, trex, tiger }`. Per T-Rex: x, y, heading and HP fraction (0 = dead) as `Float32Array`. Per tiger: x, y and state code. One frame at t = 0, then one every `traceMinEvery` ticks (0.5 s), plus a final frame at the end of the battle. When the frames would exceed `traceFloatBudget` floats, every other frame is dropped and the interval doubles. |
+| `events`                               | The event log described below (`Uint16Array`).                                                                                                                                                                                                                                                                                                                           |
+| `eventsCompleteUntilStep`              | Every event with stamp ≤ this value is in `events`. It equals the battle's tick count (`duration / 0.1`) unless the budget stopped the log.                                                                                                                                                                                                                              |
+| `eventStats`                           | Stored P0 and P1 counts, plus P1 events coalesced or dropped and P0 events dropped.                                                                                                                                                                                                                                                                                      |
+| `meta`                                 | `dt`, `bodyRadius`, `tigerRadius`, and per-T-Rex `reach` (m) and `arc` (bite half-angle, rad) as `Float32Array`. This is what a renderer needs to draw bite cones and to place latched tigers.                                                                                                                                                                           |
+| `arenaSize`, `trexCount`, `tigerCount` | Scenario geometry.                                                                                                                                                                                                                                                                                                                                                       |
+
+**Event format.** Each event is four unsigned 16-bit integers (8 bytes): `[stamp, type << 8 | v, a, b]`.
+
+- `stamp` is the tick that produced the event, counted from 1. The update from t = (s − 1) × 0.1 s to t = s × 0.1 s has stamp s, the same index as a frame recorded at s × 0.1 s. Event time = stamp × `DT`.
+- `a` and `b` are agent indices; `0xFFFF` means "none". `v` is a type-specific byte.
+- Events are stored in emission order, which is the engine's tick order (§3.2): T-Rex bites, then each tiger's update in index order, then T-Rex deaths. The log is therefore sorted by stamp and can be binary-searched by time.
+
+| Code | Event        | a     | b                                 | v                                                          | Class | Tiger state afterwards                      |
+| ---- | ------------ | ----- | --------------------------------- | ---------------------------------------------------------- | ----- | ------------------------------------------- |
+| 1    | `BiteHit`    | T-Rex | tiger                             | damage ÷ tiger max HP × 255, clamped to 255                | P0    | Recover (Dead if a `TigerDeath` follows)    |
+| 2    | `BiteMiss`   | T-Rex | tiger                             | 0                                                          | P1    | unchanged                                   |
+| 3    | `Latch`      | tiger | host T-Rex                        | latch angle relative to the host's heading, 256 steps/turn | P0    | Latched                                     |
+| 4    | `LatchFail`  | tiger | T-Rex                             | 0                                                          | P1    | unchanged                                   |
+| 5    | `Throw`      | tiger | host                              | 0                                                          | P0    | Recover (Dead if a `TigerDeath` follows)    |
+| 6    | `Release`    | tiger | host, or none                     | 0 = stamina ran out, 1 = host died                         | P0    | Recover                                     |
+| 7    | `TigerDeath` | tiger | killer T-Rex                      | 0 = bite, 1 = throw                                        | P0    | Dead                                        |
+| 8    | `Rout`       | tiger | host if it was latched, else none | 0                                                          | P0    | Routed                                      |
+| 9    | `Exit`       | tiger | none                              | 0                                                          | P0    | Left                                        |
+| 10   | `TrexDeath`  | T-Rex | none                              | 0                                                          | P0    | — (the T-Rex is dead from this stamp on)    |
+| 11   | `Exhausted`  | tiger | target T-Rex                      | 0                                                          | P0    | Recover (stamina ran out while approaching) |
+| 12   | `Resume`     | tiger | none                              | 0                                                          | P0    | Approach                                    |
+
+**Reconstruction.** P0 events cover every tiger state change and every T-Rex death; P1 events are cosmetic.
+
+- Start from "every tiger in Approach, every T-Rex alive" and apply the events with stamp ≤ s in log order. The result is exactly the state stored in a frame at s × 0.1 s (`tigerStateAfter` and `eventTiger` in `events.ts`).
+- Several events of one tiger in one tick stay in order. For example, a bitten Routed tiger gets `BiteHit` (→ Recover) and then `Rout` (→ Routed) in its own update. A `TigerDeath` always directly follows the `BiteHit` or `Throw` that caused it.
+- A latched tiger sits at `bodyRadius + tigerRadius` from its host's centre, at the latch angle relative to the host's heading. Its position is recomputed from the host's pose every tick and is then clamped to the arena like every non-routed tiger, so next to a wall it can sit closer than that distance. On the tick it latches it is still at its contact position: on the same bearing, but anywhere within `bodyRadius + tigerRadius + 0.5` m of the host's centre (the flank tactic can bring it nearer than the ride distance). The first pinned position is the next tick's.
+- Leaving the host: a `Throw` and a stamina `Release` come after the latched position update of their tick, so at the event's stamp the tiger is still on its host (a thrown tiger is then moved 3 m farther out on the same bearing). A `Rout`, a `BiteHit` and a `Release` because the host died come before that update, so the tiger was last pinned one tick earlier; a routed or bitten tiger also takes its first fleeing or recovering step in the event's tick. The replay uses these rules for its ride timing ([REPLAY.md §3](REPLAY.md#3-world-states-and-motion)).
+
+**Budget.**
+
+- **P0 (state-changing):** at most `eventP0Cap` = 262,144 events (2 MiB). When the cap is reached the log **stops**. The events of the current tick are discarded, so the log ends on a tick boundary, and `eventsCompleteUntilStep` is set to the last complete tick. Later events are only counted (`p0Dropped`).
+- **P1 (cosmetic: `BiteMiss`, `LatchFail`):** at most `eventP1Cap` = 32,768 events (256 KiB); later ones are dropped and counted. Before that, at most one `BiteMiss` per T-Rex per `biteMissCoalesce` (1 s) and one `LatchFail` per tiger per `latchFailCoalesce` (2 s) are stored; the rest are counted in `p1Coalesced`.
+- The worst case is therefore 2.25 MiB of events, next to at most 24 MB of frames (`traceFloatBudget`).
+- **Fallback:** a renderer uses event-exact states up to `eventsCompleteUntilStep × DT` and frame-sampled states after it (the last frame at or before t, as the version 1 replay did). It should tell the viewer that detail is reduced after that time.
+- `eventsCompleteUntilStep` is 0 when the log is turned off (`TraceOptions.events = false`, used by tests). The log also stops itself if a stamp or an agent index would not fit in 16 bits. The limits in §2.3 keep both out of reach: at most 36,000 ticks and 5,000 agents.
+
+**Observed volumes.** Default parameters with the agent counts shown, runs 0 … n−1 of an n-run batch:
+
+| Scenario                                    | Runs | Events (mean / max) | Largest log | P0 dropped |
+| ------------------------------------------- | ---- | ------------------- | ----------- | ---------- |
+| 1 vs 1                                      | 100  | 16 / 47             | 0.4 KiB     | 0          |
+| 1 vs 10                                     | 100  | 229 / 686           | 5.4 KiB     | 0          |
+| 1 vs 100                                    | 100  | 712 / 1,622         | 12.7 KiB    | 0          |
+| 10 vs 100 (default scenario)                | 100  | 303 / 1,120         | 8.8 KiB     | 0          |
+| 10 vs 1,000                                 | 2    | 2,445 / 3,394       | 26.5 KiB    | 0          |
+| 50 vs 1,000                                 | 2    | 2,638 / 3,808       | 29.8 KiB    | 0          |
+| 500 vs 5,000                                | 2    | 6,149 / 6,921       | 54.1 KiB    | 0          |
+| 1 vs 5,000, `maxTime` 3,600 s               | 2    | 2,394 / 4,004       | 31.3 KiB    | 0          |
+| Stress: 1 vs 5,000, 3,600 s, latch chance 0 | 1    | 294,900             | 2,304 KiB   | 291,241    |
+
+The stress case is a 3,600 s draw in which no tiger can ever latch, so tigers cycle through approach, failed latch and exhaustion. It produces about 2.85 million events. The log keeps 262,132 P0 and 32,768 P1 events (2.25 MiB) and stops at tick 17,227 (t = 1,722.7 s). By the end of the battle the frames are 16 s apart, so the fallback is coarse there.
+
+**Determinism guarantees.**
+
+- The log exists only when `trace = true`. Otherwise it is `null`, and each of the 12 emission points costs one null check; argument expressions are not evaluated.
+- Emission code only reads state. It never draws a random number, never reorders a loop and never changes control flow.
+- Tests (`tests/events.test.ts`, `tests/events-determinism.test.ts`) check, over a scaled-down scenario matrix:
+  - summaries and frames are bit-identical with the log on, with it off, and against golden values captured from the engine before the log existed;
+  - the number of random draws is identical with and without the log;
+  - the reconstructed states equal every frame sample, latched tigers sit on their hosts, and T-Rex deaths agree with frame HP;
+  - stamps and indices fit in 16 bits for every value `LIMITS` allows;
+  - a log stopped by the budget holds exactly the uncapped log's P0 events up to `eventsCompleteUntilStep`.
+
+**Transport.** The worker transfers every buffer of the trace (frames, events and meta) to the main thread without copying (`traceTransferList` in `src/workers/protocol.ts`).
 
 ## 3. Battle model
 
@@ -363,6 +443,10 @@ These are fixed in `engine.ts`. They are not sampled and not editable in the UI.
 | `flankLoadPenalty`                | 20 m            | Flank: target-score penalty per tiger already latched                                                                                |
 | `traceFloatBudget`                | 6,000,000       | Replay: when a trace would exceed this many floats, every other frame is dropped and the interval doubles                            |
 | `traceMinEvery`                   | 5 ticks (0.5 s) | Replay: starting interval between recorded frames                                                                                    |
+| `eventP0Cap`                      | 262,144         | Replay: most state-changing events in the log (2 MiB); reaching it stops the log (§2.6)                                              |
+| `eventP1Cap`                      | 32,768          | Replay: most cosmetic events (bite misses, failed latches) in the log (256 KiB)                                                      |
+| `biteMissCoalesce`                | 1 s             | Replay: at most one logged bite miss per T-Rex per interval                                                                          |
+| `latchFailCoalesce`               | 2 s             | Replay: at most one logged failed latch per tiger per interval                                                                       |
 | `recoverMinTime`                  | 5 s             | Minimum time in Recover after a wound or a throw                                                                                     |
 | `shockPad`                        | 6.5 m           | Morale-shock grid query padding (max per-tick displacement: 35 m/s × 0.1 s + 3 m throw); the exact 40 m distance check still applies |
 

@@ -1,5 +1,16 @@
 import type { ScenarioConfig } from './config';
 import { individualFactor } from './distributions';
+import {
+  DeathCause,
+  EVENT_NONE,
+  EventLog,
+  EventType,
+  ReleaseCause,
+  angleByte,
+  damageByte,
+  type EventLogLimits,
+  type EventStats,
+} from './events';
 import { PARAMS, PARAM_INDEX as P } from './params';
 import { Rng, deriveSeed } from './rng';
 import { SpatialGrid } from './spatial';
@@ -34,6 +45,10 @@ export const CONSTANTS = {
   flankLoadPenalty: 20,
   traceFloatBudget: 6_000_000,
   traceMinEvery: 5,
+  eventP0Cap: 262_144,
+  eventP1Cap: 32_768,
+  biteMissCoalesce: 1,
+  latchFailCoalesce: 2,
   recoverMinTime: 5,
   shockPad: 6.5,
 } as const;
@@ -66,16 +81,48 @@ export interface RunSummary {
 export interface TraceFrame {
   t: number;
   /** Per T-Rex: x, y, heading, hpFrac (hpFrac ≤ 0 → dead). */
-  trex: Float32Array;
+  trex: Float32Array<ArrayBuffer>;
   /** Per tiger: x, y, state. */
-  tiger: Float32Array;
+  tiger: Float32Array<ArrayBuffer>;
 }
 
+/** Static per-run data the replay needs for geometry (bite wedges, latch positions). */
+export interface TraceMeta {
+  /** Integration step in seconds; event time = stamp × dt. */
+  dt: number;
+  bodyRadius: number;
+  tigerRadius: number;
+  /** Per T-Rex bite reach (m). */
+  reach: Float32Array<ArrayBuffer>;
+  /** Per T-Rex bite half-angle (rad). */
+  arc: Float32Array<ArrayBuffer>;
+}
+
+export const TRACE_VERSION = 2;
+
 export interface BattleTrace {
+  version: typeof TRACE_VERSION;
   arenaSize: number;
   trexCount: number;
   tigerCount: number;
   frames: TraceFrame[];
+  /** Event log, 4 × u16 per event (events.ts, docs/MODEL.md §2.6). */
+  events: Uint16Array<ArrayBuffer>;
+  /**
+   * Every event with stamp ≤ this step is in `events`. Equals the battle's tick count unless the
+   * P0 budget was exhausted; after it, a renderer must fall back to frame-sampled states.
+   */
+  eventsCompleteUntilStep: number;
+  eventStats: EventStats;
+  meta: TraceMeta;
+}
+
+/** Test hooks for traced runs. The app always uses the defaults. */
+export interface TraceOptions {
+  /** Record the event log (default true). */
+  events?: boolean;
+  /** Override parts of the event budget. */
+  eventLimits?: Partial<EventLogLimits>;
 }
 
 export interface BattleOutput {
@@ -105,6 +152,7 @@ export function simulateBattle(
   row: ArrayLike<number>,
   run: number,
   trace = false,
+  options: TraceOptions = {},
 ): BattleOutput {
   const C = CONSTANTS;
   const rng = new Rng(deriveSeed(config.seed, run, BATTLE_SALT));
@@ -235,7 +283,21 @@ export function simulateBattle(
     }
   };
 
-  const kill = (j: number): void => {
+  // Event log: only for traced runs. `log?.emit(...)` skips argument evaluation when null.
+  // Emission only reads state; it never draws random numbers or changes control flow.
+  const log =
+    trace && options.events !== false
+      ? new EventLog(N, M, {
+          p0Cap: C.eventP0Cap,
+          p1Cap: C.eventP1Cap,
+          missWindow: Math.round(C.biteMissCoalesce / DT),
+          failWindow: Math.round(C.latchFailCoalesce / DT),
+          ...options.eventLimits,
+        })
+      : null;
+
+  const kill = (j: number, cause: number, by: number): void => {
+    log?.emit(EventType.TigerDeath, cause, j, by);
     tState[j] = TigerState.Dead;
     tHp[j] = 0;
     tHost[j] = -1;
@@ -342,6 +404,7 @@ export function simulateBattle(
   if (trace) record(0);
 
   for (; step < maxSteps; step++) {
+    log?.beginStep(step + 1);
     grid.rebuild(M, tx, ty, presentFilter);
     rCarry.fill(0);
     rLatched.fill(0);
@@ -406,9 +469,12 @@ export function simulateBattle(
             : (rAcc[i] as number);
           if (rng.next() < acc) {
             const dmg = (rBiteDmg[i] as number) * (C.biteDamageMin + C.biteDamageSpan * rng.next());
+            log?.emit(EventType.BiteHit, damageByte(dmg, tMaxHp[best] as number), i, best);
             tHp[best] = (tHp[best] as number) - dmg;
-            if ((tHp[best] as number) <= 0) kill(best);
+            if ((tHp[best] as number) <= 0) kill(best, DeathCause.Bite, i);
             else toRecover(best, C.woundMoraleLoss, C.recoverMinTime);
+          } else {
+            log?.emit(EventType.BiteMiss, 0, i, best);
           }
         }
       }
@@ -423,6 +489,12 @@ export function simulateBattle(
       if (s >= TigerState.Dead) continue;
 
       if (config.morale && s !== TigerState.Routed && (tMorale[j] as number) < C.routThreshold) {
+        log?.emit(
+          EventType.Rout,
+          0,
+          j,
+          s === TigerState.Latched ? (tHost[j] as number) : EVENT_NONE,
+        );
         tState[j] = TigerState.Routed;
         tHost[j] = -1;
       }
@@ -481,6 +553,7 @@ export function simulateBattle(
           moveToward(j, heading, stepLen);
 
           if ((tStamina[j] as number) <= 0) {
+            log?.emit(EventType.Exhausted, 0, j, r);
             toRecover(j, 0, 0);
             break;
           }
@@ -498,7 +571,9 @@ export function simulateBattle(
                   (tx[j] as number) - (rx[r] as number),
                 ) - (rh[r] as number),
               );
+              log?.emit(EventType.Latch, angleByte(tLatchAng[j] as number), j, r);
             } else {
+              log?.emit(EventType.LatchFail, 0, j, r);
               tLatchCd[j] = C.latchRetry;
             }
           }
@@ -507,6 +582,7 @@ export function simulateBattle(
         case TigerState.Latched: {
           const h = tHost[j] as number;
           if (h < 0 || !rAlive[h]) {
+            log?.emit(EventType.Release, ReleaseCause.HostDied, j, h < 0 ? EVENT_NONE : h);
             toRecover(j, 0, 0);
             break;
           }
@@ -518,16 +594,20 @@ export function simulateBattle(
           rWound[h] = (rWound[h] as number) + dmg;
           tStamina[j] = (tStamina[j] as number) - DT / (tLatchEnd[j] as number);
           if (rng.next() < (rShake[h] as number) * DT) {
+            log?.emit(EventType.Throw, 0, j, h);
             tHp[j] = (tHp[j] as number) - C.throwDamageFrac * (tMaxHp[j] as number);
             if ((tHp[j] as number) <= 0) {
-              kill(j);
+              kill(j, DeathCause.Throw, h);
               break;
             }
             toRecover(j, C.throwMoraleLoss, C.recoverMinTime);
             moveToward(j, a, C.throwDistance);
             break;
           }
-          if ((tStamina[j] as number) <= 0) toRecover(j, 0, 0);
+          if ((tStamina[j] as number) <= 0) {
+            log?.emit(EventType.Release, ReleaseCause.Stamina, j, h);
+            toRecover(j, 0, 0);
+          }
           break;
         }
         case TigerState.Recover: {
@@ -542,6 +622,7 @@ export function simulateBattle(
           }
           tRecoverTimer[j] = (tRecoverTimer[j] as number) - DT;
           if ((tStamina[j] as number) >= C.resumeStamina && (tRecoverTimer[j] as number) <= 0) {
+            log?.emit(EventType.Resume, 0, j, EVENT_NONE);
             tState[j] = TigerState.Approach;
             tTarget[j] = -1;
           }
@@ -564,7 +645,10 @@ export function simulateBattle(
           moveToward(j, away, speed * DT);
           const x = tx[j] as number;
           const y = ty[j] as number;
-          if (x < 0 || y < 0 || x > L || y > L) tState[j] = TigerState.Left;
+          if (x < 0 || y < 0 || x > L || y > L) {
+            log?.emit(EventType.Exit, 0, j, EVENT_NONE);
+            tState[j] = TigerState.Left;
+          }
           break;
         }
       }
@@ -579,6 +663,7 @@ export function simulateBattle(
     let trexAlive = 0;
     for (let i = 0; i < N; i++) {
       if (rAlive[i] && (rHp[i] as number) <= 0) {
+        log?.emit(EventType.TrexDeath, 0, i, EVENT_NONE);
         rAlive[i] = 0;
         rHp[i] = 0;
       }
@@ -639,7 +724,26 @@ export function simulateBattle(
     trexHpFrac,
     trexAdvantage: trexHpFrac - active / M,
   };
-  return trace
-    ? { summary, trace: { arenaSize: L, trexCount: N, tigerCount: M, frames } }
-    : { summary };
+  if (!trace) return { summary };
+  const ev = log ? log.finish(step) : null;
+  return {
+    summary,
+    trace: {
+      version: TRACE_VERSION,
+      arenaSize: L,
+      trexCount: N,
+      tigerCount: M,
+      frames,
+      events: ev ? ev.events : new Uint16Array(0),
+      eventsCompleteUntilStep: ev ? ev.completeUntilStep : 0,
+      eventStats: ev ? ev.stats : { p0: 0, p1: 0, p1Coalesced: 0, p1Dropped: 0, p0Dropped: 0 },
+      meta: {
+        dt: DT,
+        bodyRadius: radius,
+        tigerRadius: C.tigerRadius,
+        reach: Float32Array.from(rReach),
+        arc: Float32Array.from(rArc),
+      },
+    },
+  };
 }

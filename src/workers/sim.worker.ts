@@ -2,7 +2,7 @@ import { sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { simulateBattle } from '../sim/engine';
 import { runChunk } from '../sim/montecarlo';
 import { buildDesign, designRow, type Design } from '../sim/sampling';
-import type { WorkerRequest, WorkerResponse } from './protocol';
+import { traceTransferList, type WorkerRequest, type WorkerResponse } from './protocol';
 
 // tsconfig `lib` is DOM-only, so type the worker global locally.
 const ctx = self as unknown as {
@@ -46,9 +46,7 @@ function handle(msg: WorkerRequest): void {
   const run = Math.max(0, Math.min(config.runs - 1, Math.floor(msg.run)));
   const { trace } = simulateBattle(config, designRow(design, run), run, true);
   if (!trace) throw new Error('engine returned no trace');
-  const transfer: Transferable[] = [];
-  for (const f of trace.frames) transfer.push(f.trex.buffer, f.tiger.buffer);
-  ctx.postMessage({ type: 'replay', jobId: msg.jobId, trace }, transfer);
+  ctx.postMessage({ type: 'replay', jobId: msg.jobId, trace }, traceTransferList(trace));
 }
 
 ctx.onmessage = (e) => {

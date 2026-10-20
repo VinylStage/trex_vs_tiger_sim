@@ -17,6 +17,13 @@
   --c-neutral: #6250d6;
   --c-latched: #1baf7a;
   --c-hp-low: #e34948;
+  --replay-arena: #f3f2ee;
+  --replay-grid: #e4e3de;
+  --replay-border: #b9b8b2;
+  --replay-trex: #0072b2;
+  --replay-tiger: #d55e00;
+  --replay-out: #767676;
+  --replay-dead: #8d8c87;
   --error-fg: #b42318;
   --error-bg: #fdecea;
   --warn-fg: #6b4300;
@@ -53,6 +60,13 @@
     --c-neutral: #9085e9;
     --c-latched: #199e70;
     --c-hp-low: #e66767;
+    --replay-arena: #252523;
+    --replay-grid: #30302d;
+    --replay-border: #4a4a46;
+    --replay-trex: #3987e5;
+    --replay-tiger: #e69f00;
+    --replay-out: #9a9993;
+    --replay-dead: #8d8c87;
     --error-fg: #ff9b8f;
     --error-bg: #3a1d1a;
     --warn-fg: #ffd58a;
@@ -813,6 +827,7 @@ input[type='checkbox'] {
 }
 
 .replay-stage {
+  position: relative;
   width: 100%;
   max-width: 620px;
   margin: 0 auto;
@@ -827,13 +842,27 @@ input[type='checkbox'] {
 }
 
 .replay-controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 14px;
+  display: grid;
+  gap: 8px;
   max-width: 620px;
   width: 100%;
   margin: 0 auto;
+}
+
+.replay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.replay-actions .btn[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.replay-actions .btn[aria-disabled='true']:hover {
+  background: var(--surface);
 }
 
 .inline-field {
@@ -851,10 +880,26 @@ input[type='checkbox'] {
 }
 
 .replay-scrub {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+/* Timeline strip: painted by src/ui/replay/strip.ts; the height is reserved before a trace loads. */
+.replay-timeline {
+  display: block;
+  width: 100%;
+  height: 40px;
+  border-radius: var(--radius-small);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.replay-slider-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex: 1 1 240px;
   min-width: 0;
 }
 
@@ -869,6 +914,92 @@ input[type='checkbox'] {
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.replay-keys {
+  max-width: 620px;
+  width: 100%;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.replay-keys summary {
+  cursor: pointer;
+  width: max-content;
+}
+
+.replay-keys-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 4px 16px;
+  margin: 8px 0 0;
+}
+
+.replay-keys-list div {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.replay-keys-list dt {
+  flex: none;
+  min-width: 7.5em;
+}
+
+.replay-keys-list dd {
+  margin: 0;
+}
+
+.replay-keys kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* Only rendered with ?debug=fps. */
+.replay-lod {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  margin: 0;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  text-align: center;
+  opacity: 0.92;
+  pointer-events: none;
+}
+
+.replay-lod.is-empty {
+  display: none;
+}
+
+.replay-debug {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  margin: 0;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 0.7rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+  pointer-events: none;
 }
 
 .legend {
@@ -889,55 +1020,34 @@ input[type='checkbox'] {
   gap: 6px;
 }
 
-.swatch {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
+.legend .legend-head {
+  color: var(--fg);
+  font-weight: 600;
 }
 
-.sw-trex {
-  width: 22px;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--c-hp-low), var(--c-trex));
+/* Swatches are canvases painted by the stage's glyph code (src/ui/replay/legend.ts). */
+.legend-glyph {
+  display: block;
+  flex: none;
+  width: 30px;
+  height: 18px;
+  border-radius: 4px;
 }
 
-.sw-approach {
-  background: var(--c-tiger);
+/* Two lines are always reserved, so showing or hiding a note never shifts the page. */
+.replay-note {
+  min-height: 4.5em;
+  max-width: 620px;
+  width: 100%;
+  margin: 0 auto;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  text-align: center;
 }
 
-.sw-latched {
-  background: var(--c-latched);
-}
-
-.sw-recover {
-  border: 2px solid var(--c-tiger);
-}
-
-.sw-routed {
-  background: var(--c-draw);
-}
-
-.sw-dead {
-  position: relative;
-  border-radius: 0;
-  opacity: 0.7;
-}
-
-.sw-dead::before,
-.sw-dead::after {
-  content: '';
-  position: absolute;
-  left: 5px;
-  top: -1px;
-  width: 2px;
-  height: 14px;
-  background: var(--muted);
-  transform: rotate(45deg);
-}
-
-.sw-dead::after {
-  transform: rotate(-45deg);
+.replay-note.is-empty {
+  visibility: hidden;
 }
 
 /* ---------- static intro and FAQ (outside #app) ---------- */
