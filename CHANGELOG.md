@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.3...trex-vs-tiger-sim-v0.2.4) (2026-10-20)
+
+
+### Features
+
+* **species:** unified trait presets for free matchups ([#75](https://github.com/VinylStage/trex_vs_tiger_sim/issues/75)) ([c0696d1](https://github.com/VinylStage/trex_vs_tiger_sim/commit/c0696d11be65e71e387f0ba7264b061add0360a4))
+
 ## [0.2.3](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.2...trex-vs-tiger-sim-v0.2.3) (2026-10-20)
 
 
