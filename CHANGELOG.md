@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.9](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.8...trex-vs-tiger-sim-v0.2.9) (2026-10-20)
+
+
+### Features
+
+* **ui:** free matchup mode, any species vs any species ([#90](https://github.com/VinylStage/trex_vs_tiger_sim/issues/90)) ([7711199](https://github.com/VinylStage/trex_vs_tiger_sim/commit/771119948c83811e85b8bf48dda2472388ad7ae2))
+
 ## [0.2.8](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.7...trex-vs-tiger-sim-v0.2.8) (2026-10-20)
 
 
