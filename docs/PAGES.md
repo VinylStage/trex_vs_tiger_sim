@@ -137,14 +137,15 @@ All links are in the static HTML; nothing a crawler needs is generated at run ti
 
 ## Colour contrast
 
-All page text is normal size, so WCAG 2.x AA needs a contrast ratio of at least **4.5:1**. The app's `--accent` (`#2a78d6` light, `#3987e5` dark) does not reach that as a text colour on the page background (4.09:1) or under white text (4.42:1 light, 3.64:1 dark). `site.css` therefore defines page-only colour roles in a top-level `html { }` block. They are not app tokens, so they stay out of the mirrored `:root` blocks:
+All page text is normal size, so WCAG 2.x AA needs a contrast ratio of at least **4.5:1**. The app's `--accent` (`#2a78d6` light, `#3987e5` dark) does not reach that as a text colour on the page background (4.09:1) or under white text (4.42:1 light, 3.64:1 dark). Both stylesheets therefore define these colour roles in their `:root` blocks (`src/ui/styles.css` is the source, `site.css` mirrors it), so the simulator and the pages use the same blue for links and filled buttons:
 
 | Role                  | Value                                        | Used for                                             |
 | --------------------- | -------------------------------------------- | ---------------------------------------------------- |
 | `--accent-text`       | `var(--accent-hover)`: `#256abf` / `#5598e7` | Links, eyebrow, parameter chips, TOC hover           |
 | `--accent-fill`       | `#256abf` (both themes)                      | Background of the button, skip link and step numbers |
 | `--accent-fill-hover` | `#1d5aa6` (both themes)                      | Button hover                                         |
-| `--accent-fill-fg`    | `var(--accent-fg)`: `#ffffff`                | Text on the filled controls                          |
+| `--accent-fill-fg`    | `#ffffff`                                    | Text on the filled controls                          |
+| `--control-border`    | `#85847f` / `#77766f`                        | Outline of inputs and selects (≥ 3:1, WCAG 1.4.11)   |
 
 Links inside `.warning` boxes use `--warn-fg` (underlined, thicker underline on hover). Link hover switches to `--fg`. `--accent` itself is kept for non-text decoration (formula border, current-nav underline, focus ring via `--focus`).
 

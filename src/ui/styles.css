@@ -10,6 +10,11 @@
   --accent: #2a78d6;
   --accent-hover: #256abf;
   --accent-fg: #ffffff;
+  --accent-text: var(--accent-hover);
+  --accent-fill: #256abf;
+  --accent-fill-hover: #1d5aa6;
+  --accent-fill-fg: #ffffff;
+  --control-border: #85847f;
   --focus: #2a78d6;
   --c-trex: #2a78d6;
   --c-tiger: #eb6834;
@@ -53,6 +58,7 @@
     --accent: #3987e5;
     --accent-hover: #5598e7;
     --accent-fg: #ffffff;
+    --control-border: #77766f;
     --focus: #6da7ec;
     --c-trex: #3987e5;
     --c-tiger: #d95926;
@@ -130,7 +136,7 @@ p {
 }
 
 a {
-  color: var(--accent);
+  color: var(--accent-text);
 }
 
 :focus-visible {
@@ -273,13 +279,14 @@ a {
 }
 
 .btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-fg);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: var(--accent-fill-fg);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
+  border-color: var(--accent-fill-hover);
 }
 
 .btn-large {
@@ -318,7 +325,7 @@ select {
   width: 100%;
   min-height: 38px;
   padding: 6px 10px;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: var(--radius-small);
   background: var(--surface);
   color: var(--fg);
@@ -1206,7 +1213,7 @@ input[type='checkbox'] {
 .intro-links a {
   display: inline-block;
   min-height: 24px;
-  color: var(--accent-hover);
+  color: var(--accent-text);
   font-weight: 500;
 }
 
