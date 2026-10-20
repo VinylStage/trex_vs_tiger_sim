@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>T-Rex vs Tiger</title>
+  <defs>
+    <clipPath id="tile"><rect width="64" height="64" rx="14"/></clipPath>
+  </defs>
+  <g clip-path="url(#tile)">
+    <rect width="64" height="64" fill="#2a78d6"/>
+    <path d="M64 0V64H0z" fill="#eb6834"/>
+    <path d="M46 31l13-6M40 44l17-6M35 56l15-4" stroke="#1b1b1a" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <path d="M8 32L16 15L37 13L39 19L25 22L31 27L14 37z" fill="#ffffff"/>
+  <circle cx="21" cy="19" r="2.2" fill="#2a78d6"/>
+</svg>
