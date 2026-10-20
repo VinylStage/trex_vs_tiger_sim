@@ -128,7 +128,7 @@ Plus non-sampled species constants carried over unchanged: `hide`, `intimidation
 
 For _Homo erectus_ the two existing role presets merge: mass is identical; heavy strike traits and pack latch traits are kept from the respective roles; `bodyRadius` uses the heavy triangle 0.2–0.3 m.
 
-**Mapping onto a side.** A side's `params` is filled from `species` exactly as today's `speciesRanges` does, with trait ids that are side-local (`mass`, not `heavy.mass`). Both sides use the same trait list, so a mirror matchup simply has two copies of one preset. The free design matrix has `2 × T` columns (`T` = traits incl. pack-buff traits) in the order "all side-A traits, then all side-B traits". Inactive traits (pack buff for a non-social side, latch traits for a non-latching species) still get a column, so the column layout depends only on the trait list, never on the species, and consume no battle RNG.
+**Mapping onto a side.** A side's `params` is filled from `species` exactly as today's `speciesRanges` does, with trait ids that are side-local (`mass`, not `heavy.mass`). Both sides use the same trait list, so a mirror matchup simply has two copies of one preset. The free design matrix has `2 × T + G` columns (`T` = traits incl. pack-buff traits, `G` = the five sampled global model constants `R_latch`, `K_knock`, `woundRef`, `interference`, `T_grace`) in the order "all side-A traits, all side-B traits, then the globals". Inactive traits (pack buff for a non-social side, latch traits for a non-latching species) still get a column, so the column layout depends only on the trait list, never on the species, and consume no battle RNG.
 
 ### 2.3 Which species are social
 
@@ -217,7 +217,7 @@ Latching (grab, hold, ride) is possible only if both hold:
 
 Why 3: every documented latch in the roster is on prey at least about 3–4 times heavier: lions on buffalo (600 / 150 ≈ 4), wolves on a brown bear (220 / 42 ≈ 5) or on elk and bison [MacNulty 2012, 2014], hyenas on buffalo (≈ 11), all legacy pack-vs-_T. rex_ pairs (≈ 40+). Between animals of similar size the fight is a bite-and-strike exchange, not a ride. Consequences: 1 _T. rex_ vs 1 _T. rex_, 5 tigers vs 5 lions and lion vs lion never latch; 10 wolves vs 1 bear latch as today; 1 tiger vs 1 bear (ρ ≈ 1.2) becomes a strike duel instead of the legacy latch (which SPECIES.md §7 flagged as a handicap for solo attackers).
 
-`R_latch` is one global constant, sampled per run like the others (`individual: false`), so its effect is visible in the tornado chart.
+`R_latch` is one global constant, sampled per run like the others (`individual: false`), so its effect is visible in the tornado chart. The ratio is checked at the moment of the latch roll with both individuals' actual masses.
 
 ### 4.3 Strikes
 
@@ -249,7 +249,7 @@ Mirror matchups must not favour side A because of update order. Each tick:
 
 Randomness comes from two streams, `deriveSeed(seed, run, SALT_A)` and `deriveSeed(seed, run, SALT_B)`, each consumed only by its own side in index order. Adding or removing an agent on one side therefore never shifts the other side's random numbers.
 
-### 4.7 The four matchup shapes
+### 4.7 Matchup shapes
 
 | Shape                    | What happens                                                                                                                                       |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------- |
