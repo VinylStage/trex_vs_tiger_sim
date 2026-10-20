@@ -98,7 +98,7 @@ export function triangular(v: unknown, fallback: Triangular, bounds: readonly [n
 
 /**
  * Upper bound on simulated agent-steps per Monte Carlo batch:
- * runs × (maxTime / DT) × (trexCount + tigerCount). Keeps a shared link from requesting
+ * runs × (maxTime / DT) × (heavyCount + packCount). Keeps a shared link from requesting
  * an effectively unbounded amount of CPU; `runs` is lowered to fit.
  */
 export const MAX_WORK = 5e10;

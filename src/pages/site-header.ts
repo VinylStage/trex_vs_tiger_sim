@@ -4,11 +4,13 @@ import {
   NAV_LABEL_KEYS,
   NAV_PAGES,
   notFoundLang,
+  otherLang,
   pagePath,
   parsePagePath,
   resultPageLang,
   type PageId,
 } from './routes.ts';
+import { renderSiteFooter, SITE_FOOTER_PLACEHOLDER } from './site-footer.ts';
 
 /*
  * The site header, in one place (docs/PAGES.md#site-header). DOM-free and pure, so the same code
@@ -36,8 +38,6 @@ export const BRAND_TEXT_KEY = 'app.shortTitle';
 export const SITE_HEADER_PLACEHOLDER = '<!-- site-header -->';
 /** Placeholder in the static head of index.html / en/index.html, replaced by {@link renderAppLogo}. */
 export const APP_LOGO_PLACEHOLDER = '<!-- app-logo -->';
-
-const otherLang = (lang: Lang): Lang => (lang === 'ko' ? 'en' : 'ko');
 
 export interface SiteNavItem {
   page: PageId;
@@ -139,7 +139,8 @@ export function headerRouteOf(path: string): HeaderRoute | null {
 export function expandSiteHeader(html: string, route: HeaderRoute | null, file: string): string {
   const hasHeader = html.includes(SITE_HEADER_PLACEHOLDER);
   const hasLogo = html.includes(APP_LOGO_PLACEHOLDER);
-  if (!hasHeader && !hasLogo) return html;
+  const hasFooter = html.includes(SITE_FOOTER_PLACEHOLDER);
+  if (!hasHeader && !hasLogo && !hasFooter) return html;
   if (!route) throw new Error(`${file}: header placeholder on a page with no known route`);
   if (hasHeader && route.page === 'simulator') {
     throw new Error(`${file}: the simulator uses ${APP_LOGO_PLACEHOLDER}, not the site header`);
@@ -149,5 +150,6 @@ export function expandSiteHeader(html: string, route: HeaderRoute | null, file: 
   }
   return html
     .replace(SITE_HEADER_PLACEHOLDER, () => renderSiteHeader(route.lang, route.page))
-    .replace(APP_LOGO_PLACEHOLDER, () => renderAppLogo());
+    .replace(APP_LOGO_PLACEHOLDER, () => renderAppLogo())
+    .replace(SITE_FOOTER_PLACEHOLDER, () => renderSiteFooter(route.lang));
 }

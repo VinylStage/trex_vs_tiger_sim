@@ -1,4 +1,4 @@
-import { PARAMS, type ParamId, type Role, type Triangular } from './params.ts';
+import { PARAMS, type ParamId, type Triangular } from './params.ts';
 
 /**
  * Species registry (docs/SPECIES.md). Every species fills one role with presets for that role's
@@ -448,10 +448,6 @@ export function speciesRanges(h: HeavySpeciesId, p: PackSpeciesId): Record<Param
 export function boundsTable(h: HeavySpeciesId, p: PackSpeciesId): (readonly [number, number])[] {
   return PARAMS.map((d) => paramBounds(d.id, h, p));
 }
-
-/** Species of a role. */
-export const speciesOf = (role: Role, h: HeavySpeciesId, p: PackSpeciesId): SpeciesId =>
-  role === 'heavy' ? h : p;
 
 // --- matchups ---
 

@@ -9,8 +9,8 @@
   display: block;
   max-width: 40rem;
   --rp-draw: #8d8c87;
-  --rp-heavy: var(--c-trex);
-  --rp-pack: var(--c-tiger);
+  --rp-heavy: var(--c-heavy);
+  --rp-pack: var(--c-pack);
 }
 
 .result-page h1 {
