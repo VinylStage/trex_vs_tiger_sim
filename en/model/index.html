@@ -120,6 +120,11 @@
                   The win probabilities on screen are what the model produces under its assumptions.
                   Do not read them as predictions about real animals.
                 </li>
+                <li>
+                  Match-ups with Homo erectus, an extinct human species, are a thought experiment
+                  that compares physical capability alone, without clothing, tools, weapons or fire.
+                  They do not depict or endorse real violence.
+                </li>
               </ul>
             </div>
           </section>
@@ -215,12 +220,14 @@
                 damage.
               </li>
               <li>Each tiger in turn checks whether it routs, then acts according to its state.</li>
-              <li>T-Rex with zero or negative health die, and the outcome checks run.</li>
+              <li>
+                T-Rex with zero or negative health are incapacitated, and the outcome checks run.
+              </li>
             </ol>
             <p>
-              A tiger leaves the battle the moment it dies; a T-Rex is marked dead at the end of the
-              tick. Animals are updated in index order within a tick, so the order can matter very
-              slightly.
+              A tiger leaves the battle the moment it is incapacitated; a T-Rex is marked
+              incapacitated at the end of the tick. Animals are updated in index order within a
+              tick, so the order can matter very slightly.
             </p>
           </section>
 
@@ -237,7 +244,7 @@
                 <span class="formula-inline"
                   >bite force (kN) × bite lethality (HP/kN) × U(0.7, 1.3)</span
                 >, where U(0.7, 1.3) is a uniform random factor. At the default modes that is
-                196–364 HP, which usually kills a tiger in one bite.
+                196–364 HP, which usually incapacitates a tiger in one bite.
               </li>
               <li>
                 <strong>Tiger attacks</strong>: while latched, a tiger deals “damage per second ×
@@ -263,10 +270,11 @@
             <ul>
               <li>
                 A T-Rex targets the nearest tiger that is not latched onto anyone and is neither
-                dead nor gone. Routed and recovering tigers can be targets.
+                incapacitated nor gone. Routed and recovering tigers can be targets.
               </li>
               <li>
-                It re-targets every 0.5 s, and at once when its target latches onto someone or dies.
+                It re-targets every 0.5 s, and at once when its target latches onto someone or is
+                incapacitated.
               </li>
               <li>
                 Its heading changes by at most “turn rate × 0.1” per tick: the huge body's
@@ -358,7 +366,8 @@
                       drains over the “latch endurance”.
                     </td>
                     <td>
-                      Stamina gone, host dead or shaken off → recovering. Morale broken → routed.
+                      Stamina gone, host incapacitated or shaken off → recovering. Morale broken →
+                      routed.
                     </td>
                   </tr>
                   <tr>
@@ -384,7 +393,7 @@
                     </td>
                   </tr>
                   <tr>
-                    <th scope="row">Dead · Gone</th>
+                    <th scope="row">Incapacitated · Gone</th>
                     <td>Takes no further part in the battle.</td>
                     <td>—</td>
                   </tr>
@@ -454,7 +463,7 @@
                     <td>Still lowered, but never leads to routing</td>
                   </tr>
                   <tr>
-                    <th scope="row">Another tiger dies within 40 m</th>
+                    <th scope="row">Another tiger is incapacitated within 40 m</th>
                     <td>Every tiger in range loses its own “morale loss”</td>
                     <td>Not applied</td>
                   </tr>
@@ -468,8 +477,8 @@
             </div>
             <p>
               With default values, a tiger starting at 0.6 routs after two survived bites (0.6 →
-              0.35 → 0.10). One survived bite plus two nearby deaths at 0.08 each also routs it (0.6
-              → 0.35 → 0.19). These thresholds are speculative.
+              0.35 → 0.10). One survived bite plus two nearby packmates incapacitated at 0.08 each
+              also routs it (0.6 → 0.35 → 0.19). These thresholds are speculative.
             </p>
           </section>
 
@@ -481,19 +490,19 @@
             </p>
             <ol class="steps">
               <li>
-                <strong>Tigers win</strong>: every T-Rex is dead. If the last T-Rex and the last
-                tiger fall in the same tick, the tigers win.
+                <strong>Tigers win</strong>: every T-Rex is incapacitated. If the last T-Rex and the
+                last tiger fall in the same tick, the tigers win.
               </li>
               <li>
                 <strong>T-Rex win</strong>: no tiger is still fighting (approaching, latched or
-                recovering). Every tiger is dead, routed or gone, so a T-Rex win includes battles
-                that end because the tigers fled.
+                recovering). Every tiger is incapacitated, routed or gone, so a T-Rex win includes
+                battles that end because the tigers fled.
               </li>
               <li><strong>Draw</strong>: the time limit is reached.</li>
             </ol>
             <p>
-              Every battle records its outcome, duration, surviving T-Rex, tigers killed, routed and
-              still fighting, the T-Rex share of HP left, and the
+              Every battle records its outcome, duration, surviving T-Rex, tigers incapacitated,
+              routed and still fighting, the T-Rex share of HP left, and the
               <strong>T-Rex advantage</strong> used for sensitivity: the T-Rex share of HP left
               minus the share of tigers still fighting, between −1 and 1.
             </p>
@@ -512,15 +521,16 @@
               <div>
                 <dt>Distributions</dt>
                 <dd>
-                  Battle duration, T-Rex survivors, tigers killed and tigers routed are summarised
-                  by the mean and the 5th, 50th (median) and 95th percentiles. The duration
-                  histogram has at most 30 bins; the survivor histogram has one bin per head count.
+                  Battle duration, T-Rex survivors, tigers incapacitated and tigers routed are
+                  summarised by the mean and the 5th, 50th (median) and 95th percentiles. The
+                  duration histogram has at most 30 bins; the survivor histogram has one bin per
+                  head count.
                 </dd>
               </div>
               <div>
                 <dt>Exchange ratio</dt>
                 <dd>
-                  Tigers killed ÷ T-Rex lost, summed over all runs: a ratio of totals, not an
+                  Tigers incapacitated ÷ T-Rex lost, summed over all runs: a ratio of totals, not an
                   average of per-run ratios.
                 </dd>
               </div>
@@ -589,7 +599,7 @@
                     <th scope="col">Scenario</th>
                     <th scope="col">T-Rex win (95% CI)</th>
                     <th scope="col">Duration p5 / p50 / p95 (s)</th>
-                    <th scope="col">Tigers killed (mean)</th>
+                    <th scope="col">Tigers incapacitated (mean)</th>
                     <th scope="col">Tigers routed (mean)</th>
                   </tr>
                 </thead>
@@ -628,13 +638,13 @@
             <ul>
               <li>
                 With morale on, the T-Rex win every run and the median battle lasts about 26 s.
-                About 14 tigers die; the other 86 or so break and flee after nearby deaths and
-                survived bites.
+                About 14 tigers are incapacitated; the other 86 or so break and flee after nearby
+                losses and survived bites.
               </li>
               <li>
-                With morale off, the tigers fight to the death, battles last a median of 140–330 s,
-                and all 100 tigers die. Even so, only a handful of the 5,000 T-Rex across 500 runs
-                died.
+                With morale off, the tigers fight until incapacitated, battles last a median of
+                140–330 s, and all 100 tigers are incapacitated. Even so, only a handful of the
+                5,000 T-Rex across 500 runs were incapacitated.
               </li>
               <li>
                 At the top of the sensitivity ranking were T-Rex bite force (ρ ≈ +0.43) and tiger
@@ -728,8 +738,8 @@
             <p>For the tigers to stand a real chance, several assumptions must move together:</p>
             <ol>
               <li>
-                <strong>No morale.</strong> The tigers must fight to the death. With morale on, even
-                1,000 tigers flee and lose 97% of the time.
+                <strong>No morale.</strong> The tigers must fight until incapacitated. With morale
+                on, even 1,000 tigers flee and lose 97% of the time.
               </li>
               <li>
                 <strong>And</strong> one of: a damage rate about 3–7 times the default, a bleed rate
@@ -737,8 +747,8 @@
                 they won every check run).
               </li>
               <li>
-                Weaker T-Rex killing power also helps the tigers: lower bite force, bite lethality
-                or bite accuracy, or a longer bite interval.
+                Weaker T-Rex attacks also help the tigers: lower bite force, bite lethality or bite
+                accuracy, or a longer bite interval.
               </li>
             </ol>
             <p>
@@ -756,26 +766,44 @@
               latching and damage per second, morale and routing). The rules above are the same for
               every species; choosing a species changes the ranges and hard bounds of the 22
               parameters and two constants. The large animals are T. rex, the African bush elephant,
-              the African buffalo and the brown bear; the pack animals are the tiger, the lion, the
-              gray wolf and the spotted hyena. Humans and domestic animals are not included.
+              the African buffalo, the brown bear, the woolly mammoth and Homo erectus; the pack
+              animals are the tiger, the lion, the gray wolf, the spotted hyena and Homo erectus.
+              Modern humans and domestic animals are not included.
+            </p>
+            <p>
+              <strong>Homo erectus</strong>, an extinct human species of about 1.9 million to
+              110,000 years ago, is modelled on the same terms as every animal: no clothing, tools,
+              weapons, fire or trained fighting skill, only the physical capability of an average
+              adult. As the large animal, its attack is bare-hand striking and gripping. Body mass
+              comes from fossil estimates (about 40–68 kg); running and striking values borrow
+              modern-human measurements and are marked derived (D) or speculative (S). It is a
+              thought experiment on physical capability and does not depict or endorse real
+              violence. The <strong>woolly mammoth</strong> (about 400,000 to 4,000 years ago) uses
+              the elephant's tusk weapon, and its hide multiplier of 0.25 stands for dense fur and a
+              fat layer up to 10 cm thick.
             </p>
             <p>
               With 1 HP per kilogram, mid-sized large animals fall to a pack far too easily, so each
               large animal has a hide multiplier <code>hide</code> on the damage it takes from the
-              pack (elephant 0.3, buffalo and brown bear 0.5, T. rex 1). Each pack animal has a body
-              radius constant <code>radius</code> that sets its contact distance and latched
-              position (tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5 m). Neither constant draws
-              random numbers, and both compute exactly as before for T. rex and the tiger, so older
-              share links keep their results. Values and evidence levels are under
+              pack (woolly mammoth 0.25, elephant 0.3, buffalo and brown bear 0.5, T. rex and Homo
+              erectus 1). Each pack animal has a body radius constant <code>radius</code> that sets
+              its contact distance and latched position (tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5
+              m, Homo erectus 0.3 m). Neither constant draws random numbers, and both compute
+              exactly as before for T. rex and the tiger, so older share links keep their results.
+              Values and evidence levels are under
               <a href="/en/parameters/#species">Species presets</a> in the parameter reference.
             </p>
             <p>
               The simulator labels every match-up. <strong>Documented in the wild</strong> marks the
               pairings below, which have field records. T. rex and any other species
               <strong>never met</strong>; pairings that share an era but have no records are marked
-              <strong>no recorded encounters</strong>. Documented match-ups are still heavily
-              simplified, and the simulation figures below are indicative 60-run checks of the
-              presets.
+              <strong>no recorded encounters</strong>. An extinct and a living species whose fossil
+              records overlap in time and place count as sharing an era (Homo erectus with spotted
+              hyenas, tigers and African bush elephants; woolly mammoths with gray wolves and
+              spotted hyenas). Where no overlap is established the badge says
+              <strong>no recorded overlap</strong> and does not claim the species never met.
+              Documented match-ups are still heavily simplified, and the simulation figures below
+              are indicative 60-run checks of the presets.
             </p>
             <section id="matchup-elephants-and-lions">
               <h3>African bush elephants and lions</h3>

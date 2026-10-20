@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { CONSTANTS } from '../src/sim/engine';
 import { PARAMS } from '../src/sim/params';
 import {
+  COEXISTING_MATCHUPS,
   DOCUMENTED_MATCHUPS,
   EVIDENCE,
   HEAVY_KEYS,
@@ -10,16 +12,26 @@ import {
   PACK_SPECIES,
   PACK_SPECIES_IDS,
   boundsTable,
+  matchupAdSafe,
   matchupAnchor,
   matchupClass,
+  matchupHasHominin,
+  paramBounds,
   paramEvidence,
   paramKey,
 } from '../src/sim/species';
 
 describe('species registry', () => {
-  it('lists the phase-1 catalog', () => {
-    expect(HEAVY_SPECIES_IDS).toEqual(['trex', 'elephant', 'buffalo', 'brownBear']);
-    expect(PACK_SPECIES_IDS).toEqual(['tiger', 'lion', 'wolf', 'hyena']);
+  it('lists the catalog: phase 1, then the woolly mammoth and Homo erectus', () => {
+    expect(HEAVY_SPECIES_IDS).toEqual([
+      'trex',
+      'elephant',
+      'buffalo',
+      'brownBear',
+      'mammoth',
+      'homoErectus',
+    ]);
+    expect(PACK_SPECIES_IDS).toEqual(['tiger', 'lion', 'wolf', 'hyena', 'homoErectus']);
   });
 
   it('keys every species by its id and role, with a complete preset', () => {
@@ -68,6 +80,61 @@ describe('species registry', () => {
     expect(HEAVY_SPECIES.brownBear.constants.hide).toBe(0.5);
     expect(PACK_SPECIES.wolf.constants.radius).toBe(0.5);
     expect(PACK_SPECIES.hyena.constants.radius).toBe(0.6);
+    expect(HEAVY_SPECIES.mammoth.ranges.mass).toEqual({ min: 2800, mode: 4500, max: 6000 });
+    expect(HEAVY_SPECIES.mammoth.weapon).toBe('tusk');
+    expect(HEAVY_SPECIES.mammoth.constants.hide).toBe(0.25);
+    expect(HEAVY_SPECIES.homoErectus.weapon).toBe('hands');
+    expect(HEAVY_SPECIES.homoErectus.constants.hide).toBe(1);
+    expect(HEAVY_SPECIES.homoErectus.ranges.mass).toEqual(PACK_SPECIES.homoErectus.ranges.mass);
+    expect(PACK_SPECIES.homoErectus.constants.radius).toBe(0.3);
+  });
+
+  it('keeps every preset inside its own bounds', () => {
+    for (const s of [...Object.values(HEAVY_SPECIES), ...Object.values(PACK_SPECIES)]) {
+      for (const [k, r] of Object.entries(s.ranges)) {
+        const [lo, hi] = (s.bounds as Record<string, readonly [number, number]>)[k] ?? [0, 0];
+        expect(r.min, `${s.id} ${k}`).toBeGreaterThanOrEqual(lo);
+        expect(r.max, `${s.id} ${k}`).toBeLessThanOrEqual(hi);
+        expect(r.min).toBeLessThanOrEqual(r.mode);
+        expect(r.mode).toBeLessThanOrEqual(r.max);
+      }
+    }
+  });
+
+  it('widens bounds for the heavy Homo erectus only, never for T. rex or the tiger', () => {
+    expect(paramBounds('heavy.mass', 'trex', 'tiger')).toEqual([1000, 20000]);
+    expect(paramBounds('pack.mass', 'trex', 'tiger')).toEqual([30, 500]);
+    expect(paramBounds('heavy.mass', 'elephant', 'tiger')).toEqual([100, 20000]);
+    expect(paramBounds('heavy.mass', 'mammoth', 'tiger')).toEqual([100, 20000]);
+    expect(paramBounds('heavy.mass', 'homoErectus', 'tiger')).toEqual([20, 20000]);
+    expect(paramBounds('heavy.biteReach', 'homoErectus', 'tiger')).toEqual([0.3, 15]);
+    expect(paramBounds('heavy.bodyRadius', 'homoErectus', 'tiger')).toEqual([0.1, 8]);
+    expect(paramBounds('heavy.biteReach', 'elephant', 'tiger')).toEqual([1, 15]);
+    expect(paramBounds('pack.mass', 'trex', 'homoErectus')).toEqual([5, 1000]);
+  });
+
+  it('dates the extinct species', () => {
+    expect(HEAVY_SPECIES.homoErectus.era).toEqual({ fromMa: 1.9, toMa: 0.11 });
+    expect(PACK_SPECIES.homoErectus.era).toEqual(HEAVY_SPECIES.homoErectus.era);
+    expect(HEAVY_SPECIES.mammoth.era).toEqual({ fromMa: 0.4, toMa: 0.004 });
+  });
+});
+
+describe('ad safety and hominins', () => {
+  it('marks every current species ad-safe', () => {
+    for (const h of HEAVY_SPECIES_IDS) {
+      for (const p of PACK_SPECIES_IDS) {
+        expect(matchupAdSafe({ heavySpecies: h, packSpecies: p })).toBe(true);
+      }
+    }
+  });
+
+  it('flags only Homo erectus as a hominin', () => {
+    expect(HEAVY_SPECIES_IDS.filter((id) => HEAVY_SPECIES[id].hominin)).toEqual(['homoErectus']);
+    expect(PACK_SPECIES_IDS.filter((id) => PACK_SPECIES[id].hominin)).toEqual(['homoErectus']);
+    expect(matchupHasHominin({ heavySpecies: 'trex', packSpecies: 'homoErectus' })).toBe(true);
+    expect(matchupHasHominin({ heavySpecies: 'homoErectus', packSpecies: 'wolf' })).toBe(true);
+    expect(matchupHasHominin({ heavySpecies: 'mammoth', packSpecies: 'wolf' })).toBe(false);
   });
 });
 
@@ -85,6 +152,41 @@ describe('matchups', () => {
     for (const p of PACK_SPECIES_IDS) expect(matchupClass('trex', p)).toBe('neverMet');
   });
 
+  it('marks extinct species with overlapping fossil records as undocumented', () => {
+    expect(matchupClass('homoErectus', 'tiger')).toBe('undocumented');
+    expect(matchupClass('homoErectus', 'hyena')).toBe('undocumented');
+    expect(matchupClass('elephant', 'homoErectus')).toBe('undocumented');
+    expect(matchupClass('mammoth', 'wolf')).toBe('undocumented');
+    expect(matchupClass('mammoth', 'hyena')).toBe('undocumented');
+    expect(matchupClass('mammoth', 'homoErectus')).toBe('undocumented');
+    expect(matchupClass('homoErectus', 'homoErectus')).toBe('undocumented');
+    expect(matchupClass('trex', 'homoErectus')).toBe('neverMet');
+    for (const m of COEXISTING_MATCHUPS) {
+      expect(HEAVY_SPECIES[m.heavy].era === 'extant').not.toBe(
+        PACK_SPECIES[m.pack].era === 'extant',
+      );
+    }
+  });
+
+  it('never claims "never met" for a recent extinct species without a sourced overlap', () => {
+    for (const [h, p] of [
+      ['mammoth', 'lion'],
+      ['mammoth', 'tiger'],
+      ['homoErectus', 'lion'],
+      ['homoErectus', 'wolf'],
+      ['buffalo', 'homoErectus'],
+      ['brownBear', 'homoErectus'],
+    ] as const) {
+      expect(matchupClass(h, p), `${h}/${p}`).toBe('unrecorded');
+    }
+    // Only T. rex, 66 million years apart, never met the living species.
+    for (const h of HEAVY_SPECIES_IDS) {
+      for (const p of PACK_SPECIES_IDS) {
+        if (matchupClass(h, p) === 'neverMet') expect(h).toBe('trex');
+      }
+    }
+  });
+
   it('marks extant pairings without field records as undocumented', () => {
     expect(matchupClass('elephant', 'wolf')).toBe('undocumented');
     expect(matchupClass('elephant', 'tiger')).toBe('undocumented');
@@ -95,5 +197,30 @@ describe('matchups', () => {
       expect(HEAVY_SPECIES_IDS).toContain(m.heavy);
       expect(PACK_SPECIES_IDS).toContain(m.pack);
     }
+  });
+});
+
+describe('intimidation (morale effect of heavy hits)', () => {
+  // Heavies that shipped before #47: their morale effects must stay exact identities.
+  const shipped = ['trex', 'elephant', 'buffalo', 'brownBear'] as const;
+
+  it('is exactly 1 for every shipped heavy, so earlier results are bit-identical', () => {
+    for (const id of shipped) {
+      const k = HEAVY_SPECIES[id].constants.intimidation;
+      expect(Object.is(k, 1)).toBe(true);
+      expect(Object.is(CONSTANTS.woundMoraleLoss * k, CONSTANTS.woundMoraleLoss)).toBe(true);
+      expect(Object.is(CONSTANTS.throwMoraleLoss * k, CONSTANTS.throwMoraleLoss)).toBe(true);
+      expect(Object.is(CONSTANTS.recoverMinTime * k, CONSTANTS.recoverMinTime)).toBe(true);
+    }
+    expect(HEAVY_SPECIES.mammoth.constants.intimidation).toBe(1);
+  });
+
+  it('is below 1 only for the unarmed hominin', () => {
+    const k = HEAVY_SPECIES.homoErectus.constants.intimidation;
+    expect(k).toBeGreaterThanOrEqual(0);
+    expect(k).toBeLessThan(1);
+    expect(
+      HEAVY_SPECIES_IDS.filter((id) => HEAVY_SPECIES[id].constants.intimidation !== 1),
+    ).toEqual(['homoErectus']);
   });
 });

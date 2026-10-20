@@ -40,8 +40,15 @@ export const PACK_KEYS = [
 export type HeavyKey = (typeof HEAVY_KEYS)[number];
 export type PackKey = (typeof PACK_KEYS)[number];
 
-export const HEAVY_SPECIES_IDS = ['trex', 'elephant', 'buffalo', 'brownBear'] as const;
-export const PACK_SPECIES_IDS = ['tiger', 'lion', 'wolf', 'hyena'] as const;
+export const HEAVY_SPECIES_IDS = [
+  'trex',
+  'elephant',
+  'buffalo',
+  'brownBear',
+  'mammoth',
+  'homoErectus',
+] as const;
+export const PACK_SPECIES_IDS = ['tiger', 'lion', 'wolf', 'hyena', 'homoErectus'] as const;
 export type HeavySpeciesId = (typeof HEAVY_SPECIES_IDS)[number];
 export type PackSpeciesId = (typeof PACK_SPECIES_IDS)[number];
 export type SpeciesId = HeavySpeciesId | PackSpeciesId;
@@ -60,13 +67,23 @@ export const EVIDENCE: readonly Evidence[] = ['L', 'D', 'S', 'U'];
 export type Era = { readonly fromMa: number; readonly toMa: number } | 'extant';
 
 /** What the heavy's `biteForce` family of parameters stands for. */
-export type Weapon = 'bite' | 'tusk' | 'horn' | 'pawBite';
+export type Weapon = 'bite' | 'tusk' | 'horn' | 'pawBite' | 'hands';
 
 /** A preset row: [min, mode, max, evidence]. */
 type Row = readonly [number, number, number, Evidence];
 
 interface SpeciesBase<K extends string> {
   readonly era: Era;
+  /**
+   * Whether a matchup with this species may carry ads (docs/ADSENSE.md). Every species in the
+   * roster is ad-safe; a living-human species would be `false`. Read through `matchupAdSafe`.
+   */
+  readonly adSafe: boolean;
+  /**
+   * A hominin, modelled unclothed and without tools, weapons, fire or trained skill. Its
+   * matchups carry the physical-capability thought-experiment note (docs/SPECIES.md §9).
+   */
+  readonly hominin: boolean;
   readonly ranges: Readonly<Record<K, Triangular>>;
   readonly evidence: Readonly<Record<K, Evidence>>;
   readonly bounds: Readonly<Record<K, readonly [number, number]>>;
@@ -79,6 +96,13 @@ export interface HeavySpecies extends SpeciesBase<HeavyKey> {
   readonly constants: {
     /** Multiplier on pack damage taken (thick skin, fat, fur). 1 = none. */
     readonly hide: number;
+    /**
+     * Multiplier on the morale a pack animal loses when this heavy hits it (`woundMoraleLoss`) or
+     * throws it off (`throwMoraleLoss`), and on the minimum recovery after a hit (not after a
+     * throw; `heavyMoraleEffects`). 1 for every species that shipped before #47 (an exact identity);
+     * below 1 for a heavy whose hits do little harm and so frighten a predator less.
+     */
+    readonly intimidation: number;
   };
 }
 
@@ -131,6 +155,27 @@ const HEAVY_WIDE_BOUNDS = {
 } as const;
 const PACK_WIDE_BOUNDS = { ...PACK_V1_BOUNDS, mass: [5, 1000] } as const;
 
+/**
+ * _Homo erectus_ as a heavy is far smaller than any other heavy: its own bounds reach down to
+ * human mass, arm reach and torso radius. No other species uses them.
+ */
+const HEAVY_HOMININ_BOUNDS = {
+  ...HEAVY_WIDE_BOUNDS,
+  mass: [20, 20000],
+  biteReach: [0.3, 15],
+  bodyRadius: [0.1, 8],
+} as const;
+
+/**
+ * Morale effect of an unarmed hominin's hit on a predator, relative to every other heavy
+ * (docs/SPECIES.md §4.10, **S**): a bare-hand blow costs a 40–180 kg carnivore a few HP, far
+ * from the bites, tusks and horns the shared `woundMoraleLoss` was set for.
+ */
+const HOMO_ERECTUS_INTIMIDATION = 0.02;
+
+/** _Homo erectus_ era: first appearance about 1.9 Ma, last at Ngandong 117–108 ka. */
+const ERA_HOMO_ERECTUS: Era = { fromMa: 1.9, toMa: 0.11 };
+
 // --- presets (docs/SPECIES.md §4, Appendix A) ---
 
 function split<K extends string>(rows: Readonly<Record<K, Row>>) {
@@ -144,6 +189,8 @@ function split<K extends string>(rows: Readonly<Record<K, Row>>) {
   return { ranges, evidence };
 }
 
+const isHominin = (id: SpeciesId): boolean => id === 'homoErectus';
+
 function heavy(
   id: HeavySpeciesId,
   era: Era,
@@ -151,8 +198,19 @@ function heavy(
   hide: number,
   rows: Readonly<Record<HeavyKey, Row>>,
   bounds: Readonly<Record<HeavyKey, readonly [number, number]>> = HEAVY_WIDE_BOUNDS,
+  intimidation = 1,
 ): HeavySpecies {
-  return { id, role: 'heavy', era, weapon, constants: { hide }, bounds, ...split(rows) };
+  return {
+    id,
+    role: 'heavy',
+    era,
+    adSafe: true,
+    hominin: isHominin(id),
+    weapon,
+    constants: { hide, intimidation },
+    bounds,
+    ...split(rows),
+  };
 }
 
 function pack(
@@ -162,7 +220,16 @@ function pack(
   rows: Readonly<Record<PackKey, Row>>,
   bounds: Readonly<Record<PackKey, readonly [number, number]>> = PACK_WIDE_BOUNDS,
 ): PackSpecies {
-  return { id, role: 'pack', era, constants: { radius }, bounds, ...split(rows) };
+  return {
+    id,
+    role: 'pack',
+    era,
+    adSafe: true,
+    hominin: isHominin(id),
+    constants: { radius },
+    bounds,
+    ...split(rows),
+  };
 }
 
 export const HEAVY_SPECIES: Readonly<Record<HeavySpeciesId, HeavySpecies>> = {
@@ -225,6 +292,40 @@ export const HEAVY_SPECIES: Readonly<Record<HeavySpeciesId, HeavySpecies>> = {
     shakeRate: [0.1, 0.25, 0.5, 'S'],
     bodyRadius: [0.6, 0.75, 0.9, 'S'],
   }),
+  mammoth: heavy('mammoth', { fromMa: 0.4, toMa: 0.004 }, 'tusk', 0.25, {
+    mass: [2800, 4500, 6000, 'L'],
+    speed: [3, 4.5, 6.8, 'D'],
+    turnRate: [30, 50, 90, 'S'],
+    biteForce: [10, 25, 50, 'S'],
+    biteLethality: [2, 5, 9, 'S'],
+    biteInterval: [2, 4, 8, 'S'],
+    biteReach: [2.8, 3.5, 4.5, 'S'],
+    biteArc: [40, 60, 90, 'S'],
+    biteAccuracy: [0.15, 0.3, 0.5, 'S'],
+    shakeRate: [0.08, 0.2, 0.4, 'S'],
+    bodyRadius: [1.3, 1.6, 1.9, 'S'],
+  }),
+  homoErectus: heavy(
+    'homoErectus',
+    ERA_HOMO_ERECTUS,
+    'hands',
+    1,
+    {
+      mass: [40, 52, 68, 'L'],
+      speed: [5, 6.5, 8.5, 'S'],
+      turnRate: [120, 200, 300, 'S'],
+      biteForce: [0.8, 1.5, 2.4, 'D'],
+      biteLethality: [0.2, 0.5, 1, 'S'],
+      biteInterval: [0.6, 1, 2, 'S'],
+      biteReach: [0.7, 0.85, 1, 'S'],
+      biteArc: [50, 70, 100, 'S'],
+      biteAccuracy: [0.15, 0.25, 0.4, 'S'],
+      shakeRate: [0.03, 0.08, 0.15, 'S'],
+      bodyRadius: [0.2, 0.25, 0.3, 'S'],
+    },
+    HEAVY_HOMININ_BOUNDS,
+    HOMO_ERECTUS_INTIMIDATION,
+  ),
 };
 
 export const PACK_SPECIES: Readonly<Record<PackSpeciesId, PackSpecies>> = {
@@ -286,6 +387,19 @@ export const PACK_SPECIES: Readonly<Record<PackSpeciesId, PackSpecies>> = {
     morale: [0.35, 0.55, 0.8, 'S'],
     moraleLoss: [0.03, 0.08, 0.15, 'S'],
   }),
+  homoErectus: pack('homoErectus', ERA_HOMO_ERECTUS, 0.3, {
+    mass: [40, 52, 68, 'L'],
+    sprintSpeed: [6, 7.5, 9, 'S'],
+    cruiseSpeed: [2.3, 3, 4, 'S'],
+    sprintEndurance: [20, 40, 90, 'S'],
+    latchEndurance: [15, 30, 60, 'S'],
+    recoveryTime: [20, 40, 90, 'S'],
+    latchChance: [0.1, 0.2, 0.35, 'S'],
+    dps: [0.2, 0.8, 2, 'S'],
+    bleed: [0, 0.0005, 0.002, 'S'],
+    morale: [0.3, 0.5, 0.75, 'S'],
+    moraleLoss: [0.04, 0.1, 0.18, 'S'],
+  }),
 };
 
 export const isHeavySpecies = (v: unknown): v is HeavySpeciesId =>
@@ -341,8 +455,20 @@ export const speciesOf = (role: Role, h: HeavySpeciesId, p: PackSpeciesId): Spec
 
 // --- matchups ---
 
-/** How a pairing relates to the real world. */
-export type MatchupClass = 'documented' | 'neverMet' | 'undocumented';
+/**
+ * How a pairing relates to the real world: `documented` field observations; `undocumented`
+ * species that lived at the same time and place without a recorded encounter; `unrecorded` an
+ * extinct and a living species whose overlap is not established (so the UI does not claim they
+ * never met); `neverMet` species separated by geological time.
+ */
+export type MatchupClass = 'documented' | 'neverMet' | 'undocumented' | 'unrecorded';
+
+/**
+ * An extinct species that disappeared at least this long ago (Ma) never met any living species
+ * in the roster: every _T. rex_ pairing (66 Ma). Younger extinct species may have overlapped
+ * with living ones, so without a sourced overlap they are `unrecorded`, not `neverMet`.
+ */
+const NEVER_MET_MA = 5;
 
 /**
  * Pairings with field observations (docs/SPECIES.md §5). The anchor names the section of
@@ -360,18 +486,54 @@ export const DOCUMENTED_MATCHUPS: readonly {
   { heavy: 'brownBear', pack: 'tiger', anchor: 'brown-bears-and-tigers' },
 ];
 
-const eraOverlap = (a: Era, b: Era): boolean => {
-  if (a === 'extant' || b === 'extant') return a === b;
-  return a.toMa <= b.fromMa && b.toMa <= a.fromMa;
-};
+/**
+ * Pairings of an extinct and a living species whose fossil records overlap in time and place
+ * (docs/SPECIES.md §5). The era rule alone would call them "never met"; with no record of an
+ * encounter they are "undocumented" instead.
+ */
+export const COEXISTING_MATCHUPS: readonly { heavy: HeavySpeciesId; pack: PackSpeciesId }[] = [
+  // Crocuta crocuta in Africa from about 2.1 Ma (Reynolds 2010); Eurasian cave hyenas with mammoths.
+  { heavy: 'homoErectus', pack: 'hyena' },
+  { heavy: 'mammoth', pack: 'hyena' },
+  // Tiger fossils in the Ngandong fauna with the last H. erectus (Rizal 2020).
+  { heavy: 'homoErectus', pack: 'tiger' },
+  // Loxodonta africana possibly from 2.44–2.27 Ma at Omo (Sanders 2023).
+  { heavy: 'elephant', pack: 'homoErectus' },
+  // Canis lupus from about 406 ka (Iurino 2022), within the woolly mammoth's range.
+  { heavy: 'mammoth', pack: 'wolf' },
+];
 
-/** Classify a pairing: documented in the field, never alive at the same time, or neither. */
+/** Classify a pairing (see `MatchupClass`). */
 export function matchupClass(h: HeavySpeciesId, p: PackSpeciesId): MatchupClass {
   if (DOCUMENTED_MATCHUPS.some((m) => m.heavy === h && m.pack === p)) return 'documented';
-  return eraOverlap(HEAVY_SPECIES[h].era, PACK_SPECIES[p].era) ? 'undocumented' : 'neverMet';
+  if (COEXISTING_MATCHUPS.some((m) => m.heavy === h && m.pack === p)) return 'undocumented';
+  const a = HEAVY_SPECIES[h].era;
+  const b = PACK_SPECIES[p].era;
+  if (a === 'extant' && b === 'extant') return 'undocumented';
+  if (a !== 'extant' && b !== 'extant') {
+    return a.toMa <= b.fromMa && b.toMa <= a.fromMa ? 'undocumented' : 'neverMet';
+  }
+  const extinct = a === 'extant' ? (b as Exclude<Era, 'extant'>) : a;
+  return extinct.toMa >= NEVER_MET_MA ? 'neverMet' : 'unrecorded';
 }
 
 /** docs/SPECIES.md anchor for a documented pairing, or null. */
 export function matchupAnchor(h: HeavySpeciesId, p: PackSpeciesId): string | null {
   return DOCUMENTED_MATCHUPS.find((m) => m.heavy === h && m.pack === p)?.anchor ?? null;
+}
+
+/**
+ * Whether ads may load for a matchup (docs/ADSENSE.md): false as soon as either side is not
+ * ad-safe. The future ad loader must skip ads when this returns false. Pure; no DOM.
+ */
+export function matchupAdSafe(c: { heavySpecies: HeavySpeciesId; packSpecies: PackSpeciesId }) {
+  return HEAVY_SPECIES[c.heavySpecies].adSafe && PACK_SPECIES[c.packSpecies].adSafe;
+}
+
+/** Whether a matchup includes a hominin and so carries the thought-experiment note. */
+export function matchupHasHominin(c: {
+  heavySpecies: HeavySpeciesId;
+  packSpecies: PackSpeciesId;
+}): boolean {
+  return HEAVY_SPECIES[c.heavySpecies].hominin || PACK_SPECIES[c.packSpecies].hominin;
 }

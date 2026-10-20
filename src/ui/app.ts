@@ -2,7 +2,7 @@ import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/confi
 import { Outcome, type RunSummary } from '../sim/engine';
 import type { AggregateResult } from '../sim/montecarlo';
 import type { ParamId } from '../sim/params';
-import { HEAVY_SPECIES } from '../sim/species';
+import { HEAVY_SPECIES, type SpeciesId } from '../sim/species';
 import {
   CanvasChart,
   durationHistogram,
@@ -17,7 +17,7 @@ import {
 } from './charts';
 import { clear, h } from './dom';
 import { costSummary, isCostOk } from './cost';
-import { createConfigForm, matchupBadge, qualifiedParamLabel } from './form';
+import { createConfigForm, matchupBadge, matchupNote, qualifiedParamLabel } from './form';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import {
   applyI18n,
@@ -27,6 +27,7 @@ import {
   setLang,
   setNamePair,
   t,
+  speciesCounter,
   teamLabel,
   type Lang,
   type MsgKey,
@@ -652,7 +653,8 @@ export function startApp(root: HTMLElement): void {
   function renderCards(agg: AggregateResult | null, cfg: ScenarioConfig): void {
     const blank = '…';
     const none = '\u00a0';
-    const of = (n: number): string => t('stat.ofN', { n: formatInt(n) });
+    const of = (n: number, species: SpeciesId): string =>
+      t('stat.ofN', { n: formatInt(n), counter: speciesCounter(species) });
     // Skeleton sub-lines carry text as long as the final ones, hidden (.is-pending .stat-sub),
     // so the cards keep their final height.
     const runs = formatInt(cfg.runs);
@@ -693,10 +695,18 @@ export function startApp(root: HTMLElement): void {
       card(
         t('stat.survivors'),
         agg ? formatNum(agg.heavySurvivors.mean, 2) : blank,
-        of(cfg.heavyCount),
+        of(cfg.heavyCount, cfg.heavySpecies),
       ),
-      card(t('stat.killed'), agg ? formatNum(agg.packKilled.mean, 1) : blank, of(cfg.packCount)),
-      card(t('stat.routed'), agg ? formatNum(agg.packRouted.mean, 1) : blank, of(cfg.packCount)),
+      card(
+        t('stat.killed'),
+        agg ? formatNum(agg.packKilled.mean, 1) : blank,
+        of(cfg.packCount, cfg.packSpecies),
+      ),
+      card(
+        t('stat.routed'),
+        agg ? formatNum(agg.packRouted.mean, 1) : blank,
+        of(cfg.packCount, cfg.packSpecies),
+      ),
       card(t('stat.exchange'), exchange[0], exchange[1]),
     );
   }
@@ -708,7 +718,8 @@ export function startApp(root: HTMLElement): void {
     elapsedMs: number,
   ): void {
     caveatLink.href = pagePath('model', getLang());
-    badgeSlot.replaceChildren(matchupBadge(cfg));
+    const note = matchupNote(cfg);
+    badgeSlot.replaceChildren(matchupBadge(cfg), ...(note ? [note] : []));
     const basis = (elapsed: string): string =>
       t('verdict.basis', {
         heavyTeam: teamLabel(cfg.heavySpecies, cfg.heavyCount),

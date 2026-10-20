@@ -138,6 +138,9 @@ describe('species constants', () => {
       ['brownBear', 'wolf'],
       ['elephant', 'lion'],
       ['buffalo', 'hyena'],
+      ['mammoth', 'wolf'],
+      ['homoErectus', 'wolf'],
+      ['trex', 'homoErectus'],
     ] as const) {
       const c = pair(h, p, { heavyCount: 1, packCount: 8, runs: 4 });
       const d = buildDesign(c);

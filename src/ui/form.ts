@@ -14,6 +14,7 @@ import {
   PACK_SPECIES_IDS,
   matchupAnchor,
   matchupClass,
+  matchupHasHominin,
   paramBounds,
   paramEvidence,
   presetRange,
@@ -60,6 +61,8 @@ export const PRESETS: readonly Preset[] = [
   { heavySpecies: 'buffalo', packSpecies: 'hyena', heavyCount: 1, packCount: 15, runs: 1000 },
   { heavySpecies: 'brownBear', packSpecies: 'wolf', heavyCount: 1, packCount: 8, runs: 1000 },
   { heavySpecies: 'brownBear', packSpecies: 'tiger', heavyCount: 1, packCount: 1, runs: 2000 },
+  { heavySpecies: 'mammoth', packSpecies: 'wolf', heavyCount: 1, packCount: 12, runs: 1000 },
+  { heavySpecies: 'trex', packSpecies: 'homoErectus', heavyCount: 1, packCount: 100, runs: 500 },
 ];
 
 /** "10 T-Rex vs 100 tigers" / "T-Rex 10마리 vs 호랑이 100마리". */
@@ -143,6 +146,20 @@ export function matchupBadge(pair: NamePair): HTMLElement {
       ? h('a', { class: 'matchup-link', text: t('matchup.sources'), attrs: { href: info.href } })
       : null,
   );
+}
+
+/**
+ * The thought-experiment note under the badge of a matchup with a hominin (docs/SPECIES.md §9),
+ * or null for every other matchup.
+ */
+export function matchupNote(pair: NamePair): HTMLElement | null {
+  const text = matchupNoteText(pair);
+  return text === null ? null : h('p', { class: 'matchup-note', text });
+}
+
+/** The note's text (see `matchupNote`), or null. */
+export function matchupNoteText(pair: NamePair): string | null {
+  return matchupHasHominin(pair) ? t('matchup.thoughtExperiment') : null;
 }
 
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -527,6 +544,7 @@ export function createConfigForm(
       { class: 'species-pickers' },
       h('div', { class: 'species-grid' }, speciesField('heavy'), speciesField('pack')),
       matchupBadge(cfg),
+      matchupNote(cfg),
     );
   }
 

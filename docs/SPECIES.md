@@ -3,7 +3,8 @@
 > **한국어 요약**
 >
 > - 엔진은 두 역할로 여러 종을 다룹니다. **대형 동물**(`heavy.*`: 혼자 싸움, 선회 제한, 정면 공격 범위, 떨쳐내기, 매달린 무게로 감속)과 **무리 동물**(`pack.*`: 질주와 순항, 스태미나, 매달리기와 초당 피해, 사기와 도주)입니다. 파라미터는 22개 그대로이고 순서도 바뀌지 않았습니다.
-> - 1차 카탈로그(8종): 대형 동물 = 티라노사우루스, 아프리카코끼리, 아프리카물소, 불곰 / 무리 동물 = 호랑이, 사자, 회색늑대, 점박이하이에나. 사람과 가축은 다루지 않습니다.
+> - 1차 카탈로그(8종): 대형 동물 = 티라노사우루스, 아프리카코끼리, 아프리카물소, 불곰 / 무리 동물 = 호랑이, 사자, 회색늑대, 점박이하이에나. 여기에 대형 동물 털매머드와, 양쪽 역할 모두에 멸종 인류 호모 에렉투스를 더했습니다(#47). 현생 인류와 가축은 다루지 않습니다.
+> - 호모 에렉투스는 다른 동물과 같은 조건(옷 · 도구 · 무기 · 불 · 훈련 없음, 평균 성인의 신체 능력)으로 모델링한 사고 실험이며, 대결 배지 아래와 모델 · 파라미터 페이지에 실제 폭력을 묘사하거나 지지하지 않는다는 안내를 붙입니다. 체중만 화석 문헌 값(L)이고, 맨손 타격 힘은 현생 인류 측정에서 유도(D), 나머지는 추정(S)입니다.
 > - 모든 기본값에 근거 수준(L 문헌, D 유도, S 추정, U 미검증)을 달았고, 시뮬레이터의 파라미터 표에도 표시합니다. 행동에 관한 값은 모든 종에서 추정입니다.
 > - 종 상수 두 개: `hide`(무리에게 받는 피해 배율, 코끼리 0.3, 물소 · 불곰 0.5, 티라노사우루스 1)와 `radius`(무리 동물 몸 반경, 호랑이 · 사자 0.8 m, 하이에나 0.6 m, 늑대 0.5 m). 난수를 쓰지 않고, 티라노사우루스 · 호랑이에서는 정확히 항등이라 예전 공유 링크(v1)가 비트 단위로 같은 결과를 냅니다.
 > - 야생에서 관찰된 대결(코끼리–사자, 물소–사자, 물소–하이에나, 불곰–늑대, 불곰–호랑이)에는 배지가 붙고, 티라노사우루스와의 대결은 “서로 만난 적 없는 종”으로 표시됩니다.
@@ -34,27 +35,33 @@ The v1 ids were `trex.*` and `tiger.*` in the same order; share links with them 
 
 Each species carries, besides its eleven preset triangles:
 
-- **bounds**: its own hard limits for sanitising and for the per-animal clamp. _T. rex_ and the tiger keep exactly the v1 bounds. The other species use the v1 bounds widened where needed: heavy mass 100–20,000 kg, heavy weapon force 0.1–150 kN, pack mass 5–1,000 kg.
+- **bounds**: its own hard limits for sanitising and for the per-animal clamp. _T. rex_ and the tiger keep exactly the v1 bounds. The other species use the v1 bounds widened where needed: heavy mass 100–20,000 kg, heavy weapon force 0.1–150 kN, pack mass 5–1,000 kg. The heavy _Homo erectus_ alone widens further to human size: mass from 20 kg, reach (`biteReach`) from 0.3 m and `bodyRadius` from 0.1 m (`HEAVY_HOMININ_BOUNDS`).
 - **era**: `extant` or a range in millions of years; the matchup badge reads it.
-- **weapon** (heavies): what `biteForce` stands for. `bite` (_T. rex_), `tusk` (tusks, trunk and trampling), `horn`, `pawBite`. Only the labels change; the formula is the same.
-- **constants**, not sampled and not in the URL: `hide` (heavies) and `radius` (packs), §7.
+- **weapon** (heavies): what `biteForce` stands for. `bite` (_T. rex_), `tusk` (tusks, trunk and trampling), `horn`, `pawBite`, `hands` (bare-hand strikes and grip, _H. erectus_). Only the labels change; the formula is the same.
+- **flags**: `adSafe` (whether ads may load on a matchup with this species; read through `matchupAdSafe`, [ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)) and `hominin` (adds the thought-experiment note, §9).
+- **constants**, not sampled and not in the URL: `hide` and `intimidation` (heavies) and `radius` (packs), §7. `intimidation` multiplies the morale a pack animal loses when the heavy hits it or throws it off, and the minimum recovery time after a hit (not after a throw); it is exactly 1 for every species that shipped before #47 and for the mammoth.
 
 ## 2. Catalog
 
-| Species               | Id          | Role  | Era      | Weapon / radius | `hide` | Why                                            | Data quality                      |
-| --------------------- | ----------- | ----- | -------- | --------------- | -----: | ---------------------------------------------- | --------------------------------- |
-| _Tyrannosaurus rex_   | `trex`      | heavy | 68–66 Ma | bite            |      1 | Default, the brand                             | Good for mass, speed, bite        |
-| African bush elephant | `elephant`  | heavy | extant   | tusk/trample    |    0.3 | Documented lion-pride predation (Savuti)       | Good mass and speed; weapon **S** |
-| African buffalo       | `buffalo`   | heavy | extant   | horn            |    0.5 | Classic lion prey; buffalo also kill lions     | Good mass; speed **U**            |
-| Brown bear            | `brownBear` | heavy | extant   | bite/paw        |    0.5 | Documented vs wolves and vs Amur tigers        | Good mass and speed; bite **D**   |
-| Tiger                 | `tiger`     | pack  | extant   | radius 0.8 m    |      — | Default                                        | As MODEL.md                       |
-| Lion                  | `lion`      | pack  | extant   | radius 0.8 m    |      — | The best-documented group hunter of large prey | Good mass, speed, bite            |
-| Gray wolf             | `wolf`      | pack  | extant   | radius 0.5 m    |      — | Best group-size success data [MacNulty 2014]   | Good mass; speed **U**            |
-| Spotted hyena         | `hyena`     | pack  | extant   | radius 0.6 m    |      — | Large clans, measured bite, long chases        | Good                              |
+| Species                | Id            | Role  | Era          | Weapon / radius | `hide` | Why                                            | Data quality                               |
+| ---------------------- | ------------- | ----- | ------------ | --------------- | -----: | ---------------------------------------------- | ------------------------------------------ |
+| _Tyrannosaurus rex_    | `trex`        | heavy | 68–66 Ma     | bite            |      1 | Default, the brand                             | Good for mass, speed, bite                 |
+| African bush elephant  | `elephant`    | heavy | extant       | tusk/trample    |    0.3 | Documented lion-pride predation (Savuti)       | Good mass and speed; weapon **S**          |
+| African buffalo        | `buffalo`     | heavy | extant       | horn            |    0.5 | Classic lion prey; buffalo also kill lions     | Good mass; speed **U**                     |
+| Brown bear             | `brownBear`   | heavy | extant       | bite/paw        |    0.5 | Documented vs wolves and vs Amur tigers        | Good mass and speed; bite **D**            |
+| Tiger                  | `tiger`       | pack  | extant       | radius 0.8 m    |      — | Default                                        | As MODEL.md                                |
+| Lion                   | `lion`        | pack  | extant       | radius 0.8 m    |      — | The best-documented group hunter of large prey | Good mass, speed, bite                     |
+| Gray wolf              | `wolf`        | pack  | extant       | radius 0.5 m    |      — | Best group-size success data [MacNulty 2014]   | Good mass; speed **U**                     |
+| Spotted hyena          | `hyena`       | pack  | extant       | radius 0.6 m    |      — | Large clans, measured bite, long chases        | Good                                       |
+| Woolly mammoth         | `mammoth`     | heavy | 0.4–0.004 Ma | tusk/trample    |   0.25 | Ice-age megaherbivore with frozen-carcass data | Good mass; speed and weapon **D/S**        |
+| _Homo erectus_ (heavy) | `homoErectus` | heavy | 1.9–0.11 Ma  | bare hands      |      1 | Owner request (#47): a hominin on both sides   | Mass **L**; strike force **D**; rest **S** |
+| _Homo erectus_ (pack)  | `homoErectus` | pack  | 1.9–0.11 Ma  | radius 0.3 m    |      — | Many hominins vs one heavy                     | Mass **L**; rest **S**                     |
 
 **Phase 2** (no new mechanics needed, weaker data): Giganotosaurus, Allosaurus, polar bear, Deinonychus (with Velociraptor and Utahraptor variants), African wild dog. **Deferred** until new mechanics exist (§8): Nile crocodile, Spinosaurus, Komodo dragon. Their research tables are in [research/SPECIES.md](research/SPECIES.md) §5.
 
-The UI offers these matchup presets: 10 _T. rex_ vs 100 tigers (default), 1 vs 10 tigers, 5 elephants vs 30 lions, 1 buffalo vs 6 lions, 1 buffalo vs 15 hyenas, 1 brown bear vs 8 wolves, 1 brown bear vs 1 tiger (`PRESETS` in `src/ui/form.ts`).
+The UI offers these matchup presets: 10 _T. rex_ vs 100 tigers (default), 1 vs 10 tigers, 5 elephants vs 30 lions, 1 buffalo vs 6 lions, 1 buffalo vs 15 hyenas, 1 brown bear vs 8 wolves, 1 brown bear vs 1 tiger, 1 woolly mammoth vs 12 wolves, 1 _T. rex_ vs 100 _Homo erectus_ (`PRESETS` in `src/ui/form.ts`).
+
+The heavy and the pack _Homo erectus_ share the id `homoErectus` (one id per role registry, like every species) and the same body-mass preset.
 
 ## 3. Evidence tags and formulas
 
@@ -246,9 +253,72 @@ Unchanged from MODEL.md §5.2. One additional documented interaction is worth a 
 | `pack.moraleLoss`      | 0–1  |  0.03 |  0.08 |  0.15 | **S** | —                                                                                                                                                                                |
 | _constant_ `radius`    | m    |       |   0.6 |       | **S** | Body contact radius (the former engine constant `tigerRadius` was 0.8 m).                                                                                                        |
 
+### 4.9 Woolly mammoth (heavy)
+
+- **Evidence.** Roughly the size of the African bush elephant. Average males 2.8–3.15 m at the shoulder and 4.5–6 t, females 2.3–2.6 m and 2.8–4 t [Larramendi 2017, via WP: Woolly mammoth]; the largest males about 3.5 m and 8.2 t [Larramendi 2016, via WP]. Skin no thicker than an elephant's (about 1.25–2.5 cm), a fat layer up to 10 cm, guard hairs 30 cm on the back and up to 90 cm on the flanks [WP]. The species arose from _M. trogontherii_ in Siberia about 400 ka; mainland populations lasted to about 10 ka, Wrangel Island to about 4 ka [WP].
+- **Weapon.** Long, strongly curved tusks, "unsuitable for stabbing but may have been used for hitting", as injuries to fossil shoulder blades suggest [WP]. As for the elephant, `biteForce` is relabelled "tusk/trample force" and anchored on body weight (4.5 t × g ≈ 44 kN); it is **S**.
+- **Interactions.** "Adult woolly mammoths could effectively defend themselves from predators with their tusks, trunks, and size; however, juveniles and weakened adults were vulnerable to pack hunters such as wolves, cave hyenas, and large felines" [WP]. No record of a pack taking an adult exists, so pairings with wolves and hyenas are "no recorded encounters" (§5), not documented.
+- **Engine cannot express:** the same gaps as the elephant (trampling, trunk throws, herd defence of calves), plus snow and cold.
+
+| Parameter             | Unit  |   min |  mode |   max | Basis | Source / rationale                                                                                                       |
+| --------------------- | ----- | ----: | ----: | ----: | :---: | ------------------------------------------------------------------------------------------------------------------------ |
+| `heavy.mass`          | kg    | 2,800 | 4,500 | 6,000 |   L   | Females 2.8–4 t, average males 4.5–6 t (Larramendi et al. 2017, via Wikipedia). Mode for a mixed adult.                  |
+| `heavy.speed`         | m/s   |     3 |   4.5 |   6.8 |   D   | No measurement. Elephant analogue (same mass class and limb design): the elephant row, Hutchinson 2003/2006.             |
+| `heavy.turnRate`      | deg/s |    30 |    50 |    90 | **S** | As the elephant.                                                                                                         |
+| `heavy.biteForce`     | kN    |    10 |    25 |    50 | **S** | Re-labelled "tusk/trample force". Body weight at 4.5 t ≈ 44 kN. No measurement.                                          |
+| `heavy.biteLethality` | HP/kN |     2 |     5 |     9 | **S** | Blunt trauma, as the elephant.                                                                                           |
+| `heavy.biteInterval`  | s     |     2 |     4 |     8 | **S** | —                                                                                                                        |
+| `heavy.biteReach`     | m     |   2.8 |   3.5 |   4.5 | **S** | Geometry: body radius + curved tusks and trunk.                                                                          |
+| `heavy.biteArc`       | deg   |    40 |    60 |    90 | **S** | Tusk sweeps and head swings.                                                                                             |
+| `heavy.biteAccuracy`  | p     |  0.15 |   0.3 |   0.5 | **S** | —                                                                                                                        |
+| `heavy.shakeRate`     | 1/s   |  0.08 |   0.2 |   0.4 | **S** | Trunk, as the elephant.                                                                                                  |
+| `heavy.bodyRadius`    | m     |   1.3 |   1.6 |   1.9 | **S** | Geometry: shoulder height 2.3–3.15 m, a little lower than the elephant.                                                  |
+| _constant_ `hide`     | ×     |       |  0.25 |       | **S** | Elephant skin plus a fat layer up to 10 cm and guard hair up to 90 cm: a little more protection than the elephant's 0.3. |
+
+### 4.10 _Homo erectus_ (heavy and pack)
+
+**Framing.** _Homo erectus_ is an extinct human species of about 1.9 Ma to 117–108 ka (last appearance at Ngandong, Java) [Rizal 2020]. It is modelled on exactly the same footing as every animal: **unclothed, no tools, no weapons, no fire, no trained fighting skill**, only the physical capability of an average healthy adult. This is a thought experiment on physical capability; it does not depict or endorse real violence, and the badge, the model page and the parameter pages say so. Living humans are not modelled (§9).
+
+- **Evidence.** Reconstructed adult height 141–167 cm, and "about 50 kg may have been normal" [WP: Homo erectus]. The Nariokotome boy (KNM-WT 15000) weighed 51–54 kg at death; adult projections are 160–178 cm and 60–83 kg [Cunningham 2018, via WP: Turkana Boy]. Dmanisi individuals are at the small end [Garvin 2017, Abs]. Grabowski et al. found that earlier estimates were inflated by large modern reference samples, while confirming that _H. erectus_ was larger than earlier hominins [Grabowski 2015, Abs]. Endurance-running traits appear with early _Homo_ about 2 Ma [Bramble & Lieberman 2004, Abs]; some _H. erectus_ torsos may suit power running more than modern humans [WP, citing Bastir 2020].
+- **Modern-human analogues.** No performance can be measured on a fossil, so running, striking and stamina borrow modern-human figures. Maximal straight punches of novice boxers: 1.6 kN lead hand, 2.4 kN rear hand; intermediate 2.3/3.7 kN, elite 2.8/4.8 kN [Smith 2000, Abs]. Untrained adults strike below novice boxers. Molar bite force of young adults: 597–909 N by sex and study [Abs: PubMed 8322012 (1993); Acta Odontol. Scand. (1995)]; the bite is not the weapon here.
+- **Mapping bare hands onto the heavy weapon (D/S).** A heavy hit deals `biteForce × biteLethality × U(0.7, 1.3)` HP. With strike force 0.8–2.4 kN (**D**: novice-boxer peaks as the ceiling, untrained adults below) and a blunt, toothless lethality of 0.2–1 HP/kN (**S**, below the elephant's blunt 2–9), a hit costs a 42 kg wolf about 0.75 HP of 42 at the mode. The engine sends every hit attacker into `Recover` and takes a fixed 0.25 of its morale (0.1 for a throw, MODEL.md §3.8), independent of damage. Calibrated for bites, tusks and horns, this let a bare-handed hominin rout a lone tiger in 98 % of runs. `intimidation` = 0.02 (**S**) scales those morale losses and the 5 s minimum recovery after a hit (not after a throw) for _H. erectus_ only: a blow that costs a predator a few HP is not a deterrent like a bite (§7).
+- **Mapping bare hands onto pack damage (S).** `pack.dps` 0.2–2 HP/s: about one strike or grip action per second × 0.8–2.4 kN × 0.3–1 HP/kN, trimmed. The tiger's formula (§3.2 item 4) is for bites and does not apply.
+- **Engine cannot express:** throwing, climbing, cooperative planning, and anything that needs tools or fire (all excluded by the framing anyway); heat dissipation by sweating, which is what makes humans endurance runners, appears only as fast recovery.
+
+| Parameter                 | Unit  |  min | mode |  max | Basis | Source / rationale                                                                                                                                                                         |
+| ------------------------- | ----- | ---: | ---: | ---: | :---: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `heavy.mass`              | kg    |   40 |   52 |   68 |   L   | About 50 kg typical; KNM-WT 15000 51–54 kg at death, adult 60–83 kg projected; Dmanisi smaller (via Wikipedia).                                                                            |
+| `heavy.speed`             | m/s   |    5 |  6.5 |  8.5 | **S** | Modern-human analogue for an untrained adult running speed held over a fight; elite sprinters peak near 10–12 m/s.                                                                         |
+| `heavy.turnRate`          | deg/s |  120 |  200 |  300 | **S** | A biped pivots in well under a second.                                                                                                                                                     |
+| `heavy.biteForce`         | kN    |  0.8 |  1.5 |  2.4 |   D   | Re-labelled "bare-hand strike and grip force". Novice boxers 1.6 kN lead / 2.4 kN rear hand (Smith 2000) as ceiling.                                                                       |
+| `heavy.biteLethality`     | HP/kN |  0.2 |  0.5 |    1 | **S** | Blunt, untrained strikes without claws or teeth: about 0.75 HP per hit on a 42 kg wolf at the mode.                                                                                        |
+| `heavy.biteInterval`      | s     |  0.6 |    1 |    2 | **S** | Roughly one committed strike per second.                                                                                                                                                   |
+| `heavy.biteReach`         | m     |  0.7 | 0.85 |    1 | **S** | Geometry: arm length from a 141–167 cm body.                                                                                                                                               |
+| `heavy.biteArc`           | deg   |   50 |   70 |  100 | **S** | Two arms cover a wide frontal arc.                                                                                                                                                         |
+| `heavy.biteAccuracy`      | p     | 0.15 | 0.25 |  0.4 | **S** | Untrained strikes at a moving, low-built animal.                                                                                                                                           |
+| `heavy.shakeRate`         | 1/s   | 0.03 | 0.08 | 0.15 | **S** | Prying off a latched carnivore by hand is slow; well below the bears and the elephant.                                                                                                     |
+| `heavy.bodyRadius`        | m     |  0.2 | 0.25 |  0.3 | **S** | Geometry: half the shoulder width.                                                                                                                                                         |
+| _constant_ `hide`         | ×     |      |    1 |      | **S** | Bare skin, no fur or thick hide: no reduction (the identity, like _T. rex_).                                                                                                               |
+| _constant_ `intimidation` | ×     |      | 0.02 |      | **S** | Morale and recovery effect of a bare-hand hit relative to a bite or tusk blow (1 for every other heavy). Chosen so a lone hominin loses most fights against one tiger, lion or hyena (§7). |
+
+| Parameter              | Unit |  min |   mode |   max | Basis | Source / rationale                                                                                            |
+| ---------------------- | ---- | ---: | -----: | ----: | :---: | ------------------------------------------------------------------------------------------------------------- |
+| `pack.mass`            | kg   |   40 |     52 |    68 |   L   | As the heavy row.                                                                                             |
+| `pack.sprintSpeed`     | m/s  |    6 |    7.5 |     9 | **S** | Modern-human analogue: untrained adults far below the ~10 m/s of the fastest sprinters (Bramble & Lieberman). |
+| `pack.cruiseSpeed`     | m/s  |  2.3 |      3 |     4 | **S** | Comfortable distance-running speeds; humans are endurance runners (Bramble & Lieberman 2004).                 |
+| `pack.sprintEndurance` | s    |   20 |     40 |    90 | **S** | Near-maximal running fades within about a minute.                                                             |
+| `pack.latchEndurance`  | s    |   15 |     30 |    60 | **S** | Holding on to a moving animal by grip alone.                                                                  |
+| `pack.recoveryTime`    | s    |   20 |     40 |    90 | **S** | Faster than the carnivores (30–180 s): sweating and endurance physiology. The model's only "endurance" lever. |
+| `pack.latchChance`     | p    |  0.1 |    0.2 |  0.35 | **S** | No claws or bite hold; lower than every carnivore.                                                            |
+| `pack.dps`             | HP/s |  0.2 |    0.8 |     2 | **S** | Bare-hand mapping above.                                                                                      |
+| `pack.bleed`           | 1/s  |    0 | 0.0005 | 0.002 | **S** | Blunt strikes rarely open wounds.                                                                             |
+| `pack.morale`          | 0–1  |  0.3 |    0.5 |  0.75 | **S** | No predator-like attack drive towards a large animal.                                                         |
+| `pack.moraleLoss`      | 0–1  | 0.04 |    0.1 |  0.18 | **S** | —                                                                                                             |
+| _constant_ `radius`    | m    |      |    0.3 |       | **S** | Body contact radius: half the shoulder width plus clearance.                                                  |
+
 ## 5. Documented match-ups
 
-The matchup badge marks a pairing **documented** when field observations exist (`DOCUMENTED_MATCHUPS` in `src/sim/species.ts`), **never met** when the species' eras do not overlap (every _T. rex_ pairing), and **no recorded encounters** otherwise. The badge links to the matching section of the model page (`/model/#matchup-<anchor>`). Documented match-ups are still heavily simplified.
+The matchup badge marks a pairing **documented** when field observations exist (`DOCUMENTED_MATCHUPS` in `src/sim/species.ts`), **never met** only when geological time separates the species (every _T. rex_ pairing: both eras dated and disjoint, or an extinct species gone for at least 5 Ma against a living one), **no recorded encounters** (`undocumented`) when they lived at the same time and place, and **기록된 조우 없음 / No recorded overlap** (`unrecorded`) when a recently extinct species meets a living one whose overlap is not established. Extant species carry no first-appearance date, so the sourced overlaps are listed in `COEXISTING_MATCHUPS` (below); every other pairing of the mammoth or _H. erectus_ with a living species is `unrecorded`, never "never met". The badge links to the matching section of the model page (`/model/#matchup-<anchor>`). Documented match-ups are still heavily simplified.
 
 ### Elephants and lions
 
@@ -270,11 +340,26 @@ Brown bears regularly take wolf kills, and most carcass conflicts end without bl
 
 In the Russian Far East, Amur tigers attacked brown and black bears in 32 recorded cases (1944–59); bears killed female tigers or cubs in 4 [WP: Brown bear]. Field records mainly concern subadult or denning bears.
 
+### Extinct species that shared a time and place with living ones
+
+These pairings are labelled **no recorded encounters**: the fossil records overlap, but no encounter of the modelled kind is recorded (`COEXISTING_MATCHUPS`).
+
+| Pairing                                         | Overlap                                                                                                                  |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| _H. erectus_ (heavy) and spotted hyenas         | _Crocuta crocuta_ in southern Africa from about 2.1 Ma, common 2.0–1.5 Ma [Reynolds 2010, via WP: Spotted hyena]         |
+| _H. erectus_ (heavy) and tigers                 | Tiger fossils in the Ngandong fauna with the last _H. erectus_ [WP: Panthera tigris soloensis; Rizal 2020]               |
+| African bush elephants and _H. erectus_ (pack)  | Earliest possible _Loxodonta africana_ at Omo, 2.44–2.27 Ma [Sanders 2023, via WP: African bush elephant]                |
+| Woolly mammoths and gray wolves                 | _Canis lupus_ from about 406 ka [Iurino 2022, via WP: Wolf]; wolves took juvenile and weak mammoths [WP: Woolly mammoth] |
+| Woolly mammoths and spotted hyenas              | Eurasian cave hyenas (_Crocuta_) for at least a million years [WP: Spotted hyena; WP: Woolly mammoth]                    |
+| Woolly mammoths and _H. erectus_ (both extinct) | The era rule finds the overlap (0.4–0.11 Ma); no shared site is known                                                    |
+
+**Unconfirmed overlaps.** The other extinct–living pairings with _H. erectus_ (lions, wolves, buffalo, brown bears) and the mammoth (lions, tigers) are `unrecorded`: the badge says only that no overlap is recorded. Some of them, such as lions and _H. erectus_ in Africa, probably overlapped, but no source checked for this work places them at the same time and place (the East African lion fossil found in this search, the Natodomeri skull of about 200 ka [Manthi 2017, Abs], is not tied to an _H. erectus_ site), so lions are not in `COEXISTING_MATCHUPS`.
+
 ## 6. Compatibility rules
 
 1. **Every v1 share link reproduces bit-identically**: same design matrix, same battle RNG streams, same summaries, aggregate and replay trace. `tests/v1-golden.test.ts` checks six v1 fragments (including out-of-v1-bounds values, a payload without a version and one that overrides every parameter) against fixtures captured on `main` before the change (`tests/fixtures/v1-golden.json`). Never regenerate that fixture.
 2. Still 22 sampled parameters, in the v1 order. LHS columns are generated column by column from one stream, so a future parameter may only be **appended**, with `individual: false`, and per-animal draws in `simulateBattle` must never be inserted before existing ones.
-3. A new mechanic is either a species constant whose _T. rex_/tiger value is an exact identity (×1, +0, a disabled branch) or an appended parameter, and it draws no random numbers when inactive. `hide` is applied as `dps × DT × hide`, so `× 1` is exact in IEEE-754; `radius` for the tiger is 0.8 m, the former engine constant.
+3. A new mechanic is either a species constant whose _T. rex_/tiger value is an exact identity (×1, +0, a disabled branch) or an appended parameter, and it draws no random numbers when inactive. `hide` is applied as `dps × DT × hide`, so `× 1` is exact in IEEE-754; `intimidation` multiplies `woundMoraleLoss`, `throwMoraleLoss` and the `recoverMinTime` that follows a hit (a throw keeps the full `recoverMinTime`) and is exactly 1 for every species that shipped before #47 (`tests/species.test.ts` checks this with `Object.is`); `radius` for the tiger is 0.8 m, the former engine constant.
 4. _T. rex_ and the tiger keep their v1 bounds forever: the engine clamps every per-animal value to the bounds, so widening them would change v1 results whose ranges touch a bound (for example `tiger.mass` max 500 × an individual factor of 1.3).
 
 Share payload v2: `{"v":2,"heavy":"elephant","pack":"lion","heavyCount":5,"packCount":30,"params":{"pack.dps":[2,6,10]}}`. Params are diffed against the selected species' presets. Unknown species ids fall back to `trex`/`tiger`. A v1 payload (no `v`, or `v: 1`) is renamed key by key (`trexCount` → `heavyCount`, `tigerCount` → `packCount`, `tigerTactic` → `packTactic`, `trex.*` → `heavy.*`, `tiger.*` → `pack.*`); keys v1 could not carry are dropped, as v1 dropped them.
@@ -296,12 +381,47 @@ Share payload v2: `{"v":2,"heavy":"elephant","pack":"lion","heavyCount":5,"packC
 | 1 _T. rex_ vs 30 lions   | never met  |       13 % |      88 % |  0 % |           203 s | Fantasy                                                          |
 | 1 _T. rex_ vs 50 wolves  | never met  |       45 % |      56 % |  0 % |           242 s | Fantasy                                                          |
 
+**Woolly mammoth and _Homo erectus_** ([#47](https://github.com/VinylStage/trex_vs_tiger_sim/issues/47); same method, 200 runs each, computed on this branch with `intimidation` = 0.02 for the heavy _H. erectus_). "Heavy wins" includes every run in which all attackers fled; the mean numbers of attackers incapacitated (`packKilled` in the code) and fled are given because flight, not incapacitation, decides most pack-of-hominin runs.
+
+| Matchup                                 | Class      | Heavy wins | Pack wins | Draw | Median duration | Pack incapacitated / fled (mean) | Reality check                                                   |
+| --------------------------------------- | ---------- | ---------: | --------: | ---: | --------------: | -------------------------------: | --------------------------------------------------------------- |
+| 1 mammoth vs 12 wolves (preset)         | no record  |       92 % |       0 % |  8 % |           309 s |                       1.3 / 10.6 | Adults "could effectively defend themselves"; plausible         |
+| 1 mammoth vs 30 wolves                  | no record  |       91 % |       4 % |  5 % |           331 s |                       1.3 / 28.6 | Morale routs large packs before damage adds up                  |
+| 1 mammoth vs 15 hyenas                  | no record  |       85 % |       2 % | 14 % |           307 s |                       0.9 / 14.0 | —                                                               |
+| 1 mammoth vs 20 lions                   | unrecorded |       77 % |      11 % | 13 % |           689 s |                       2.2 / 17.1 | No sourced overlap (cave lions are another species)             |
+| 1 _T. rex_ vs 100 _H. erectus_ (preset) | never met  |       92 % |       6 % |  2 % |           302 s |                       1.8 / 96.4 | Fantasy; nearly every attacker flees                            |
+| 1 _T. rex_ vs 300 _H. erectus_          | never met  |       36 % |      65 % |  0 % |           187 s |                      0.7 / 199.0 | Numbers win once total damage outpaces routing                  |
+| 1 _T. rex_ vs 30 _H. erectus_           | never met  |       96 % |       0 % |  5 % |           249 s |                       2.1 / 27.9 | —                                                               |
+| 1 elephant vs 30 _H. erectus_           | no record  |       98 % |       0 % |  3 % |           225 s |                       1.5 / 28.4 | Unarmed hominins do not bring down an adult elephant; plausible |
+| 1 mammoth vs 30 _H. erectus_            | no record  |       97 % |       0 % |  3 % |           241 s |                       1.6 / 28.3 | As the elephant                                                 |
+| 1 buffalo vs 20 _H. erectus_            | unrecorded |       92 % |       8 % |  0 % |           193 s |                       3.4 / 15.9 | —                                                               |
+| 1 _H. erectus_ vs 8 wolves              | unrecorded |        0 % |     100 % |  0 % |            22 s |                        0.0 / 0.0 | An unarmed adult has no chance against a pack; plausible        |
+| 1 _H. erectus_ vs 3 wolves              | unrecorded |        0 % |     100 % |  0 % |            30 s |                        0.0 / 0.0 | Plausible                                                       |
+| 1 _H. erectus_ vs 1 wolf                | unrecorded |       57 % |      41 % |  3 % |           349 s |                        0.5 / 0.1 | Closer to even; still favours the hominin somewhat (see below)  |
+| 1 _H. erectus_ vs 3 hyenas              | no record  |        0 % |     100 % |  0 % |            24 s |                        0.0 / 0.0 | Plausible                                                       |
+| 1 _H. erectus_ vs 1 hyena               | no record  |       32 % |      60 % |  8 % |           420 s |                        0.2 / 0.1 | The hominin loses most runs                                     |
+| 1 _H. erectus_ vs 1 tiger               | no record  |       12 % |      73 % | 15 % |           354 s |                        0.0 / 0.1 | The hominin loses most runs; draws are 20-minute stand-offs     |
+| 1 _H. erectus_ vs 1 lion                | unrecorded |       14 % |      79 % |  8 % |           312 s |                        0.0 / 0.1 | The hominin loses most runs                                     |
+| 1 _H. erectus_ vs 1 _H. erectus_        | no record  |       79 % |      18 % |  4 % |           472 s |                        0.5 / 0.3 | The heavy role wins symmetric duels: a role artefact            |
+| 1 _H. erectus_ vs 2 _H. erectus_        | no record  |        8 % |      92 % |  1 % |           195 s |                        0.2 / 0.0 | —                                                               |
+
+Before `intimidation` (every heavy hit cost 0.25 morale), the same seed gave the hominin 98 % against one tiger, 99 % against one hyena and 100 % against one wolf: the lone predator fled after two or three bare-hand hits. The mammoth and pack-of-hominin rows are unchanged because only the heavy _H. erectus_ has `intimidation` ≠ 1.
+
 Findings carried over from the research runs:
 
 - **1 HP/kg makes mid-size heavies too fragile.** A 3.2 t elephant has only about 21 lions' worth of HP and no defence against riders except its frontal cone and shake-off. `hide` (elephant 0.3, buffalo 0.5, brown bear 0.5) moves the lone-heavy results to plausible levels while leaving juveniles vulnerable (a 0.9 t juvenile against 27 lions still loses in nearly every run). All `hide` values are **S**; calibrate against the qualitative targets above.
 - **Wolves vs a lone buffalo** (a bison stand-in) give a sigmoidal curve: almost no kills for 1–3 wolves and a plateau from about 12, close to the 9–13-wolf plateau observed for wolves hunting bison [MacNulty 2014]. The model measures "kill within 20 minutes", the field data capture per encounter, so only the shape compares.
 - **`pack.dps` is the top Spearman driver** in almost every matchup (|ρ| 0.3–0.6), followed by `heavy.shakeRate` and `heavy.mass`. Per-species dps calibration is the priority.
 - **Herd effects emerge** without herd rules: neighbours' cones cover each other's riders.
+
+Findings from the mammoth and _Homo erectus_ runs:
+
+- **Hit morale was a per-hit constant.** Every heavy hit took 0.25 of the attacker's morale whatever the damage, so bare-hand hits routed lone predators. The species constant `intimidation` (exactly 1 for every earlier species, so their results are bit-identical; 0.02 **S** for the heavy _H. erectus_) scales the hit and throw morale loss and the minimum recovery after a hit. With it, and with lower, **S** bare-hand lethality, accuracy and shake-off, a lone hominin loses most runs against one tiger (73 %), lion (79 %) or hyena (60 %). The brown bear vs 1 tiger row above still reflects the shared constant and is unchanged on purpose.
+- **What `intimidation` cannot fix.** A heavy's hit still detaches a latched attacker and sends it to recover, so a lone predator rarely holds on long; the fights run 5–7 minutes and 8–15 % end as 20-minute stand-offs. Against one wolf the hominin still wins 57 %, mostly by slowly incapacitating it with many weak blows. A truer duel needs hits that do not always detach, or the role-free engine ([#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50)).
+- **Against a pack the hominin loses quickly**: 3 or 8 wolves and 3 hyenas win every run in under 30 s.
+- **As attackers, hominins mostly flee.** `pack.dps` (|ρ| ≈ 0.6) and `pack.morale` dominate; large numbers (300 against one _T. rex_) win only because the total damage rate outruns routing.
+- **Role asymmetry.** The same species on both sides does not give 50/50: one heavy _H. erectus_ beats one pack _H. erectus_ in 79 % of runs and loses to two in 92 %; the roles, not the species, decide this.
+- **The mammoth behaves like a slightly better-insulated elephant.** Its `hide` (0.25) is **S**; against 12 wolves it holds in 92 % of runs, consistent with adults being rarely taken.
 
 ## 8. What the engine cannot express
 
@@ -321,10 +441,12 @@ Findings carried over from the research runs:
 
 ## 9. Content rules
 
-- No humans and no domestic animals anywhere in the roster. Gorilla is excluded (not a predator, no heavy-vs-pack data).
+- No living humans (_Homo sapiens_) and no domestic animals anywhere in the roster. Gorilla is excluded (not a predator, no heavy-vs-pack data).
+- The one hominin, the extinct _Homo erectus_, is modelled unclothed, with no tools, weapons, fire or trained skill, from an average adult's physical capability. Every matchup with it shows the thought-experiment note under the badge (`matchup.thoughtExperiment`: a physical-capability thought experiment that does not depict or endorse real violence), and the model and parameter pages repeat it. Wording stays neutral (incapacitated, fled), with the scientific name only.
+- Every species carries `adSafe`; a living-human species would be `false` and its matchups would load no ads ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)). All current species are `true`.
 - The replay keeps abstract glyphs and role colours for every species (heavy = blue triangle scaled from the species body radius, exactly 7 m for _T. rex_; pack = orange dot sized from `radius`); no gore.
-- Cross-era pairings are labelled "never met"; documented pairings link to sourced notes. Elephant copy mentions tusks only as anatomy.
-- Korean UI strings never put a particle after a species name; English strings use singular/plural forms chosen with `Intl.PluralRules`.
+- Only pairings separated by geological time (_T. rex_) are labelled "never met"; a recently extinct species without a sourced overlap is "no recorded overlap" (`unrecorded`). Documented pairings link to sourced notes. Elephant and mammoth copy mentions tusks only as anatomy.
+- Korean UI strings never put a particle after a species name; English strings use singular/plural forms chosen with `Intl.PluralRules`. Korean head counts use the counter `명` for _Homo erectus_ and `마리` for every animal (`speciesCounter`, the `{counter}` and `{heavyCounter}` placeholders); English has none.
 
 ## 10. References
 
@@ -340,21 +462,32 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 - **[Fry 2009]** A central role for venom in predation by _Varanus komodoensis_. _PNAS_ 106:8969–8974. <https://doi.org/10.1073/pnas.0810883106> [Abs]
 - **[Funston 2001]** Funston P.J., Mills M.G.L., Biggs H.C. Factors affecting the hunting success of male and female lions in the Kruger National Park. _J. Zool._ 253:419–431. <https://doi.org/10.1017/S0952836901000395> [Abs]
 - **[Gignac 2010]** A description of _Deinonychus antirrhopus_ bite marks and estimates of bite force using tooth indentation simulations. _J. Vert. Paleontol._ 30:1169–1177. <https://doi.org/10.1080/02724634.2010.483535> [Abs]
+- **[Bramble & Lieberman 2004]** Endurance running and the evolution of _Homo_. _Nature_ 432:345–352. <https://doi.org/10.1038/nature03052> [Abs; sprint figures via Nature News 2004]
+- **[Cunningham 2018]** Cunningham D.L., Graves R.R., Wescott D.J., McCarthy R.C. The effect of ontogeny on estimates of KNM-WT 15000's adult body size. _J. Hum. Evol._ 121:119–127. <https://doi.org/10.1016/j.jhevol.2018.04.002> [WP]
+- **[Garvin 2017]** Garvin H.M. et al. Body size, brain size, and sexual dimorphism in _Homo naledi_ from the Dinaledi Chamber. _J. Hum. Evol._ 111:119–138. <https://doi.org/10.1016/j.jhevol.2017.06.010> [Abs]
+- **[Grabowski 2015]** Grabowski M., Hatala K.G., Jungers W.L., Richmond B.G. Body mass estimates of hominin fossils and the evolution of human body size. _J. Hum. Evol._ 85:75–93. <https://doi.org/10.1016/j.jhevol.2015.05.005> [Abs]
 - **[Hubel 2016a]** Hubel T.Y. et al. Energy cost and return for hunting in African wild dogs and cheetahs. _Nat. Commun._ 7:11034. <https://doi.org/10.1038/ncomms11034> [FT]
 - **[Hubel 2016b]** Hubel T.Y. et al. Additive opportunistic capture explains group hunting benefits in African wild dogs. _Nat. Commun._ 7:11033. <https://doi.org/10.1038/ncomms11033> [FT abstract and introduction]
 - **[Hutchinson 2003]** Hutchinson J.R. et al. Are fast-moving elephants really running? _Nature_ 422:493–494. <https://doi.org/10.1038/422493a> [Abs]
 - **[Hutchinson 2006]** Hutchinson J.R. et al. The locomotor kinematics of Asian and African elephants: changes with speed and size. _J. Exp. Biol._ 209:3812–3827. <https://doi.org/10.1242/jeb.02443> [Abs]
 - **[Hutchinson 2019]** Divergent evolution of terrestrial locomotor abilities in extant Crocodylia. _Sci. Rep._ <https://doi.org/10.1038/s41598-019-55768-6> [FT]
+- **[Iurino 2022]** Iurino D.A. et al. A Middle Pleistocene wolf from central Italy provides insights on the first occurrence of _Canis lupus_ in Europe. _Sci. Rep._ 12:2882. <https://doi.org/10.1038/s41598-022-06812-5> [WP]
 - **[Jimenez 2008]** Gray wolves, _Canis lupus_, killed by cougars, _Puma concolor_, and a grizzly bear, _Ursus arctos_, in Montana, Alberta, and Wyoming. _Can. Field-Nat._ 122:76–78. <https://doi.org/10.22621/cfn.v122i1.550> [Abs]
 - **[Joubert 2006]** Hunting behaviour of lions (_Panthera leo_) on elephants (_Loxodonta africana_) in the Chobe National Park, Botswana. _Afr. J. Ecol._ 44:279–281. <https://doi.org/10.1111/j.1365-2028.2006.00626.x> [WP]
+- **[Larramendi 2017]** Larramendi A., Palombo M.R., Marano F. Reconstructing the life appearance of a Pleistocene giant: size, shape, sexual dimorphism and ontogeny of _Palaeoloxodon antiquus_ from Neumark-Nord 1 (Germany). _Boll. Soc. Paleontol. Ital._ 56(3):299–317. <https://doi.org/10.4435/BSPI.2017.29> [WP; the woolly mammoth averages are a comparison in this paper]
 - **[Larramendi 2016]** Shoulder height, body mass and shape of proboscideans. _Acta Palaeontol. Pol._ 61:537–574. <https://doi.org/10.4202/app.00136.2014> [WP]
+- **[Manthi 2017]** Manthi F.K. et al. Gigantic lion, _Panthera leo_, from the Pleistocene of Natodomeri, eastern Africa. _J. Paleontol._ (2017). [Abs; data at <https://doi.org/10.5061/dryad.279n4>]
 - **[MacNulty 2014]** MacNulty D.R., Tallian A., Stahler D.R., Smith D.W. Influence of group size on the success of wolves hunting bison. _PLoS ONE_ 9:e112884. <https://doi.org/10.1371/journal.pone.0112884> [FT]
 - **[Power & Compion 2009]** Lion predation on elephants in the Savuti, Chobe National Park, Botswana. _African Zoology_ 44:36–44. <https://doi.org/10.3377/004.044.0104> [Abs]
 - **[Rayfield 2001]** Cranial design and function in a large theropod dinosaur. _Nature_ 409:1033–1037. <https://doi.org/10.1038/35059070> [Abs]
+- **[Reynolds 2010]** Reynolds S.C. Where the wild things were: spatial and temporal distribution of carnivores in the Cradle of Humankind. _J. Taphonomy_ 8:233–257. [WP]
+- **[Rizal 2020]** Rizal Y., Westaway K.E. et al. Last appearance of _Homo erectus_ at Ngandong, Java, 117,000–108,000 years ago. _Nature_ 577:381–385. <https://doi.org/10.1038/s41586-019-1863-2> [Abs]
 - **[Sakamoto 2022]** Sakamoto M. Estimating bite force in extinct dinosaurs using phylogenetically predicted physiological cross-sectional areas of jaw adductor muscles. _PeerJ_ 10:e13731. <https://doi.org/10.7717/peerj.13731> [FT]
+- **[Sanders 2023]** Sanders W.J. _Evolution and Fossil Record of African Proboscidea_. CRC Press, pp. 257–261. <https://doi.org/10.1201/b20016> [WP]
 - **[Sellers 2017]** Investigating the running abilities of _Tyrannosaurus rex_ using stress-constrained multibody dynamic analysis. _PeerJ_ 5:e3420. <https://peerj.com/articles/3420/> [MODEL]
 - **[Sellers & Manning 2007]** Estimating dinosaur maximum running speeds using evolutionary robotics. _Proc. R. Soc. B_ 274. <https://doi.org/10.1098/rspb.2007.0846>, full text <https://pmc.ncbi.nlm.nih.gov/articles/PMC2279215/> [FT]
 - **[Sereno 2022]** Sereno P.C. et al. _Spinosaurus_ is not an aquatic dinosaur. _eLife_ 11:e80092. <https://doi.org/10.7554/eLife.80092> [FT]
+- **[Smith 2000]** Smith M.S., Dyson R.J., Hale T., Janaway L. Development of a boxing dynamometer and its punch force discrimination efficacy. _J. Sports Sci._ 18(6):445–450. [Abs]
 - **[Snively 2019]** Snively E. et al. Lower rotational inertia and larger leg muscles indicate more rapid turns in tyrannosaurids than in other large theropods. _PeerJ_ 7:e6432. <https://doi.org/10.7717/peerj.6432> [FT]
 - **[Stander 1992]** Cooperative hunting in lions: the role of the individual. _Behav. Ecol. Sociobiol._ 29:445–454. <https://doi.org/10.1007/BF00170175> [Abs]
 - **[van der Meijden 2023]** Measurement of voluntary bite forces in large carnivores using a semi-automated reward-driven system. _J. Exp. Biol._ 226:jeb245255. <https://doi.org/10.1242/jeb.245255> [WP]
@@ -385,6 +518,12 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 - [WP: Allosaurus] <https://en.wikipedia.org/wiki/Allosaurus>
 - [WP: Tiger] <https://en.wikipedia.org/wiki/Tiger>
 - [WP: Bite force quotient] <https://en.wikipedia.org/wiki/Bite_force_quotient>
+- [WP: Woolly mammoth] <https://en.wikipedia.org/wiki/Woolly_mammoth> (accessed 2026-10-20)
+- [WP: Homo erectus] <https://en.wikipedia.org/wiki/Homo_erectus> (accessed 2026-10-20)
+- [WP: Turkana Boy] <https://en.wikipedia.org/wiki/Turkana_Boy> (accessed 2026-10-20)
+- [WP: Panthera tigris soloensis] <https://en.wikipedia.org/wiki/Panthera_tigris_soloensis> (accessed 2026-10-20)
+- [WP: Endurance running hypothesis] <https://en.wikipedia.org/wiki/Endurance_running_hypothesis> (accessed 2026-10-20)
+- **Bite force of modern adults** (not the model's weapon): PubMed 8322012 (1993; molar means 847 N men, 597 N women) and _Acta Odontologica Scandinavica_ (1995; 909 N, 777 N), both via search summaries [Abs].
 
 **Policy**
 

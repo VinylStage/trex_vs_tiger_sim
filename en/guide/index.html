@@ -217,6 +217,27 @@
                       matter most.
                     </td>
                   </tr>
+                  <tr data-heavy="mammoth" data-pack="wolf">
+                    <th scope="row">1 mammoth vs 12 wolves</th>
+                    <td><data data-k="heavyCount" value="1">1</data> woolly mammoth</td>
+                    <td><data data-k="packCount" value="12">12</data> gray wolves</td>
+                    <td><data data-k="runs" value="1000">1,000</data></td>
+                    <td>
+                      Ice-age contemporaries with no recorded encounter: how much do thick fur and
+                      fat (the hide multiplier) change the outcome?
+                    </td>
+                  </tr>
+                  <tr data-heavy="trex" data-pack="homoErectus">
+                    <th scope="row">1 T-Rex vs 100 Homo erectus</th>
+                    <td><data data-k="heavyCount" value="1">1</data> T. rex</td>
+                    <td><data data-k="packCount" value="100">100</data> Homo erectus</td>
+                    <td><data data-k="runs" value="500">500</data></td>
+                    <td>
+                      These species never met. A thought experiment on physical capability alone,
+                      without clothing, tools or weapons; it does not depict or endorse real
+                      violence.
+                    </td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -290,8 +311,9 @@
               <div>
                 <dt>Morale &amp; routing</dt>
                 <dd>
-                  When on, tigers lose morale when they are bitten or when a nearby tiger dies, and
-                  flee once morale falls below 0.2. When off, tigers fight to the death.
+                  When on, tigers lose morale when they are bitten or when a nearby tiger is
+                  incapacitated, and flee once morale falls below 0.2. When off, tigers fight until
+                  incapacitated.
                 </dd>
               </div>
             </dl>
@@ -401,17 +423,17 @@
                     <td>The average number of T-Rex still alive at the end.</td>
                   </tr>
                   <tr>
-                    <th scope="row">Tigers killed · Tigers routed (mean)</th>
+                    <th scope="row">Tigers incapacitated · Tigers routed (mean)</th>
                     <td>
-                      The average number of tigers killed, and of tigers that fled or left the
-                      arena.
+                      The average number of tigers incapacitated, and of tigers that fled or left
+                      the arena.
                     </td>
                   </tr>
                   <tr>
                     <th scope="row">Exchange ratio</th>
                     <td>
-                      Over all runs, tigers killed ÷ T-Rex lost. It shows ∞ when no T-Rex died and
-                      “—” when nobody died.
+                      Over all runs, tigers incapacitated ÷ T-Rex lost. It shows ∞ when no T-Rex was
+                      incapacitated and “—” when nobody was incapacitated.
                     </td>
                   </tr>
                 </tbody>
@@ -478,7 +500,7 @@
               <li>
                 <strong>Legend</strong>: the legend under the canvas explains the symbols for the
                 T-Rex (colour shows HP left) and for each tiger state: approaching, latched,
-                recovering, routed and dead.
+                recovering, routed and incapacitated.
               </li>
             </ul>
             <p>
@@ -544,7 +566,7 @@
               <li>
                 Read the verdict and the cards. Under the default assumptions the T-Rex win almost
                 every run, battles usually end in about half a minute, and most tigers flee rather
-                than die.
+                than fall.
               </li>
               <li>
                 Look at the two or three longest bars in the sensitivity chart. In preliminary runs,
@@ -560,11 +582,12 @@
               <li>Run again.</li>
               <li>
                 The duration histogram moves far to the right: tigers no longer flee, battles last
-                minutes, and far more tigers die. The T-Rex still win almost every time.
+                minutes, and far more tigers are incapacitated. The T-Rex still win almost every
+                time.
               </li>
               <li>
-                The sensitivity ranking changes too. In a fight to the death, the tiger damage rate
-                (<code>tiger.dps</code>) becomes the most important assumption.
+                The sensitivity ranking changes too. In a fight without retreat, the tiger damage
+                rate (<code>tiger.dps</code>) becomes the most important assumption.
               </li>
             </ol>
             <h3>Experiment 3. What would it take for the tigers to win?</h3>
@@ -602,10 +625,10 @@
             <h3>Why do the T-Rex almost always win?</h3>
             <p>
               Under the default assumptions a T-Rex weighs about 8 tonnes, more than 40 times a 180
-              kg tiger, and hit points scale with body mass. One good bite kills most tigers, while
-              a tiger's attacks are assumed to cause shallow wounds worth a few HP per second. With
-              the morale model on, tigers that see others fall also flee quickly. This conclusion
-              comes from the assumptions, so changing them changes the answer; see
+              kg tiger, and hit points scale with body mass. One good bite incapacitates most
+              tigers, while a tiger's attacks are assumed to cause shallow wounds worth a few HP per
+              second. With the morale model on, tigers that see others fall also flee quickly. This
+              conclusion comes from the assumptions, so changing them changes the answer; see
               <a href="/en/model/#tigers-win">which assumptions would let the tigers win</a>.
             </p>
             <h3>A friend opened my link and got slightly different numbers.</h3>

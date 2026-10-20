@@ -76,8 +76,8 @@ const ko = {
   'preset.default': '{label} (기본)',
   'preset.hint':
     '양쪽 종, 마릿수, 실행 횟수를 한 번에 바꾸고 파라미터 범위를 그 종의 기본값으로 되돌립니다. 나머지 설정은 그대로입니다.',
-  'team.one': '{name} {n}마리',
-  'team.other': '{name} {n}마리',
+  'team.one': '{name} {n}{counter}',
+  'team.other': '{name} {n}{counter}',
 
   'field.heavyCount': '{Heavy} 수',
   'field.packCount': '{Pack} 수',
@@ -100,7 +100,10 @@ const ko = {
   'matchup.documented': '야생에서 관찰된 대결',
   'matchup.neverMet': '서로 만난 적 없는 종',
   'matchup.undocumented': '관찰 기록 없는 가상 대결',
+  'matchup.unrecorded': '기록된 조우 없음',
   'matchup.sources': '근거 보기',
+  'matchup.thoughtExperiment':
+    '신체 능력만 비교하는 사고 실험입니다(옷 · 도구 · 무기 · 불 · 훈련 없음). 실제 폭력을 묘사하거나 지지하지 않습니다.',
   'toast.rangesReset': '파라미터 범위를 {name} 기본값으로 바꿨습니다.',
   'toast.presetApplied': '{label} 프리셋을 적용했습니다.',
   'toast.undo': '되돌리기',
@@ -153,6 +156,8 @@ const ko = {
   'species.lion': '사자',
   'species.wolf': '회색늑대',
   'species.hyena': '점박이하이에나',
+  'species.mammoth': '털매머드',
+  'species.homoErectus': '호모 에렉투스',
   'species.trex.one': 'T-Rex',
   'species.trex.other': 'T-Rex',
   'species.elephant.one': '코끼리',
@@ -169,6 +174,10 @@ const ko = {
   'species.wolf.other': '늑대',
   'species.hyena.one': '하이에나',
   'species.hyena.other': '하이에나',
+  'species.mammoth.one': '매머드',
+  'species.mammoth.other': '매머드',
+  'species.homoErectus.one': '호모 에렉투스',
+  'species.homoErectus.other': '호모 에렉투스',
   'evidence.L': '문헌 값',
   'evidence.D': '문헌에서 유도한 값',
   'evidence.S': '추정값',
@@ -221,13 +230,13 @@ const ko = {
   'stat.duration': '전투 시간 (중앙값)',
   'stat.durationSub': '5–95%: {p5} – {p95}',
   'stat.survivors': '{Heavy} 생존 (평균)',
-  'stat.ofN': '{n}마리 중',
-  'stat.killed': '죽은 {PackPl} (평균)',
+  'stat.ofN': '{n}{counter} 중',
+  'stat.killed': '전투 불능 {PackPl} (평균)',
   'stat.routed': '도주한 {PackPl} (평균)',
   'stat.exchange': '교환비',
-  'stat.exchangeSub': '{heavy} 1마리 손실당 죽은 {packPl}',
+  'stat.exchangeSub': '{heavy} 1{heavyCounter} 손실당 전투 불능 {packPl}',
   'stat.exchangeInf': '{heavy} 손실 없음',
-  'stat.exchangeNone': '사망 없음',
+  'stat.exchangeNone': '전투 불능 없음',
 
   'chart.outcome': '결과별 비율과 95% 구간',
   'chart.duration': '전투 시간 분포',
@@ -275,11 +284,11 @@ const ko = {
   'replay.zoom4': '{heavyPl} 중심 4배',
   'replay.scrub': '재생 위치',
   'replay.canvasLabel':
-    '전투 재생 애니메이션: 삼각형은 {heavyPl}, 무리 동물({packPl})은 상태에 따라 점(접근), 마름모(매달림), 고리(회복), 화살표(도주), ×(사망)로 표시합니다',
+    '전투 재생 애니메이션: 삼각형은 {heavyPl}, 무리 동물({packPl})은 상태에 따라 점(접근), 마름모(매달림), 고리(회복), 화살표(도주), ×(전투 불능)로 표시합니다',
   'replay.legendLabel': '재생 범례',
   'replay.legendHeavy': '{Heavy}',
   'replay.legendHp': '다친 {heavy} (채운 면적 = 남은 체력)',
-  'replay.legendHeavyDead': '쓰러진 {heavy}',
+  'replay.legendHeavyDead': '전투 불능 {heavy}',
   'replay.legendPack': '{PackPl}',
   'replay.legendBite': '공격 범위 (명중은 채워 표시, 빠른 재생에서는 윤곽만)',
   'replay.lodNote':
@@ -292,7 +301,7 @@ const ko = {
   'replay.skipContact': '첫 접촉으로',
   'replay.valueText': '{cur} / {total}',
   'replay.scene':
-    '{time}: {heavyPl} {total}마리 중 {alive}마리 생존. {PackPl} 상태: 접근 {approach}, 매달림 {latched}, 회복 {recover}, 도주·이탈 {out}, 사망 {dead}',
+    '{time}: {heavyPl} {total}{heavyCounter} 중 {alive}{heavyCounter} 생존. {PackPl} 상태: 접근 {approach}, 매달림 {latched}, 회복 {recover}, 도주·이탈 {out}, 전투 불능 {dead}',
   'replay.overviewLabel':
     '전투 전체 요약 그림: 선은 이동 경로, 마름모는 {packPl} 개체가 매달린 곳, ×는 {packPl} 개체가 쓰러진 곳, 삼각형은 {heavy}의 마지막 위치입니다',
   'replay.overviewNote':
@@ -312,14 +321,14 @@ const ko = {
   'replay.keyView': '자동 보기와 경기장 전체 보기 전환',
   'replay.legendEvents': '사건',
   'replay.legendLatchRing': '매달림 (좁아지는 고리)',
-  'replay.legendOutRing': '도주·사망 (회색 고리)',
+  'replay.legendOutRing': '도주·전투 불능 (회색 고리)',
   'replay.legendThrow': '떨쳐 냄 (짧은 선 세 개)',
   'replay.legendTrail': '최근 3초 이동 자취',
   'state.approach': '접근',
   'state.latched': '매달림',
   'state.recover': '회복',
   'state.routed': '도주',
-  'state.dead': '사망',
+  'state.dead': '전투 불능',
 
   'time.sec': '{s}초',
   'time.minSec': '{m}분 {s}초',
@@ -371,7 +380,7 @@ const ko = {
     '네. 링크 복사를 누르면 종, 마릿수, 파라미터 범위, 시드가 담긴 주소가 만들어집니다. 같은 링크를 열고 실행하면 같은 결과가 나옵니다.',
   'faq.q5': '어떤 동물을 고를 수 있나요?',
   'faq.a5':
-    '대형 동물은 티라노사우루스, 아프리카코끼리, 아프리카물소, 불곰이고, 무리 동물은 호랑이, 사자, 회색늑대, 점박이하이에나입니다. 코끼리와 사자, 물소와 사자, 불곰과 늑대처럼 야생에서 관찰된 대결에는 표시가 붙고, 기본값마다 근거 수준(문헌, 유도, 추정, 미검증)을 함께 보여 줍니다. 사람과 가축은 다루지 않습니다.',
+    '대형 동물은 티라노사우루스, 아프리카코끼리, 아프리카물소, 불곰, 털매머드, 호모 에렉투스이고, 무리 동물은 호랑이, 사자, 회색늑대, 점박이하이에나, 호모 에렉투스입니다. 코끼리와 사자, 물소와 사자, 불곰과 늑대처럼 야생에서 관찰된 대결에는 표시가 붙고, 기본값마다 근거 수준(문헌, 유도, 추정, 미검증)을 함께 보여 줍니다. 멸종 인류인 호모 에렉투스는 옷 · 도구 · 무기 없이 신체 능력만 비교하는 사고 실험이며, 현생 인류와 가축은 다루지 않습니다.',
 
   'tour.start': '튜토리얼',
   'tour.counter': '{n} / {total}',
@@ -414,7 +423,7 @@ const ko = {
     '실행이 끝나면 이곳에 판정, 요약 카드, 차트(승패 확률, 전투 시간, 생존 수, 민감도)와 전투 재생이 나타납니다. 투어를 마친 뒤 실행해 보세요.',
   'tour.verdict.title': '판정과 요약 카드',
   'tour.verdict.body':
-    '가장 많이 나온 결과를 “몇 번 중 몇 번”으로 보여 주고, 실행 횟수에서 오는 정밀도(95% Wilson 구간)와 이 모델의 한계를 바로 옆에 적었습니다. 카드에는 결과별 비율, 전투 시간 중앙값, 평균 생존 · 사망 · 도주 수, 교환비가 있습니다.',
+    '가장 많이 나온 결과를 “몇 번 중 몇 번”으로 보여 주고, 실행 횟수에서 오는 정밀도(95% Wilson 구간)와 이 모델의 한계를 바로 옆에 적었습니다. 카드에는 결과별 비율, 전투 시간 중앙값, 평균 생존 · 전투 불능 · 도주 수, 교환비가 있습니다.',
   'tour.outcome.title': '승패 확률 차트',
   'tour.outcome.body':
     '막대는 결과별 비율, 가는 선은 95% 구간입니다. 마우스를 올리거나 탭하면 정확한 값이 나오고, “데이터 표 보기”에 모든 값이 있습니다. 아래 히스토그램은 전투 시간과 {heavy} 생존 수의 분포입니다.',
@@ -459,6 +468,7 @@ const ko = {
   'param.weapon.tusk': '엄니 · 밟기 힘',
   'param.weapon.horn': '뿔 들이받기 힘',
   'param.weapon.pawBite': '물기 · 앞발 힘',
+  'param.weapon.hands': '맨손 타격 · 붙잡기 힘',
   'param.attack.biteLethality': '공격 치명도',
   'param.attack.biteInterval': '공격 간격',
   'param.attack.biteReach': '공격 사거리',
@@ -490,7 +500,7 @@ const ko = {
   'paramHelp.pack.bleed':
     '{heavy} 개체가 매초 (누적 상처 피해 × 출혈률)만큼 체력을 잃습니다. 개체 변동 없음.',
   'paramHelp.pack.morale': '0.2 아래로 떨어지면 도주합니다 (사기 모델 사용 시).',
-  'paramHelp.pack.moraleLoss': '40 m 이내의 동료가 죽을 때마다 잃는 사기.',
+  'paramHelp.pack.moraleLoss': '40 m 이내의 동료가 전투 불능이 될 때마다 잃는 사기.',
 } as const;
 
 export type MsgKey = keyof typeof ko;
@@ -563,8 +573,8 @@ const en: Dictionary = {
   'preset.default': '{label} (default)',
   'preset.hint':
     'Sets both species, the head counts and the number of runs, and resets the ranges to those species’ presets. Other settings are kept.',
-  'team.one': '{n} {name}',
-  'team.other': '{n} {name}',
+  'team.one': '{n}{counter} {name}',
+  'team.other': '{n}{counter} {name}',
 
   'field.heavyCount': '{Heavy} count',
   'field.packCount': '{Pack} count',
@@ -587,7 +597,10 @@ const en: Dictionary = {
   'matchup.documented': 'Documented in the wild',
   'matchup.neverMet': 'These species never met',
   'matchup.undocumented': 'No recorded encounters',
+  'matchup.unrecorded': 'No recorded overlap',
   'matchup.sources': 'Sources',
+  'matchup.thoughtExperiment':
+    'A thought experiment comparing physical capability only (no clothing, tools, weapons, fire or training). It does not depict or endorse real violence.',
   'toast.rangesReset': 'Ranges reset to the {name} presets.',
   'toast.presetApplied': 'Applied the {label} preset.',
   'toast.undo': 'Undo',
@@ -640,6 +653,8 @@ const en: Dictionary = {
   'species.lion': 'Lion',
   'species.wolf': 'Gray wolf',
   'species.hyena': 'Spotted hyena',
+  'species.mammoth': 'Woolly mammoth',
+  'species.homoErectus': 'Homo erectus',
   'species.trex.one': 'T-Rex',
   'species.trex.other': 'T-Rex',
   'species.elephant.one': 'elephant',
@@ -656,6 +671,10 @@ const en: Dictionary = {
   'species.wolf.other': 'wolves',
   'species.hyena.one': 'hyena',
   'species.hyena.other': 'hyenas',
+  'species.mammoth.one': 'mammoth',
+  'species.mammoth.other': 'mammoths',
+  'species.homoErectus.one': 'Homo erectus',
+  'species.homoErectus.other': 'Homo erectus',
   'evidence.L': 'Literature value',
   'evidence.D': 'Derived from literature',
   'evidence.S': 'Speculative',
@@ -708,13 +727,13 @@ const en: Dictionary = {
   'stat.duration': 'Battle duration (median)',
   'stat.durationSub': '5–95%: {p5} – {p95}',
   'stat.survivors': '{Heavy} survivors (mean)',
-  'stat.ofN': 'of {n}',
-  'stat.killed': '{PackPl} killed (mean)',
+  'stat.ofN': 'of {n}{counter}',
+  'stat.killed': '{PackPl} incapacitated (mean)',
   'stat.routed': '{PackPl} routed (mean)',
   'stat.exchange': 'Exchange ratio',
-  'stat.exchangeSub': '{packPl} killed per {heavy} lost',
+  'stat.exchangeSub': '{packPl} incapacitated per {heavy}{heavyCounter} lost',
   'stat.exchangeInf': 'no {heavy} lost',
-  'stat.exchangeNone': 'no deaths',
+  'stat.exchangeNone': 'none incapacitated',
 
   'chart.outcome': 'Share of each outcome with 95% interval',
   'chart.duration': 'Battle duration distribution',
@@ -762,11 +781,11 @@ const en: Dictionary = {
   'replay.zoom4': '4× on {heavyPl}',
   'replay.scrub': 'Playback position',
   'replay.canvasLabel':
-    'Battle replay animation: triangles are {heavyPl}; {packPl} are dots (approaching), diamonds (latched), rings (recovering), arrows (routed) or crosses (dead)',
+    'Battle replay animation: triangles are {heavyPl}; {packPl} are dots (approaching), diamonds (latched), rings (recovering), arrows (routed) or crosses (incapacitated)',
   'replay.legendLabel': 'Replay legend',
   'replay.legendHeavy': '{Heavy}',
   'replay.legendHp': 'Wounded {heavy} (filled area = HP left)',
-  'replay.legendHeavyDead': 'Dead {heavy}',
+  'replay.legendHeavyDead': 'Incapacitated {heavy}',
   'replay.legendPack': '{PackPl}',
   'replay.legendBite': 'Attack reach (filled on a hit; outline only at high speed)',
   'replay.lodNote': 'Zoomed out, {packPl} are small squares. Zoom in to see their shapes.',
@@ -778,11 +797,11 @@ const en: Dictionary = {
   'replay.skipContact': 'Skip to contact',
   'replay.valueText': '{cur} of {total}',
   'replay.scene':
-    '{time}: {alive} of {total} {heavyPl} alive. {PackPl}: {approach} approaching, {latched} latched, {recover} recovering, {out} fled or gone, {dead} dead',
+    '{time}: {alive}{heavyCounter} of {total}{heavyCounter} {heavyPl} alive. {PackPl}: {approach} approaching, {latched} latched, {recover} recovering, {out} fled or gone, {dead} incapacitated',
   'replay.overviewLabel':
-    'Summary of the whole battle: lines are paths, diamonds mark where {packPl} latched, crosses where {packPl} died, triangles the final {heavy} positions',
+    'Summary of the whole battle: lines are paths, diamonds mark where {packPl} latched, crosses where {packPl} were incapacitated, triangles the final {heavy} positions',
   'replay.overviewNote':
-    'Reduced motion is on, so the whole battle is shown in one picture (lines: paths, diamonds: latches, crosses: deaths). Press Play to animate it without effects.',
+    'Reduced motion is on, so the whole battle is shown in one picture (lines: paths, diamonds: latches, crosses: incapacitated). Press Play to animate it without effects.',
   'replay.announceSpeed': 'Playback speed {speed}',
   'replay.announceView': 'View: {view}',
   'replay.noMoreEvents': 'No more events in that direction',
@@ -793,19 +812,19 @@ const en: Dictionary = {
   'replay.keyPage': 'Forward / back by 10 % of the battle',
   'replay.keyEnds': 'Start / end',
   'replay.keySpeed': 'Slower / faster',
-  'replay.keyEvent': 'Previous / next event (contact, kill, rout), 1 s before it',
+  'replay.keyEvent': 'Previous / next event (contact, incapacitation, rout), 1 s before it',
   'replay.keyContact': '2 s before the first contact',
   'replay.keyView': 'Switch between the auto view and the whole arena',
   'replay.legendEvents': 'Events',
   'replay.legendLatchRing': 'Latch (shrinking ring)',
-  'replay.legendOutRing': 'Rout or death (grey ring)',
+  'replay.legendOutRing': 'Rout or incapacitation (grey ring)',
   'replay.legendThrow': 'Thrown off (three short rays)',
   'replay.legendTrail': 'Path over the last 3 s',
   'state.approach': 'Approaching',
   'state.latched': 'Latched',
   'state.recover': 'Recovering',
   'state.routed': 'Routed',
-  'state.dead': 'Dead',
+  'state.dead': 'Incapacitated',
 
   'time.sec': '{s} s',
   'time.minSec': '{m} min {s} s',
@@ -859,7 +878,7 @@ const en: Dictionary = {
     'Yes. Copy link creates an address that holds the species, head counts, parameter ranges and seed. Opening that link and running it gives the same result.',
   'faq.q5': 'Which animals can I choose?',
   'faq.a5':
-    'The large animals are Tyrannosaurus rex, the African bush elephant, the African buffalo and the brown bear; the pack animals are the tiger, the lion, the gray wolf and the spotted hyena. Match-ups observed in the wild, such as elephants and lions, buffalo and lions or brown bears and wolves, are marked, and every preset value shows its evidence level (literature, derived, speculative or unverified). Humans and domestic animals are not included.',
+    'The large animals are Tyrannosaurus rex, the African bush elephant, the African buffalo, the brown bear, the woolly mammoth and Homo erectus; the pack animals are the tiger, the lion, the gray wolf, the spotted hyena and Homo erectus. Match-ups observed in the wild, such as elephants and lions, buffalo and lions or brown bears and wolves, are marked, and every preset value shows its evidence level (literature, derived, speculative or unverified). Homo erectus, an extinct human species, is a thought experiment on physical capability alone, without clothing, tools or weapons; modern humans and domestic animals are not included.',
 
   'tour.start': 'Tutorial',
   'tour.counter': '{n} / {total}',
@@ -902,7 +921,7 @@ const en: Dictionary = {
     'When a run finishes, this panel shows the verdict, summary cards, charts (outcome, battle duration, survivors, sensitivity) and an animated battle replay. Run a simulation after the tour to see them.',
   'tour.verdict.title': 'Verdict and summary cards',
   'tour.verdict.body':
-    'The most frequent outcome as “k of n battles”, with the precision that comes from the number of runs (95% Wilson interval) and the model’s limits right next to it. The cards add the share of each outcome, the median battle duration, mean survivors, kills and routs, and the exchange ratio.',
+    'The most frequent outcome as “k of n battles”, with the precision that comes from the number of runs (95% Wilson interval) and the model’s limits right next to it. The cards add the share of each outcome, the median battle duration, mean survivors, incapacitated and routed animals, and the exchange ratio.',
   'tour.outcome.title': 'Outcome chart',
   'tour.outcome.body':
     'Bars show the share of each outcome and the thin lines its 95% interval. Hover or tap for exact values; “Show data table” lists them all. The histograms below show the distribution of battle duration and {heavy} survivors.',
@@ -947,6 +966,7 @@ const en: Dictionary = {
   'param.weapon.tusk': 'Tusk and trample force',
   'param.weapon.horn': 'Horn force',
   'param.weapon.pawBite': 'Bite and paw force',
+  'param.weapon.hands': 'Bare-hand strike and grip force',
   'param.attack.biteLethality': 'Attack lethality',
   'param.attack.biteInterval': 'Attack interval',
   'param.attack.biteReach': 'Attack reach',
@@ -981,7 +1001,7 @@ const en: Dictionary = {
   'paramHelp.pack.bleed':
     'The {heavy} loses (accumulated wound damage × rate) HP every second. No individual variation.',
   'paramHelp.pack.morale': 'Routs when morale drops below 0.2 (morale model on).',
-  'paramHelp.pack.moraleLoss': 'Morale lost whenever a packmate within 40 m is killed.',
+  'paramHelp.pack.moraleLoss': 'Morale lost whenever a packmate within 40 m is incapacitated.',
 };
 
 export const DICTIONARIES: Readonly<Record<Lang, Dictionary>> = { ko, en };
@@ -1061,14 +1081,29 @@ export function speciesVars(pair: NamePair = names, lang: Lang = current): Recor
     out[`${role}Pl`] = other;
     out[Role] = capitalize(one);
     out[`${Role}Pl`] = capitalize(other);
+    out[`${role}Counter`] = speciesCounter(id, lang);
   }
   return out;
 }
 
-/** "10 T-Rex" / "T-Rex 10마리": a head count with the right plural form. */
+/**
+ * Korean counter word for a species: 명 for the hominin, 마리 for animals. English has none, so
+ * the `{counter}` placeholders in English messages are empty.
+ */
+const KO_COUNTERS: Partial<Record<SpeciesId, string>> = { homoErectus: '명' };
+
+export function speciesCounter(id: SpeciesId, lang: Lang = current): string {
+  return lang === 'ko' ? (KO_COUNTERS[id] ?? '마리') : '';
+}
+
+/** "10 T-Rex" / "T-Rex 10마리" / "호모 에렉투스 100명": a head count with the right forms. */
 export function teamLabel(id: SpeciesId, n: number): string {
   const rule = new Intl.PluralRules(locale()).select(n) === 'one' ? 'one' : 'other';
-  return t(`team.${rule}`, { n: n.toLocaleString(locale()), name: speciesShort(id, rule) });
+  return t(`team.${rule}`, {
+    n: n.toLocaleString(locale()),
+    name: speciesShort(id, rule),
+    counter: speciesCounter(id),
+  });
 }
 
 export function t(key: MsgKey, vars?: Vars): string {

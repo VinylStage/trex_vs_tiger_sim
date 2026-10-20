@@ -1004,6 +1004,11 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
         HEAVY_SPECIES_IDS.map((id) => [id, String(HEAVY_SPECIES[id].constants.hide)]),
       ),
     );
+    expect(facts('intimidation')).toEqual(
+      Object.fromEntries(
+        HEAVY_SPECIES_IDS.map((id) => [id, String(HEAVY_SPECIES[id].constants.intimidation)]),
+      ),
+    );
     expect(facts('weapon')).toEqual(
       Object.fromEntries(HEAVY_SPECIES_IDS.map((id) => [id, HEAVY_SPECIES[id].weapon])),
     );
@@ -1019,8 +1024,12 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
     // ends that differ from the T. rex/tiger (v1) bounds.
     const wide = (id: (typeof PARAMS)[number]['id']): readonly [number, number] =>
       paramBounds(id, 'elephant', 'lion');
+    // Heavy hominins have their own, wider bounds (checked below).
+    const ordinaryHeavies = HEAVY_SPECIES_IDS.filter(
+      (s) => s !== DEFAULT_HEAVY && !HEAVY_SPECIES[s].hominin,
+    );
     for (const p of PARAMS) {
-      for (const h of HEAVY_SPECIES_IDS.filter((s) => s !== DEFAULT_HEAVY)) {
+      for (const h of ordinaryHeavies) {
         for (const pk of PACK_SPECIES_IDS.filter((s) => s !== DEFAULT_PACK)) {
           expect(paramBounds(p.id, h, pk), `${h}/${pk} ${p.id}`).toEqual(wide(p.id));
         }
@@ -1044,6 +1053,27 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
       .map((d) => `${d.attrs['data-param']} ${d.attrs['data-end']} ${Number(d.attrs['value'])}`);
     expect(stated).toHaveLength(named.length);
     expect([...named].sort()).toEqual([...expected].sort());
+  });
+
+  it('states the hominin bounds that differ from the widened ones', () => {
+    const hominins = HEAVY_SPECIES_IDS.filter((s) => HEAVY_SPECIES[s].hominin);
+    expect(hominins.length).toBeGreaterThan(0);
+    for (const h of hominins) {
+      const expected: string[] = [];
+      for (const p of PARAMS.filter((x) => x.role === 'heavy')) {
+        const own = paramBounds(p.id, h, DEFAULT_PACK);
+        const w = paramBounds(p.id, 'elephant', DEFAULT_PACK);
+        if (own[0] !== w[0]) expected.push(`${p.id} lo ${own[0]}`);
+        if (own[1] !== w[1]) expected.push(`${p.id} hi ${own[1]}`);
+      }
+      const named = elements(html, 'data')
+        .filter((d) => d.attrs['data-k'] === 'hominin')
+        .map((d) => {
+          expect(shownNumber(textOf(d.inner))).toBe(Number(d.attrs['value']));
+          return `${d.attrs['data-param']} ${d.attrs['data-end']} ${Number(d.attrs['value'])}`;
+        });
+      expect([...named].sort()).toEqual([...expected].sort());
+    }
   });
 
   it('lists engine constants with their code values', () => {
@@ -1233,5 +1263,47 @@ describe('public/_headers', () => {
     expect(headersFor(src, '/assets/site-abc123.js')['cache-control']).toEqual([
       'public, max-age=31536000, immutable',
     ]);
+  });
+});
+
+// ---------- neutral outcome wording (CONTRIBUTING.md content rules, docs/SPECIES.md §9) ----------
+
+/**
+ * Death words for simulation states. `(?<!가)` skips 가죽 (hide); the English words are whole
+ * words only. Quoted field records (`#matchup-*` sections of the model page) may keep them.
+ */
+const DEATH_WORDS =
+  /(?<!가)죽[은을는지기음었]|사망|\b(?:dead|killed|kills?|died|dies|die)\b|to the death/i;
+
+const withoutFieldRecords = (html: string): string =>
+  html.replace(/<section id="matchup-[^"]*">[\s\S]*?<\/section>/g, '');
+
+describe('neutral outcome wording', () => {
+  it.each(SHELL_PAGES.map((p) => [p.file, p] as const))('%s uses no death words', (_, p) => {
+    const text = textOf(withoutFieldRecords(p.html));
+    expect(DEATH_WORDS.exec(text)?.[0] ?? null).toBeNull();
+  });
+
+  it.each(LANGS)('the %s dictionary uses no death words', (lang) => {
+    // Placeholder names such as `{dead}` are code, not text.
+    const hits = Object.entries(DICTIONARIES[lang]).filter(([, v]) =>
+      DEATH_WORDS.test(v.replace(/\{\w+\}/g, '')),
+    );
+    expect(hits).toEqual([]);
+  });
+
+  it('still recognises the words it rejects, and allows 가죽 (hide)', () => {
+    for (const s of [
+      '죽은 호랑이',
+      '사망',
+      'tigers killed',
+      'a dead tiger',
+      'fight to the death',
+    ]) {
+      expect(DEATH_WORDS.test(s), s).toBe(true);
+    }
+    for (const s of ['가죽은 두껍다', '가죽을', 'wolf skills', 'diet', 'incapacitated']) {
+      expect(DEATH_WORDS.test(s), s).toBe(false);
+    }
   });
 });
