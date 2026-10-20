@@ -24,6 +24,11 @@ import './share-panel.css';
 export interface ConfigTransferHooks {
   getConfig(): ScenarioConfig;
   applyConfig(config: ScenarioConfig): void;
+  /**
+   * Pasted text that is a free-matchup config (`TVT3-` code or v3 link, #50): apply it and
+   * return true; return false to parse it as a classic config.
+   */
+  applyFreeInput?(text: string): boolean;
 }
 
 const t = (key: ShareMsgKey, vars?: Readonly<Record<string, string | number>>): string =>
@@ -187,11 +192,21 @@ export function createConfigTransfer(hooks: ConfigTransferHooks): HTMLElement {
     downloadBlob(blob, configFileName(c));
     flash(statusEl, t('xfer.saved'));
   });
-  checkBtn.addEventListener('click', () => handle(parseConfigInput(pasteField.value)));
+  const check = (): void => {
+    if (hooks.applyFreeInput?.(pasteField.value)) {
+      pasteField.value = '';
+      pending = null;
+      preview.hidden = true;
+      flash(statusEl, t('xfer.applied'));
+      return;
+    }
+    handle(parseConfigInput(pasteField.value));
+  };
+  checkBtn.addEventListener('click', check);
   pasteField.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handle(parseConfigInput(pasteField.value));
+      check();
     }
   });
   loadBtn.addEventListener('click', () => fileInput.click());
