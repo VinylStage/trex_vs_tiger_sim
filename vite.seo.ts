@@ -167,6 +167,25 @@ export function seo({ root, version }: SeoOptions): Plugin {
             out.source = absolutizeUrls(out.source, out.fileName);
           }
         }
+        const diag = (args: string[]): string => git(root, args) ?? '(error)';
+        this.emitFile({
+          type: 'asset',
+          fileName: 'build-git-diagnostic.txt',
+          source: [
+            `CF_PAGES=${process.env['CF_PAGES'] ?? ''}`,
+            `version=${diag(['--version'])}`,
+            `inside=${diag(['rev-parse', '--is-inside-work-tree'])}`,
+            `shallow=${diag(['rev-parse', '--is-shallow-repository'])}`,
+            `count=${diag(['rev-list', '--count', 'HEAD'])}`,
+            `head=${diag(['log', '-1', '--format=%H %cI'])}`,
+            `index=${diag(['log', '-1', '--format=%H %cI', '--', 'index.html'])}`,
+            `status=${diag(['status', '--porcelain', '--', 'index.html', 'guide/index.html'])}`,
+            `statusAll=${diag(['status', '--porcelain']).slice(0, 2000)}`,
+            `shallowFile=${diag(['rev-parse', '--git-path', 'shallow'])}`,
+            `boundary=${[...gitHistory(root).boundary].join(',')}`,
+            '',
+          ].join('\n'),
+        });
         const known = INDEXABLE_ROUTES.filter((r) => lastmod(r.page, r.lang) !== null).length;
         const h = history ?? gitHistory(root);
         this.info(
