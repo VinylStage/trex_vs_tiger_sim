@@ -1,6 +1,6 @@
 # ADR-0007: Symmetric sides in a separate engine; freeze the heavy/pack engine
 
-- Status: Proposed
+- Status: Accepted (owner, 2026-10-20, [#50 comment](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50#issuecomment-6284898507))
 - Date: 2026-10-20
 - Issue: #50
 - Design: [docs/design/FREE-MATCHUPS.md](../design/FREE-MATCHUPS.md)
@@ -16,6 +16,7 @@ The owner wants any species on either side, including same-species matchups, wit
 3. Latching depends on the species (`canLatch`) and on the body-mass ratio (target ≥ `R_latch` × attacker, default 3); otherwise agents fight with frontal strikes.
 4. A **pack-buff layer** applies only to species with `social = true` and only while an agent has at least one present ally within its species' cohesion radius. Its five effects (coordinated approach, shared target, group latching, morale support and contagion, relief) are bounded, sampled, individually switchable, and with all of them off a social side is bit-identical to the same species with `social = false`.
 5. Share payload **v3** encodes free configs; v1 and v2 decode to legacy configs and are re-encoded as v2.
+6. A page opened without a link keeps the legacy default until free-model calibration (design §8 P8) is done, then switches to the free model. One species per side; herd group defence is out of scope (#72).
 
 ## Alternatives considered
 
