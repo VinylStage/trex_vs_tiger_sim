@@ -20,3 +20,7 @@ All simulation runs execute client-side in a pool of dedicated Web Workers (`nav
 - Throughput scales with the visitor's CPU, not the server.
 - Results must be deterministic per seed independent of worker count → per-run seeds are derived from `(masterSeed, runIndex)`; the sampling design is rebuilt deterministically in each worker.
 - Slow devices get slower runs; the UI shows progress, an ETA and supports cancellation.
+
+## Amendment (2026-10-20, #52)
+
+The pool size is now `navigator.hardwareConcurrency − 1`, capped at 8 and at least 1 (`poolSize` in `src/ui/chunks.ts`; 3 when the browser does not report a core count). One core stays free for the page, so input, progress and the replay stay responsive during a run. Aggregation (win probabilities, histograms, Spearman) also moved from the main thread into a worker, and replays run on a separate worker so they never wait behind a batch. The decision itself, compute in the visitor's browser, is unchanged.
