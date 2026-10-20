@@ -1,7 +1,6 @@
 import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { Outcome, type RunSummary } from '../sim/engine';
-import { aggregate, type AggregateResult } from '../sim/montecarlo';
-import { buildDesign } from '../sim/sampling';
+import type { AggregateResult } from '../sim/montecarlo';
 import { HEAVY_SPECIES } from '../sim/species';
 import {
   CanvasChart,
@@ -57,9 +56,6 @@ interface ReplayState {
   loading: boolean;
   error?: string;
 }
-
-const nextFrame = (): Promise<void> =>
-  new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
 function outcomeKey(o: number): MsgKey {
   return o === Outcome.Heavy
@@ -386,8 +382,8 @@ export function startApp(root: HTMLElement): void {
     try {
       const summaries = await pool.run(cfg, onProgress);
       setStatus({ key: 'run.aggregating' });
-      await nextFrame();
-      const agg = aggregate(cfg, buildDesign(cfg), summaries);
+      // In a worker: Spearman sensitivities over 20,000 runs would block the page for 100s of ms.
+      const agg = await pool.aggregate(cfg, summaries);
       result = { config: cfg, agg, summaries, elapsedMs: performance.now() - t0 };
       setStatus(null);
       renderResults();

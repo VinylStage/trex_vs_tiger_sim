@@ -1,5 +1,6 @@
 import type { ScenarioConfig } from '../sim/config';
 import type { BattleTrace, RunSummary } from '../sim/engine';
+import { packSummaries, type AggregateResult } from '../sim/montecarlo';
 import type { WorkerRequest, WorkerResponse } from '../workers/protocol';
 import { estimateRemainingMs, poolSize, splitRuns, type RunRange } from './chunks';
 
@@ -42,6 +43,12 @@ interface RunJob {
   reject: (e: Error) => void;
 }
 
+interface AggregateJob {
+  jobId: number;
+  resolve: (a: AggregateResult) => void;
+  reject: (e: Error) => void;
+}
+
 interface ReplayJob {
   jobId: number;
   resolve: (t: BattleTrace) => void;
@@ -60,13 +67,14 @@ export class SimPool {
   private nextJobId = 1;
   private job: RunJob | null = null;
   private replayJob: ReplayJob | null = null;
+  private aggJob: AggregateJob | null = null;
 
   constructor(size = poolSize(globalThis.navigator?.hardwareConcurrency)) {
     this.size = size;
   }
 
   get running(): boolean {
-    return this.job !== null;
+    return this.job !== null || this.aggJob !== null;
   }
 
   /** Run every Monte Carlo run of `config`. Rejects with CancelledError if cancelled. */
@@ -97,13 +105,34 @@ export class SimPool {
     });
   }
 
+  /**
+   * Aggregate the summaries of a finished run in one of the (now idle) run workers, so the
+   * Spearman sensitivities and quantiles never block the main thread. The result is the same
+   * object `aggregate(config, buildDesign(config), summaries)` returns on the main thread.
+   */
+  aggregate(config: ScenarioConfig, summaries: readonly RunSummary[]): Promise<AggregateResult> {
+    this.cancel();
+    const worker = this.workers[0] ?? this.createRunWorker();
+    if (this.workers.length === 0) this.workers.push(worker);
+    const jobId = this.nextJobId++;
+    const packed = packSummaries(summaries);
+    return new Promise<AggregateResult>((resolve, reject) => {
+      this.aggJob = { jobId, resolve, reject };
+      const msg: WorkerRequest = { type: 'aggregate', jobId, config, summaries: packed };
+      worker.postMessage(msg, [packed.buffer]);
+    });
+  }
+
   /** Abort the current Monte Carlo job (workers are terminated and recreated on demand). */
   cancel(): void {
     const job = this.job;
-    if (!job) return;
+    const agg = this.aggJob;
+    if (!job && !agg) return;
     this.job = null;
+    this.aggJob = null;
     this.terminateRunWorkers();
-    job.reject(new CancelledError());
+    job?.reject(new CancelledError());
+    agg?.reject(new CancelledError());
   }
 
   /** Re-simulate one run with a full trace. A newer replay request supersedes an older one. */
@@ -184,6 +213,16 @@ export class SimPool {
   }
 
   private onRunMessage(worker: Worker, msg: WorkerResponse): void {
+    const agg = this.aggJob;
+    if (agg && msg.jobId === agg.jobId) {
+      if (msg.type === 'aggregate') {
+        this.aggJob = null;
+        agg.resolve(msg.agg);
+      } else if (msg.type === 'error') {
+        this.fail(new Error(msg.message));
+      }
+      return;
+    }
     const job = this.job;
     if (!job) return;
     const chunk = job.inFlight.get(msg.jobId);
@@ -205,6 +244,7 @@ export class SimPool {
         this.fail(new Error(msg.message));
         break;
       case 'replay':
+      case 'aggregate':
         break;
     }
   }
@@ -228,9 +268,12 @@ export class SimPool {
 
   private fail(err: Error): void {
     const job = this.job;
+    const agg = this.aggJob;
     this.job = null;
+    this.aggJob = null;
     this.terminateRunWorkers();
     job?.reject(err);
+    agg?.reject(err);
   }
 
   private terminateRunWorkers(): void {
