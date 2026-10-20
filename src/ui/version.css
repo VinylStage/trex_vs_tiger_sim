@@ -1,0 +1,307 @@
+/* ---------- header badge ---------- */
+
+.brand-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+}
+
+.version-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.version-badge:hover {
+  background: var(--surface-2);
+  color: var(--fg);
+}
+
+.version-badge-num {
+  color: var(--fg);
+  font-weight: 650;
+}
+
+/*
+ * All status labels share one grid cell, so the slot is as wide as the longest label from the first
+ * paint and a status change never resizes the badge or reflows the header (no layout shift).
+ */
+.version-badge-status {
+  display: inline-grid;
+  justify-items: start;
+}
+
+.version-badge-status > * {
+  grid-area: 1 / 1;
+}
+
+.version-badge-status > :not(.is-current) {
+  visibility: hidden;
+}
+
+.version-badge-dot {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--c-draw);
+}
+
+.version-badge[data-state='latest'] .version-badge-dot {
+  background: var(--c-latched);
+}
+
+/* The accent marks the border and the dot only: as label colour it is below 4.5:1 on the badge. */
+.version-badge[data-state='update'] {
+  border-color: var(--accent);
+  color: var(--fg);
+}
+
+.version-badge[data-state='update'] .version-badge-dot {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+.version-badge[data-state='error'] .version-badge-dot {
+  background: transparent;
+  border: 1.5px solid var(--muted);
+}
+
+.version-badge[data-state='checking'] .version-badge-dot {
+  animation: version-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes version-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+/* ---------- dialog ---------- */
+
+.version-dialog {
+  width: min(30rem, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: 0 16px 48px rgb(0 0 0 / 0.22);
+}
+
+.version-dialog::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+.version-dialog-body {
+  display: grid;
+  gap: 14px;
+  padding: var(--pad);
+}
+
+.version-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.version-dialog h2 {
+  font-size: 1.1rem;
+}
+
+.version-msg {
+  padding: 10px 12px;
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  font-size: 0.875rem;
+}
+
+.version-msg[data-state='update'] {
+  border: 1px solid var(--warn-border);
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+}
+
+.version-msg[data-state='error'] {
+  border: 1px solid var(--danger-border);
+  background: var(--error-bg);
+  color: var(--error-fg);
+}
+
+.version-facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.version-facts dt {
+  color: var(--muted);
+}
+
+.version-facts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.version-links {
+  font-size: 0.875rem;
+}
+
+/* --accent is 4.42:1 on the light dialog surface; this shade reaches 6:1 (dark: 4.64:1 as is). */
+.version-links a {
+  color: #1f62b8;
+}
+
+@media (prefers-color-scheme: dark) {
+  .version-links a {
+    color: var(--accent);
+  }
+}
+
+.version-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.version-actions .btn {
+  white-space: normal;
+  text-align: center;
+}
+
+.version-actions .btn[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.version-confirm {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--warn-border);
+  border-radius: var(--radius-small);
+  background: var(--warn-bg);
+  color: var(--warn-fg);
+  font-size: 0.875rem;
+}
+
+.version-confirm h3 {
+  font-size: 0.95rem;
+}
+
+.version-confirm h3:focus {
+  outline: none;
+}
+
+@media (max-width: 420px) {
+  .version-facts {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .version-facts dd + dt {
+    margin-top: 8px;
+  }
+
+  .version-actions .btn {
+    flex: 1 1 100%;
+  }
+}
+
+/*
+ * ---------- update banner ----------
+ * Fixed, so it never shifts the layout, and docked to the bottom edge, so it never covers the header.
+ * On the two-column layout it sits bottom right, over the results column. Below 1000 px it is
+ * centred and rises above the config panel's run bar while that bar is stuck to the bottom edge:
+ * version.ts measures the bar into --update-banner-lift, applied with `translate`, which does not
+ * count as a layout shift. version.ts also sets scroll-padding-bottom while the banner is shown.
+ */
+
+.update-banner {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 9;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 0.875rem;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.18);
+  translate: 0 calc(-1 * var(--update-banner-lift, 0px));
+  transition: translate 0.15s ease-out;
+  animation: update-banner-in 0.2s ease-out;
+}
+
+.update-banner-text {
+  flex: 1 1 14rem;
+  min-height: 1.3em;
+}
+
+.update-banner-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+@keyframes update-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@media (min-width: 1000px) {
+  .update-banner {
+    left: auto;
+    right: 16px;
+    bottom: 16px;
+    max-width: min(30rem, calc(100vw - 32px));
+    margin: 0;
+    translate: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .version-badge[data-state='checking'] .version-badge-dot,
+  .update-banner {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* ---------- footer ---------- */
+
+.version-footer {
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}

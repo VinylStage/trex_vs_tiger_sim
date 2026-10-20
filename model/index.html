@@ -1,0 +1,957 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>모델 설명: 몬테카를로 에이전트 기반 전투 모델 – 티렉스 대 호랑이</title>
+    <meta
+      name="description"
+      content="티라노사우루스 vs 호랑이 시뮬레이터의 모델을 쉬운 말로 설명합니다. 삼각분포와 라틴 하이퍼큐브 샘플링, 개체 변동, 물기·매달리기·출혈·사기 규칙, 승패 판정, 윌슨 신뢰구간과 스피어만 민감도, 재현성과 한계."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/src/pages/site.css" />
+    <script type="module" src="/src/pages/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <a class="site-brand" href="/">
+          <img src="/favicon.svg" alt="" width="32" height="32" />
+          <span>티렉스 대 호랑이</span>
+        </a>
+        <nav class="site-nav" aria-label="사이트 메뉴">
+          <ul class="site-nav-list">
+            <li><a class="site-nav-link" href="/" data-page="simulator">시뮬레이터</a></li>
+            <li><a class="site-nav-link" href="/guide/" data-page="guide">사용 방법</a></li>
+            <li><a class="site-nav-link" href="/model/" data-page="model">모델 설명</a></li>
+            <li>
+              <a class="site-nav-link" href="/parameters/" data-page="parameters">파라미터</a>
+            </li>
+            <li><a class="site-nav-link" href="/about/" data-page="about">소개</a></li>
+          </ul>
+        </nav>
+        <a class="lang-switch" href="/en/model/" hreflang="en" lang="en" data-lang-switch
+          >English</a
+        >
+      </div>
+    </header>
+    <main id="main" class="site-main">
+      <article class="page">
+        <header class="page-head">
+          <nav class="eyebrow breadcrumb" aria-label="이동 경로" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/">티렉스 대 호랑이</a></li>
+              <li aria-current="page">모델 설명</li>
+            </ol>
+          </nav>
+          <h1>모델 설명: 몬테카를로 에이전트 기반 전투 모델은 어떻게 동작하나</h1>
+          <p class="lead">
+            시뮬레이터가 전투 한 판을 어떻게 계산하고, 수많은 전투를 어떻게 확률과 통계로 요약하는지
+            쉬운 말로 설명합니다. 수식과 상수는 실제 엔진 코드와 같고, 각 가정의 한계도 함께
+            적었습니다.
+          </p>
+          <p class="page-meta">
+            최종 수정 <time datetime="2026-10-20">2026년 10월 20일</time> · 읽는 데 약 15분
+          </p>
+        </header>
+
+        <nav class="toc" aria-labelledby="toc-title">
+          <h2 id="toc-title">목차</h2>
+          <ol>
+            <li><a href="#summary">한눈에 보기</a></li>
+            <li><a href="#purpose">질문과 면책</a></li>
+            <li><a href="#monte-carlo">몬테카를로 방법이란</a></li>
+            <li><a href="#uncertainty">두 층의 불확실성</a></li>
+            <li><a href="#battle">전투 한 판의 진행</a></li>
+            <li><a href="#damage">체력, 피해, 출혈</a></li>
+            <li><a href="#trex">티라노사우루스의 행동</a></li>
+            <li><a href="#tigers">호랑이의 행동</a></li>
+            <li><a href="#tactics">호랑이 전술</a></li>
+            <li><a href="#morale">사기와 도주</a></li>
+            <li><a href="#outcomes">승패 판정</a></li>
+            <li><a href="#statistics">결과 통계</a></li>
+            <li><a href="#reproducibility">재현성</a></li>
+            <li><a href="#results">기본 가정에서의 예비 결과</a></li>
+            <li><a href="#tigers-win">호랑이가 이기려면?</a></li>
+            <li><a href="#limitations">한계와 향후 과제</a></li>
+            <li><a href="#references">참고 문헌</a></li>
+          </ol>
+        </nav>
+
+        <div class="page-body">
+          <section id="summary">
+            <h2>한눈에 보기</h2>
+            <ul>
+              <li>
+                <strong>에이전트 기반</strong>: T-Rex와 호랑이 한 마리 한 마리가 위치, 체력,
+                스태미나, 사기를 가진 개체(에이전트)로 움직이며, 0.1초마다 정해진 규칙에 따라
+                판단하고 행동합니다.
+              </li>
+              <li>
+                <strong>몬테카를로</strong>: 정확히 알 수 없는 22개 능력치를 실행마다 범위 안에서
+                다르게 뽑아 같은 시나리오를 수백에서 수천 번 반복하고, 승패 비율과 분포를 셉니다.
+              </li>
+              <li>
+                <strong>불확실성 두 층</strong>: 실행 단위로는 “그 종의 진짜 값을 모른다”는
+                불확실성을, 개체 단위로는 “같은 종이라도 개체마다 다르다”는 변동을 넣습니다.
+              </li>
+              <li>
+                <strong>결과는 가정의 함수</strong>: 기본 가정에서는 T-Rex 10마리가 호랑이 100마리를
+                거의 항상 이깁니다. 하지만 사기를 끄고 호랑이의 공격력이나 마릿수를 크게 늘리면
+                결과가 뒤집힐 수 있습니다. 이 모델이 보여 주려는 것은 바로 그 민감도입니다.
+              </li>
+            </ul>
+          </section>
+
+          <section id="purpose">
+            <h2>질문과 면책</h2>
+            <p>
+              이 시뮬레이터는 놀이터에서 나올 법한 질문에서 출발했습니다. “티라노사우루스 N마리와
+              호랑이 M마리가 탁 트인 들판에서 싸우면 누가 이길까?” 이런 질문에는 정답이 없습니다.
+              대신 이 모델은 답을 정하는 데 필요한 가정을 하나도 빠짐없이 드러내고, 그 가정이 바뀔
+              때 답이 어떻게 바뀌는지 보여 주는 것을 목표로 합니다.
+            </p>
+            <div class="warning">
+              <ul>
+                <li>
+                  <i>T. rex</i>는 약 6,800만–6,600만 년 전 백악기 후기에, 호랑이는 플라이스토세
+                  이후에 산 동물입니다.
+                  <strong
+                    >두 동물은 함께 산 적이 없고, 이런 싸움은 한 번도 일어난 적이 없습니다.</strong
+                  >
+                </li>
+                <li>
+                  매달리기, 떨쳐내기, 출혈, 사기, 집단 전술 같은 상호작용 규칙은 모두 가정입니다. 각
+                  파라미터가 문헌에 근거한 것인지, 추정인지는
+                  <a href="/parameters/">파라미터 설명</a>에 표시했습니다.
+                </li>
+                <li>
+                  호랑이는 혼자 매복해 사냥하는 동물입니다. 다 자란 호랑이 여러 마리가 협력해 큰
+                  동물을 공격한 기록은 없으므로, 모델의 두 가지 호랑이 전술은 모두 가상의
+                  행동입니다.
+                </li>
+                <li>
+                  화면의 승률은 “이 가정 아래에서 모델이 내놓는 값”입니다. 실제 동물에 대한 예측으로
+                  읽으면 안 됩니다.
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <section id="monte-carlo">
+            <h2>몬테카를로 방법이란</h2>
+            <p>
+              몬테카를로 방법은 답을 공식 하나로 구하기 어려울 때, 무작위성을 넣은 실험을 아주 많이
+              반복해 결과의 분포를 얻는 방법입니다. 이름은 카지노로 유명한 모나코의 몬테카를로에서
+              왔습니다.
+            </p>
+            <p>
+              이 시뮬레이터에서 실험 한 번은 전투 한 판입니다. 실행마다 T-Rex의 무는 힘, 호랑이의
+              매달리기 성공률 같은 값을 미리 정한 범위 안에서 새로 뽑고, 그 값으로 전투를 처음부터
+              끝까지 계산합니다. 500번을 반복해 T-Rex가 480번 이겼다면 T-Rex 승률의 추정값은
+              96%입니다. 반복 횟수가 많을수록 추정은 안정되고, 신뢰구간으로 그 정밀도를 나타냅니다.
+            </p>
+            <p>
+              중요한 점은 이 확률이 “싸움마다 운이 따른다”는 우연뿐 아니라 “우리가 능력치를 정확히
+              모른다”는 무지까지 함께 담고 있다는 것입니다. 그래서 범위를 좁히거나 넓히면 확률도
+              함께 달라집니다.
+            </p>
+          </section>
+
+          <section id="uncertainty">
+            <h2>두 층의 불확실성</h2>
+            <h3>1층: 실행 단위의 불확실성 (모르는 값)</h3>
+            <p>
+              예를 들어 T-Rex의 무는 힘은 연구에 따라 약 8.5 kN에서 57 kN까지 추정치가 다릅니다.
+              그래서 각 파라미터를 하나의 숫자가 아니라 <strong>삼각분포</strong>로 표현합니다.
+              삼각분포는 최소, 최빈(가장 그럴듯한 값), 최대 세 숫자로 정의되며, 최빈값 근처가 가장
+              자주 뽑히고 양 끝으로 갈수록 드물게 뽑힙니다. 22개 파라미터가 각자 이런 분포를 가지며,
+              실행마다 파라미터당 값 하나를 뽑습니다.
+            </p>
+            <p>값을 뽑는 방식은 두 가지 중에서 고를 수 있습니다.</p>
+            <ul>
+              <li>
+                <strong>LHS(라틴 하이퍼큐브 샘플링, 기본값)</strong>: 각 파라미터의 0–1 구간을 실행
+                횟수만큼 같은 너비의 칸으로 나누고, 칸마다 정확히 한 번씩 값을 뽑은 뒤 순서를
+                섞습니다. 그래서 적은 실행으로도 범위의 양 끝까지 고르게 덮습니다. 파라미터마다
+                독립적으로 섞으므로 파라미터 사이의 상관은 따로 조절하지 않습니다.
+              </li>
+              <li>
+                <strong>단순 무작위</strong>: 모든 값을 서로 독립적으로 뽑습니다. 실행 횟수가 충분히
+                많으면 LHS와 결과가 같아지지만, 적을 때는 LHS보다 들쭉날쭉합니다.
+              </li>
+            </ul>
+            <p>
+              두 방식 모두 0–1 사이의 수 u를 삼각분포의 역누적분포함수에 넣어 실제 값으로 바꿉니다.
+              최소를 a, 최빈을 c, 최대를 b라고 하면 다음과 같습니다.
+            </p>
+            <p class="formula">
+              u &lt; (c−a)/(b−a)이면 x = a + √(u·(b−a)·(c−a)), 그렇지 않으면 x = b −
+              √((1−u)·(b−a)·(b−c))
+            </p>
+            <h3>2층: 개체 단위의 변동 (서로 다른 개체)</h3>
+            <p>
+              같은 실행 안에서도 동물은 저마다 다릅니다. 개체 변동이 적용되는 파라미터는 동물마다
+              독립적으로 배율 f를 하나씩 받습니다. f는 평균 1, 표준편차 CV(기본 0.08)인 정규분포에서
+              뽑되, 0.5–1.5 바깥이면 다시 뽑습니다(16번 안에 범위 안의 값이 나오지 않으면 1). 개체의
+              값은 “실행 값 × f”를 허용 범위 안으로 자른 값입니다.
+            </p>
+            <ul>
+              <li>CV를 0으로 두면 모든 개체가 그 실행의 값을 그대로 씁니다.</li>
+              <li>
+                물기 치명도, 몸 반경, 출혈률 세 파라미터는 실행 단위로만 정해지고 모든 개체가 같은
+                값을 씁니다.
+              </li>
+              <li>호랑이의 순항 속도는 같은 개체의 질주 속도를 넘지 않도록 맞춥니다.</li>
+            </ul>
+          </section>
+
+          <section id="battle">
+            <h2>전투 한 판의 진행</h2>
+            <h3>경기장과 배치</h3>
+            <p>
+              경기장은 한 변이 L(기본 600 m)인 장애물 없는 정사각형 평지입니다. 두 무리 사이의
+              간격은 200 m와 0.4L 중 작은 값입니다. T-Rex는 경기장 왼쪽에 세로 한 줄로 서서 호랑이
+              쪽을 바라보며, 서로 최대 15 m 간격으로 배치됩니다. 호랑이는 오른쪽의 원 안에 무작위로
+              흩어져 시작합니다. 기본 설정이면 두 무리는 약 200 m 떨어진 곳에서 출발합니다.
+            </p>
+            <h3>0.1초 단위의 시간</h3>
+            <p>엔진은 시간을 0.1초씩 나눠 계산합니다. 한 단계(틱)마다 다음 순서로 진행됩니다.</p>
+            <ol class="steps">
+              <li>공간 격자를 다시 만들어 가까운 동물을 빠르게 찾을 수 있게 합니다.</li>
+              <li>T-Rex마다 매달린 호랑이 수와 그 무게 합을 셉니다.</li>
+              <li>
+                살아 있는 T-Rex가 차례로 목표를 고르고, 몸을 돌리고, 움직이고, 물고, 출혈 피해를
+                받습니다.
+              </li>
+              <li>호랑이가 차례로 도주 여부를 확인하고 상태에 맞게 행동합니다.</li>
+              <li>체력이 0 이하가 된 T-Rex를 사망 처리하고, 승패가 났는지 확인합니다.</li>
+            </ol>
+            <p>
+              호랑이는 죽는 즉시 전투에서 빠지지만, T-Rex는 그 틱이 끝날 때 사망 처리됩니다. 같은 틱
+              안에서는 동물을 번호 순서대로 갱신하므로 순서가 결과에 아주 약간 영향을 줄 수
+              있습니다.
+            </p>
+          </section>
+
+          <section id="damage">
+            <h2>체력, 피해, 출혈</h2>
+            <ul>
+              <li>
+                <strong>체력(HP)</strong>: 두 종 모두 체중 1 kg당 1 HP입니다. 체중 8,000 kg인
+                T-Rex는 8,000 HP, 180 kg인 호랑이는 180 HP로 시작합니다. 이것은 생리학 법칙이 아니라
+                피해를 같은 단위로 다루기 위한 모델링 약속입니다.
+              </li>
+              <li>
+                <strong>T-Rex의 물기</strong>: 한 번 명중할 때의 피해는
+                <span class="formula-inline">무는 힘(kN) × 물기 치명도(HP/kN) × U(0.7, 1.3)</span
+                >입니다. U(0.7, 1.3)은 0.7과 1.3 사이의 균등한 무작위 배율입니다. 기본 최빈값이면
+                196–364 HP로, 호랑이 한 마리를 대개 한 번에 쓰러뜨립니다.
+              </li>
+              <li>
+                <strong>호랑이의 공격</strong>: T-Rex에 매달려 있는 동안 0.1초마다 “초당 피해 ×
+                0.1”만큼 피해를 줍니다. 이 피해는 T-Rex의 누적 상처에도 더해집니다.
+              </li>
+              <li>
+                <strong>출혈</strong>: 살아 있는 T-Rex는 매초 “누적 상처 × 출혈률”만큼 체력을
+                잃습니다. 예를 들어 출혈률 0.002/s에서 호랑이에게 1,000 HP의 상처를 입은 T-Rex는 그
+                뒤로 매초 2 HP를 잃습니다. 상처는 아물지 않으며, 출혈 피해는 상처 누적에 다시
+                더해지지 않습니다.
+              </li>
+            </ul>
+            <p>
+              출혈은 사기를 끈 긴 소모전에서 특히 중요합니다. 상처 W를 입은 뒤 T초가 지나면 출혈로
+              대략 W × 출혈률 × T만큼을 더 잃기 때문입니다. W = 1,000 HP, 출혈률 0.002/s, T =
+              300초라면 약 600 HP입니다.
+            </p>
+          </section>
+
+          <section id="trex">
+            <h2>티라노사우루스의 행동</h2>
+            <h3>목표 고르기와 이동</h3>
+            <ul>
+              <li>
+                T-Rex는 다른 동물에 매달려 있지 않고, 죽거나 경기장을 떠나지 않은 호랑이 가운데 가장
+                가까운 호랑이를 목표로 삼습니다. 도주하거나 회복 중인 호랑이도 목표가 될 수
+                있습니다.
+              </li>
+              <li>
+                0.5초마다 목표를 다시 고르고, 목표가 다른 T-Rex에 매달리거나 죽으면 즉시 다시
+                고릅니다.
+              </li>
+              <li>
+                몸의 방향은 0.1초마다 최대 “선회 속도 × 0.1”만큼만 바뀝니다. 거대한 몸의 회전 관성
+                때문에 빠르게 돌지 못한다는 가정입니다.
+              </li>
+              <li>목표가 물기 사거리의 80%보다 멀리 있을 때만 앞으로 나아갑니다.</li>
+              <li>
+                매달린 호랑이가 무거울수록 느려집니다. 속도에
+                <span class="formula-inline">max(0.3, 1 − 매달린 호랑이 무게 합 ÷ 자기 체중)</span
+                >을 곱합니다. 예를 들어 8,000 kg T-Rex에 180 kg 호랑이 다섯 마리가 매달리면 0.89배가
+                됩니다.
+              </li>
+              <li>목표와의 방향 차이가 60°보다 크면 속도가 절반이 됩니다.</li>
+            </ul>
+            <h3>물기</h3>
+            <p>
+              물기 재정비 시간이 끝나면 T-Rex는 입 앞의 부채꼴 영역 안에서 물 대상을 찾습니다.
+              대상은 몸 중심에서 “물기 사거리 + 0.8 m(호랑이 몸 반경)” 안에 있고, 정면에서 좌우로
+              “물기 각도” 안에 있어야 합니다. 물기 각도는 반각이므로 실제 부채꼴은 그 두 배입니다.
+            </p>
+            <ul>
+              <li>자기에게 매달린 호랑이가 가장 먼저이고, 없으면 가장 가까운 후보를 고릅니다.</li>
+              <li>후보가 없으면 다음 틱에 다시 찾습니다.</li>
+              <li>
+                물기를 시도하면 재정비 시간이 다시 시작되고, “물기 명중률”의 확률로 명중합니다.
+                매달린 호랑이를 물 때는 명중률이 1.5배가 됩니다(최대 0.95).
+              </li>
+              <li>물리고 살아남은 호랑이는 회복 상태로 물러나고 사기가 0.25 떨어집니다.</li>
+            </ul>
+            <div class="note">
+              <p>
+                <strong>기하학적 결과.</strong> 매달린 호랑이는 T-Rex 몸에 대해 고정된 위치를
+                유지하며 T-Rex와 함께 회전합니다. 그래서 옆구리나 등 뒤처럼 입이 닿지 않는 곳에
+                매달린 호랑이는 그 T-Rex가 직접 물 수 없습니다. 이런 호랑이는 떨쳐내기, 호랑이
+                자신의 스태미나 소진, 또는 다른 T-Rex의 물기로만 떼어낼 수 있습니다.
+              </p>
+            </div>
+            <h3>떨쳐내기</h3>
+            <p>
+              매달린 호랑이는 0.1초마다 각자 “떨쳐내기 빈도 × 0.1”의 확률로 내동댕이쳐집니다. 그래서
+              한 마리가 매달려 있는 평균 시간은 1 ÷ 떨쳐내기 빈도초입니다. 떨어진 호랑이는 자기 최대
+              체력의 10%를 잃고, 살아남으면 3 m 바깥으로 밀려나 회복 상태가 되며 사기가 0.1
+              떨어집니다.
+            </p>
+            <p>
+              T-Rex에게는 스태미나도, 사기도, 앞발 공격도 없습니다. 약 1 m 길이의 짧은 앞발은 싸움에
+              거의 쓸모가 없었다고 보는 연구를 따랐습니다.
+            </p>
+          </section>
+
+          <section id="tigers">
+            <h2>호랑이의 행동</h2>
+            <p>호랑이는 아래 상태 가운데 하나에 있으며, 상태에 따라 행동이 달라집니다.</p>
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-tiger-states"
+            >
+              <table>
+                <caption id="caption-tiger-states">
+                  호랑이의 행동 상태와 전환 조건
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">상태</th>
+                    <th scope="col">행동</th>
+                    <th scope="col">다음 상태로 바뀌는 조건</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">접근</th>
+                    <td>
+                      1초마다 목표 T-Rex를 고르고 다가갑니다. 목표에서 60 m보다 멀면 순항 속도로
+                      움직이며 스태미나를 조금씩 회복하고, 60 m 안에서는 질주 속도로 달리며
+                      스태미나를 씁니다.
+                    </td>
+                    <td>
+                      몸이 닿으면 “매달리기 성공률”로 매달림(실패하면 1초 뒤 재시도). 스태미나가
+                      바닥나면 회복.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">매달림</th>
+                    <td>
+                      T-Rex 몸에 붙어 함께 움직이며 매초 “초당 피해”를 줍니다. 매달려 있는 동안
+                      스태미나가 “매달리기 지구력”에 걸쳐 줄어듭니다.
+                    </td>
+                    <td>스태미나 소진, T-Rex 사망, 떨쳐내짐 → 회복. 사기가 무너지면 도주.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">회복</th>
+                    <td>
+                      스태미나를 순항 때보다 네 배 빠르게 회복합니다. T-Rex가 40 m 안에 있으면 순항
+                      속도로 멀어집니다.
+                    </td>
+                    <td>
+                      스태미나가 80% 이상이고, 물리거나 떨쳐진 뒤라면 최소 5초가 지났을 때 다시
+                      접근.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">도주</th>
+                    <td>
+                      가장 가까운 T-Rex의 반대 방향으로 달아납니다. 스태미나가 남아 있으면 질주하고,
+                      바닥나면 순항합니다. 도주 중에는 스태미나가 회복되지 않습니다.
+                    </td>
+                    <td>
+                      경기장 경계를 넘으면 이탈. 도주 중에도 T-Rex의 입 앞에 있으면 물릴 수
+                      있습니다.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">사망 · 이탈</th>
+                    <td>더 이상 전투에 참여하지 않습니다.</td>
+                    <td>—</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              몸이 “닿았다”는 것은 중심 사이의 거리가 T-Rex 몸 반경 + 0.8 m + 0.5 m 이하라는
+              뜻입니다(기본 반경이면 3.8 m). 매달린 호랑이는 T-Rex 중심에서 “몸 반경 + 0.8 m” 떨어진
+              자리에 고정됩니다.
+            </p>
+          </section>
+
+          <section id="tactics">
+            <h2>호랑이 전술</h2>
+            <dl class="facts">
+              <div>
+                <dt>정면 돌격</dt>
+                <dd>
+                  가장 가까운 살아 있는 T-Rex를 목표로 삼아 그 중심으로 곧장 달려갑니다. 접촉
+                  거리에서 멈추도록 한 걸음의 길이를 제한합니다.
+                </dd>
+              </div>
+              <div>
+                <dt>측면 포위 (기본)</dt>
+                <dd>
+                  “거리 + 20 m × 그 T-Rex에 이미 매달린 호랑이 수”가 가장 작은 T-Rex를 목표로 삼아
+                  공격을 여러 T-Rex에 분산합니다. 목표 지점은 T-Rex 몸 뒤쪽에서 자기 쪽으로 약 34°
+                  비켜난 곳입니다. T-Rex와의 거리가 “물기 사거리 + 4 m”보다 가깝고 정면에서 “물기
+                  각도 + 20°” 안에 있으면 위험 구역으로 보고, T-Rex가 바라보는 방향과 직각으로
+                  옆걸음질해 입 앞을 벗어납니다.
+                </dd>
+              </div>
+            </dl>
+            <p>
+              두 전술 모두 가상의 행동입니다. 다 자란 호랑이는 혼자 사냥하며, 여러 마리가 협력해 큰
+              먹이를 공격한 기록은 없습니다.
+            </p>
+          </section>
+
+          <section id="morale">
+            <h2>사기와 도주</h2>
+            <p>
+              사기는 호랑이에게만 있으며, 각 개체의 “초기 사기” 값에서 시작합니다. 호랑이가 자신을
+              크게 다치게 할 싸움을 피한다는 관찰을 단순화한 규칙입니다.
+            </p>
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-morale">
+              <table>
+                <caption id="caption-morale">
+                  사기를 바꾸는 사건
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">사건</th>
+                    <th scope="col">사기 변화</th>
+                    <th scope="col">사기 모델을 끄면</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">물리고 살아남음</th>
+                    <td>−0.25</td>
+                    <td>값은 줄지만 도주로 이어지지 않음</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">떨쳐지고 살아남음</th>
+                    <td>−0.10</td>
+                    <td>값은 줄지만 도주로 이어지지 않음</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">40 m 안에서 다른 호랑이가 죽음</th>
+                    <td>범위 안의 모든 호랑이가 각자의 “사기 손실”만큼</td>
+                    <td>적용 안 됨</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">자기 차례에 사기가 0.2 미만</th>
+                    <td>도주 상태로 바뀜(매달려 있었다면 떨어짐)</td>
+                    <td>도주하지 않음</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              기본값으로 예를 들면, 초기 사기 0.6인 호랑이는 두 번 물리고 살아남으면 0.6 → 0.35 →
+              0.10이 되어 도주합니다. 한 번 물린 뒤 근처에서 동료 두 마리가 죽어도(0.08씩) 0.6 →
+              0.35 → 0.19가 되어 도주합니다. 이 문턱값들은 추정입니다.
+            </p>
+          </section>
+
+          <section id="outcomes">
+            <h2>승패 판정</h2>
+            <p>
+              매 틱이 끝날 때 다음 조건을 순서대로 확인하고, 처음 만족하는 조건으로 전투가 끝납니다.
+            </p>
+            <ol class="steps">
+              <li>
+                <strong>호랑이 승리</strong>: T-Rex가 모두 죽었습니다. 마지막 T-Rex와 마지막
+                호랑이가 같은 틱에 쓰러지면 호랑이 승리로 칩니다.
+              </li>
+              <li>
+                <strong>T-Rex 승리</strong>: 싸우고 있는(접근·매달림·회복 상태인) 호랑이가 한 마리도
+                없습니다. 모든 호랑이가 죽었거나, 도주했거나, 경기장을 떠난 경우입니다. 따라서 T-Rex
+                승리에는 호랑이가 달아나서 끝난 전투도 포함됩니다.
+              </li>
+              <li><strong>무승부</strong>: 제한 시간에 도달했습니다.</li>
+            </ol>
+            <p>
+              전투마다 결과, 걸린 시간, 살아남은 T-Rex 수, 죽은·도주한·아직 싸우는 호랑이 수,
+              T-Rex의 남은 체력 비율, 그리고 민감도 분석에 쓰는 <strong>T-Rex 우세도</strong>(T-Rex
+              남은 체력 비율 − 아직 싸우는 호랑이 비율, −1에서 1 사이)를 기록합니다.
+            </p>
+          </section>
+
+          <section id="statistics">
+            <h2>결과 통계</h2>
+            <dl class="facts">
+              <div>
+                <dt>승패 확률</dt>
+                <dd>
+                  각 결과가 나온 실행의 비율입니다. 95% 신뢰구간은 윌슨 점수 구간으로 계산합니다.
+                  윌슨 구간은 확률이 0%나 100%에 가까울 때도 0–100% 안에 머무르는 장점이 있습니다.
+                </dd>
+              </div>
+              <div>
+                <dt>분포 요약</dt>
+                <dd>
+                  전투 시간, T-Rex 생존 수, 죽은 호랑이 수, 도주한 호랑이 수는 평균과 5%,
+                  50%(중앙값), 95% 분위수로 요약합니다. 전투 시간 히스토그램은 최대 30개 구간, 생존
+                  수 히스토그램은 마릿수마다 한 구간입니다.
+                </dd>
+              </div>
+              <div>
+                <dt>교환비</dt>
+                <dd>
+                  모든 실행을 합친 “죽은 호랑이 수 ÷ 잃은 T-Rex 수”입니다. 실행별 비율의 평균이
+                  아니라 합계의 비율입니다.
+                </dd>
+              </div>
+              <div>
+                <dt>민감도</dt>
+                <dd>
+                  파라미터마다 실행 단위 값과 T-Rex 우세도 사이의 스피어만 순위 상관계수 ρ를
+                  계산하고, 절댓값이 큰 순서로 정렬합니다. ρ의 표준오차는 대략 1/√(실행 횟수 −
+                  1)이므로 500회에서 약 0.045입니다. |ρ|가 0.1 안팎이면 잡음으로 보는 것이
+                  안전합니다.
+                </dd>
+              </div>
+              <div>
+                <dt>대표 전투</dt>
+                <dd>
+                  T-Rex 우세도가 전체의 중앙값에 가장 가까운 실행입니다. 같으면 번호가 작은 실행을
+                  고릅니다. 재생 화면이 처음 보여 주는 전투입니다.
+                </dd>
+              </div>
+            </dl>
+            <p>
+              T-Rex가 모든 실행에서 이기면 끝까지 싸우는 호랑이가 없으므로 T-Rex 우세도는 T-Rex의
+              남은 체력 비율과 같아집니다. 이때 민감도는 “무엇이 T-Rex의 체력 손실을 좌우하는가”를
+              보여 줍니다.
+            </p>
+          </section>
+
+          <section id="reproducibility">
+            <h2>재현성</h2>
+            <ul>
+              <li>
+                난수는 sfc32 생성기를 쓰며, splitmix32로 시드를 섞어 초기화합니다. 샘플링 설계와 각
+                전투는 마스터 시드에서 서로 다른 하위 시드를 받습니다.
+              </li>
+              <li>
+                전투 i의 결과는 설정과 i에만 달려 있습니다. 그래서 워커를 몇 개로 나눠 계산해도
+                결과가 똑같고, 재생 화면은 같은 전투를 다시 계산해 그대로 보여 줄 수 있습니다.
+              </li>
+              <li>
+                같은 브라우저 엔진에서는 결과가 비트 단위로 같습니다. 엔진이 다르면 삼각함수·로그
+                함수의 반올림이 달라 개별 전투가 갈라질 수 있지만, 통계적으로는 같은 결과를 냅니다.
+              </li>
+              <li>
+                샘플링 설계는 실행 횟수에 따라 달라집니다. 100회 실행의 7번째 전투와 500회 실행의
+                7번째 전투는 서로 다른 전투입니다.
+              </li>
+            </ul>
+          </section>
+
+          <section id="results">
+            <h2>기본 가정에서의 예비 결과</h2>
+            <p>
+              아래 표는 개발 중 엔진을 로컬에서 점검한 결과입니다(시드 20261019, 500회, LHS, T-Rex
+              10 vs 호랑이 100, 경기장 600 m, 제한 시간 1,200초, CV 0.08). 시드나 실행 횟수가 다르면
+              수치가 조금 달라질 수 있으니 참고용으로만 보세요.
+            </p>
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-results">
+              <table>
+                <caption id="caption-results">
+                  시나리오별 예비 결과 (각 500회)
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">시나리오</th>
+                    <th scope="col">T-Rex 승률 (95% CI)</th>
+                    <th scope="col">전투 시간 5% / 50% / 95% (초)</th>
+                    <th scope="col">죽은 호랑이 (평균)</th>
+                    <th scope="col">도주한 호랑이 (평균)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">사기 켬, 측면 포위 (기본)</th>
+                    <td>100% (99.2–100%)</td>
+                    <td>19 / 26 / 130</td>
+                    <td>14.1</td>
+                    <td>85.9</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">사기 켬, 정면 돌격</th>
+                    <td>100% (99.2–100%)</td>
+                    <td>18 / 23 / 89</td>
+                    <td>14.8</td>
+                    <td>85.2</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">사기 끔, 측면 포위</th>
+                    <td>100% (99.2–100%)</td>
+                    <td>155 / 332 / 672</td>
+                    <td>100</td>
+                    <td>0</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">사기 끔, 정면 돌격</th>
+                    <td>100% (99.2–100%)</td>
+                    <td>79 / 139 / 248</td>
+                    <td>100</td>
+                    <td>0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <ul>
+              <li>
+                사기를 켜면 T-Rex가 모든 실행에서 이기고 전투는 중앙값 약 26초 만에 끝납니다. 호랑이
+                약 14마리가 죽고, 나머지 약 86마리는 근처 동료의 죽음과 부상으로 사기가 무너져
+                달아납니다.
+              </li>
+              <li>
+                사기를 끄면 호랑이가 끝까지 싸우므로 전투가 중앙값 140–330초로 길어지고, 100마리가
+                모두 죽습니다. 그래도 500회 동안 죽은 T-Rex는 5,000마리 가운데 몇 마리에
+                불과했습니다.
+              </li>
+              <li>
+                민감도 상위에는 사기를 켰을 때 T-Rex의 무는 힘(ρ ≈ +0.43)과 호랑이의 사기
+                손실(+0.36)이, 사기를 껐을 때 호랑이의 초당 피해(ρ ≈ −0.50)가 올랐습니다.
+              </li>
+            </ul>
+          </section>
+
+          <section id="tigers-win">
+            <h2>호랑이가 이기려면?</h2>
+            <p>
+              기본값에서 한 가지씩만 바꿔 각 100회씩 점검한 결과입니다(시드 20261019, 측면 포위).
+              신뢰구간이 ±10%포인트 정도로 넓으니 경향만 보세요.
+            </p>
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-tigers-win">
+              <table>
+                <caption id="caption-tigers-win">
+                  가정을 하나씩 바꾼 결과 (각 100회)
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">바꾼 가정</th>
+                    <th scope="col">사기</th>
+                    <th scope="col">T-Rex 승</th>
+                    <th scope="col">호랑이 승</th>
+                    <th scope="col">무승부</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">없음</th>
+                    <td>끔</td>
+                    <td>99%</td>
+                    <td>0%</td>
+                    <td>1%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">초당 피해 10 / 20 / 40</th>
+                    <td>끔</td>
+                    <td>92%</td>
+                    <td>8%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">초당 피해 20 / 40 / 80</th>
+                    <td>끔</td>
+                    <td>54%</td>
+                    <td>46%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">출혈률 0.01 / 0.02 / 0.04</th>
+                    <td>끔</td>
+                    <td>84%</td>
+                    <td>16%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">호랑이 300마리</th>
+                    <td>끔</td>
+                    <td>78%</td>
+                    <td>21%</td>
+                    <td>1%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">호랑이 1,000마리</th>
+                    <td>끔</td>
+                    <td>0%</td>
+                    <td>100%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">호랑이 1,000마리</th>
+                    <td>켬</td>
+                    <td>97%</td>
+                    <td>3%</td>
+                    <td>0%</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">초당 피해 20 / 40 / 80</th>
+                    <td>켬</td>
+                    <td>100%</td>
+                    <td>0%</td>
+                    <td>0%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>호랑이에게 실제로 승산이 생기려면 여러 가정이 함께 바뀌어야 합니다.</p>
+            <ol>
+              <li>
+                <strong>사기가 없어야 합니다.</strong> 호랑이가 죽을 때까지 싸워야 합니다. 사기를
+                켜면 호랑이 1,000마리도 97%의 실행에서 달아나 패합니다.
+              </li>
+              <li>
+                <strong>그리고</strong> 다음 가운데 하나가 필요합니다. 기본값의 약 3–7배인 초당
+                피해, 약 10배인 출혈률, 또는 T-Rex 한 마리당 호랑이 약 30마리 이상(100마리면 모든
+                점검 실행에서 승리).
+              </li>
+              <li>
+                T-Rex의 살상력을 낮추는 것도 호랑이를 돕습니다. 무는 힘, 물기 치명도, 물기 명중률을
+                낮추거나 물기 간격을 늘리면 됩니다.
+              </li>
+            </ol>
+            <p>
+              이 모든 변화는 시뮬레이터에서 직접 시험해 볼 수 있습니다. 따라 하기 쉬운 순서는
+              <a href="/guide/#tutorial">사용 방법의 튜토리얼</a>에 있습니다.
+            </p>
+          </section>
+
+          <section id="limitations">
+            <h2>한계와 향후 과제</h2>
+            <h3>기하와 물리</h3>
+            <ul>
+              <li>
+                지형, 장애물, 높이가 없는 2차원 평지입니다. 호랑이가 기어오르거나 목을 노리는 행동은
+                없습니다.
+              </li>
+              <li>
+                몸은 원으로 단순화했고 동물끼리 충돌하지 않아, 같은 종끼리는 겹칠 수 있습니다.
+              </li>
+              <li>호랑이에게는 바라보는 방향이 없고, T-Rex의 꼬리와 앞발은 역할이 없습니다.</li>
+            </ul>
+            <h3>피해 모델</h3>
+            <ul>
+              <li>
+                체력은 개체당 하나의 수치입니다. 부위별 피해나 부상에 따른 능력 저하가 없어서, 다친
+                T-Rex도 느려지지 않고 회복한 호랑이는 다시 온전한 힘으로 싸웁니다.
+              </li>
+              <li>1 kg당 1 HP라는 약속 때문에 두 종 모두 피해가 체중에 비례합니다.</li>
+              <li>출혈은 누적 상처에 비례해 영원히 이어지며 지혈되지 않습니다.</li>
+            </ul>
+            <h3>행동</h3>
+            <ul>
+              <li>T-Rex는 지치지도, 겁먹지도, 달아나지도 않습니다.</li>
+              <li>호랑이 전술은 미리 정한 규칙이며, 의사소통이나 학습이 없습니다.</li>
+              <li>물기 명중률, 각도, 간격은 전투 내내 일정합니다.</li>
+            </ul>
+            <h3>통계</h3>
+            <ul>
+              <li>
+                개체 배율은 파라미터마다 독립적입니다. 무거운 호랑이가 자동으로 더 강하지는
+                않습니다.
+              </li>
+              <li>
+                LHS의 열은 서로 독립이라, 예를 들어 T-Rex의 체중과 무는 힘 사이의 상관이 없습니다.
+              </li>
+              <li>스피어만 ρ는 한 파라미터씩 본 단조 관계만 잡아내며 상호작용은 놓칩니다.</li>
+              <li>
+                물기 치명도, 명중률, 초당 피해, 출혈률, 사기 같은 추정 파라미터에 대한 결과는 그
+                추정이 맞는 만큼만 믿을 수 있습니다.
+              </li>
+            </ul>
+            <h3>향후 과제</h3>
+            <p>
+              소볼(Sobol) 분산 기반 민감도 지수, 지형과 장애물, 부상에 따른 능력 저하, T-Rex의 피로,
+              파라미터 사이의 상관을 반영한 샘플링, 어린 T-Rex와 다른 포식자 프리셋, 대형 고양잇과
+              동물이 큰 먹이를 공격한 기록에 맞춘 보정 등을 검토하고 있습니다.
+            </p>
+          </section>
+
+          <section id="references">
+            <h2>참고 문헌</h2>
+            <p>
+              파라미터별 근거는 <a href="/parameters/">파라미터 설명</a>에 있습니다. 주요 문헌은
+              다음과 같습니다.
+            </p>
+            <h3>티라노사우루스</h3>
+            <ul>
+              <li>
+                Erickson G.M. et al. (2004). Gigantism and comparative life-history parameters of
+                tyrannosaurid dinosaurs. <i>Nature</i> 430, 772–775.
+                <a href="https://doi.org/10.1038/nature02699">doi:10.1038/nature02699</a>
+              </li>
+              <li>
+                Persons W.S., Currie P.J., Erickson G.M. (2019). An older and exceptionally large
+                adult specimen of <i>Tyrannosaurus rex</i>. <i>The Anatomical Record</i>.
+                <a href="https://doi.org/10.1002/ar.24118">doi:10.1002/ar.24118</a>
+              </li>
+              <li>
+                Hutchinson J.R., Garcia M. (2002). <i>Tyrannosaurus</i> was not a fast runner.
+                <i>Nature</i> 415, 1018–1021.
+                <a href="https://doi.org/10.1038/4151018a">doi:10.1038/4151018a</a>
+              </li>
+              <li>
+                Sellers W.I. et al. (2017). Investigating the running abilities of
+                <i>Tyrannosaurus rex</i> using stress-constrained multibody dynamic analysis.
+                <i>PeerJ</i> 5, e3420.
+                <a href="https://peerj.com/articles/3420/">peerj.com/articles/3420</a>
+              </li>
+              <li>
+                Hutchinson J.R., Ng-Thow-Hing V., Anderson F.C. (2007). A 3D interactive method for
+                estimating body segmental parameters in animals.
+                <i>Journal of Theoretical Biology</i> 246, 660–680.
+                <a href="https://doi.org/10.1016/j.jtbi.2007.01.023"
+                  >doi:10.1016/j.jtbi.2007.01.023</a
+                >
+              </li>
+              <li>
+                Gignac P.M., Erickson G.M. (2017). The biomechanics behind extreme osteophagy in
+                <i>Tyrannosaurus rex</i>. <i>Scientific Reports</i> 7, 2012.
+                <a href="https://doi.org/10.1038/s41598-017-02161-w"
+                  >doi:10.1038/s41598-017-02161-w</a
+                >
+              </li>
+              <li>
+                Bates K.T., Falkingham P.L. (2012). Estimating maximum bite performance in
+                <i>Tyrannosaurus rex</i> using multi-body dynamics. <i>Biology Letters</i> 8,
+                660–664.
+                <a href="https://doi.org/10.1098/rsbl.2012.0056">doi:10.1098/rsbl.2012.0056</a>
+              </li>
+              <li>
+                Padian K. (2022). Why tyrannosaurid forelimbs were so short: An integrative
+                hypothesis.
+                <i>Acta Palaeontologica Polonica</i> 67(1).
+              </li>
+            </ul>
+            <h3>호랑이</h3>
+            <ul>
+              <li>
+                Schaller G.B. (1967). <i>The Deer and the Tiger: A Study of Wildlife in India</i>.
+                University of Chicago Press.
+              </li>
+              <li>
+                Wilson A.M. et al. (2018). Biomechanics of predator–prey arms race in lion, zebra,
+                cheetah and impala. <i>Nature</i> 554, 183–188.
+                <a href="https://doi.org/10.1038/nature25479">doi:10.1038/nature25479</a>
+              </li>
+              <li>
+                Wroe S., McHenry C., Thomason J. (2005). Bite club: comparative bite force in big
+                biting mammals and the prediction of predatory behaviour in fossil taxa.
+                <i>Proc. R. Soc. B</i> 272, 619–625.
+                <a href="https://doi.org/10.1098/rspb.2004.2986">doi:10.1098/rspb.2004.2986</a>
+              </li>
+              <li>
+                Hayward M.W., Jędrzejewski W., Jędrzejewska B. (2012). Prey preferences of the tiger
+                <i>Panthera tigris</i>. <i>Journal of Zoology</i> 286, 221–231.
+                <a href="https://doi.org/10.1111/j.1469-7998.2011.00871.x"
+                  >doi:10.1111/j.1469-7998.2011.00871.x</a
+                >
+              </li>
+            </ul>
+            <p>
+              전체 목록과 엔진 상수 표는 저장소의
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/MODEL.md"
+                >MODEL.md</a
+              >에 있습니다. 문서와 코드가 다르면 코드가 기준이며, 그런 차이를 발견하면
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim/issues">GitHub 이슈</a>로
+              알려 주세요.
+            </p>
+          </section>
+
+          <aside class="cta">
+            <p>
+              <strong>가정을 직접 바꿔 보세요.</strong> 모든 범위는 시뮬레이터에서 수정할 수
+              있습니다.
+            </p>
+            <a class="button" href="/">시뮬레이터 열기</a>
+          </aside>
+        </div>
+      </article>
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <p class="footer-disclaimer" data-i18n="footer.disclaimer">
+          T. rex와 호랑이는 같은 시대에 산 적이 없고, 모든 상호작용 규칙은 가정입니다. 결과는
+          불확실한 입력에 따라 승패가 어떻게 달라지는지 보여 주는 교육용 모델일 뿐 실제 싸움의
+          예측이 아니며, 이 사이트는 실제 동물 싸움을 조장하거나 지지하지 않습니다.
+        </p>
+        <ul class="footer-links" aria-label="사이트 정보와 링크" data-i18n-aria="footer.linksLabel">
+          <li><a href="/about/" data-footer="about">소개 · 문의</a></li>
+          <li><a href="/privacy/" data-footer="privacy">개인정보처리방침</a></li>
+          <li><a href="/license/" data-footer="license">라이선스</a></li>
+          <li>
+            <a
+              href="https://github.com/VinylStage/trex_vs_tiger_sim"
+              rel="noopener"
+              data-footer="source"
+              >소스 코드 (GitHub)</a
+            >
+          </li>
+          <li>
+            <a href="https://vinylims.com" rel="me noopener" data-footer="blog"
+              >블로그 (Vinyl’s Log)</a
+            >
+          </li>
+          <li>
+            <a href="https://link.vinylims.com" rel="me noopener" data-footer="linktree"
+              >Linktree</a
+            >
+          </li>
+        </ul>
+        <p class="footer-meta">
+          <span data-i18n="footer.local">시뮬레이션은 모두 브라우저에서 실행됩니다.</span>
+          <span data-i18n="footer.copyright">© 2026 VinylStage · MIT 라이선스 오픈 소스</span>
+          <a
+            class="version-footer"
+            href="https://github.com/VinylStage/trex_vs_tiger_sim/releases"
+            rel="noopener"
+            title="릴리스 노트 보기"
+            data-i18n-title="version.footerTitle"
+            ><span data-i18n="version.footer">버전</span>
+            <span class="version-footer-num" data-app-version></span
+          ></a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

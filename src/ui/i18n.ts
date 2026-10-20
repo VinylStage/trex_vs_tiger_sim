@@ -1,20 +1,67 @@
-import type { ParamId } from '../sim/params';
+import type { ParamId } from '../sim/params.ts';
 
 export type Lang = 'ko' | 'en';
 export const LANGS: readonly Lang[] = ['ko', 'en'];
 export const DEFAULT_LANG: Lang = 'ko';
-const STORAGE_KEY = 'trexsim.lang';
 
 const ko = {
-  'app.title': '티라노사우루스 vs 호랑이 시뮬레이터',
-  'app.shortTitle': 'T-Rex vs 호랑이',
-  'app.tagline': '몬테카를로 에이전트 기반 전투 시뮬레이션 — 모든 계산은 브라우저에서',
+  'app.title': '티렉스 대 호랑이 시뮬레이터',
+  'app.shortTitle': '티렉스 대 호랑이',
+  'app.tagline': '티라노사우루스 vs 호랑이 · 몬테카를로 방법으로 배우는 교육용 시뮬레이션',
+  'app.documentTitle': '티렉스 대 호랑이 시뮬레이터 – 티라노사우루스 vs 호랑이, 누가 이길까?',
   'lang.switch': 'English',
   'lang.switchAria': 'Switch the interface to English',
   'share.copy': '링크 복사',
   'share.hint': '현재 설정을 URL로 공유합니다. 시드가 포함되므로 같은 결과가 재현됩니다.',
   'share.copied': '링크를 복사했습니다.',
   'share.failed': '복사하지 못했습니다. 주소창의 URL을 직접 복사하세요.',
+
+  'nav.label': '사이트 메뉴',
+  'breadcrumb.label': '이동 경로',
+  'nav.simulator': '시뮬레이터',
+  'nav.guide': '사용 방법',
+  'nav.model': '모델 설명',
+  'nav.parameters': '파라미터',
+  'nav.about': '소개',
+  'nav.privacy': '개인정보처리방침',
+  'nav.license': '라이선스',
+  'version.badgeTitle': '버전 정보와 업데이트 확인',
+  'version.status.checking': '확인 중',
+  'version.status.latest': '최신',
+  'version.status.newer': '새 버전',
+  'version.status.rebuild': '새 빌드',
+  'version.status.changed': '변경됨',
+  'version.status.error': '확인 불가',
+  'version.dialogTitle': '버전 정보',
+  'version.current': '현재 버전',
+  'version.builtAt': '빌드 시각',
+  'version.deployed': '배포된 최신 버전',
+  'version.checkedAt': '마지막 확인',
+  'version.unknown': '알 수 없음',
+  'version.msg.checking': '배포된 최신 버전을 확인하는 중입니다…',
+  'version.msg.latest': '최신 버전을 사용하고 있습니다.',
+  'version.msg.newer': '새 버전이 배포되었습니다. 아래 버튼으로 불러오세요.',
+  'version.msg.rebuild': '같은 버전에 새 변경 사항이 배포되었습니다. 아래 버튼으로 불러오세요.',
+  'version.msg.changed': '지금 배포된 버전이 이 페이지와 다릅니다. 아래 버튼으로 불러오세요.',
+  'version.msg.error':
+    '배포 정보를 가져오지 못했습니다. 네트워크 연결을 확인한 뒤 “다시 확인”을 누르세요.',
+  'version.recheck': '다시 확인',
+  'version.releaseNotes': '릴리스 노트 (GitHub)',
+  'version.reload': '최신 버전 불러오기 (캐시·저장소 초기화)',
+  'version.confirmTitle': '캐시와 저장소를 초기화할까요?',
+  'version.confirmBody':
+    '이 사이트가 브라우저에 저장한 캐시와 데이터를 지운 뒤 최신 버전을 다시 불러옵니다. 튜토리얼 안내를 닫았거나 마친 기록이 초기화됩니다. 지금 시나리오 설정과 언어는 주소(URL)에 담겨 있어 그대로 유지됩니다.',
+  'version.confirm': '초기화하고 불러오기',
+  'version.cancel': '취소',
+  'version.resetting': '초기화하는 중…',
+  'version.close': '닫기',
+  'version.banner': '새 버전이 배포되었습니다: {label}',
+  'version.bannerAction': '업데이트',
+  'version.bannerDismiss': '나중에',
+  'version.bannerRegion': '업데이트 알림',
+  'version.updated': '최신 버전을 불러왔습니다 (v{version}).',
+  'version.footer': '버전',
+  'version.footerTitle': '릴리스 노트 보기',
 
   'config.title': '시나리오',
   'config.presets': '프리셋',
@@ -195,10 +242,110 @@ const ko = {
   'time.hourMin': '{h}시간 {m}분',
 
   'footer.disclaimer':
-    'T. rex와 호랑이는 같은 시대에 산 적이 없고, 모든 상호작용 규칙은 가정입니다. 결과는 불확실한 입력에 따라 승패가 어떻게 달라지는지 보여주는 교육용 장난감 모델이며 실제 싸움의 예측이 아닙니다.',
-  'footer.model': '모델 설명 (MODEL.md)',
-  'footer.source': '소스 코드',
-  'footer.privacy': '서버 전송 · 추적 없음',
+    'T. rex와 호랑이는 같은 시대에 산 적이 없고, 모든 상호작용 규칙은 가정입니다. 결과는 불확실한 입력에 따라 승패가 어떻게 달라지는지 보여 주는 교육용 모델일 뿐 실제 싸움의 예측이 아니며, 이 사이트는 실제 동물 싸움을 조장하거나 지지하지 않습니다.',
+  'footer.linksLabel': '사이트 정보와 링크',
+  'footer.about': '소개 · 문의',
+  'footer.privacy': '개인정보처리방침',
+  'footer.license': '라이선스',
+  'footer.source': '소스 코드 (GitHub)',
+  'footer.blog': '블로그 (Vinyl’s Log)',
+  'footer.linktree': 'Linktree',
+  'footer.local': '시뮬레이션은 모두 브라우저에서 실행됩니다.',
+  'footer.copyright': '© 2026 VinylStage · MIT 라이선스 오픈 소스',
+
+  'intro.title': '티렉스 대 호랑이 시뮬레이터란?',
+  'intro.lead':
+    '티라노사우루스 N마리와 호랑이 M마리가 탁 트인 평지에서 맞붙으면 어떻게 될까요? 이 시뮬레이터는 이 질문을 출발점으로 몬테카를로 방법을 직접 체험해 보는 무료 교육용 도구입니다. 한 판의 승패 대신, 문헌에 근거한 불확실한 능력치로 전투를 수백 번 반복해 승률과 그 불확실성을 함께 보여 줍니다.',
+  'intro.howTitle': '어떻게 작동하나요?',
+  'intro.how1': '마릿수, 전술, 실행 횟수를 정하고, 원하면 22개 능력치의 범위도 바꿉니다.',
+  'intro.how2': '전투마다 체중, 무는 힘, 속도 같은 능력치를 범위 안에서 새로 뽑습니다.',
+  'intro.how3':
+    '개체마다 단순한 규칙으로 움직이는 에이전트 기반 전투를 브라우저가 여러 번 계산합니다.',
+  'intro.how4':
+    '결과를 승률과 95% 신뢰구간, 전투 시간 분포, 민감도 차트, 전투 재생으로 정리합니다.',
+  'intro.learnTitle': '무엇을 배울 수 있나요?',
+  'intro.learn1': '몬테카를로 시뮬레이션: 무작위 실험을 반복해 답을 근사하는 방법',
+  'intro.learn2': '신뢰구간: 실행 횟수에 따라 추정이 얼마나 정밀해지는지',
+  'intro.learn3': '민감도 분석: 결과가 어떤 가정에 가장 크게 좌우되는지',
+  'intro.moreTitle': '더 알아보기',
+  'intro.link.guide': '사용 방법과 결과 읽는 법',
+  'intro.link.model': '모델 설명과 기본 가정의 예비 결과',
+  'intro.link.parameters': '파라미터 범위와 출처',
+  'intro.link.tour': '1분 튜토리얼 시작',
+  'faq.title': '자주 묻는 질문',
+  'faq.q1': '티라노사우루스와 호랑이가 실제로 만난 적이 있나요?',
+  'faq.a1':
+    '없습니다. 티라노사우루스는 약 6,800만–6,600만 년 전 백악기 말에 살았고, 호랑이는 그보다 훨씬 뒤에 나타났습니다. 이 대결은 방법을 배우기 위한 가상의 시나리오입니다.',
+  'faq.q2': '그래서 누가 이기나요?',
+  'faq.a2':
+    '정해진 답은 없습니다. 승률은 마릿수, 사기, 전술, 능력치 범위 같은 가정에 따라 크게 달라집니다. 기본 가정에서의 예비 결과와 그 해석은 모델 설명 페이지에 있고, 위의 시뮬레이터로 직접 확인할 수도 있습니다.',
+  'faq.q3': '몬테카를로 시뮬레이션이란 무엇인가요?',
+  'faq.a3':
+    '불확실한 값을 무작위로 뽑아 같은 실험을 여러 번 반복하고, 결과의 분포로 답을 추정하는 방법입니다. 실행 횟수가 많을수록 승률의 신뢰구간이 좁아집니다.',
+  'faq.q4': '결과를 공유하거나 다시 재현할 수 있나요?',
+  'faq.a4':
+    '네. 링크 복사를 누르면 마릿수, 파라미터 범위, 시드가 담긴 주소가 만들어집니다. 같은 링크를 열고 실행하면 같은 결과가 나옵니다.',
+
+  'tour.start': '튜토리얼',
+  'tour.counter': '{n} / {total}',
+  'tour.back': '이전',
+  'tour.next': '다음',
+  'tour.skip': '건너뛰기',
+  'tour.done': '완료',
+  'tour.announce': '{n} / {total}단계: {title}',
+  'tour.demo': '빠른 데모 실행 ({n}회)',
+  'tour.demoRunning': '데모 실행 중… 끝나면 결과 단계로 넘어갑니다.',
+  'tour.demoFailed': '데모가 끝나지 않았습니다. 다시 실행하거나 “다음”으로 계속하세요.',
+  'tour.demoHint':
+    '지금 {n}회짜리 빠른 데모를 돌리면 다음 단계에서 실제 결과를 함께 살펴볼 수 있습니다.',
+  'tour.hasResults': '이미 결과가 있으니 다음 단계에서 바로 살펴봅니다.',
+  'tour.guide': '가이드 읽기',
+  'tour.offer.title': '처음 오셨나요?',
+  'tour.offer.body': '1분 투어로 설정, 실행, 결과 읽는 법을 차례로 알아보세요.',
+  'tour.offer.start': '투어 시작',
+  'tour.offer.dismiss': '괜찮아요',
+  'tour.welcome.title': '시뮬레이터 둘러보기',
+  'tour.welcome.body':
+    '티라노사우루스 N마리와 호랑이 M마리가 넓은 들판에서 싸우면 누가 이길까요? 이 시뮬레이터는 문헌에서 가져온 불확실한 능력치를 전투마다 새로 뽑아 수백 번 싸움을 붙이고, 승률과 신뢰구간을 보여줍니다. 모든 계산은 이 브라우저 안에서 이뤄집니다. ← → 키로 이동하고 Esc로 닫을 수 있습니다.',
+  'tour.presets.title': '프리셋',
+  'tour.presets.body':
+    '자주 쓰는 대결 구도를 한 번에 고릅니다. 프리셋은 마릿수와 실행 횟수만 바꾸고 나머지 설정은 그대로 둡니다.',
+  'tour.counts.title': '마릿수',
+  'tour.counts.body':
+    '양쪽 마릿수를 직접 정합니다. 마릿수가 많을수록 전투 한 번을 계산하는 시간이 길어지며, 무거운 설정이면 아래에 예상 시간 경고가 나타납니다.',
+  'tour.runs.title': '실행 횟수와 시드',
+  'tour.runs.body':
+    '정한 횟수만큼 전투를 반복합니다. 횟수가 많을수록 승률의 95% 신뢰구간이 좁아집니다. 시드가 같으면 결과가 똑같이 재현되므로, 링크를 공유하면 다른 사람도 같은 숫자를 봅니다.',
+  'tour.advanced.title': '고급: 파라미터 범위',
+  'tour.advanced.body':
+    '체중, 무는 힘, 속도 같은 능력치는 값 하나가 아니라 최소 · 최빈 · 최대로 정한 삼각분포에서 실행마다 새로 뽑습니다. 범위를 바꿔 가정이 결과를 어떻게 움직이는지 확인해 보세요. 바꾼 줄에는 점(•)이 붙고 ↺로 되돌릴 수 있습니다.',
+  'tour.run.title': '실행',
+  'tour.run.body':
+    '“시뮬레이션 실행”을 누르면 CPU 코어마다 워커 하나씩 일을 나눠 계산합니다. 진행률과 남은 시간이 표시되고 언제든 취소할 수 있습니다.',
+  'tour.results.title': '결과',
+  'tour.results.body':
+    '실행이 끝나면 이곳에 판정, 요약 카드, 차트(승패 확률, 전투 시간, 생존 수, 민감도)와 전투 재생이 나타납니다. 투어를 마친 뒤 실행해 보세요.',
+  'tour.verdict.title': '판정과 요약 카드',
+  'tour.verdict.body':
+    '가장 가능성이 높은 결과와 그 확률, 95% 신뢰구간(Wilson)입니다. 카드에는 결과별 확률, 전투 시간 중앙값, 평균 생존 · 사망 · 도주 수, 교환비가 있습니다.',
+  'tour.outcome.title': '승패 확률 차트',
+  'tour.outcome.body':
+    '막대는 결과별 확률, 가는 선은 95% 신뢰구간입니다. 마우스를 올리거나 탭하면 정확한 값이 나옵니다. 아래 히스토그램은 전투 시간과 T-Rex 생존 수의 분포입니다.',
+  'tour.sensitivity.title': '민감도',
+  'tour.sensitivity.body':
+    '어떤 가정이 승패를 가장 크게 좌우하는지 보여줍니다. 오른쪽(양수) 막대는 값이 클수록 T-Rex에, 왼쪽(음수)은 호랑이에 유리하다는 뜻입니다. 긴 막대의 범위를 고급 설정에서 바꿔 보세요.',
+  'tour.replay.title': '전투 재생',
+  'tour.replay.body':
+    '대표 전투(T-Rex 우세도가 중앙값에 가장 가까운 전투)나 무작위 전투를 다시 계산해 애니메이션으로 보여줍니다. 재생 · 일시정지, 속도, 보기 배율, 재생 위치를 조절할 수 있습니다.',
+  'tour.share.title': '링크 공유',
+  'tour.share.body':
+    '시드를 포함한 현재 설정 전체가 주소에 담깁니다. 링크를 보내면 받는 사람도 같은 시나리오와 같은 결과를 봅니다. 서버에는 아무것도 저장되지 않습니다.',
+  'tour.header.title': '언어와 튜토리얼',
+  'tour.header.body':
+    '한국어와 English를 전환합니다. 이 투어는 “튜토리얼” 버튼으로 언제든 다시 볼 수 있습니다.',
+  'tour.finish.title': '준비 완료',
+  'tour.finish.body':
+    '이제 시나리오를 바꿔 직접 실행해 보세요. 모델의 가정과 각 파라미터의 의미 · 출처는 가이드에서 자세히 설명합니다.',
 
   'param.trex.mass': '체중',
   'param.trex.speed': '이동 속도',
@@ -254,14 +401,65 @@ export type Dictionary = Record<MsgKey, string>;
 
 const en: Dictionary = {
   'app.title': 'T-Rex vs Tiger Simulator',
-  'app.shortTitle': 'T-Rex vs Tigers',
-  'app.tagline': 'Monte Carlo agent-based battle simulation — runs entirely in your browser',
+  'app.shortTitle': 'T-Rex vs Tiger',
+  'app.tagline':
+    'Tyrannosaurus rex vs tigers · learn the Monte Carlo method with an educational simulation',
+  'app.documentTitle': 'T-Rex vs Tiger Simulator – who wins, T. rex or tigers?',
   'lang.switch': '한국어',
   'lang.switchAria': '인터페이스를 한국어로 바꾸기',
   'share.copy': 'Copy link',
   'share.hint': 'Share the current settings as a URL. The seed is included, so results reproduce.',
   'share.copied': 'Link copied.',
   'share.failed': 'Could not copy. Copy the URL from the address bar instead.',
+
+  'nav.label': 'Site',
+  'breadcrumb.label': 'Breadcrumb',
+  'nav.simulator': 'Simulator',
+  'nav.guide': 'Guide',
+  'nav.model': 'Model',
+  'nav.parameters': 'Parameters',
+  'nav.about': 'About',
+  'nav.privacy': 'Privacy',
+  'nav.license': 'License',
+  'version.badgeTitle': 'Version info and update check',
+  'version.status.checking': 'Checking',
+  'version.status.latest': 'Latest',
+  'version.status.newer': 'New version',
+  'version.status.rebuild': 'New build',
+  'version.status.changed': 'Changed',
+  'version.status.error': "Can't check",
+  'version.dialogTitle': 'Version',
+  'version.current': 'Current version',
+  'version.builtAt': 'Built',
+  'version.deployed': 'Latest deployed',
+  'version.checkedAt': 'Last checked',
+  'version.unknown': 'unknown',
+  'version.msg.checking': 'Checking the latest deployed version…',
+  'version.msg.latest': 'You are on the latest version.',
+  'version.msg.newer': 'A new version has been deployed. Load it with the button below.',
+  'version.msg.rebuild':
+    'New changes have been deployed under the same version. Load them with the button below.',
+  'version.msg.changed':
+    'The deployed version differs from this page. Load it with the button below.',
+  'version.msg.error':
+    'Could not fetch the deployment info. Check your connection, then press “Check again”.',
+  'version.recheck': 'Check again',
+  'version.releaseNotes': 'Release notes (GitHub)',
+  'version.reload': 'Load the latest version (clear cache & storage)',
+  'version.confirmTitle': 'Clear cache and storage?',
+  'version.confirmBody':
+    'This clears the cache and data this site keeps in your browser, then loads the latest version. The record that you dismissed or finished the tutorial is reset. The current scenario and language live in the URL, so they are kept.',
+  'version.confirm': 'Clear and reload',
+  'version.cancel': 'Cancel',
+  'version.resetting': 'Clearing…',
+  'version.close': 'Close',
+  'version.banner': 'A new version has been deployed: {label}',
+  'version.bannerAction': 'Update',
+  'version.bannerDismiss': 'Later',
+  'version.bannerRegion': 'Update notice',
+  'version.updated': 'Loaded the latest version (v{version}).',
+  'version.footer': 'Version',
+  'version.footerTitle': 'View release notes',
 
   'config.title': 'Scenario',
   'config.presets': 'Presets',
@@ -442,10 +640,112 @@ const en: Dictionary = {
   'time.hourMin': '{h} h {m} min',
 
   'footer.disclaimer':
-    'T. rex and tigers never coexisted, and every interaction rule is an assumption. This educational toy model shows how the outcome depends on uncertain inputs; it does not predict a real fight.',
-  'footer.model': 'Model description (MODEL.md)',
-  'footer.source': 'Source code',
-  'footer.privacy': 'No server, no tracking',
+    'T. rex and tigers never coexisted, and every interaction rule is an assumption. This educational model shows how the outcome depends on uncertain inputs; it does not predict a real fight, and this site does not promote or endorse real animal fighting.',
+  'footer.linksLabel': 'Site information and links',
+  'footer.about': 'About & contact',
+  'footer.privacy': 'Privacy',
+  'footer.license': 'License',
+  'footer.source': 'Source code (GitHub)',
+  'footer.blog': 'Blog (Vinyl’s Log)',
+  'footer.linktree': 'Linktree',
+  'footer.local': 'Simulations run in your browser.',
+  'footer.copyright': '© 2026 VinylStage · Open source under the MIT License',
+
+  'intro.title': 'What is the T-Rex vs Tiger Simulator?',
+  'intro.lead':
+    'What happens if N Tyrannosaurus rex meet M tigers on an open field? This free educational tool uses that question to let you try the Monte Carlo method yourself. Instead of a single fight, it repeats the battle hundreds of times with uncertain, literature-based traits and shows the win probabilities together with their uncertainty.',
+  'intro.howTitle': 'How does it work?',
+  'intro.how1':
+    'Choose the head counts, the tiger tactic and the number of runs, and optionally edit the ranges of the 22 traits.',
+  'intro.how2':
+    'Every battle draws fresh traits, such as body mass, bite force and speed, from those ranges.',
+  'intro.how3':
+    'Your browser computes many agent-based battles, in which each animal follows simple rules.',
+  'intro.how4':
+    'The results show win probabilities with 95% confidence intervals, battle durations, a sensitivity chart and a replay.',
+  'intro.learnTitle': 'What can you learn?',
+  'intro.learn1': 'Monte Carlo simulation: approximating an answer by repeating random experiments',
+  'intro.learn2': 'Confidence intervals: how the estimate sharpens as the number of runs grows',
+  'intro.learn3': 'Sensitivity analysis: which assumptions the outcome depends on most',
+  'intro.moreTitle': 'Learn more',
+  'intro.link.guide': 'How to use it and read the results',
+  'intro.link.model': 'The model and its preliminary results',
+  'intro.link.parameters': 'Parameter ranges and sources',
+  'intro.link.tour': 'Take the one-minute tour',
+  'faq.title': 'Frequently asked questions',
+  'faq.q1': 'Did Tyrannosaurus rex and tigers ever meet?',
+  'faq.a1':
+    'No. Tyrannosaurus rex lived at the end of the Cretaceous, about 68 to 66 million years ago, and tigers appeared much later. The match-up is a hypothetical scenario for learning the method.',
+  'faq.q2': 'So who wins?',
+  'faq.a2':
+    'There is no fixed answer. The win probability depends strongly on assumptions such as head counts, morale, tactics and trait ranges. Preliminary results for the default assumptions, and how to read them, are on the model page, and you can check them yourself with the simulator above.',
+  'faq.q3': 'What is a Monte Carlo simulation?',
+  'faq.a3':
+    'It repeats the same experiment many times with uncertain values drawn at random and estimates the answer from the spread of the results. The more runs, the narrower the confidence interval of the win probability.',
+  'faq.q4': 'Can I share or reproduce a result?',
+  'faq.a4':
+    'Yes. Copy link creates an address that holds the head counts, parameter ranges and seed. Opening that link and running it gives the same result.',
+
+  'tour.start': 'Tutorial',
+  'tour.counter': '{n} / {total}',
+  'tour.back': 'Back',
+  'tour.next': 'Next',
+  'tour.skip': 'Skip',
+  'tour.done': 'Done',
+  'tour.announce': 'Step {n} of {total}: {title}',
+  'tour.demo': 'Run a quick demo ({n} runs)',
+  'tour.demoRunning': 'Running the demo… the tour moves on to the results when it finishes.',
+  'tour.demoFailed': 'The demo did not finish. Run it again, or press Next to continue.',
+  'tour.demoHint':
+    'Run a quick {n}-run demo now and the next steps will walk through real results.',
+  'tour.hasResults': 'You already have results, so the next steps use them.',
+  'tour.guide': 'Read the guide',
+  'tour.offer.title': 'New here?',
+  'tour.offer.body': 'Take a one-minute tour of the settings, the run and how to read the results.',
+  'tour.offer.start': 'Start the tour',
+  'tour.offer.dismiss': 'No thanks',
+  'tour.welcome.title': 'Welcome to the simulator',
+  'tour.welcome.body':
+    'Who wins if N Tyrannosaurus rex fight M tigers on an open field? The simulator draws uncertain, literature-based traits afresh for every battle, fights hundreds of battles and reports win probabilities with confidence intervals. Everything runs in this browser. Use the ← → keys to move and Esc to close.',
+  'tour.presets.title': 'Presets',
+  'tour.presets.body':
+    'Pick a common match-up in one click. A preset changes only the head counts and the number of runs; everything else stays as it is.',
+  'tour.counts.title': 'Head counts',
+  'tour.counts.body':
+    'Set how many animals fight on each side. Bigger battles take longer to compute; when a setting is heavy, a warning with the estimated time appears below.',
+  'tour.runs.title': 'Runs and seed',
+  'tour.runs.body':
+    'The battle is repeated this many times. More runs give a narrower 95% confidence interval for each win probability. The same seed reproduces exactly the same results, so a shared link shows others the same numbers.',
+  'tour.advanced.title': 'Advanced: parameter ranges',
+  'tour.advanced.body':
+    'Traits such as body mass, bite force and speed are not single numbers: every run draws them from a triangular distribution set by min · mode · max. Change a range to see how an assumption moves the result. Changed rows get a dot (•), and ↺ resets them.',
+  'tour.run.title': 'Run',
+  'tour.run.body':
+    'Run simulation splits the work across one Web Worker per CPU core. Progress and the time left are shown, and you can cancel at any time.',
+  'tour.results.title': 'Results',
+  'tour.results.body':
+    'When a run finishes, this panel shows the verdict, summary cards, charts (outcome, battle duration, survivors, sensitivity) and an animated battle replay. Run a simulation after the tour to see them.',
+  'tour.verdict.title': 'Verdict and summary cards',
+  'tour.verdict.body':
+    'The most likely outcome with its probability and 95% (Wilson) confidence interval. The cards add the probability of each outcome, the median battle duration, mean survivors, kills and routs, and the exchange ratio.',
+  'tour.outcome.title': 'Outcome chart',
+  'tour.outcome.body':
+    'Bars show the probability of each outcome and the thin lines its 95% confidence interval. Hover or tap for exact values. The histograms below show the distribution of battle duration and T-Rex survivors.',
+  'tour.sensitivity.title': 'Sensitivity',
+  'tour.sensitivity.body':
+    'Shows which assumptions drive the outcome most. A bar to the right (positive) means larger values favour the T-Rex; to the left, the tigers. Try changing the range of a long bar under Advanced.',
+  'tour.replay.title': 'Battle replay',
+  'tour.replay.body':
+    'Re-simulates the representative battle (closest to the median T-Rex advantage) or a random one and animates it. Use play/pause, speed, view zoom and the position slider.',
+  'tour.share.title': 'Share a link',
+  'tour.share.body':
+    'All current settings, including the seed, live in the page address. Send the link and the recipient sees the same scenario and the same results. Nothing is stored on a server.',
+  'tour.header.title': 'Language and tutorial',
+  'tour.header.body':
+    'Switch between Korean and English. Replay this tour any time with the Tutorial button.',
+  'tour.finish.title': "You're all set",
+  'tour.finish.body':
+    "Now change the scenario and run it yourself. The guide explains the model's assumptions and what every parameter means, with sources.",
 
   'param.trex.mass': 'Body mass',
   'param.trex.speed': 'Speed',
@@ -536,22 +836,16 @@ export function locale(): string {
   return current === 'ko' ? 'ko-KR' : 'en-US';
 }
 
-function readStoredLang(): Lang | null {
-  try {
-    const v = globalThis.localStorage?.getItem(STORAGE_KEY);
-    return isLang(v) ? v : null;
-  } catch {
-    return null;
-  }
-}
-
 function syncDocumentLang(): void {
   if (typeof document !== 'undefined') document.documentElement.lang = current;
 }
 
-/** Load the persisted language (default Korean) and apply it to `<html lang>`. */
-export function initLang(): Lang {
-  current = readStoredLang() ?? DEFAULT_LANG;
+/**
+ * Set the starting language and apply it to `<html lang>`. The app passes the language of its
+ * URL (`/` Korean, `/en/` English; see `pageLang` in src/pages/routes.ts). Nothing is stored.
+ */
+export function initLang(lang: Lang = DEFAULT_LANG): Lang {
+  current = lang;
   syncDocumentLang();
   return current;
 }
@@ -559,11 +853,6 @@ export function initLang(): Lang {
 export function setLang(lang: Lang): void {
   if (lang === current) return;
   current = lang;
-  try {
-    globalThis.localStorage?.setItem(STORAGE_KEY, lang);
-  } catch {
-    // Storage may be unavailable (private mode, blocked cookies); the choice just won't persist.
-  }
   syncDocumentLang();
   for (const fn of listeners) fn(lang);
 }

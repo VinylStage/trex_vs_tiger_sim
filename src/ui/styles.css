@@ -90,12 +90,36 @@ html {
 }
 
 body {
+  --page-max: 1360px;
+
   margin: 0;
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.5;
+}
+
+/*
+ * The app mounts into #app; the static intro, FAQ and footer follow it (index.html,
+ * en/index.html). Reserving one viewport keeps them below the fold before and after the mount,
+ * so mounting the app shifts nothing on screen. Before the mount #app holds only a static header
+ * (.app-static-head: logo, the page's <h1> and a link to the other language), which the app
+ * replaces with its own; without JavaScript that header is all #app shows.
+ */
+#app {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+@media (scripting: none) {
+  #app {
+    min-height: 0;
+  }
+}
+
+.app-static-head a.btn {
+  text-decoration: none;
 }
 
 h1,
@@ -179,7 +203,12 @@ a {
 
 .header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.app-header .site-nav {
+  flex-basis: 100%;
 }
 
 /* ---------- layout ---------- */
@@ -1021,23 +1050,85 @@ input[type='checkbox'] {
   visibility: hidden;
 }
 
-/* ---------- footer & toast ---------- */
+/* ---------- static intro and FAQ (outside #app) ---------- */
 
-.app-footer {
-  max-width: 1360px;
+.site-intro,
+.site-faq {
+  border-top: 1px solid var(--border);
+}
+
+.site-intro-inner {
+  max-width: var(--page-max);
   margin: 0 auto;
-  padding: 8px 24px 40px;
+  padding: 24px 24px 28px;
+}
+
+.site-intro h2,
+.site-faq h2 {
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+
+.site-intro h3,
+.site-faq h3 {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.intro-lead {
+  max-width: 80ch;
   color: var(--muted);
-  font-size: 0.8rem;
 }
 
-.disclaimer {
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 16px 28px;
+  margin-top: 18px;
+}
+
+.intro-block ol,
+.intro-block ul {
+  margin: 0;
+  padding-left: 1.25em;
+  color: var(--muted);
+}
+
+.intro-block li + li {
+  margin-top: 4px;
+}
+
+.intro-links a {
+  display: inline-block;
+  min-height: 24px;
+  color: var(--accent-hover);
+  font-weight: 500;
+}
+
+.intro-links a:hover {
+  color: var(--fg);
+}
+
+.faq-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px 28px;
+}
+
+.faq-item p {
   max-width: 72ch;
+  color: var(--muted);
 }
 
-.footer-links {
-  margin-top: 6px;
+:lang(ko) .site-intro,
+:lang(ko) .site-faq {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
 }
+
+/* ---------- toast ---------- */
 
 .toast {
   position: fixed;
@@ -1068,8 +1159,8 @@ input[type='checkbox'] {
     gap: 14px;
   }
 
-  .app-footer {
-    padding: 4px 16px 32px;
+  .site-intro-inner {
+    padding: 20px 16px 24px;
   }
 
   .brand h1 {
