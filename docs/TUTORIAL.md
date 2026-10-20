@@ -140,6 +140,7 @@ Append **`?tour=1`** to the page URL, for example `https://trex-vs-tiger.vinylim
 
 - The query parameter is used instead of a hash parameter because the URL fragment already carries the shared scenario (`#s=…`, see [ADR-0003](adr/0003-no-backend-url-sharing.md)). Both can be combined: `/?tour=1#s=…`.
 - On load the parameter is removed with `history.replaceState`, so reloading or copying the link afterwards does not restart the tour. Other query parameters and the fragment are kept.
+- The deep link is not a separate page for search engines: the canonical of `/?tour=1` is `/` (and `/en/` for `/en/?tour=1`), generated at build time ([SEO.md](SEO.md#head-tags)), and the sitemap lists only `/` and `/en/`.
 - The Korean guide links to `/?tour=1`, the English guide to `/en/?tour=1`. The tour runs in the language of the URL (`/` Korean, `/en/` English); nothing about the language is stored.
 - The static intro under the simulator (`index.html`, `en/index.html`) has a **1분 튜토리얼 시작 / Take the one-minute tour** link (`a[data-tour-start]`, `href` = the deep link). With JavaScript the app intercepts a plain click and starts the tour in place, without reloading; modified clicks (new tab) and no-JS visits follow the deep link.
 

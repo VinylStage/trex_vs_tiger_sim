@@ -107,6 +107,7 @@ The link exists without JavaScript, so crawlers and no-JS visitors can reach the
 2. release-please keeps a release PR open that bumps `package.json` `version`, `.release-please-manifest.json` and `CHANGELOG.md`.
 3. Merging the release PR deploys a build whose `__APP_VERSION__` and `version.json` carry the new version. Open tabs see "새 버전 v0.2.0". The GitHub Release and tag (`trex-vs-tiger-sim-v0.2.0`) are created by the same workflow.
 4. Nothing else needs to change: the version is never hard-coded in the source.
+5. When release-please reports `release_created`, its `indexnow` job calls `.github/workflows/indexnow.yml`, which waits until `version.json` on production reports the new version and then submits the sitemap URLs to IndexNow ([SEO.md](SEO.md#indexnow)). The build also writes the version into the simulator's JSON-LD (`WebApplication.softwareVersion`).
 
 Preview deployments work the same way: the branch alias `https://<branch>.trex-vs-tiger-sim.pages.dev` moves with every push, so an open preview tab notices the next push.
 
