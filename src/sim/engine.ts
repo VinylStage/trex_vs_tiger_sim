@@ -74,7 +74,7 @@ export interface RunSummary {
   packRouted: number;
   packActive: number;
   heavyHpFrac: number;
-  /** trexHpFrac − (active pack animals / initial pack animals), in [−1, 1]. Used for sensitivity. */
+  /** heavyHpFrac − (active pack animals / initial pack animals), in [−1, 1]. Used for sensitivity. */
   heavyAdvantage: number;
 }
 
