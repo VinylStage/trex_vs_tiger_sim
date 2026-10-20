@@ -106,7 +106,7 @@ The free (symmetric) engine of [#50](https://github.com/VinylStage/trex_vs_tiger
 
 The free engine is cheaper per agent-step at every size. The largest difference is at 500 v 5,000, where the legacy flank tactic scans every heavy linearly once per pack animal per second (`chooseHeavy`); the free individual layer has no flank targeting and uses the grid for every neighbour query. These numbers cover the individual layer (P3). The pack buff (P4) adds capped cohesion queries for social sides and must be re-measured against the same 1.5× gate (design §7).
 
-**Regression test.** `tests/free-perf.test.ts` runs the 10 v 100 comparison in every `npm test` and fails if the free engine costs more than 1.5× the legacy engine per agent-step. Both engines run in the same process, alternately, so machine load affects both alike.
+**Regression test.** `tests/free-perf.test.ts` has two halves. In every `npm test` it checks the deterministic part of the claim: `freeWorkEstimate` counts the same agent-steps as `workEstimate` for the same matchup, and a seeded 10 v 100 batch never simulates more agent-steps than the budget counted. The timing gate (the free engine costs at most 1.5× the legacy engine per agent-step at 10 v 100, median of 7 interleaved rounds after a warm-up) runs only with `BENCH=1 npx vitest run tests/free-perf.test.ts`: wall time is not deterministic, and in the default suite a single slow round on a loaded machine failed it although the measured ratio is about 0.7 (#82). Run the gate whenever `src/sim/free/engine.ts` changes.
 
 ## Not changed
 
