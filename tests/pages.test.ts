@@ -1253,6 +1253,20 @@ describe('public/_headers', () => {
     expect(headersFor(src, '/version.json')['cache-control']).toEqual(['no-store']);
   });
 
+  it('sends HSTS once everywhere, scoped to this host (no includeSubDomains, no preload)', () => {
+    for (const path of ['/', '/en/', '/reset/', '/version.json', '/assets/a.js', '/nope']) {
+      expect(headersFor(src, path)['strict-transport-security'], path).toEqual([
+        'max-age=31536000',
+      ]);
+    }
+  });
+
+  it('enforces Trusted Types with only the worker policy', () => {
+    const [csp] = headersFor(src, '/')['content-security-policy'] ?? [];
+    expect(csp).toContain("require-trusted-types-for 'script'");
+    expect(csp).toMatch(/trusted-types sim-worker(;|$)/);
+  });
+
   it('sends the CSP on unknown paths, where the 404 pages are served', () => {
     for (const path of ['/nope', '/en/nope', '/a/b/c', '/404.html']) {
       expect(headersFor(src, path)['content-security-policy'], path).toHaveLength(1);
