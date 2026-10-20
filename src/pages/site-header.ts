@@ -6,6 +6,7 @@ import {
   notFoundLang,
   pagePath,
   parsePagePath,
+  resultPageLang,
   type PageId,
 } from './routes.ts';
 
@@ -118,11 +119,12 @@ export interface HeaderRoute {
 
 /**
  * The route of a page source by its root-relative path as Vite reports it (`/guide/index.html`,
- * `/en/index.html`, `/404.html`, `/en/404.html`), or null for anything else (`/reset/`).
+ * `/en/index.html`, `/404.html`, `/en/404.html`, `/r/index.html`), or null for anything else
+ * (`/reset/`). 404 and result pages mark no navigation item (`page: null`).
  */
 export function headerRouteOf(path: string): HeaderRoute | null {
   const p = path.split('?')[0] ?? '';
-  const nf = notFoundLang(p);
+  const nf = notFoundLang(p) ?? resultPageLang(p);
   if (nf) return { lang: nf, page: null };
   if (!/(^|\/)index\.html$|\/$/.test(p)) return null;
   return parsePagePath(p);

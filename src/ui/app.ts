@@ -37,6 +37,9 @@ import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
 import { heavyLengthForRadius } from './replay/glyphs';
 import { configFromHash, hashFromConfig } from './share';
+import { copyText } from '../share/share-ui';
+import { createConfigTransfer } from './config-transfer';
+import { createReproduceCheck, createResultShare } from './result-share';
 import { pageLang, pagePath, switchedAppUrl } from '../pages/routes';
 import { logoAttrs } from '../pages/site-header';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
@@ -101,6 +104,9 @@ export function startApp(root: HTMLElement): void {
   document.title = t('app.documentTitle');
   const pool = new SimPool();
   let config: ScenarioConfig = configFromHash(location.hash) ?? defaultConfig();
+  // "Run it yourself" links carry a result snapshot (`&chk=`); read it before the URL is rewritten.
+  const repro = createReproduceCheck(location.hash, config);
+  const resultShare = createResultShare();
   let result: RunResult | null = null;
   let status: Message | null = null;
   let replayState: ReplayState | null = null;
@@ -150,10 +156,8 @@ export function startApp(root: HTMLElement): void {
   shareBtn.addEventListener('click', () => {
     writeUrl();
     const url = location.href;
-    const done = (): void => showToast(t('share.copied'));
-    const fail = (): void => showToast(t('share.failed'));
-    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(url).then(done, fail);
-    else fail();
+    // Without clipboard access the link is shown in a selected field instead (src/share/share-ui.ts).
+    void copyText(url, getLang()).then((ok) => ok && showToast(t('share.copied')));
   });
 
   // index.html and en/index.html ship a static header inside #app with the page's only <h1> and
@@ -257,6 +261,7 @@ export function startApp(root: HTMLElement): void {
     progress,
     statusEl,
     costNoteEl,
+    repro.el,
     srProgress,
   );
   const configPanel = h(
@@ -265,6 +270,16 @@ export function startApp(root: HTMLElement): void {
     h('h2', { id: 'config-title', i18n: 'config.title' }),
     form.el,
     runBar,
+    createConfigTransfer({
+      getConfig: () => config,
+      applyConfig: (c) => {
+        config = c;
+        form.setConfig(c);
+        writeUrl();
+        updateStale();
+        syncNames();
+      },
+    }),
   );
   // The sticky run bar must never cover a focused field (WCAG 2.4.11): its height feeds
   // `scroll-padding-bottom` of the page (single column) and of the config panel (two columns).
@@ -345,6 +360,7 @@ export function startApp(root: HTMLElement): void {
       caveatEl,
       basisEl,
       badgeSlot,
+      resultShare.el,
     ),
     cardsEl,
     h(
@@ -534,6 +550,7 @@ export function startApp(root: HTMLElement): void {
       placeholder = null;
       setStatus(null);
       renderResults();
+      repro.afterRun(cfg, agg);
       void loadReplay(agg.representativeRun, 'representative');
       ok = true;
       return true;
@@ -747,6 +764,7 @@ export function startApp(root: HTMLElement): void {
     resultsBody.hidden = !showBody;
     resultsBody.classList.toggle('is-pending', result === null);
     updateStale();
+    resultShare.update(result);
     if (!showBody) return;
     syncNames();
     // Static bindings (replay legend and controls) name the species of these results.

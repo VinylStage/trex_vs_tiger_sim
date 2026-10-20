@@ -126,6 +126,22 @@ export function upgradeV1(o: Record<string, unknown>): Record<string, unknown> {
   return out;
 }
 
+/**
+ * Config from a parsed payload object (the JSON inside `encodeConfig`, or the `config` of an
+ * exported file): v1 upgrade, then `sanitizeConfig`. Never throws.
+ */
+export function configFromObject(raw: Record<string, unknown>): ScenarioConfig {
+  // Main ignored `v`, so anything that is not a number ≥ 2 is a v1 payload.
+  const v = raw['v'];
+  const o = typeof v !== 'number' || !(v >= 2) ? upgradeV1(raw) : raw;
+  return sanitizeConfig({
+    ...o,
+    heavySpecies: o['heavy'],
+    packSpecies: o['pack'],
+    params: expandParams(o['params']),
+  });
+}
+
 /** Decode a payload produced by `encodeConfig`. Any malformed input yields the defaults. */
 export function decodeConfig(payload: string): ScenarioConfig {
   if (payload.length === 0 || payload.length > MAX_SHARE_LENGTH) return defaultConfig();
@@ -134,16 +150,7 @@ export function decodeConfig(payload: string): ScenarioConfig {
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
       return defaultConfig();
     }
-    const raw = parsed as Record<string, unknown>;
-    // Main ignored `v`, so anything that is not a number ≥ 2 is a v1 payload.
-    const v = raw['v'];
-    const o = typeof v !== 'number' || !(v >= 2) ? upgradeV1(raw) : raw;
-    return sanitizeConfig({
-      ...o,
-      heavySpecies: o['heavy'],
-      packSpecies: o['pack'],
-      params: expandParams(o['params']),
-    });
+    return configFromObject(parsed as Record<string, unknown>);
   } catch {
     return defaultConfig();
   }

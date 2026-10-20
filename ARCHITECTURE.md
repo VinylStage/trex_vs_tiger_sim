@@ -4,7 +4,7 @@
 
 ## 1. System context
 
-Everything runs in the visitor's browser. Cloudflare Pages only serves static files built from `main`.
+Everything runs in the visitor's browser. Cloudflare Pages serves static files built from `main`; the only server code is a tiny Pages Function that rewrites link-preview meta tags on `/r/` result links ([ADR-0006](docs/adr/0006-pages-function-share-previews.md)).
 
 ```mermaid
 ---
@@ -18,6 +18,7 @@ architecture-beta
     group cf(cloud)[Cloudflare Pages Free]
     service build(server)[Pages build] in cf
     service cdn(internet)[Static CDN] in cf
+    service fn(server)[Function r only] in cf
 
     group client(internet)[Visitor browser]
     service ui(server)[UI main thread] in client
@@ -27,6 +28,7 @@ architecture-beta
     repo:B --> T:build
     build:R --> L:cdn
     cdn:R --> L:ui
+    cdn:T --> B:fn
     ui:B --> T:workers
 ```
 
@@ -35,6 +37,7 @@ architecture-beta
 | Compute         | Browser Web Workers                | Workers Free = 10 ms CPU/request; infeasible server-side ([ADR-0001](docs/adr/0001-client-side-compute.md)) |
 | Hosting         | Cloudflare Pages (Git integration) | Free, unlimited static requests ([ADR-0002](docs/adr/0002-cloudflare-pages-git-integration.md))             |
 | State / sharing | URL fragment `#s=`                 | No backend ([ADR-0003](docs/adr/0003-no-backend-url-sharing.md))                                            |
+| Result previews | Pages Function on `/r/*` only      | Meta rewrite for crawlers, no storage ([ADR-0006](docs/adr/0006-pages-function-share-previews.md))          |
 | Runtime deps    | None                               | [ADR-0004](docs/adr/0004-no-runtime-dependencies.md)                                                        |
 
 ## 2. Module structure
@@ -60,6 +63,18 @@ flowchart LR
         tour@{ shape: rect, label: "tour.ts · tour-model.ts<br/>guided tour" }
         version@{ shape: rect, label: "version.ts · version-model.ts<br/>badge, update check" }
         sitedata@{ shape: rect, label: "site-data.ts<br/>cache / storage reset" }
+        xfer@{ shape: rect, label: "config-transfer.ts · result-share.ts<br/>export/import, share result" }
+        card@{ shape: rect, label: "result-card.ts<br/>canvas result card" }
+    end
+    subgraph SHARE["src/share (sharing, DOM-free core)"]
+        codec@{ shape: doc, label: "config-code.ts · result-codec.ts<br/>TVT2- codes, ?r= validator" }
+        rtext@{ shape: rect, label: "result-text.ts · messages.ts<br/>tiers, text share, meta" }
+        rpage@{ shape: rect, label: "result-page.ts<br/>/r/ page" }
+        rfn@{ shape: rect, label: "result-function.ts<br/>HTMLRewriter glue" }
+        shareui@{ shape: rect, label: "share-ui.ts<br/>clipboard, save, overlay" }
+    end
+    subgraph FN["functions/ (Cloudflare Pages)"]
+        fnr@{ shape: hex, label: "r/[[path]].ts · en/r/[[path]].ts" }
     end
     subgraph SEO["src/seo (build time)"]
         seo@{ shape: rect, label: "head · sitemap · robots<br/>llms · JSON-LD" }
@@ -100,10 +115,18 @@ flowchart LR
     engine --> spatial & rng & events
     config & engine --> species
     seo --> routes
+    app --> xfer
+    xfer --> codec & shareui
+    rpage --> codec & rtext & card & shareui & routes
+    card --> rtext
+    rtext --> codec
+    codec --> share
+    fnr --> rfn
+    rfn --> rtext
     e1@{ animate: true }
 ```
 
-Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run inside workers.
+Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run inside workers. The same holds for the sharing core (`src/share/config-code.ts`, `result-codec.ts`, `result-text.ts`), which the app, the `/r/` page and the Pages Function all import, so they accept exactly the same links ([SHARING.md](docs/SHARING.md)).
 
 ### Entry points (multi-page build)
 
@@ -116,6 +139,7 @@ Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run insi
 | `reset/index.html`                            | `src/reset.ts`                  | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                 |
 | `license/index.html`, `en/license/index.html` | `src/pages/site.ts`             | MIT text and third-party notices                                                                                      |
 | `404.html`, `en/404.html`                     | `src/pages/site.ts`             | Real 404 pages (disable the Pages SPA fallback)                                                                       |
+| `r/index.html`, `en/r/index.html`             | `src/share/result-page.ts`      | Shared-result pages (`?r=`): noindex, not in the sitemap, never load the simulator ([SHARING.md](docs/SHARING.md))    |
 
 At build time `vite.seo.ts` (code in `src/seo/`) writes the head tags, JSON-LD, `sitemap.xml`, `robots.txt` and `llms*.txt` from the page registry ([SEO.md](docs/SEO.md)). Species presets and bounds live in `src/sim/species.ts` ([SPECIES.md](docs/SPECIES.md)); the replay renderer and its event log are described in [REPLAY.md](docs/REPLAY.md) and MODEL.md §2.6.
 
@@ -222,5 +246,6 @@ flowchart LR
 - Static site; no secrets, no cookies of its own and no third-party requests. `localStorage` holds only the tour-seen flag (language comes from the URL); the version check fetches the same-origin `/version.json`.
 - CSP in `public/_headers`: `default-src 'self'`, no inline scripts, `worker-src 'self'`, `frame-ancestors 'none'`. HTML responses carry `Cache-Control: no-cache, no-transform` so Cloudflare Bot Fight Mode does not inject an inline script (this also disables Cloudflare's compression of HTML; see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 - The reset page uses `Clear-Site-Data: "cache", "storage"` but never `"cookies"`, which would clear cookies for every `*.vinylims.com` site ([VERSIONING.md](docs/VERSIONING.md)).
+- Result links (`/r/?r=`) are untrusted too: length cap 4096, base64url alphabet, `JSON.parse`, then a strict summary validator (integer counts, `h + p + d === n`, finite values in range). The Pages Function on `/r/*` uses the same validator, sets the page's security headers itself and stores and logs nothing ([ADR-0006](docs/adr/0006-pages-function-share-previews.md)).
 - URL fragment input is untrusted → `JSON.parse` only, schema check, numeric clamping, unknown keys dropped (`src/sim/config.ts`).
 - Resource limits (max agents, runs, time) are clamped to prevent a shared link from freezing a browser.

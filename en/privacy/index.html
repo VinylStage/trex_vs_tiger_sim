@@ -70,7 +70,10 @@
               </li>
               <li>
                 Every simulation runs on your device; settings and results are never sent to a
-                server.
+                server. The only exception is a result link you choose to share: its result summary
+                is processed for the link preview and not stored (<a href="#local"
+                  >Computation and share links</a
+                >).
               </li>
               <li>
                 Our host, Cloudflare, processes standard request logs while delivering and
@@ -170,9 +173,22 @@
                 never reach our host or Cloudflare.
               </li>
               <li>
-                If you send a link made with <em>Copy link</em> to someone, they can see those
-                settings (head counts, parameter ranges, seed and so on). Links contain no personal
-                data, and whether to share them is up to you.
+                If you send a link made with <em>Copy settings link</em> to someone, they can see
+                those settings (head counts, parameter ranges, seed and so on). Links contain no
+                personal data, and whether to share them is up to you. Settings codes
+                (<code>TVT2-…</code>) and exported .json files hold the same settings and are made
+                in your browser.
+              </li>
+              <li>
+                <em>Share result</em> links (<code>/r/?r=…</code>), result card images and result
+                texts are all generated in your browser. A result link holds the settings and a
+                result summary (run count, win and draw counts, means) and no personal data.
+              </li>
+              <li>
+                So that link previews can show the result, a result link puts it in the query
+                (<code>?r=</code>), which is sent to Cloudflare with the page request. A small
+                Cloudflare Pages Function that runs only on <code>/r/</code> addresses reads this
+                query to fill in the preview title and description, and stores and logs nothing.
               </li>
             </ul>
           </section>

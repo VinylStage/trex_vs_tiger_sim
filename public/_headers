@@ -24,3 +24,9 @@
 /reset/*
   Cache-Control: no-store
   Clear-Site-Data: "cache", "storage"
+
+/r/*
+  X-Robots-Tag: noindex
+
+/en/r/*
+  X-Robots-Tag: noindex

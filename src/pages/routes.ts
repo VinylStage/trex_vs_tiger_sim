@@ -83,6 +83,19 @@ export function notFoundLang(path: string): Lang | null {
   return null;
 }
 
+/**
+ * Language of a shared-result page (docs/SHARING.md#result-page), not an indexable page:
+ * `/r/`, `/r/index.html` → 'ko'; `/en/r/`, `/en/r/index.html` → 'en'; anything else null.
+ */
+export function resultPageLang(path: string): Lang | null {
+  if (/^\/?r\/(index\.html)?$/.test(path)) return 'ko';
+  if (/^\/?en\/r\/(index\.html)?$/.test(path)) return 'en';
+  return null;
+}
+
+/** Root-relative path of the result page in a language. */
+export const resultPagePath = (lang: Lang): string => (lang === 'en' ? '/en/r/' : '/r/');
+
 /** The same page in the other language (app or content page), or null for an unknown path. */
 export function counterpartPath(pathname: string): string | null {
   const here = parsePagePath(pathname);
