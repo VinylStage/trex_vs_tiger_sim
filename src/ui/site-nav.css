@@ -55,7 +55,8 @@
   }
 
   .site-nav-link {
-    padding: 0 5px;
+    padding: 0 4px;
+    font-size: 0.84rem;
   }
 }
 
