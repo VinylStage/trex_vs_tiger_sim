@@ -1,4 +1,4 @@
-import type { TigerState } from './engine';
+import type { PackState } from './engine';
 
 /**
  * Replay event log (docs/MODEL.md §2.6). Recorded only for the traced replay run.
@@ -11,36 +11,36 @@ import type { TigerState } from './engine';
  * - Events are stored in emission order, so the log is sorted by stamp.
  */
 export const EventType = {
-  /** a = T-Rex, b = tiger, v = damage / tiger max HP × 255 (clamped). Tiger → Recover. */
+  /** a = heavy, b = pack animal, v = damage / pack animal max HP × 255 (clamped). Pack animal → Recover. */
   BiteHit: 1,
-  /** a = T-Rex, b = tiger. Cosmetic (P1). */
+  /** a = heavy, b = pack animal. Cosmetic (P1). */
   BiteMiss: 2,
-  /** a = tiger, b = host T-Rex, v = latch angle in the host frame (256 steps per turn). */
+  /** a = pack animal, b = host heavy, v = latch angle in the host frame (256 steps per turn). */
   Latch: 3,
-  /** a = tiger, b = T-Rex. Cosmetic (P1). */
+  /** a = pack animal, b = heavy. Cosmetic (P1). */
   LatchFail: 4,
-  /** a = tiger, b = host. Shaken off: tiger → Recover (or Dead, see TigerDeath). */
+  /** a = pack animal, b = host. Shaken off: pack animal → Recover (or Dead, see PackDeath). */
   Throw: 5,
-  /** a = tiger, b = host or EVENT_NONE, v = ReleaseCause. Tiger → Recover. */
+  /** a = pack animal, b = host or EVENT_NONE, v = ReleaseCause. Pack animal → Recover. */
   Release: 6,
-  /** a = tiger, b = killer T-Rex, v = DeathCause. Tiger → Dead. */
-  TigerDeath: 7,
-  /** a = tiger, b = host if it was latched, else EVENT_NONE. Tiger → Routed. */
+  /** a = pack animal, b = killer heavy, v = DeathCause. Pack animal → Dead. */
+  PackDeath: 7,
+  /** a = pack animal, b = host if it was latched, else EVENT_NONE. Pack animal → Routed. */
   Rout: 8,
-  /** a = tiger. Tiger → Left. */
+  /** a = pack animal. Pack animal → Left. */
   Exit: 9,
-  /** a = T-Rex. */
-  TrexDeath: 10,
-  /** a = tiger, b = target T-Rex. Out of stamina while approaching: tiger → Recover. */
+  /** a = heavy. */
+  HeavyDeath: 10,
+  /** a = pack animal, b = target heavy. Out of stamina while approaching: pack animal → Recover. */
   Exhausted: 11,
-  /** a = tiger. Tiger → Approach. */
+  /** a = pack animal. Pack animal → Approach. */
   Resume: 12,
 } as const;
 export type EventTypeCode = (typeof EventType)[keyof typeof EventType];
 
 /** `v` of a Release event. */
 export const ReleaseCause = { Stamina: 0, HostDied: 1 } as const;
-/** `v` of a TigerDeath event. */
+/** `v` of a PackDeath event. */
 export const DeathCause = { Bite: 0, Throw: 1 } as const;
 
 /** "No agent" in the a/b fields. */
@@ -64,9 +64,9 @@ export interface EventLogLimits {
   p0Cap: number;
   /** Most P1 events stored. Later ones are dropped and counted. */
   p1Cap: number;
-  /** Minimum stamps between two stored BiteMiss events of the same T-Rex. */
+  /** Minimum stamps between two stored BiteMiss events of the same heavy. */
   missWindow: number;
-  /** Minimum stamps between two stored LatchFail events of the same tiger. */
+  /** Minimum stamps between two stored LatchFail events of the same pack animal. */
   failWindow: number;
 }
 
@@ -110,14 +110,14 @@ export class EventLog {
   private p1Dropped = 0;
   private p0Dropped = 0;
 
-  constructor(trexCount: number, tigerCount: number, limits: EventLogLimits) {
+  constructor(heavyCount: number, packCount: number, limits: EventLogLimits) {
     this.limits = limits;
     this.maxLength = (Math.max(0, limits.p0Cap) + Math.max(0, limits.p1Cap)) * EVENT_STRIDE;
     this.buf = new Uint16Array(Math.min(this.maxLength, 1024 * EVENT_STRIDE));
     // Stamps start at 1, so 0 means "never".
-    this.lastMiss = new Uint16Array(trexCount);
-    this.lastFail = new Uint16Array(tigerCount);
-    if (Math.max(trexCount, tigerCount) - 1 > EVENT_MAX_INDEX) this.stop();
+    this.lastMiss = new Uint16Array(heavyCount);
+    this.lastFail = new Uint16Array(packCount);
+    if (Math.max(heavyCount, packCount) - 1 > EVENT_MAX_INDEX) this.stop();
   }
 
   /** Start the events of tick `step` (stamped `step`). Call once per tick, in order. */
@@ -207,7 +207,7 @@ export class EventLog {
 
 const TAU = Math.PI * 2;
 
-/** Bite damage as a fraction of the tiger's max HP, 0..255. */
+/** Bite damage as a fraction of the pack animal's max HP, 0..255. */
 export const damageByte = (damage: number, maxHp: number): number =>
   Math.min(255, Math.max(0, Math.round((255 * damage) / maxHp)));
 
@@ -231,29 +231,29 @@ export const eventA = (events: Uint16Array, k: number): number =>
 export const eventB = (events: Uint16Array, k: number): number =>
   events[k * EVENT_STRIDE + 3] as number;
 
-type TigerStates = typeof TigerState;
-type TigerStateCode = TigerStates[keyof TigerStates];
+type PackStates = typeof PackState;
+type PackStateCode = PackStates[keyof PackStates];
 
-const APPROACH: TigerStates['Approach'] = 0;
-const LATCHED: TigerStates['Latched'] = 1;
-const RECOVER: TigerStates['Recover'] = 2;
-const ROUTED: TigerStates['Routed'] = 3;
-const DEAD: TigerStates['Dead'] = 4;
-const LEFT: TigerStates['Left'] = 5;
+const APPROACH: PackStates['Approach'] = 0;
+const LATCHED: PackStates['Latched'] = 1;
+const RECOVER: PackStates['Recover'] = 2;
+const ROUTED: PackStates['Routed'] = 3;
+const DEAD: PackStates['Dead'] = 4;
+const LEFT: PackStates['Left'] = 5;
 
-/** Index of the tiger an event is about, or -1 for T-Rex-only events. */
-export function eventTiger(type: number, a: number, b: number): number {
+/** Index of the pack animal an event is about, or -1 for heavy-only events. */
+export function eventPack(type: number, a: number, b: number): number {
   if (type === EventType.BiteHit || type === EventType.BiteMiss) return b;
-  if (type === EventType.TrexDeath || type < EventType.BiteHit || type > EventType.Resume)
+  if (type === EventType.HeavyDeath || type < EventType.BiteHit || type > EventType.Resume)
     return -1;
   return a;
 }
 
 /**
- * The tiger state an event leaves its tiger in, or -1 if it changes none. Applied in log order,
- * these transitions reproduce every frame's tiger states exactly (up to `completeUntilStep`).
+ * The pack animal state an event leaves its pack animal in, or -1 if it changes none. Applied in log order,
+ * these transitions reproduce every frame's pack animal states exactly (up to `completeUntilStep`).
  */
-export function tigerStateAfter(type: number): TigerStateCode | -1 {
+export function packStateAfter(type: number): PackStateCode | -1 {
   switch (type) {
     case EventType.BiteHit:
     case EventType.Throw:
@@ -262,7 +262,7 @@ export function tigerStateAfter(type: number): TigerStateCode | -1 {
       return RECOVER;
     case EventType.Latch:
       return LATCHED;
-    case EventType.TigerDeath:
+    case EventType.PackDeath:
       return DEAD;
     case EventType.Rout:
       return ROUTED;

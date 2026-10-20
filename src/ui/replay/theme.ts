@@ -12,8 +12,8 @@ export const REPLAY_TOKENS = {
   arena: '--replay-arena',
   grid: '--replay-grid',
   border: '--replay-border',
-  trex: '--replay-trex',
-  tiger: '--replay-tiger',
+  heavy: '--replay-trex',
+  pack: '--replay-tiger',
   out: '--replay-out',
   dead: '--replay-dead',
 } as const;
@@ -29,54 +29,54 @@ export const FALLBACK_COLORS: BaseColors = {
   arena: '#f3f2ee',
   grid: '#e4e3de',
   border: '#b9b8b2',
-  trex: '#0072b2',
-  tiger: '#d55e00',
+  heavy: '#0072b2',
+  pack: '#d55e00',
   out: '#767676',
   dead: '#8d8c87',
 };
 
 /** Opacity of each pre-blended paint (over the arena). */
 export const BLEND = {
-  trexTint: 0.16,
+  heavyTint: 0.16,
   deadMark: 0.5,
-  deadTrex: 0.6,
+  deadHeavy: 0.6,
   tether: 0.85,
   biteLine: 0.55,
   lodRecover: 0.45,
   lodRouted: 0.75,
-  /** Trail segments by age (newest → oldest); tiger trails at 0.8 × these. */
+  /** Trail segments by age (newest → oldest); pack animal trails at 0.8 × these. */
   trail0: 0.38,
   trail1: 0.25,
   trail2: 0.13,
-  tigerTrail: 0.8,
-  /** Reduced-motion overview: tiger paths. */
-  ovTiger: 0.3,
+  packTrail: 0.8,
+  /** Reduced-motion overview: pack animal paths. */
+  ovPack: 0.3,
 } as const;
 
 export interface ReplayTheme extends BaseColors {
   font: string;
-  /** Hollow (damaged) T-Rex fill: T-Rex blue at 16 %. */
-  trexTint: string;
-  /** Dead-tiger crosses and LOD squares: grey at 50 %. */
+  /** Hollow (damaged) heavy fill: heavy blue at 16 %. */
+  heavyTint: string;
+  /** Dead-pack animal crosses and LOD squares: grey at 50 %. */
   deadMark: string;
-  /** Dead T-Rex outline: muted at 60 %. */
-  deadTrex: string;
-  /** Latch tether: tiger orange at 85 %. */
+  /** Dead heavy outline: muted at 60 %. */
+  deadHeavy: string;
+  /** Latch tether: pack animal orange at 85 %. */
   tether: string;
-  /** Bite-cone outline: T-Rex blue at 55 %. */
+  /** Bite-cone outline: heavy blue at 55 %. */
   biteLine: string;
-  /** LOD squares of recovering tigers (orange at 45 %) and routed tigers (grey at 75 %). */
+  /** LOD squares of recovering pack animals (orange at 45 %) and routed pack animals (grey at 75 %). */
   lodRecover: string;
   lodRouted: string;
   /** Trail tones by age, newest (0) to oldest (2). */
-  trailTrex0: string;
-  trailTrex1: string;
-  trailTrex2: string;
-  trailTiger0: string;
-  trailTiger1: string;
-  trailTiger2: string;
-  /** Overview tiger paths: tiger orange at 30 %. */
-  ovTiger: string;
+  trailHeavy0: string;
+  trailHeavy1: string;
+  trailHeavy2: string;
+  trailPack0: string;
+  trailPack1: string;
+  trailPack2: string;
+  /** Overview pack animal paths: pack animal orange at 30 %. */
+  ovPack: string;
 }
 
 export type ColorRole = Exclude<keyof ReplayTheme, 'font'>;
@@ -126,20 +126,20 @@ export function deriveTheme(base: BaseColors, font: string): ReplayTheme {
   return {
     ...base,
     font,
-    trexTint: over(base.trex, BLEND.trexTint),
+    heavyTint: over(base.heavy, BLEND.heavyTint),
     deadMark: over(base.dead, BLEND.deadMark),
-    deadTrex: over(base.muted, BLEND.deadTrex),
-    tether: over(base.tiger, BLEND.tether),
-    biteLine: over(base.trex, BLEND.biteLine),
-    lodRecover: over(base.tiger, BLEND.lodRecover),
+    deadHeavy: over(base.muted, BLEND.deadHeavy),
+    tether: over(base.pack, BLEND.tether),
+    biteLine: over(base.heavy, BLEND.biteLine),
+    lodRecover: over(base.pack, BLEND.lodRecover),
     lodRouted: over(base.out, BLEND.lodRouted),
-    trailTrex0: over(base.trex, BLEND.trail0),
-    trailTrex1: over(base.trex, BLEND.trail1),
-    trailTrex2: over(base.trex, BLEND.trail2),
-    trailTiger0: over(base.tiger, BLEND.trail0 * BLEND.tigerTrail),
-    trailTiger1: over(base.tiger, BLEND.trail1 * BLEND.tigerTrail),
-    trailTiger2: over(base.tiger, BLEND.trail2 * BLEND.tigerTrail),
-    ovTiger: over(base.tiger, BLEND.ovTiger),
+    trailHeavy0: over(base.heavy, BLEND.trail0),
+    trailHeavy1: over(base.heavy, BLEND.trail1),
+    trailHeavy2: over(base.heavy, BLEND.trail2),
+    trailPack0: over(base.pack, BLEND.trail0 * BLEND.packTrail),
+    trailPack1: over(base.pack, BLEND.trail1 * BLEND.packTrail),
+    trailPack2: over(base.pack, BLEND.trail2 * BLEND.packTrail),
+    ovPack: over(base.pack, BLEND.ovPack),
   };
 }
 

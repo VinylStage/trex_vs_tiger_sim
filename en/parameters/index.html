@@ -66,8 +66,9 @@
           <h2 id="toc-title">Contents</h2>
           <ol>
             <li><a href="#how-to-read">How to read this page</a></li>
-            <li><a href="#trex">T-Rex parameters (11)</a></li>
-            <li><a href="#tiger">Tiger parameters (11)</a></li>
+            <li><a href="#heavy">Large-animal parameters (11)</a></li>
+            <li><a href="#pack">Pack-animal parameters (11)</a></li>
+            <li><a href="#species">Species presets</a></li>
             <li><a href="#settings">Scenario settings</a></li>
             <li><a href="#constants">Fixed constants</a></li>
           </ol>
@@ -111,32 +112,35 @@
             </p>
           </section>
 
-          <section id="trex">
-            <h2>T-Rex parameters (11)</h2>
+          <section id="heavy">
+            <h2>Large-animal parameters (11)</h2>
             <p>
-              Body, movement, bite and shake-off values of an adult <i>Tyrannosaurus rex</i>. The
-              T-Rex has no stamina and no morale.
+              Body, movement, attack and shake-off values of the large animal that fights alone.
+              Large animals have no stamina and no morale. The ranges and sources below are for the
+              default species, an adult <i>Tyrannosaurus rex</i>; the other species are under
+              <a href="#species">Species presets</a>. For the elephant, buffalo and brown bear the
+              bite names read as attacks (tusks, horns, paws); the arithmetic is the same.
             </p>
             <ul class="param-index">
-              <li><a href="#param-trex.mass">Body mass</a></li>
-              <li><a href="#param-trex.speed">Speed</a></li>
-              <li><a href="#param-trex.turnRate">Turn rate</a></li>
-              <li><a href="#param-trex.biteForce">Bite force</a></li>
-              <li><a href="#param-trex.biteLethality">Bite lethality</a></li>
-              <li><a href="#param-trex.biteInterval">Bite interval</a></li>
-              <li><a href="#param-trex.biteReach">Bite reach</a></li>
-              <li><a href="#param-trex.biteArc">Bite arc (half-angle)</a></li>
-              <li><a href="#param-trex.biteAccuracy">Bite accuracy</a></li>
-              <li><a href="#param-trex.shakeRate">Shake-off rate</a></li>
-              <li><a href="#param-trex.bodyRadius">Body radius</a></li>
+              <li><a href="#param-heavy.mass">Body mass</a></li>
+              <li><a href="#param-heavy.speed">Speed</a></li>
+              <li><a href="#param-heavy.turnRate">Turn rate</a></li>
+              <li><a href="#param-heavy.biteForce">Bite force</a></li>
+              <li><a href="#param-heavy.biteLethality">Bite lethality</a></li>
+              <li><a href="#param-heavy.biteInterval">Bite interval</a></li>
+              <li><a href="#param-heavy.biteReach">Bite reach</a></li>
+              <li><a href="#param-heavy.biteArc">Bite arc (half-angle)</a></li>
+              <li><a href="#param-heavy.biteAccuracy">Bite accuracy</a></li>
+              <li><a href="#param-heavy.shakeRate">Shake-off rate</a></li>
+              <li><a href="#param-heavy.bodyRadius">Body radius</a></li>
             </ul>
             <section
-              class="param species-trex"
-              id="param-trex.mass"
-              data-param="trex.mass"
+              class="param role-heavy"
+              id="param-heavy.mass"
+              data-param="heavy.mass"
               data-unit="kg"
             >
-              <h3>Body mass <code>trex.mass</code> <span class="tag">Literature-based</span></h3>
+              <h3>Body mass <code>heavy.mass</code> <span class="tag">Literature-based</span></h3>
               <dl class="facts">
                 <div>
                   <dt>Default range (min · mode · max)</dt>
@@ -174,12 +178,12 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.speed"
-              data-param="trex.speed"
+              class="param role-heavy"
+              id="param-heavy.speed"
+              data-param="heavy.speed"
               data-unit="m/s"
             >
-              <h3>Speed <code>trex.speed</code> <span class="tag">Literature-based</span></h3>
+              <h3>Speed <code>heavy.speed</code> <span class="tag">Literature-based</span></h3>
               <dl class="facts">
                 <div>
                   <dt>Default range (min · mode · max)</dt>
@@ -219,13 +223,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.turnRate"
-              data-param="trex.turnRate"
+              class="param role-heavy"
+              id="param-heavy.turnRate"
+              data-param="heavy.turnRate"
               data-unit="deg/s"
             >
               <h3>
-                Turn rate <code>trex.turnRate</code> <span class="tag">Literature-based</span>
+                Turn rate <code>heavy.turnRate</code> <span class="tag">Literature-based</span>
               </h3>
               <dl class="facts">
                 <div>
@@ -263,13 +267,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteForce"
-              data-param="trex.biteForce"
+              class="param role-heavy"
+              id="param-heavy.biteForce"
+              data-param="heavy.biteForce"
               data-unit="kN"
             >
               <h3>
-                Bite force <code>trex.biteForce</code> <span class="tag">Literature-based</span>
+                Bite force <code>heavy.biteForce</code> <span class="tag">Literature-based</span>
               </h3>
               <dl class="facts">
                 <div>
@@ -307,13 +311,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteLethality"
-              data-param="trex.biteLethality"
+              class="param role-heavy"
+              id="param-heavy.biteLethality"
+              data-param="heavy.biteLethality"
               data-unit="HP/kN"
             >
               <h3>
-                Bite lethality <code>trex.biteLethality</code>
+                Bite lethality <code>heavy.biteLethality</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -347,13 +351,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteInterval"
-              data-param="trex.biteInterval"
+              class="param role-heavy"
+              id="param-heavy.biteInterval"
+              data-param="heavy.biteInterval"
               data-unit="s"
             >
               <h3>
-                Bite interval <code>trex.biteInterval</code>
+                Bite interval <code>heavy.biteInterval</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -391,13 +395,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteReach"
-              data-param="trex.biteReach"
+              class="param role-heavy"
+              id="param-heavy.biteReach"
+              data-param="heavy.biteReach"
               data-unit="m"
             >
               <h3>
-                Bite reach <code>trex.biteReach</code>
+                Bite reach <code>heavy.biteReach</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -437,13 +441,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteArc"
-              data-param="trex.biteArc"
+              class="param role-heavy"
+              id="param-heavy.biteArc"
+              data-param="heavy.biteArc"
               data-unit="deg"
             >
               <h3>
-                Bite arc (half-angle) <code>trex.biteArc</code>
+                Bite arc (half-angle) <code>heavy.biteArc</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -483,13 +487,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteAccuracy"
-              data-param="trex.biteAccuracy"
+              class="param role-heavy"
+              id="param-heavy.biteAccuracy"
+              data-param="heavy.biteAccuracy"
               data-unit="p"
             >
               <h3>
-                Bite accuracy <code>trex.biteAccuracy</code>
+                Bite accuracy <code>heavy.biteAccuracy</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -527,13 +531,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.shakeRate"
-              data-param="trex.shakeRate"
+              class="param role-heavy"
+              id="param-heavy.shakeRate"
+              data-param="heavy.shakeRate"
               data-unit="1/s"
             >
               <h3>
-                Shake-off rate <code>trex.shakeRate</code>
+                Shake-off rate <code>heavy.shakeRate</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -573,13 +577,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.bodyRadius"
-              data-param="trex.bodyRadius"
+              class="param role-heavy"
+              id="param-heavy.bodyRadius"
+              data-param="heavy.bodyRadius"
               data-unit="m"
             >
               <h3>
-                Body radius <code>trex.bodyRadius</code>
+                Body radius <code>heavy.bodyRadius</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -612,32 +616,34 @@
             </section>
           </section>
 
-          <section id="tiger">
-            <h2>Tiger parameters (11)</h2>
+          <section id="pack">
+            <h2>Pack-animal parameters (11)</h2>
             <p>
-              Body, movement and stamina, latching and attack, and morale values of an adult tiger
-              (<i>Panthera tigris</i>).
+              Body, movement and stamina, latching and attack, and morale values of the animals that
+              attack in numbers. The ranges and sources below are for the default species, an adult
+              tiger (<i>Panthera tigris</i>); the other species are under
+              <a href="#species">Species presets</a>.
             </p>
             <ul class="param-index">
-              <li><a href="#param-tiger.mass">Body mass</a></li>
-              <li><a href="#param-tiger.sprintSpeed">Sprint speed</a></li>
-              <li><a href="#param-tiger.cruiseSpeed">Cruise speed</a></li>
-              <li><a href="#param-tiger.sprintEndurance">Sprint endurance</a></li>
-              <li><a href="#param-tiger.latchEndurance">Latch endurance</a></li>
-              <li><a href="#param-tiger.recoveryTime">Recovery time</a></li>
-              <li><a href="#param-tiger.latchChance">Latch chance</a></li>
-              <li><a href="#param-tiger.dps">Damage per second</a></li>
-              <li><a href="#param-tiger.bleed">Bleed rate</a></li>
-              <li><a href="#param-tiger.morale">Initial morale</a></li>
-              <li><a href="#param-tiger.moraleLoss">Morale loss</a></li>
+              <li><a href="#param-pack.mass">Body mass</a></li>
+              <li><a href="#param-pack.sprintSpeed">Sprint speed</a></li>
+              <li><a href="#param-pack.cruiseSpeed">Cruise speed</a></li>
+              <li><a href="#param-pack.sprintEndurance">Sprint endurance</a></li>
+              <li><a href="#param-pack.latchEndurance">Latch endurance</a></li>
+              <li><a href="#param-pack.recoveryTime">Recovery time</a></li>
+              <li><a href="#param-pack.latchChance">Latch chance</a></li>
+              <li><a href="#param-pack.dps">Damage per second</a></li>
+              <li><a href="#param-pack.bleed">Bleed rate</a></li>
+              <li><a href="#param-pack.morale">Initial morale</a></li>
+              <li><a href="#param-pack.moraleLoss">Morale loss</a></li>
             </ul>
             <section
-              class="param species-tiger"
-              id="param-tiger.mass"
-              data-param="tiger.mass"
+              class="param role-pack"
+              id="param-pack.mass"
+              data-param="pack.mass"
               data-unit="kg"
             >
-              <h3>Body mass <code>tiger.mass</code> <span class="tag">Literature-based</span></h3>
+              <h3>Body mass <code>pack.mass</code> <span class="tag">Literature-based</span></h3>
               <dl class="facts">
                 <div>
                   <dt>Default range (min · mode · max)</dt>
@@ -675,13 +681,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.sprintSpeed"
-              data-param="tiger.sprintSpeed"
+              class="param role-pack"
+              id="param-pack.sprintSpeed"
+              data-param="pack.sprintSpeed"
               data-unit="m/s"
             >
               <h3>
-                Sprint speed <code>tiger.sprintSpeed</code>
+                Sprint speed <code>pack.sprintSpeed</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -720,13 +726,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.cruiseSpeed"
-              data-param="tiger.cruiseSpeed"
+              class="param role-pack"
+              id="param-pack.cruiseSpeed"
+              data-param="pack.cruiseSpeed"
               data-unit="m/s"
             >
               <h3>
-                Cruise speed <code>tiger.cruiseSpeed</code>
+                Cruise speed <code>pack.cruiseSpeed</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -761,13 +767,13 @@
               <p><strong>Basis.</strong> A judgement for a trot or canter.</p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.sprintEndurance"
-              data-param="tiger.sprintEndurance"
+              class="param role-pack"
+              id="param-pack.sprintEndurance"
+              data-param="pack.sprintEndurance"
               data-unit="s"
             >
               <h3>
-                Sprint endurance <code>tiger.sprintEndurance</code>
+                Sprint endurance <code>pack.sprintEndurance</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -805,13 +811,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.latchEndurance"
-              data-param="tiger.latchEndurance"
+              class="param role-pack"
+              id="param-pack.latchEndurance"
+              data-param="pack.latchEndurance"
               data-unit="s"
             >
               <h3>
-                Latch endurance <code>tiger.latchEndurance</code>
+                Latch endurance <code>pack.latchEndurance</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -850,13 +856,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.recoveryTime"
-              data-param="tiger.recoveryTime"
+              class="param role-pack"
+              id="param-pack.recoveryTime"
+              data-param="pack.recoveryTime"
               data-unit="s"
             >
               <h3>
-                Recovery time <code>tiger.recoveryTime</code>
+                Recovery time <code>pack.recoveryTime</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -891,13 +897,13 @@
               <p><strong>Basis.</strong> A judgement.</p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.latchChance"
-              data-param="tiger.latchChance"
+              class="param role-pack"
+              id="param-pack.latchChance"
+              data-param="pack.latchChance"
               data-unit="p"
             >
               <h3>
-                Latch chance <code>tiger.latchChance</code>
+                Latch chance <code>pack.latchChance</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -935,13 +941,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.dps"
-              data-param="tiger.dps"
+              class="param role-pack"
+              id="param-pack.dps"
+              data-param="pack.dps"
               data-unit="HP/s"
             >
               <h3>
-                Damage per second <code>tiger.dps</code>
+                Damage per second <code>pack.dps</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -982,13 +988,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.bleed"
-              data-param="tiger.bleed"
+              class="param role-pack"
+              id="param-pack.bleed"
+              data-param="pack.bleed"
               data-unit="1/s"
             >
               <h3>
-                Bleed rate <code>tiger.bleed</code>
+                Bleed rate <code>pack.bleed</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -1024,13 +1030,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.morale"
-              data-param="tiger.morale"
+              class="param role-pack"
+              id="param-pack.morale"
+              data-param="pack.morale"
               data-unit="0-1"
             >
               <h3>
-                Initial morale <code>tiger.morale</code>
+                Initial morale <code>pack.morale</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -1070,13 +1076,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.moraleLoss"
-              data-param="tiger.moraleLoss"
+              class="param role-pack"
+              id="param-pack.moraleLoss"
+              data-param="pack.moraleLoss"
               data-unit="0-1"
             >
               <h3>
-                Morale loss <code>tiger.moraleLoss</code>
+                Morale loss <code>pack.moraleLoss</code>
                 <span class="tag tag-speculative">Speculative</span>
               </h3>
               <dl class="facts">
@@ -1113,6 +1119,1165 @@
             </section>
           </section>
 
+          <section id="species">
+            <h2>Species presets</h2>
+            <p>
+              The simulator covers several species with the same 22 parameters. The
+              <strong>large animal</strong> that fights alone uses the eleven
+              <code>heavy.*</code> parameters above; the <strong>pack animal</strong> that attacks
+              in numbers uses the eleven <code>pack.*</code> parameters. Choosing a species makes
+              the ranges below (min · mode · max) the defaults, and the letter next to each value
+              gives its evidence: <abbr class="ev ev-L" title="literature value">L</abbr> literature
+              value, <abbr class="ev ev-D" title="derived from literature">D</abbr> derived from
+              literature with a stated formula,
+              <abbr class="ev ev-S" title="speculative">S</abbr> speculative,
+              <abbr class="ev ev-U" title="unverified popular figure">U</abbr> a popular figure
+              without a peer-reviewed source. Behavioural values (accuracy, morale, latching) are
+              speculative for every species.
+            </p>
+            <p>
+              The per-parameter notes and hard bounds above describe the default species, T. rex and
+              the tiger. Other species have wider bounds only where they need them (large-animal
+              mass from
+              <data data-k="wide" data-param="heavy.mass" data-end="lo" value="100">100</data> kg,
+              weapon force from
+              <data data-k="wide" data-param="heavy.biteForce" data-end="lo" value="0.1">0.1</data>
+              kN, pack-animal mass
+              <data data-k="wide" data-param="pack.mass" data-end="lo" value="5">5</data>–<data
+                data-k="wide"
+                data-param="pack.mass"
+                data-end="hi"
+                value="1000"
+                >1,000</data
+              >
+              kg). T. rex and the tiger keep exactly their previous bounds, so older share links
+              still give the same results.
+            </p>
+            <p>
+              Two constants are not sampled. <code>hide</code> multiplies the damage a large animal
+              takes from the pack (damage per second and the wounds that drive bleeding) and stands
+              for thick skin, fat or fur (1 for T. rex). <code>radius</code> is the pack animal’s
+              body radius, used for the contact distance, the latched position and the dot size in
+              the replay (0.8 m for the tiger). Sources and calibration notes are in
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/SPECIES.md"
+                >docs/SPECIES.md</a
+              >.
+            </p>
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-species-heavy"
+            >
+              <table class="species-table">
+                <caption id="caption-species-heavy">
+                  Large-animal presets (min · mode · max)
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Parameter</th>
+                    <th scope="col">T. rex</th>
+                    <th scope="col">African bush elephant</th>
+                    <th scope="col">African buffalo</th>
+                    <th scope="col">Brown bear</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.mass">Body mass (kg)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="5650 8000 9500"
+                        >5,650 · 8,000 · 9,500</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="2600 3200 6900"
+                        >2,600 · 3,200 · 6,900</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="420 600 900"
+                        >420 · 600 · 900</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="130 220 450"
+                        >130 · 220 · 450</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.speed">Speed (m/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.speed"
+                        data-ev="L"
+                        value="3.4 5.5 8"
+                        >3.4 · 5.5 · 8</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.speed"
+                        data-ev="L"
+                        value="3 4.5 6.8"
+                        >3 · 4.5 · 6.8</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.speed"
+                        data-ev="U"
+                        value="8 11 15.5"
+                        >8 · 11 · 15.5</data
+                      >
+                      <abbr class="ev ev-U" title="unverified popular figure">U</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.speed"
+                        data-ev="L"
+                        value="8 11 13.3"
+                        >8 · 11 · 13.3</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.turnRate">Turn rate (°/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.turnRate"
+                        data-ev="L"
+                        value="22 30 45"
+                        >22 · 30 · 45</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.turnRate"
+                        data-ev="S"
+                        value="30 50 90"
+                        >30 · 50 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.turnRate"
+                        data-ev="S"
+                        value="60 90 150"
+                        >60 · 90 · 150</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.turnRate"
+                        data-ev="S"
+                        value="60 120 200"
+                        >60 · 120 · 200</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteForce">Weapon force (kN)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteForce"
+                        data-ev="L"
+                        value="8.5 35 57"
+                        >8.5 · 35 · 57</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteForce"
+                        data-ev="S"
+                        value="8 20 45"
+                        >8 · 20 · 45</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteForce"
+                        data-ev="S"
+                        value="2 5 10"
+                        >2 · 5 · 10</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteForce"
+                        data-ev="D"
+                        value="0.6 1.2 3"
+                        >0.6 · 1.2 · 3</data
+                      >
+                      <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteLethality">Lethality (HP/kN)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="4 8 12"
+                        >4 · 8 · 12</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="2 5 9"
+                        >2 · 5 · 9</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="4 8 12"
+                        >4 · 8 · 12</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="4 8 12"
+                        >4 · 8 · 12</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteInterval">Attack interval (s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="1.5 2.5 4"
+                        >1.5 · 2.5 · 4</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="2 4 8"
+                        >2 · 4 · 8</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="1 2 4"
+                        >1 · 2 · 4</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="0.8 1.5 3"
+                        >0.8 · 1.5 · 3</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteReach">Attack reach (m)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="4.5 5.5 6.5"
+                        >4.5 · 5.5 · 6.5</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="2.8 3.5 4.3"
+                        >2.8 · 3.5 · 4.3</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="1.5 1.8 2.2"
+                        >1.5 · 1.8 · 2.2</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="1.2 1.5 1.9"
+                        >1.2 · 1.5 · 1.9</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteArc">Attack arc (°)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="30 45 70"
+                        >30 · 45 · 70</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="40 60 90"
+                        >40 · 60 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="30 45 70"
+                        >30 · 45 · 70</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="45 70 100"
+                        >45 · 70 · 100</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteAccuracy">Accuracy</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.3 0.5 0.7"
+                        >0.3 · 0.5 · 0.7</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.15 0.3 0.5"
+                        >0.15 · 0.3 · 0.5</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.2 0.35 0.55"
+                        >0.2 · 0.35 · 0.55</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.3 0.45 0.65"
+                        >0.3 · 0.45 · 0.65</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.shakeRate">Shake-off rate (1/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.05 0.12 0.25"
+                        >0.05 · 0.12 · 0.25</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.08 0.2 0.4"
+                        >0.08 · 0.2 · 0.4</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.03 0.08 0.2"
+                        >0.03 · 0.08 · 0.2</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.1 0.25 0.5"
+                        >0.1 · 0.25 · 0.5</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.bodyRadius">Body radius (m)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="2 2.5 3"
+                        >2 · 2.5 · 3</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="1.4 1.7 2"
+                        >1.4 · 1.7 · 2</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="0.7 0.85 1"
+                        >0.7 · 0.85 · 1</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="0.6 0.75 0.9"
+                        >0.6 · 0.75 · 0.9</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Weapon</th>
+                    <td><data data-k="weapon" data-species="trex" value="bite">bite</data></td>
+                    <td>
+                      <data data-k="weapon" data-species="elephant" value="tusk"
+                        >tusks and trampling</data
+                      >
+                    </td>
+                    <td><data data-k="weapon" data-species="buffalo" value="horn">horns</data></td>
+                    <td>
+                      <data data-k="weapon" data-species="brownBear" value="pawBite"
+                        >bite and paws</data
+                      >
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Hide multiplier <code>hide</code></th>
+                    <td><data data-k="hide" data-species="trex" value="1">1</data></td>
+                    <td><data data-k="hide" data-species="elephant" value="0.3">0.3</data></td>
+                    <td><data data-k="hide" data-species="buffalo" value="0.5">0.5</data></td>
+                    <td><data data-k="hide" data-species="brownBear" value="0.5">0.5</data></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-species-pack"
+            >
+              <table class="species-table">
+                <caption id="caption-species-pack">
+                  Pack-animal presets (min · mode · max)
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Parameter</th>
+                    <th scope="col">Tiger</th>
+                    <th scope="col">Lion</th>
+                    <th scope="col">Gray wolf</th>
+                    <th scope="col">Spotted hyena</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.mass">Body mass (kg)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.mass"
+                        data-ev="L"
+                        value="100 180 260"
+                        >100 · 180 · 260</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.mass"
+                        data-ev="L"
+                        value="110 150 225"
+                        >110 · 150 · 225</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.mass"
+                        data-ev="L"
+                        value="30 42 60"
+                        >30 · 42 · 60</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.mass"
+                        data-ev="L"
+                        value="40 55 70"
+                        >40 · 55 · 70</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.sprintSpeed">Sprint speed (m/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.sprintSpeed"
+                        data-ev="S"
+                        value="11 14 18"
+                        >11 · 14 · 18</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.sprintSpeed"
+                        data-ev="L"
+                        value="11 14 20.6"
+                        >11 · 14 · 20.6</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.sprintSpeed"
+                        data-ev="U"
+                        value="12 15 18"
+                        >12 · 15 · 18</data
+                      >
+                      <abbr class="ev ev-U" title="unverified popular figure">U</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.sprintSpeed"
+                        data-ev="L"
+                        value="11 14 16.7"
+                        >11 · 14 · 16.7</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.cruiseSpeed">Cruise speed (m/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.cruiseSpeed"
+                        data-ev="S"
+                        value="4 6 8"
+                        >4 · 6 · 8</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.cruiseSpeed"
+                        data-ev="S"
+                        value="3 5 7"
+                        >3 · 5 · 7</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.cruiseSpeed"
+                        data-ev="U"
+                        value="2.5 4 6"
+                        >2.5 · 4 · 6</data
+                      >
+                      <abbr class="ev ev-U" title="unverified popular figure">U</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.cruiseSpeed"
+                        data-ev="S"
+                        value="3 4.5 6"
+                        >3 · 4.5 · 6</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <a href="#param-pack.sprintEndurance">Sprint endurance (s)</a>
+                    </th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.sprintEndurance"
+                        data-ev="S"
+                        value="10 20 40"
+                        >10 · 20 · 40</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.sprintEndurance"
+                        data-ev="S"
+                        value="8 15 30"
+                        >8 · 15 · 30</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.sprintEndurance"
+                        data-ev="S"
+                        value="20 40 90"
+                        >20 · 40 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.sprintEndurance"
+                        data-ev="S"
+                        value="30 60 150"
+                        >30 · 60 · 150</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <a href="#param-pack.latchEndurance">Latch endurance (s)</a>
+                    </th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.latchEndurance"
+                        data-ev="S"
+                        value="15 30 60"
+                        >15 · 30 · 60</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.latchEndurance"
+                        data-ev="S"
+                        value="20 45 120"
+                        >20 · 45 · 120</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.latchEndurance"
+                        data-ev="S"
+                        value="10 25 60"
+                        >10 · 25 · 60</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.latchEndurance"
+                        data-ev="S"
+                        value="15 30 60"
+                        >15 · 30 · 60</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.recoveryTime">Recovery time (s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.recoveryTime"
+                        data-ev="S"
+                        value="30 60 120"
+                        >30 · 60 · 120</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.recoveryTime"
+                        data-ev="S"
+                        value="40 90 180"
+                        >40 · 90 · 180</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.recoveryTime"
+                        data-ev="S"
+                        value="30 60 120"
+                        >30 · 60 · 120</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.recoveryTime"
+                        data-ev="S"
+                        value="30 60 120"
+                        >30 · 60 · 120</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.latchChance">Latch chance</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.latchChance"
+                        data-ev="S"
+                        value="0.15 0.35 0.6"
+                        >0.15 · 0.35 · 0.6</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.latchChance"
+                        data-ev="S"
+                        value="0.2 0.4 0.65"
+                        >0.2 · 0.4 · 0.65</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.latchChance"
+                        data-ev="S"
+                        value="0.1 0.25 0.45"
+                        >0.1 · 0.25 · 0.45</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.latchChance"
+                        data-ev="S"
+                        value="0.15 0.3 0.5"
+                        >0.15 · 0.3 · 0.5</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.dps">Damage per second (HP/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.dps"
+                        data-ev="D"
+                        value="2 6 12"
+                        >2 · 6 · 12</data
+                      >
+                      <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.dps"
+                        data-ev="D"
+                        value="2.5 7 14"
+                        >2.5 · 7 · 14</data
+                      >
+                      <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.dps"
+                        data-ev="D"
+                        value="0.8 2.5 6"
+                        >0.8 · 2.5 · 6</data
+                      >
+                      <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.dps"
+                        data-ev="D"
+                        value="1.2 4 12"
+                        >1.2 · 4 · 12</data
+                      >
+                      <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.bleed">Bleed rate (1/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.bleed"
+                        data-ev="S"
+                        value="0 0.002 0.005"
+                        >0 · 0.002 · 0.005</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.bleed"
+                        data-ev="S"
+                        value="0 0.002 0.005"
+                        >0 · 0.002 · 0.005</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.bleed"
+                        data-ev="S"
+                        value="0.001 0.003 0.006"
+                        >0.001 · 0.003 · 0.006</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.bleed"
+                        data-ev="S"
+                        value="0.001 0.003 0.008"
+                        >0.001 · 0.003 · 0.008</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.morale">Initial morale</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.morale"
+                        data-ev="S"
+                        value="0.4 0.6 0.85"
+                        >0.4 · 0.6 · 0.85</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.morale"
+                        data-ev="S"
+                        value="0.45 0.65 0.9"
+                        >0.45 · 0.65 · 0.9</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.morale"
+                        data-ev="S"
+                        value="0.35 0.55 0.8"
+                        >0.35 · 0.55 · 0.8</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.morale"
+                        data-ev="S"
+                        value="0.35 0.55 0.8"
+                        >0.35 · 0.55 · 0.8</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.moraleLoss">Morale loss</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.moraleLoss"
+                        data-ev="S"
+                        value="0.03 0.08 0.15"
+                        >0.03 · 0.08 · 0.15</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.moraleLoss"
+                        data-ev="S"
+                        value="0.02 0.06 0.12"
+                        >0.02 · 0.06 · 0.12</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.moraleLoss"
+                        data-ev="S"
+                        value="0.03 0.08 0.15"
+                        >0.03 · 0.08 · 0.15</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.moraleLoss"
+                        data-ev="S"
+                        value="0.03 0.08 0.15"
+                        >0.03 · 0.08 · 0.15</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Body radius constant <code>radius</code> (m)</th>
+                    <td><data data-k="radius" data-species="tiger" value="0.8">0.8</data></td>
+                    <td><data data-k="radius" data-species="lion" value="0.8">0.8</data></td>
+                    <td><data data-k="radius" data-species="wolf" value="0.5">0.5</data></td>
+                    <td><data data-k="radius" data-species="hyena" value="0.6">0.6</data></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           <section id="settings">
             <h2>Scenario settings</h2>
             <p>
@@ -1120,8 +2285,56 @@
               that differ from the defaults, and values arriving through a link are clamped to the
               ranges below.
             </p>
-            <section class="setting" id="setting-trexCount" data-setting="trexCount">
-              <h3>T-Rex count <code>trexCount</code></h3>
+            <section class="setting" id="setting-heavySpecies" data-setting="heavySpecies">
+              <h3>Large animal <code>heavySpecies</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="trex">Tyrannosaurus rex</data></dd>
+                </div>
+                <div>
+                  <dt>Options</dt>
+                  <dd>
+                    <data data-k="option" value="trex">Tyrannosaurus rex</data>,
+                    <data data-k="option" value="elephant">African bush elephant</data>,
+                    <data data-k="option" value="buffalo">African buffalo</data>,
+                    <data data-k="option" value="brownBear">Brown bear</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                The species on the side of the large animals that fight alone. Choosing it sets that
+                species’ ranges and hard bounds for the 11 parameters and its multiplier on damage
+                taken from the pack (a constant for thick skin). Share links store it as
+                <code>heavy</code>.
+              </p>
+            </section>
+            <section class="setting" id="setting-packSpecies" data-setting="packSpecies">
+              <h3>Pack animal <code>packSpecies</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="tiger">Tiger</data></dd>
+                </div>
+                <div>
+                  <dt>Options</dt>
+                  <dd>
+                    <data data-k="option" value="tiger">Tiger</data>,
+                    <data data-k="option" value="lion">Lion</data>,
+                    <data data-k="option" value="wolf">Gray wolf</data>,
+                    <data data-k="option" value="hyena">Spotted hyena</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                The species on the side that attacks in numbers. Choosing it sets that species’
+                ranges and hard bounds for the 11 parameters and its body radius constant (used for
+                contact distance and the latched position; 0.8 m for the tiger). Share links store
+                it as <code>pack</code>.
+              </p>
+            </section>
+            <section class="setting" id="setting-heavyCount" data-setting="heavyCount">
+              <h3>T-Rex count <code>heavyCount</code></h3>
               <dl class="facts">
                 <div>
                   <dt>Default</dt>
@@ -1140,8 +2353,8 @@
                 Computing time grows with the total number of animals.
               </p>
             </section>
-            <section class="setting" id="setting-tigerCount" data-setting="tigerCount">
-              <h3>Tiger count <code>tigerCount</code></h3>
+            <section class="setting" id="setting-packCount" data-setting="packCount">
+              <h3>Tiger count <code>packCount</code></h3>
               <dl class="facts">
                 <div>
                   <dt>Default</dt>
@@ -1285,8 +2498,8 @@
                 few runs. Simple random draws every value independently.
               </p>
             </section>
-            <section class="setting" id="setting-tigerTactic" data-setting="tigerTactic">
-              <h3>Tiger tactic <code>tigerTactic</code></h3>
+            <section class="setting" id="setting-packTactic" data-setting="packTactic">
+              <h3>Pack tactic <code>packTactic</code></h3>
               <dl class="facts">
                 <div>
                   <dt>Default</dt>
@@ -1353,14 +2566,6 @@
                     <td><data data-k="value" value="0.1">0.1</data> s</td>
                     <td>Time step: every animal is updated every 0.1 s.</td>
                   </tr>
-                  <tr data-constant="tigerRadius">
-                    <th scope="row"><code>tigerRadius</code></th>
-                    <td><data data-k="value" value="0.8">0.8</data> m</td>
-                    <td>
-                      Tiger body radius, used for contact, bite reach padding and the latched
-                      position.
-                    </td>
-                  </tr>
                   <tr data-constant="latchRetry">
                     <th scope="row"><code>latchRetry</code></th>
                     <td><data data-k="value" value="1">1</data> s</td>
@@ -1416,13 +2621,13 @@
                     <td><data data-k="value" value="0.25">0.25</data></td>
                     <td>Stamina regeneration while cruising, relative to resting.</td>
                   </tr>
-                  <tr data-constant="trexRetarget">
-                    <th scope="row"><code>trexRetarget</code></th>
+                  <tr data-constant="heavyRetarget">
+                    <th scope="row"><code>heavyRetarget</code></th>
                     <td><data data-k="value" value="0.5">0.5</data> s</td>
                     <td>T-Rex re-targeting interval.</td>
                   </tr>
-                  <tr data-constant="tigerRetarget">
-                    <th scope="row"><code>tigerRetarget</code></th>
+                  <tr data-constant="packRetarget">
+                    <th scope="row"><code>packRetarget</code></th>
                     <td><data data-k="value" value="1">1</data> s</td>
                     <td>Tiger re-targeting interval.</td>
                   </tr>
@@ -1474,9 +2679,10 @@
     <footer class="site-footer">
       <div class="site-footer-inner">
         <p class="footer-disclaimer" data-i18n="footer.disclaimer">
-          T. rex and tigers never coexisted, and every interaction rule is an assumption. This
-          educational model shows how the outcome depends on uncertain inputs; it does not predict a
-          real fight, and this site does not promote or endorse real animal fighting.
+          Every match-up is an educational model. T. rex never lived alongside any of the other
+          species, match-ups seen in the wild are heavily simplified, and every interaction rule is
+          an assumption. The model shows how the outcome depends on uncertain inputs; it does not
+          predict a real fight, and this site does not promote or endorse real animal fighting.
         </p>
         <ul
           class="footer-links"

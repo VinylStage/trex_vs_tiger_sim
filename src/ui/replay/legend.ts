@@ -9,9 +9,9 @@ import {
   biteCone,
   burst,
   ring,
-  tigerGlyph,
-  trexGauge,
-  trexTriangle,
+  packGlyph,
+  heavyGauge,
+  heavyTriangle,
   type Bucket,
   type PathSink,
 } from './glyphs';
@@ -20,8 +20,8 @@ import type { ReplayTheme } from './theme';
 /** Legend swatch size (CSS px); matches `.legend-glyph` in styles.css. */
 export const SWATCH_W = 30;
 export const SWATCH_H = 18;
-const TREX_LEN = 17;
-const TIGER_R = 4.2;
+const HEAVY_LEN = 17;
+const PACK_R = 4.2;
 
 type SwatchBuilder = (sink: (b: Bucket) => PathSink) => void;
 
@@ -30,28 +30,28 @@ const cy = SWATCH_H / 2;
 
 /** Legend rows: each swatch is built by the same glyph builders and paints as the stage. */
 export const LEGEND_ITEMS: readonly { key: MsgKey; head?: true; build?: SwatchBuilder }[] = [
-  { key: 'replay.legendTrex', build: (s) => trexTriangle(s('trex'), cx, cy, 1, 0, TREX_LEN) },
+  { key: 'replay.legendHeavy', build: (s) => heavyTriangle(s('heavy'), cx, cy, 1, 0, HEAVY_LEN) },
   {
     key: 'replay.legendHp',
     build: (s) => {
-      trexTriangle(s('trexHollow'), cx, cy, 1, 0, TREX_LEN);
-      trexTriangle(s('trexOutline'), cx, cy, 1, 0, TREX_LEN);
-      trexGauge(s('trexGauge'), cx, cy, 1, 0, TREX_LEN, 0.45);
+      heavyTriangle(s('heavyHollow'), cx, cy, 1, 0, HEAVY_LEN);
+      heavyTriangle(s('heavyOutline'), cx, cy, 1, 0, HEAVY_LEN);
+      heavyGauge(s('heavyGauge'), cx, cy, 1, 0, HEAVY_LEN, 0.45);
     },
   },
   {
-    key: 'replay.legendTrexDead',
-    build: (s) => trexTriangle(s('deadTrex'), cx, cy, 1, 0, TREX_LEN),
+    key: 'replay.legendHeavyDead',
+    build: (s) => heavyTriangle(s('deadHeavy'), cx, cy, 1, 0, HEAVY_LEN),
   },
-  { key: 'species.tiger', head: true },
-  { key: 'state.approach', build: (s) => tigerGlyph('approach', s, cx - 4, cy, TIGER_R, 1, 0) },
+  { key: 'replay.legendPack', head: true },
+  { key: 'state.approach', build: (s) => packGlyph('approach', s, cx - 4, cy, PACK_R, 1, 0) },
   {
     key: 'state.latched',
-    build: (s) => tigerGlyph('latched', s, cx + 5, cy, TIGER_R, 1, 0, 1, cy),
+    build: (s) => packGlyph('latched', s, cx + 5, cy, PACK_R, 1, 0, 1, cy),
   },
-  { key: 'state.recover', build: (s) => tigerGlyph('recover', s, cx, cy, TIGER_R, 1, 0) },
-  { key: 'state.routed', build: (s) => tigerGlyph('routed', s, cx, cy, TIGER_R, 1, 0) },
-  { key: 'state.dead', build: (s) => tigerGlyph('dead', s, cx, cy, TIGER_R, 1, 0) },
+  { key: 'state.recover', build: (s) => packGlyph('recover', s, cx, cy, PACK_R, 1, 0) },
+  { key: 'state.routed', build: (s) => packGlyph('routed', s, cx, cy, PACK_R, 1, 0) },
+  { key: 'state.dead', build: (s) => packGlyph('dead', s, cx, cy, PACK_R, 1, 0) },
   { key: 'replay.legendEvents', head: true },
   {
     key: 'replay.legendBite',
@@ -60,22 +60,22 @@ export const LEGEND_ITEMS: readonly { key: MsgKey; head?: true; build?: SwatchBu
   {
     key: 'replay.legendLatchRing',
     build: (s) => {
-      tigerGlyph('latched', s, cx, cy, 3, 1, 0);
-      ring(s(FX_BUCKETS.tiger[0]), cx, cy, 7.5);
+      packGlyph('latched', s, cx, cy, 3, 1, 0);
+      ring(s(FX_BUCKETS.pack[0]), cx, cy, 7.5);
     },
   },
   {
     key: 'replay.legendOutRing',
     build: (s) => {
-      tigerGlyph('routed', s, cx, cy, 3.4, 1, 0);
+      packGlyph('routed', s, cx, cy, 3.4, 1, 0);
       ring(s(FX_BUCKETS.out[0]), cx, cy, 7.5);
     },
   },
   {
     key: 'replay.legendThrow',
     build: (s) => {
-      tigerGlyph('recover', s, cx - 5, cy, TIGER_R, 1, 0);
-      burst(s(FX_BUCKETS.trex[0]), cx - 5, cy, 1, 0, 6, 13);
+      packGlyph('recover', s, cx - 5, cy, PACK_R, 1, 0);
+      burst(s(FX_BUCKETS.heavy[0]), cx - 5, cy, 1, 0, 6, 13);
     },
   },
   {
@@ -86,11 +86,11 @@ export const LEGEND_ITEMS: readonly { key: MsgKey; head?: true; build?: SwatchBu
       for (let k = 0; k < 3; k++) {
         const a = xs[k] as number;
         const b = xs[k + 1] as number;
-        const path = s(TRAIL_BUCKETS.tiger[2 - k] ?? TRAIL_BUCKETS.tiger[0]);
+        const path = s(TRAIL_BUCKETS.pack[2 - k] ?? TRAIL_BUCKETS.pack[0]);
         path.moveTo(a, y(a));
         path.lineTo(b, y(b));
       }
-      tigerGlyph('approach', s, 21, y(21), TIGER_R * 0.8, 1, 0);
+      packGlyph('approach', s, 21, y(21), PACK_R * 0.8, 1, 0);
     },
   },
 ];

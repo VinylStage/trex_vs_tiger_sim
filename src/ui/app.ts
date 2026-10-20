@@ -2,6 +2,7 @@ import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/confi
 import { Outcome, type RunSummary } from '../sim/engine';
 import { aggregate, type AggregateResult } from '../sim/montecarlo';
 import { buildDesign } from '../sim/sampling';
+import { HEAVY_SPECIES } from '../sim/species';
 import {
   CanvasChart,
   durationHistogram,
@@ -11,7 +12,7 @@ import {
   redrawAllCharts,
 } from './charts';
 import { clear, h } from './dom';
-import { createConfigForm, qualifiedParamLabel } from './form';
+import { createConfigForm, matchupBadge, qualifiedParamLabel } from './form';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import {
   applyI18n,
@@ -19,13 +20,16 @@ import {
   initLang,
   onLangChange,
   setLang,
+  setNamePair,
   t,
+  teamLabel,
   type Lang,
   type MsgKey,
   type Vars,
 } from './i18n';
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
+import { heavyLengthForRadius } from './replay/glyphs';
 import { configFromHash, hashFromConfig } from './share';
 import { pageLang, switchedAppUrl } from '../pages/routes';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
@@ -58,10 +62,10 @@ const nextFrame = (): Promise<void> =>
   new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
 function outcomeKey(o: number): MsgKey {
-  return o === Outcome.Trex
-    ? 'outcome.trex'
-    : o === Outcome.Tigers
-      ? 'outcome.tigers'
+  return o === Outcome.Heavy
+    ? 'outcome.heavy'
+    : o === Outcome.Pack
+      ? 'outcome.pack'
       : 'outcome.draw';
 }
 
@@ -104,8 +108,8 @@ export function startApp(root: HTMLElement): void {
   const toast = h('div', { class: 'toast', attrs: { role: 'status', 'aria-live': 'polite' } });
   toast.hidden = true;
   let toastTimer = 0;
-  const showToast = (key: MsgKey): void => {
-    toast.textContent = t(key);
+  const showToast = (text: string): void => {
+    toast.textContent = text;
     toast.hidden = false;
     clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => {
@@ -115,8 +119,8 @@ export function startApp(root: HTMLElement): void {
   shareBtn.addEventListener('click', () => {
     writeUrl();
     const url = location.href;
-    const done = (): void => showToast('share.copied');
-    const fail = (): void => showToast('share.failed');
+    const done = (): void => showToast(t('share.copied'));
+    const fail = (): void => showToast(t('share.failed'));
     if (navigator.clipboard?.writeText) navigator.clipboard.writeText(url).then(done, fail);
     else fail();
   });
@@ -155,7 +159,17 @@ export function startApp(root: HTMLElement): void {
     config = c;
     writeUrl();
     updateStale();
+    syncNames();
   });
+
+  /**
+   * Messages without explicit names (results, charts, replay, tour) name the species of the shown
+   * results, or of the edited scenario before the first run.
+   */
+  function syncNames(): void {
+    setNamePair(result?.config ?? config);
+  }
+  syncNames();
 
   const runBtn = h('button', {
     class: 'btn btn-primary btn-large',
@@ -222,6 +236,7 @@ export function startApp(root: HTMLElement): void {
   staleEl.hidden = true;
   const verdictEl = h('p', { class: 'verdict' });
   const basisEl = h('p', { class: 'verdict-basis' });
+  const badgeSlot = h('div', { class: 'verdict-badge' });
   const cardsEl = h('div', { class: 'stat-cards', attrs: { 'data-tour': 'stat-cards' } });
   const outcomeChart = new CanvasChart('chart.outcome', 'h-outcome');
   const durationChart = new CanvasChart('chart.duration', 'h-hist');
@@ -261,6 +276,7 @@ export function startApp(root: HTMLElement): void {
       },
       verdictEl,
       basisEl,
+      badgeSlot,
     ),
     cardsEl,
     h(
@@ -415,7 +431,10 @@ export function startApp(root: HTMLElement): void {
       if (token !== replayToken) return;
       replayState = { kind, run, loading: false };
       renderReplayInfo();
-      replayView.load(trace);
+      const heavy = HEAVY_SPECIES[result.config.heavySpecies];
+      replayView.load(trace, true, {
+        heavyLengthM: heavyLengthForRadius(heavy.ranges.bodyRadius.mode),
+      });
     } catch (err) {
       if (err instanceof CancelledError || token !== replayToken) return;
       replayState = {
@@ -476,20 +495,24 @@ export function startApp(root: HTMLElement): void {
     updateStale();
     if (!result) return;
     const { agg, config: cfg } = result;
+    syncNames();
+    // Static bindings (replay legend and controls) name the species of these results.
+    applyI18n(resultsBody);
     const ivText = (iv: { lo: number; hi: number }): Vars => ({
       lo: formatPct(iv.lo),
       hi: formatPct(iv.hi),
     });
 
     const best = [
-      { key: 'verdict.trex' as const, iv: agg.pTrex },
-      { key: 'verdict.tigers' as const, iv: agg.pTigers },
+      { key: 'verdict.heavy' as const, iv: agg.pHeavy },
+      { key: 'verdict.pack' as const, iv: agg.pPack },
       { key: 'verdict.draw' as const, iv: agg.pDraw },
     ].reduce((a, b) => (b.iv.p > a.iv.p ? b : a));
     verdictEl.textContent = t(best.key, { p: formatPct(best.iv.p), ...ivText(best.iv) });
+    badgeSlot.replaceChildren(matchupBadge(cfg));
     basisEl.textContent = t('verdict.basis', {
-      trex: formatInt(cfg.trexCount),
-      tigers: formatInt(cfg.tigerCount),
+      heavyTeam: teamLabel(cfg.heavySpecies, cfg.heavyCount),
+      packTeam: teamLabel(cfg.packSpecies, cfg.packCount),
       n: formatInt(agg.n),
       seed: String(cfg.seed),
       elapsed: formatDuration(result.elapsedMs / 1000),
@@ -497,13 +520,13 @@ export function startApp(root: HTMLElement): void {
 
     clear(cardsEl);
     cardsEl.append(
-      card(t('outcome.trex'), formatPct(agg.pTrex.p), t('stat.ci', ivText(agg.pTrex)), 'mk-trex'),
       card(
-        t('outcome.tigers'),
-        formatPct(agg.pTigers.p),
-        t('stat.ci', ivText(agg.pTigers)),
-        'mk-tiger',
+        t('outcome.heavy'),
+        formatPct(agg.pHeavy.p),
+        t('stat.ci', ivText(agg.pHeavy)),
+        'mk-trex',
       ),
+      card(t('outcome.pack'), formatPct(agg.pPack.p), t('stat.ci', ivText(agg.pPack)), 'mk-tiger'),
       card(t('outcome.draw'), formatPct(agg.pDraw.p), t('stat.ci', ivText(agg.pDraw)), 'mk-draw'),
       card(
         t('stat.duration'),
@@ -515,18 +538,18 @@ export function startApp(root: HTMLElement): void {
       ),
       card(
         t('stat.survivors'),
-        formatNum(agg.trexSurvivors.mean, 2),
-        t('stat.ofN', { n: formatInt(cfg.trexCount) }),
+        formatNum(agg.heavySurvivors.mean, 2),
+        t('stat.ofN', { n: formatInt(cfg.heavyCount) }),
       ),
       card(
         t('stat.killed'),
-        formatNum(agg.tigersKilled.mean, 1),
-        t('stat.ofN', { n: formatInt(cfg.tigerCount) }),
+        formatNum(agg.packKilled.mean, 1),
+        t('stat.ofN', { n: formatInt(cfg.packCount) }),
       ),
       card(
         t('stat.routed'),
-        formatNum(agg.tigersRouted.mean, 1),
-        t('stat.ofN', { n: formatInt(cfg.tigerCount) }),
+        formatNum(agg.packRouted.mean, 1),
+        t('stat.ofN', { n: formatInt(cfg.packCount) }),
       ),
       card(
         t('stat.exchange'),
@@ -546,8 +569,8 @@ export function startApp(root: HTMLElement): void {
     outcomeChart.set(
       paintOutcome(agg),
       [
-        `${t('outcome.trex')} ${formatPct(agg.pTrex.p)}`,
-        `${t('outcome.tigers')} ${formatPct(agg.pTigers.p)}`,
+        `${t('outcome.heavy')} ${formatPct(agg.pHeavy.p)}`,
+        `${t('outcome.pack')} ${formatPct(agg.pPack.p)}`,
         `${t('outcome.draw')} ${formatPct(agg.pDraw.p)}`,
       ].join(', '),
     );
@@ -568,21 +591,21 @@ export function startApp(root: HTMLElement): void {
       `${t('chart.duration')}: ${t('stat.duration')} ${formatDuration(agg.duration.p50)}`,
     );
     survivorsChart.set(
-      paintHistogram(agg.trexSurvivors.hist, {
-        color: (th) => th.trex,
+      paintHistogram(agg.heavySurvivors.hist, {
+        color: (th) => th.heavy,
         discrete: true,
-        axisTitle: t('chart.trexAlive'),
+        axisTitle: t('chart.heavyAlive'),
         tickLabel: (v) => formatInt(v),
-        binLabel: (lo) => `${t('chart.trexAlive')} ${formatInt(lo + 0.5)}`,
+        binLabel: (lo) => `${t('chart.heavyAlive')} ${formatInt(lo + 0.5)}`,
       }),
-      `${t('chart.survivors')}: ${t('stat.survivors')} ${formatNum(agg.trexSurvivors.mean, 2)}`,
+      `${t('chart.survivors')}: ${t('stat.survivors')} ${formatNum(agg.heavySurvivors.mean, 2)}`,
     );
     const top = agg.sensitivity.slice(0, 10);
     tornadoChart.set(
-      paintTornado(top, qualifiedParamLabel),
+      paintTornado(top, (id) => qualifiedParamLabel(id, cfg)),
       top
         .slice(0, 5)
-        .map((s) => `${qualifiedParamLabel(s.id)} ${formatNum(s.rho, 2)}`)
+        .map((s) => `${qualifiedParamLabel(s.id, cfg)} ${formatNum(s.rho, 2)}`)
         .join(', '),
       Math.max(120, 24 + top.length * 28),
     );
@@ -615,6 +638,7 @@ export function startApp(root: HTMLElement): void {
     config = c;
     form.setConfig(c);
     updateStale();
+    syncNames();
   });
 
   // ---------- guided tour ----------

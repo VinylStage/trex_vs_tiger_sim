@@ -574,6 +574,26 @@ tbody tr:last-child > * {
   color: var(--warn-fg);
 }
 
+.ev {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  text-decoration: none;
+  cursor: help;
+}
+
+.species-table td {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
 .param-index {
   display: flex;
   flex-wrap: wrap;
@@ -597,11 +617,11 @@ tbody tr:last-child > * {
   text-decoration: none;
 }
 
-.species-trex {
+.role-heavy {
   border-left: 4px solid var(--c-trex);
 }
 
-.species-tiger {
+.role-pack {
   border-left: 4px solid var(--c-tiger);
 }
 

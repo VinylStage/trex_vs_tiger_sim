@@ -6,12 +6,25 @@ import {
   LIMITS,
   MAX_WORK,
   SAMPLING_METHODS,
-  TIGER_TACTICS,
+  PACK_TACTICS,
   defaultConfig,
   type ScenarioConfig,
 } from '../src/sim/config';
 import { CONSTANTS, DT } from '../src/sim/engine';
 import { PARAMS } from '../src/sim/params';
+import {
+  DEFAULT_HEAVY,
+  DEFAULT_PACK,
+  HEAVY_SPECIES,
+  HEAVY_SPECIES_IDS,
+  PACK_SPECIES,
+  PACK_SPECIES_IDS,
+  paramBounds,
+  paramEvidence,
+  presetRange,
+  type HeavySpeciesId,
+  type PackSpeciesId,
+} from '../src/sim/species';
 import {
   CONTENT_PAGES,
   NAV_LABEL_KEYS,
@@ -21,7 +34,15 @@ import {
   type ContentPage,
   type PageId,
 } from '../src/pages/routes';
-import { DICTIONARIES, LANGS, type Lang, type MsgKey } from '../src/ui/i18n';
+import {
+  DICTIONARIES,
+  LANGS,
+  interpolate,
+  speciesVars,
+  type Lang,
+  type MsgKey,
+} from '../src/ui/i18n';
+import { PRESETS } from '../src/ui/form';
 import { footerItems, siteNavItems } from '../src/ui/site-nav';
 import { findHtmlEntries } from '../vite.pages';
 
@@ -794,16 +815,17 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
     );
     expect(s.attrs['id']).toBe(`param-${p.id}`);
     expect(s.attrs['data-unit']).toBe(p.unit);
-    expect(s.attrs['class']).toContain(`species-${p.species}`);
+    expect(s.attrs['class']).toContain(`role-${p.role}`);
     expect(textOf(one(elements(s.inner, 'h3'), 'h3').inner)).toContain(
       DICTIONARIES[lang][`param.${p.id}`],
     );
     expect(numberFacts(s.inner, ['min', 'mode', 'max', 'lo', 'hi'])).toEqual({
-      min: p.default.min,
-      mode: p.default.mode,
-      max: p.default.max,
-      lo: p.bounds[0],
-      hi: p.bounds[1],
+      // The page documents the default species (T. rex and tiger); docs/SPECIES.md the others.
+      min: presetRange(p.id, DEFAULT_HEAVY, DEFAULT_PACK).min,
+      mode: presetRange(p.id, DEFAULT_HEAVY, DEFAULT_PACK).mode,
+      max: presetRange(p.id, DEFAULT_HEAVY, DEFAULT_PACK).max,
+      lo: paramBounds(p.id, DEFAULT_HEAVY, DEFAULT_PACK)[0],
+      hi: paramBounds(p.id, DEFAULT_HEAVY, DEFAULT_PACK)[1],
     });
     const individual = dataValues(s.inner).filter((d) => d.k === 'individual');
     expect(one(individual, 'individual').value).toBe(String(p.individual));
@@ -813,7 +835,9 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
   const keys = (Object.keys(d) as (keyof ScenarioConfig)[]).filter((k) => k !== 'params');
   const choices: Partial<Record<keyof ScenarioConfig, readonly string[]>> = {
     sampling: SAMPLING_METHODS,
-    tigerTactic: TIGER_TACTICS,
+    packTactic: PACK_TACTICS,
+    heavySpecies: HEAVY_SPECIES_IDS,
+    packSpecies: PACK_SPECIES_IDS,
     morale: ['true', 'false'],
   };
 
@@ -829,7 +853,11 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
     );
     expect(s.attrs['id']).toBe(`setting-${key}`);
     expect(textOf(one(elements(s.inner, 'h3'), 'h3').inner)).toContain(
-      DICTIONARIES[lang][`field.${key}` as MsgKey],
+      // Labels name the species; the page describes the default pair (T. rex and tigers).
+      interpolate(
+        DICTIONARIES[lang][`field.${key}` as MsgKey],
+        speciesVars({ heavySpecies: DEFAULT_HEAVY, packSpecies: DEFAULT_PACK }, lang),
+      ),
     );
     const options = choices[key];
     if (options) {
@@ -852,6 +880,81 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
     expect(one(budget, 'maxWork').value).toBe(String(MAX_WORK));
   });
 
+  it('lists every species preset with its evidence tag and constants (src/sim/species.ts)', () => {
+    const presets = elements(html, 'data').filter((d) => d.attrs['data-k'] === 'preset');
+    const expected: string[] = [];
+    for (const [role, ids] of [
+      ['heavy', HEAVY_SPECIES_IDS],
+      ['pack', PACK_SPECIES_IDS],
+    ] as const) {
+      for (const p of PARAMS.filter((x) => x.role === role)) {
+        for (const id of ids) {
+          const h = role === 'heavy' ? (id as HeavySpeciesId) : DEFAULT_HEAVY;
+          const pk = role === 'pack' ? (id as PackSpeciesId) : DEFAULT_PACK;
+          const r = presetRange(p.id, h, pk);
+          expected.push(`${id} ${p.id} ${r.min} ${r.mode} ${r.max} ${paramEvidence(p.id, h, pk)}`);
+        }
+      }
+    }
+    const documented = presets.map((d) => {
+      const [min, mode, max] = (d.attrs['value'] ?? '').split(' ').map(Number);
+      expect(textOf(d.inner).split(' · ').map(shownNumber)).toEqual([min, mode, max]);
+      return `${d.attrs['data-species']} ${d.attrs['data-param']} ${min} ${mode} ${max} ${d.attrs['data-ev']}`;
+    });
+    expect([...documented].sort()).toEqual([...expected].sort());
+    const facts = (k: string): Record<string, string> =>
+      Object.fromEntries(
+        elements(html, 'data')
+          .filter((d) => d.attrs['data-k'] === k)
+          .map((d) => [d.attrs['data-species'] ?? '', d.attrs['value'] ?? '']),
+      );
+    expect(facts('hide')).toEqual(
+      Object.fromEntries(
+        HEAVY_SPECIES_IDS.map((id) => [id, String(HEAVY_SPECIES[id].constants.hide)]),
+      ),
+    );
+    expect(facts('weapon')).toEqual(
+      Object.fromEntries(HEAVY_SPECIES_IDS.map((id) => [id, HEAVY_SPECIES[id].weapon])),
+    );
+    expect(facts('radius')).toEqual(
+      Object.fromEntries(
+        PACK_SPECIES_IDS.map((id) => [id, String(PACK_SPECIES[id].constants.radius)]),
+      ),
+    );
+  });
+
+  it('states the widened bounds of the other species as in src/sim/species.ts', () => {
+    // Every non-default species shares one set of widened bounds; the prose names exactly the
+    // ends that differ from the T. rex/tiger (v1) bounds.
+    const wide = (id: (typeof PARAMS)[number]['id']): readonly [number, number] =>
+      paramBounds(id, 'elephant', 'lion');
+    for (const p of PARAMS) {
+      for (const h of HEAVY_SPECIES_IDS.filter((s) => s !== DEFAULT_HEAVY)) {
+        for (const pk of PACK_SPECIES_IDS.filter((s) => s !== DEFAULT_PACK)) {
+          expect(paramBounds(p.id, h, pk), `${h}/${pk} ${p.id}`).toEqual(wide(p.id));
+        }
+      }
+    }
+    const expected: string[] = [];
+    for (const p of PARAMS) {
+      const v1 = paramBounds(p.id, DEFAULT_HEAVY, DEFAULT_PACK);
+      const w = wide(p.id);
+      if (w[0] !== v1[0]) expected.push(`${p.id} lo ${w[0]}`);
+      if (w[1] !== v1[1]) expected.push(`${p.id} hi ${w[1]}`);
+    }
+    const stated = dataValues(html)
+      .filter((d) => d.k === 'wide')
+      .map((d) => {
+        expect(shownNumber(d.shown)).toBe(Number(d.value));
+        return d;
+      });
+    const named = elements(html, 'data')
+      .filter((d) => d.attrs['data-k'] === 'wide')
+      .map((d) => `${d.attrs['data-param']} ${d.attrs['data-end']} ${Number(d.attrs['value'])}`);
+    expect(stated).toHaveLength(named.length);
+    expect([...named].sort()).toEqual([...expected].sort());
+  });
+
   it('lists engine constants with their code values', () => {
     const rows = tags(html, 'tr').filter((t) => t.attrs['data-constant'] !== undefined);
     expect(rows.length).toBeGreaterThanOrEqual(15);
@@ -861,6 +964,30 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
       expect(Object.hasOwn(values, name), `unknown constant ${name}`).toBe(true);
       expect(numberFacts(row.inner, ['value'])).toEqual({ value: values[name] });
     }
+  });
+});
+
+describe.each(LANGS)('guide page (%s)', (lang) => {
+  it('lists the matchup presets of src/ui/form.ts in order', () => {
+    const html = read(sourceOf('guide', lang));
+    const rows = elements(html, 'tr').filter((r) => r.attrs['data-heavy'] !== undefined);
+    expect(
+      rows.map((r) => {
+        const facts = Object.fromEntries(
+          elements(r.inner, 'data').map((d) => {
+            expect(shownNumber(d.inner)).toBe(Number(d.attrs['value']));
+            return [d.attrs['data-k'], Number(d.attrs['value'])];
+          }),
+        );
+        return {
+          heavySpecies: r.attrs['data-heavy'],
+          packSpecies: r.attrs['data-pack'],
+          heavyCount: facts['heavyCount'],
+          packCount: facts['packCount'],
+          runs: facts['runs'],
+        };
+      }),
+    ).toEqual(PRESETS.map((p) => ({ ...p })));
   });
 });
 

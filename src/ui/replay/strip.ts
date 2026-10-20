@@ -7,8 +7,8 @@ const MARKER_ROW = 9;
 const PAD_BOTTOM = 1;
 
 /**
- * Timeline strip above the slider (docs/REPLAY.md §8): stacked tiger counts by state, the living
- * T-Rex line, and event markers. The static part is rendered once into an offscreen bitmap per
+ * Timeline strip above the slider (docs/REPLAY.md §8): stacked pack animal counts by state, the living
+ * Heavy line, and event markers. The static part is rendered once into an offscreen bitmap per
  * size and theme; each frame only blits it and draws the playhead. Pointer drag seeks. It is
  * hidden from assistive technology: the native slider below is the accessible control.
  */
@@ -87,7 +87,7 @@ export class TimelineStrip {
     ctx.fillRect(x - 1, 0, 2, cssH);
   }
 
-  /** The static strip: surface, stacked counts, T-Rex line, markers. */
+  /** The static strip: surface, stacked counts, heavy line, markers. */
   private render(
     bw: number,
     bh: number,
@@ -112,10 +112,10 @@ export class TimelineStrip {
     const xAt = (t: number): number => 1 + (t / m.duration) * W;
     const xBin = (b: number): number => 1 + (m.bins > 1 ? b / (m.bins - 1) : 0) * W;
     let total = 0;
-    for (let ch = 0; ch < CH.trex; ch++) total += m.counts[ch] as number;
+    for (let ch = 0; ch < CH.heavy; ch++) total += m.counts[ch] as number;
     total = Math.max(1, total);
 
-    // Stacked bands, bottom to top: dead, fled or left, latched, other tigers still fighting.
+    // Stacked bands, bottom to top: dead, fled or left, latched, other pack animals still fighting.
     const acc = new Float64Array(m.bins);
     const band = (channels: readonly number[], color: string): void => {
       g.beginPath();
@@ -136,18 +136,18 @@ export class TimelineStrip {
     };
     band([CH.dead], theme.deadMark);
     band([CH.out], theme.lodRouted);
-    band([CH.latched], theme.tiger);
+    band([CH.latched], theme.pack);
     band([CH.approach, CH.recover], theme.lodRecover);
 
-    // Living T-Rex, as a share of the starting count.
-    const n0 = Math.max(1, m.counts[CH.trex] as number);
+    // Living heavy, as a share of the starting count.
+    const n0 = Math.max(1, m.counts[CH.heavy] as number);
     g.beginPath();
     for (let b = 0; b < m.bins; b++) {
-      const y = top + 1 + H - 2 - ((m.counts[b * CHANNELS + CH.trex] as number) / n0) * (H - 2);
+      const y = top + 1 + H - 2 - ((m.counts[b * CHANNELS + CH.heavy] as number) / n0) * (H - 2);
       if (b === 0) g.moveTo(xBin(b), y);
       else g.lineTo(xBin(b), y);
     }
-    g.strokeStyle = theme.trex;
+    g.strokeStyle = theme.heavy;
     g.lineWidth = 2;
     g.stroke();
 
@@ -158,7 +158,7 @@ export class TimelineStrip {
       for (let y = top; y < top + H; y += 4) g.fillRect(x, y, 1, 2);
     }
 
-    // Markers: kills and routs as short ticks, T-Rex deaths tall, first contact as a ▼.
+    // Markers: kills and routs as short ticks, heavy deaths tall, first contact as a ▼.
     const tick = (t: number, y0: number, y1: number, w: number, color: string): void => {
       g.fillStyle = color;
       g.fillRect(Math.round((xAt(t) - w / 2) * dpr) / dpr, y0, w, y1 - y0);
@@ -167,7 +167,7 @@ export class TimelineStrip {
       if (mk.kind === 'kills') tick(mk.t, 0, top - 3, 1, theme.dead);
       else if (mk.kind === 'routs') tick(mk.t, 3, top - 1, 1, theme.out);
     }
-    for (const mk of m.markers) if (mk.kind === 'trexDeath') tick(mk.t, 0, cssH, 2, theme.trex);
+    for (const mk of m.markers) if (mk.kind === 'heavyDeath') tick(mk.t, 0, cssH, 2, theme.heavy);
     for (const mk of m.markers) {
       if (mk.kind !== 'contact') continue;
       const x = xAt(mk.t);

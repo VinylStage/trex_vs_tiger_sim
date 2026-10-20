@@ -3,12 +3,13 @@
 > **한국어 요약**
 >
 > - 이 문서는 `src/sim/`의 시뮬레이션 엔진이 **실제로 하는 일**을 그대로 설명합니다. 이 모델은 교육용 장난감 모델입니다. 티라노사우루스와 호랑이는 같은 시대에 살지 않았고, 상호작용 규칙은 모두 가정입니다.
+> - 엔진은 대형 동물(`heavy.*`)과 무리 동물(`pack.*`) 두 역할로 여러 종을 다룹니다(§2.7). 아래 설명과 표는 기본 종인 티라노사우루스와 호랑이 기준이고, 다른 종의 값과 근거는 SPECIES.md에 있습니다.
 > - 몬테카를로 설계는 두 층의 불확실성을 씁니다. 실행(run)마다 각 파라미터를 삼각분포 `(min, mode, max)`에서 LHS 또는 단순 무작위로 뽑고, 개체마다 `N(1, CV)`(구간 `[0.5, 1.5]`로 절단) 배율을 곱합니다.
 > - 체력(HP)은 두 종 모두 체중 1 kg당 1 HP입니다. T-Rex 한 번의 물기 피해는 `교합력(kN) × 치명도(HP/kN) × U(0.7, 1.3)`입니다. 호랑이는 T-Rex에 매달린(latched) 동안 초당 `dps`의 피해를 주고, 누적 상처에 비례해 T-Rex가 출혈합니다.
 > - 기본 가정(T-Rex 10 vs 호랑이 100, 사기 ON)에서는 T-Rex가 사실상 100% 이깁니다(전투 시간 중앙값 약 26초). 호랑이 약 14마리가 죽고 약 86마리가 도주합니다. 사기를 끄면(죽을 때까지 싸움) 전투가 140–330초로 길어지지만 T-Rex 승률은 여전히 약 99–100%입니다.
 > - 호랑이가 이기려면 사기를 끈 상태에서 dps를 기본값의 수 배로 올리거나, 출혈 계수를 크게 하거나, T-Rex 한 마리당 호랑이 수를 30마리 이상으로 늘려야 합니다. 이 결과는 예측이 아니라 **불확실한 가정에 대한 민감도**를 보여줍니다. UI에서 직접 범위를 바꿔 보세요.
 
-Source of truth: `src/sim/engine.ts`, `params.ts`, `config.ts`, `sampling.ts`, `distributions.ts`, `montecarlo.ts`, `stats.ts` and `rng.ts`. If this document and the code disagree, the code wins. Please open an issue in that case.
+Source of truth: `src/sim/engine.ts`, `params.ts`, `species.ts`, `config.ts`, `sampling.ts`, `distributions.ts`, `montecarlo.ts`, `stats.ts` and `rng.ts`. If this document and the code disagree, the code wins. Please open an issue in that case.
 
 ## Contents
 
@@ -69,7 +70,7 @@ value = clamp(runValue × f, bounds)
 ```
 
 - `CV` is `individualCV` (default 0.08, allowed range 0–0.3). With `CV = 0`, every animal uses the run value exactly.
-- Three parameters are **run-level only** (`individual = false`): `trex.biteLethality`, `trex.bodyRadius` and `tiger.bleed`. All animals in a run share them.
+- Three parameters are **run-level only** (`individual = false`): `heavy.biteLethality`, `heavy.bodyRadius` and `pack.bleed`. All animals in a run share them.
 - For tigers, `cruiseSpeed` is additionally capped at the same tiger's `sprintSpeed`.
 
 ### 2.2 Random numbers and determinism
@@ -91,21 +92,25 @@ Untrusted input, such as the URL fragment, goes through `sanitizeConfig`:
 - unknown keys are dropped;
 - only JSON numbers are accepted (numeric strings fall back to the default); numbers are clamped to the limits below, counts and the seed are rounded to integers, and `maxTime` is snapped to the 0.1 s step;
 - each triangular `(min, mode, max)` must supply all three numbers (a partial range falls back to the default triangle); values are clamped to the parameter's bounds and sorted so that `min ≤ mode ≤ max`;
-- **work budget:** `runs × (maxTime / 0.1) × (trexCount + tigerCount)` must not exceed `MAX_WORK = 5·10¹⁰` agent-steps; otherwise `runs` is lowered to fit. This stops a shared link from requesting an effectively unbounded amount of CPU.
+- **work budget:** `runs × (maxTime / 0.1) × (heavyCount + packCount)` must not exceed `MAX_WORK = 5·10¹⁰` agent-steps; otherwise `runs` is lowered to fit. This stops a shared link from requesting an effectively unbounded amount of CPU.
 
-| Setting        | Default        | Allowed                                          |
-| -------------- | -------------- | ------------------------------------------------ |
-| `trexCount`    | 10             | 1–500                                            |
-| `tigerCount`   | 100            | 1–5,000                                          |
-| `runs`         | 500            | 1–20,000, and within the work budget             |
-| `seed`         | 20261019       | 0–2³²−1                                          |
-| `arenaSize`    | 600 m (square) | 100–5,000 m                                      |
-| `maxTime`      | 1,200 s        | 30–3,600 s                                       |
-| `sampling`     | `lhs`          | `lhs`, `random`                                  |
-| `individualCV` | 0.08           | 0–0.3                                            |
-| `tigerTactic`  | `flank`        | `flank`, `direct` (§3.6)                         |
-| `morale`       | `true`         | `true` / `false` (§3.8)                          |
-| `params`       | §5 table       | each `(min, mode, max)` within the listed bounds |
+| Setting        | Default        | Allowed                                           |
+| -------------- | -------------- | ------------------------------------------------- |
+| `heavySpecies` | `trex`         | `trex`, `elephant`, `buffalo`, `brownBear` (§2.7) |
+| `packSpecies`  | `tiger`        | `tiger`, `lion`, `wolf`, `hyena` (§2.7)           |
+| `heavyCount`   | 10             | 1–500                                             |
+| `packCount`    | 100            | 1–5,000                                           |
+| `runs`         | 500            | 1–20,000, and within the work budget              |
+| `seed`         | 20261019       | 0–2³²−1                                           |
+| `arenaSize`    | 600 m (square) | 100–5,000 m                                       |
+| `maxTime`      | 1,200 s        | 30–3,600 s                                        |
+| `sampling`     | `lhs`          | `lhs`, `random`                                   |
+| `individualCV` | 0.08           | 0–0.3                                             |
+| `packTactic`   | `flank`        | `flank`, `direct` (§3.6)                          |
+| `morale`       | `true`         | `true` / `false` (§3.8)                           |
+| `params`       | §5 table       | each `(min, mode, max)` within the listed bounds  |
+
+Species fall back to `trex`/`tiger` when unknown. Missing parameters take the **selected species'** presets, and parameter values are clamped with that species' bounds (§2.7). Share links store the species as `heavy`/`pack` in a `v: 2` payload; `v: 1` links (`trexCount`, `trex.*`, …) are upgraded through an alias map and reproduce bit-identically (`tests/v1-golden.test.ts`).
 
 ### 2.4 Outcomes
 
@@ -118,27 +123,27 @@ A battle ends at the end of the first tick in which one of these holds. The chec
 Each run returns a `RunSummary`:
 
 - `outcome` and `duration` (ticks × 0.1 s);
-- `trexAlive`;
-- `tigersKilled`;
-- `tigersRouted`, which counts Routed plus Left;
-- `tigersActive`;
-- `trexHpFrac`: the summed HP of surviving T-Rex divided by the summed max HP of all T-Rex;
-- `trexAdvantage = trexHpFrac − tigersActive / tigerCount`, which lies in [−1, 1].
+- `heavyAlive`;
+- `packKilled`;
+- `packRouted`, which counts Routed plus Left;
+- `packActive`;
+- `heavyHpFrac`: the summed HP of surviving T-Rex divided by the summed max HP of all T-Rex;
+- `heavyAdvantage = heavyHpFrac − packActive / packCount`, which lies in [−1, 1].
 
 ### 2.5 Aggregate metrics
 
-| Metric                       | Definition (`montecarlo.ts`, `stats.ts`)                                                                                                                                                                              |
-| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P(T-Rex), P(tigers), P(draw) | Proportion of runs, with a **Wilson score 95% interval** (`z = 1.95996`).                                                                                                                                             |
-| Duration, T-Rex survivors    | Mean, p5, p50 and p95, using linearly interpolated quantiles. Histograms: duration in ≤ 30 bins over `[0, maxTime]`, each bin a whole number of 0.1 s steps (no aliasing); survivors in `trexCount + 1` integer bins. |
-| Tigers killed, tigers routed | Mean, p5, p50 and p95.                                                                                                                                                                                                |
-| Exchange ratio               | Σ tigers killed ÷ Σ T-Rex lost over all runs (a ratio of totals). `Infinity` if tigers died but no T-Rex did; `NaN` if nobody died.                                                                                   |
-| Sensitivity                  | For each parameter, the **Spearman rank correlation ρ** (average ranks for ties) between its _run-level_ design value and `trexAdvantage`. Sorted by \|ρ\|; a non-finite ρ becomes 0.                                 |
-| Representative run           | The run whose `trexAdvantage` is closest to the median `trexAdvantage`, with ties going to the lowest run index. The UI replays this run.                                                                             |
+| Metric                       | Definition (`montecarlo.ts`, `stats.ts`)                                                                                                                                                                               |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P(T-Rex), P(tigers), P(draw) | Proportion of runs, with a **Wilson score 95% interval** (`z = 1.95996`).                                                                                                                                              |
+| Duration, T-Rex survivors    | Mean, p5, p50 and p95, using linearly interpolated quantiles. Histograms: duration in ≤ 30 bins over `[0, maxTime]`, each bin a whole number of 0.1 s steps (no aliasing); survivors in `heavyCount + 1` integer bins. |
+| Tigers killed, tigers routed | Mean, p5, p50 and p95.                                                                                                                                                                                                 |
+| Exchange ratio               | Σ tigers killed ÷ Σ T-Rex lost over all runs (a ratio of totals). `Infinity` if tigers died but no T-Rex did; `NaN` if nobody died.                                                                                    |
+| Sensitivity                  | For each parameter, the **Spearman rank correlation ρ** (average ranks for ties) between its _run-level_ design value and `heavyAdvantage`. Sorted by \|ρ\|; a non-finite ρ becomes 0.                                 |
+| Representative run           | The run whose `heavyAdvantage` is closest to the median `heavyAdvantage`, with ties going to the lowest run index. The UI replays this run.                                                                            |
 
 How to read the sensitivity:
 
-- When the T-Rex win every run, `tigersActive = 0` at the end, so `trexAdvantage` equals `trexHpFrac`. ρ then measures what drives the HP the T-Rex lose.
+- When the T-Rex win every run, `packActive = 0` at the end, so `heavyAdvantage` equals `heavyHpFrac`. ρ then measures what drives the HP the T-Rex lose.
 - Spearman ρ captures monotonic one-at-a-time association only. Interactions are not captured; Sobol indices are on the roadmap.
 - As a rough guide, the standard error is about `1/√(runs−1)`, which is ≈ 0.045 at 500 runs. Treat \|ρ\| ≲ 0.1 as noise.
 
@@ -150,12 +155,12 @@ The UI replays the representative run (§2.5) by simulating it again with `trace
 
 | Field                                  | Content                                                                                                                                                                                                                                                                                                                                                                  |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `frames`                               | State samples `{ t, trex, tiger }`. Per T-Rex: x, y, heading and HP fraction (0 = dead) as `Float32Array`. Per tiger: x, y and state code. One frame at t = 0, then one every `traceMinEvery` ticks (0.5 s), plus a final frame at the end of the battle. When the frames would exceed `traceFloatBudget` floats, every other frame is dropped and the interval doubles. |
+| `frames`                               | State samples `{ t, heavy, pack }`. Per T-Rex: x, y, heading and HP fraction (0 = dead) as `Float32Array`. Per tiger: x, y and state code. One frame at t = 0, then one every `traceMinEvery` ticks (0.5 s), plus a final frame at the end of the battle. When the frames would exceed `traceFloatBudget` floats, every other frame is dropped and the interval doubles. |
 | `events`                               | The event log described below (`Uint16Array`).                                                                                                                                                                                                                                                                                                                           |
 | `eventsCompleteUntilStep`              | Every event with stamp ≤ this value is in `events`. It equals the battle's tick count (`duration / 0.1`) unless the budget stopped the log.                                                                                                                                                                                                                              |
 | `eventStats`                           | Stored P0 and P1 counts, plus P1 events coalesced or dropped and P0 events dropped.                                                                                                                                                                                                                                                                                      |
-| `meta`                                 | `dt`, `bodyRadius`, `tigerRadius`, and per-T-Rex `reach` (m) and `arc` (bite half-angle, rad) as `Float32Array`. This is what a renderer needs to draw bite cones and to place latched tigers.                                                                                                                                                                           |
-| `arenaSize`, `trexCount`, `tigerCount` | Scenario geometry.                                                                                                                                                                                                                                                                                                                                                       |
+| `meta`                                 | `dt`, `bodyRadius`, `packRadius`, and per-T-Rex `reach` (m) and `arc` (bite half-angle, rad) as `Float32Array`. This is what a renderer needs to draw bite cones and to place latched tigers.                                                                                                                                                                            |
+| `arenaSize`, `heavyCount`, `packCount` | Scenario geometry.                                                                                                                                                                                                                                                                                                                                                       |
 
 **Event format.** Each event is four unsigned 16-bit integers (8 bytes): `[stamp, type << 8 | v, a, b]`.
 
@@ -165,24 +170,24 @@ The UI replays the representative run (§2.5) by simulating it again with `trace
 
 | Code | Event        | a     | b                                 | v                                                          | Class | Tiger state afterwards                      |
 | ---- | ------------ | ----- | --------------------------------- | ---------------------------------------------------------- | ----- | ------------------------------------------- |
-| 1    | `BiteHit`    | T-Rex | tiger                             | damage ÷ tiger max HP × 255, clamped to 255                | P0    | Recover (Dead if a `TigerDeath` follows)    |
+| 1    | `BiteHit`    | T-Rex | tiger                             | damage ÷ tiger max HP × 255, clamped to 255                | P0    | Recover (Dead if a `PackDeath` follows)     |
 | 2    | `BiteMiss`   | T-Rex | tiger                             | 0                                                          | P1    | unchanged                                   |
 | 3    | `Latch`      | tiger | host T-Rex                        | latch angle relative to the host's heading, 256 steps/turn | P0    | Latched                                     |
 | 4    | `LatchFail`  | tiger | T-Rex                             | 0                                                          | P1    | unchanged                                   |
-| 5    | `Throw`      | tiger | host                              | 0                                                          | P0    | Recover (Dead if a `TigerDeath` follows)    |
+| 5    | `Throw`      | tiger | host                              | 0                                                          | P0    | Recover (Dead if a `PackDeath` follows)     |
 | 6    | `Release`    | tiger | host, or none                     | 0 = stamina ran out, 1 = host died                         | P0    | Recover                                     |
-| 7    | `TigerDeath` | tiger | killer T-Rex                      | 0 = bite, 1 = throw                                        | P0    | Dead                                        |
+| 7    | `PackDeath`  | tiger | killer T-Rex                      | 0 = bite, 1 = throw                                        | P0    | Dead                                        |
 | 8    | `Rout`       | tiger | host if it was latched, else none | 0                                                          | P0    | Routed                                      |
 | 9    | `Exit`       | tiger | none                              | 0                                                          | P0    | Left                                        |
-| 10   | `TrexDeath`  | T-Rex | none                              | 0                                                          | P0    | — (the T-Rex is dead from this stamp on)    |
+| 10   | `HeavyDeath` | T-Rex | none                              | 0                                                          | P0    | — (the T-Rex is dead from this stamp on)    |
 | 11   | `Exhausted`  | tiger | target T-Rex                      | 0                                                          | P0    | Recover (stamina ran out while approaching) |
 | 12   | `Resume`     | tiger | none                              | 0                                                          | P0    | Approach                                    |
 
 **Reconstruction.** P0 events cover every tiger state change and every T-Rex death; P1 events are cosmetic.
 
-- Start from "every tiger in Approach, every T-Rex alive" and apply the events with stamp ≤ s in log order. The result is exactly the state stored in a frame at s × 0.1 s (`tigerStateAfter` and `eventTiger` in `events.ts`).
-- Several events of one tiger in one tick stay in order. For example, a bitten Routed tiger gets `BiteHit` (→ Recover) and then `Rout` (→ Routed) in its own update. A `TigerDeath` always directly follows the `BiteHit` or `Throw` that caused it.
-- A latched tiger sits at `bodyRadius + tigerRadius` from its host's centre, at the latch angle relative to the host's heading. Its position is recomputed from the host's pose every tick and is then clamped to the arena like every non-routed tiger, so next to a wall it can sit closer than that distance. On the tick it latches it is still at its contact position: on the same bearing, but anywhere within `bodyRadius + tigerRadius + 0.5` m of the host's centre (the flank tactic can bring it nearer than the ride distance). The first pinned position is the next tick's.
+- Start from "every tiger in Approach, every T-Rex alive" and apply the events with stamp ≤ s in log order. The result is exactly the state stored in a frame at s × 0.1 s (`packStateAfter` and `eventTiger` in `events.ts`).
+- Several events of one tiger in one tick stay in order. For example, a bitten Routed tiger gets `BiteHit` (→ Recover) and then `Rout` (→ Routed) in its own update. A `PackDeath` always directly follows the `BiteHit` or `Throw` that caused it.
+- A latched tiger sits at `bodyRadius + packRadius` from its host's centre, at the latch angle relative to the host's heading. Its position is recomputed from the host's pose every tick and is then clamped to the arena like every non-routed tiger, so next to a wall it can sit closer than that distance. On the tick it latches it is still at its contact position: on the same bearing, but anywhere within `bodyRadius + packRadius + 0.5` m of the host's centre (the flank tactic can bring it nearer than the ride distance). The first pinned position is the next tick's.
 - Leaving the host: a `Throw` and a stamina `Release` come after the latched position update of their tick, so at the event's stamp the tiger is still on its host (a thrown tiger is then moved 3 m farther out on the same bearing). A `Rout`, a `BiteHit` and a `Release` because the host died come before that update, so the tiger was last pinned one tick earlier; a routed or bitten tiger also takes its first fleeing or recovering step in the event's tick. The replay uses these rules for its ride timing ([REPLAY.md §3](REPLAY.md#3-world-states-and-motion)).
 
 **Budget.**
@@ -222,6 +227,19 @@ The stress case is a 3,600 s draw in which no tiger can ever latch, so tigers cy
 
 **Transport.** The worker transfers every buffer of the trace (frames, events and meta) to the main thread without copying (`traceTransferList` in `src/workers/protocol.ts`).
 
+### 2.7 Species and roles
+
+The engine has two roles. The **heavy** side (`heavy.*` parameters) is the large animal that fights alone: turn-limited, with a frontal attack cone, shake-off and carry slowdown. The **pack** side (`pack.*`) attacks in numbers: sprint and cruise, stamina, latching with damage per second, morale and rout. The rest of this document describes the rules with the default species, _T. rex_ and the tiger; the rules are the same for every species.
+
+`src/sim/species.ts` registers the phase-1 catalog: heavy `trex`, `elephant`, `buffalo`, `brownBear`; pack `tiger`, `lion`, `wolf`, `hyena`. Each species carries:
+
+- preset triangles for its role's eleven parameters, each with an evidence tag (L literature, D derived, S speculative, U unverified);
+- its own **hard bounds**. _T. rex_ and the tiger keep exactly the v1 bounds of §5; the other species widen heavy mass to 100 kg, heavy weapon force to 0.1 kN and pack mass to 5–1,000 kg. The per-animal clamp in the engine uses the selected species' bounds;
+- an era (for the matchup badge) and, for heavies, a weapon kind that only relabels the `biteForce` family (tusk/trample, horn, bite/paw);
+- non-sampled constants: `hide` for heavies (multiplier on pack damage taken: elephant 0.3, buffalo 0.5, brown bear 0.5, _T. rex_ 1) and `radius` for packs (body contact radius: tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5 m). `radius` replaces the former engine constant `tigerRadius` wherever it was used (contact distance, bite reach padding, latched offset, trace `meta.packRadius`).
+
+The constants draw no random numbers, and their _T. rex_/tiger values are exact identities (`x × 1`, 0.8 m), so every run with the default species is bit-identical to the engine before species existed. The values, sources and calibration notes are in [SPECIES.md](SPECIES.md).
+
 ## 3. Battle model
 
 ### 3.1 Arena and spawn
@@ -259,8 +277,8 @@ When a tiger dies it is removed immediately. A T-Rex whose HP drops to 0 or belo
 
 - **HP = body mass in kg (1 HP/kg) for both species.** A tiger's HP equals its individual mass, and so does a T-Rex's. Damage is expressed in the same "kg-equivalent" units, so the bite and claw rates below are calibrated against body mass.
 - **T-Rex bite damage per hit:** `biteForce (kN) × biteLethality (HP/kN) × U(0.7, 1.3)`.
-- **Tiger damage:** `dps × DT` per tick while latched. It is applied to the host's HP and also added to the host's accumulated **wound** total.
-- **Bleeding:** each tick, every live T-Rex loses `wound × tiger.bleed × DT` HP. The bleed loss rate grows with the total tiger damage the T-Rex has ever received. Wounds never close, and bleeding does not add to `wound`.
+- **Tiger damage:** `dps × DT × hide` per tick while latched, where `hide` is the heavy species constant (§2.7; 1 for T. rex, an exact identity). It is applied to the host's HP and also added to the host's accumulated **wound** total.
+- **Bleeding:** each tick, every live T-Rex loses `wound × pack.bleed × DT` HP. The bleed loss rate grows with the total tiger damage the T-Rex has ever received. Wounds never close, and bleeding does not add to `wound`.
 
 Example: with `bleed = 0.002 /s`, a T-Rex that has taken 1,000 HP of tiger damage bleeds 2 HP/s from then on.
 
@@ -328,7 +346,7 @@ The T-Rex has no stamina, no morale and no arm attack. The arms are about 1 m lo
 
 ```mermaid
 ---
-title: Tiger states (engine.ts TigerState)
+title: Tiger states (engine.ts PackState)
 ---
 stateDiagram-v2
     [*] --> Approach
@@ -390,13 +408,13 @@ Both tactics are **hypothetical**. Adult tigers hunt alone, and no coordinated m
 
 ### 3.7 Bleeding
 
-See §3.3. `tiger.bleed` is a run-level constant in `1/s`. The default mode `0.002` means 0.2% of accumulated wound HP is lost per second.
+See §3.3. `pack.bleed` is a run-level constant in `1/s`. The default mode `0.002` means 0.2% of accumulated wound HP is lost per second.
 
 Bleeding matters most in long, no-morale battles, where wounds accumulate for minutes. Over T seconds after accumulating wound W, bleeding removes about `W × bleed × T` HP. For example, W = 1,000 HP, bleed = 0.002 /s and T = 300 s gives about 600 HP.
 
 ### 3.8 Morale and rout
 
-Morale applies to tigers only and starts at the individual `tiger.morale`.
+Morale applies to tigers only and starts at the individual `pack.morale`.
 
 | Event                                   | Morale change                                                           | Applies when `morale = false`? |
 | --------------------------------------- | ----------------------------------------------------------------------- | ------------------------------ |
@@ -414,12 +432,11 @@ This models the observation that tigers avoid injurious fights. The thresholds a
 
 ## 4. Constants
 
-These are fixed in `engine.ts`. They are not sampled and not editable in the UI.
+These are fixed in `engine.ts`. They are not sampled and not editable in the UI. The pack contact radius is a species constant (§2.7; 0.8 m for the tiger).
 
 | Constant                          | Value           | Meaning                                                                                                                              |
 | --------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `DT`                              | 0.1 s           | Integration time step                                                                                                                |
-| `tigerRadius`                     | 0.8 m           | Tiger body radius (contact distance, bite reach padding, latched offset)                                                             |
 | `latchRetry`                      | 1 s             | Latch cooldown after a failed latch roll                                                                                             |
 | `moraleRadius`                    | 40 m            | Morale-shock radius around a killed tiger                                                                                            |
 | `routThreshold`                   | 0.2             | Morale below which a tiger routs (morale on)                                                                                         |
@@ -431,8 +448,8 @@ These are fixed in `engine.ts`. They are not sampled and not editable in the UI.
 | `resumeStamina`                   | 0.8             | Stamina at which a recovering tiger re-engages                                                                                       |
 | `sprintTriggerDistance`           | 60 m            | Tigers sprint (and drain stamina) within this distance of their target                                                               |
 | `cruiseRegenFactor`               | 0.25            | Stamina regeneration while cruising, relative to resting                                                                             |
-| `trexRetarget`                    | 0.5 s           | T-Rex retarget interval                                                                                                              |
-| `tigerRetarget`                   | 1 s             | Tiger retarget interval                                                                                                              |
+| `heavyRetarget`                   | 0.5 s           | T-Rex retarget interval                                                                                                              |
+| `packRetarget`                    | 1 s             | Tiger retarget interval                                                                                                              |
 | `minCarrySpeedFactor`             | 0.3             | Floor of the carried-mass speed factor                                                                                               |
 | `latchedAccuracyBonus`            | 1.5             | Bite-accuracy multiplier against latched tigers                                                                                      |
 | `maxAccuracy`                     | 0.95            | Cap on the boosted accuracy                                                                                                          |
@@ -464,53 +481,53 @@ Hard-coded values in the code that are not in `CONSTANTS`:
 
 Columns:
 
-- **min / mode / max:** the default triangular distribution.
-- **Bounds:** the hard limits enforced by `sanitizeConfig` and by the clamping of individual values.
+- **min / mode / max:** the default triangular distribution of the default species (_T. rex_, tiger); other species: [SPECIES.md](SPECIES.md).
+- **Bounds:** the _T. rex_/tiger hard limits (identical to v1) enforced by `sanitizeConfig` and by the clamping of individual values.
 - **Ind.:** whether per-animal variation applies.
 
 **[speculative]** means no direct data exists, and the range is the author's judgement, chosen to be wide.
 
 ### 5.1 _Tyrannosaurus rex_
 
-| Parameter            | Unit  | min  | mode | max  | Bounds     | Ind. | Source / rationale                                                                                                                                                                                                                                                                                                                                           |
-| -------------------- | ----- | ---- | ---- | ---- | ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `trex.mass`          | kg    | 5650 | 8000 | 9500 | 1000–20000 | yes  | Min ≈ Sue, 5,654 kg [Erickson 2004]. Scotty ≈ 8,870 kg [Persons 2019]. Volumetric models of large adults exceed 9 t [Hutchinson 2011]. The mode of 8 t is a central adult value. It also sets HP.                                                                                                                                                            |
-| `trex.speed`         | m/s   | 3.4  | 5.5  | 8    | 0.5–25     | yes  | Fast running is ruled out [Hutchinson & Garcia 2002]. Stress-constrained models allow walking gaits only, about 5 m/s maximum [Sellers 2017], which motivates the mode. Preferred walking is 1.28 m/s [van Bijlert 2021], so the minimum is a brisk walk. The maximum of 8 m/s leaves room for less conservative estimates. The exact numbers are judgement. |
-| `trex.turnRate`      | deg/s | 22   | 30   | 45   | 5–360      | yes  | Large rotational inertia means slow turning, about 1–2 s per 45° [Hutchinson, Ng-Thow-Hing & Anderson 2007], i.e. 22.5–45 °/s.                                                                                                                                                                                                                               |
-| `trex.biteForce`     | kN    | 8.5  | 35   | 57   | 1–150      | yes  | 8,526–34,522 N [Gignac & Erickson 2017]; 35–57 kN maximum [Bates & Falkingham 2012]. The minimum and mode follow the first study, and the maximum follows the second.                                                                                                                                                                                        |
-| `trex.biteLethality` | HP/kN | 4    | 8    | 12   | 0.1–100    | no   | **[speculative]** No data maps bite force to damage. See the calibration in §5.3.                                                                                                                                                                                                                                                                            |
-| `trex.biteInterval`  | s     | 1.5  | 2.5  | 4    | 0.2–30     | yes  | **[speculative]** Time between bite attempts: jaw cycle plus repositioning the head.                                                                                                                                                                                                                                                                         |
-| `trex.biteReach`     | m     | 4.5  | 5.5  | 6.5  | 1–15       | yes  | **[speculative geometry]** Distance from the body centre to the jaws. The skull is about 1.5 m long [Padian 2022; Carpenter & Smith 2001]. With a 2.5 m body radius, the default puts the jaws about 3 m beyond the body circle, covering skull and neck.                                                                                                    |
-| `trex.biteArc`       | deg   | 30   | 45   | 70   | 5–180      | yes  | **[speculative]** Half-angle of the frontal bite cone (§3.4). The bite is the only modelled weapon. Fossil evidence of tyrannosaur attacks is bite evidence: a healed bite on a hadrosaur [DePalma 2013] and face-biting between tyrannosaurs [Peterson 2009].                                                                                               |
-| `trex.biteAccuracy`  | p     | 0.3  | 0.5  | 0.7  | 0–1        | yes  | **[speculative]** Chance an attempt connects with a small, agile target.                                                                                                                                                                                                                                                                                     |
-| `trex.shakeRate`     | 1/s   | 0.05 | 0.12 | 0.25 | 0–10       | yes  | **[speculative]** Rate of throwing off each latched tiger; mean hold time `1/rate` is 4–20 s. There are no skin-thickness data: preserved skin shows only small scales [Bell 2017].                                                                                                                                                                          |
-| `trex.bodyRadius`    | m     | 2    | 2.5  | 3    | 0.5–8      | no   | **[speculative geometry]** The roughly 12 m long animal is modelled as a contact circle. The radius sets contact distance, the latched offset and the flank aim point.                                                                                                                                                                                       |
+| Parameter             | Unit  | min  | mode | max  | Bounds     | Ind. | Source / rationale                                                                                                                                                                                                                                                                                                                                           |
+| --------------------- | ----- | ---- | ---- | ---- | ---------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `heavy.mass`          | kg    | 5650 | 8000 | 9500 | 1000–20000 | yes  | Min ≈ Sue, 5,654 kg [Erickson 2004]. Scotty ≈ 8,870 kg [Persons 2019]. Volumetric models of large adults exceed 9 t [Hutchinson 2011]. The mode of 8 t is a central adult value. It also sets HP.                                                                                                                                                            |
+| `heavy.speed`         | m/s   | 3.4  | 5.5  | 8    | 0.5–25     | yes  | Fast running is ruled out [Hutchinson & Garcia 2002]. Stress-constrained models allow walking gaits only, about 5 m/s maximum [Sellers 2017], which motivates the mode. Preferred walking is 1.28 m/s [van Bijlert 2021], so the minimum is a brisk walk. The maximum of 8 m/s leaves room for less conservative estimates. The exact numbers are judgement. |
+| `heavy.turnRate`      | deg/s | 22   | 30   | 45   | 5–360      | yes  | Large rotational inertia means slow turning, about 1–2 s per 45° [Hutchinson, Ng-Thow-Hing & Anderson 2007], i.e. 22.5–45 °/s.                                                                                                                                                                                                                               |
+| `heavy.biteForce`     | kN    | 8.5  | 35   | 57   | 1–150      | yes  | 8,526–34,522 N [Gignac & Erickson 2017]; 35–57 kN maximum [Bates & Falkingham 2012]. The minimum and mode follow the first study, and the maximum follows the second.                                                                                                                                                                                        |
+| `heavy.biteLethality` | HP/kN | 4    | 8    | 12   | 0.1–100    | no   | **[speculative]** No data maps bite force to damage. See the calibration in §5.3.                                                                                                                                                                                                                                                                            |
+| `heavy.biteInterval`  | s     | 1.5  | 2.5  | 4    | 0.2–30     | yes  | **[speculative]** Time between bite attempts: jaw cycle plus repositioning the head.                                                                                                                                                                                                                                                                         |
+| `heavy.biteReach`     | m     | 4.5  | 5.5  | 6.5  | 1–15       | yes  | **[speculative geometry]** Distance from the body centre to the jaws. The skull is about 1.5 m long [Padian 2022; Carpenter & Smith 2001]. With a 2.5 m body radius, the default puts the jaws about 3 m beyond the body circle, covering skull and neck.                                                                                                    |
+| `heavy.biteArc`       | deg   | 30   | 45   | 70   | 5–180      | yes  | **[speculative]** Half-angle of the frontal bite cone (§3.4). The bite is the only modelled weapon. Fossil evidence of tyrannosaur attacks is bite evidence: a healed bite on a hadrosaur [DePalma 2013] and face-biting between tyrannosaurs [Peterson 2009].                                                                                               |
+| `heavy.biteAccuracy`  | p     | 0.3  | 0.5  | 0.7  | 0–1        | yes  | **[speculative]** Chance an attempt connects with a small, agile target.                                                                                                                                                                                                                                                                                     |
+| `heavy.shakeRate`     | 1/s   | 0.05 | 0.12 | 0.25 | 0–10       | yes  | **[speculative]** Rate of throwing off each latched tiger; mean hold time `1/rate` is 4–20 s. There are no skin-thickness data: preserved skin shows only small scales [Bell 2017].                                                                                                                                                                          |
+| `heavy.bodyRadius`    | m     | 2    | 2.5  | 3    | 0.5–8      | no   | **[speculative geometry]** The roughly 12 m long animal is modelled as a contact circle. The radius sets contact distance, the latched offset and the flank aim point.                                                                                                                                                                                       |
 
 ### 5.2 Tiger (_Panthera tigris_)
 
-| Parameter               | Unit | min  | mode  | max   | Bounds | Ind. | Source / rationale                                                                                                                                                                                                                                  |
-| ----------------------- | ---- | ---- | ----- | ----- | ------ | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tiger.mass`            | kg   | 100  | 180   | 260   | 30–500 | yes  | Bengal males are about 167–261 kg and females about 116–164 kg (Chitwan data of Sunquist and Smith, via [Wikipedia: Bengal tiger], a secondary source). Wild Amur males average 176 kg [Slaght 2005]. The range covers both sexes. It also sets HP. |
-| `tiger.sprintSpeed`     | m/s  | 11   | 14    | 18    | 2–35   | yes  | **[speculative]** There is no peer-reviewed measurement of tiger sprint speed. Popular figures of 48–65 km/h (13–18 m/s) are unsourced. The range is set by analogy with measured wild lion locomotion [Wilson 2018].                               |
-| `tiger.cruiseSpeed`     | m/s  | 4    | 6     | 8     | 0.5–20 | yes  | **[speculative]** Trot or canter used beyond 60 m. It is capped at the individual's sprint speed.                                                                                                                                                   |
-| `tiger.sprintEndurance` | s    | 10   | 20    | 40    | 1–600  | yes  | **[speculative]** Tigers are ambush predators that make short charges [Schaller 1967]. This is the time from full stamina to exhaustion at sprint speed.                                                                                            |
-| `tiger.latchEndurance`  | s    | 15   | 30    | 60    | 1–1200 | yes  | **[speculative]** How long a tiger can hold on to a moving animal 20–95× its mass.                                                                                                                                                                  |
-| `tiger.recoveryTime`    | s    | 30   | 60    | 120   | 1–3600 | yes  | **[speculative]** Time to regain full stamina while resting. Re-engaging needs 80% of it.                                                                                                                                                           |
-| `tiger.latchChance`     | p    | 0.15 | 0.35  | 0.6   | 0–1    | yes  | **[speculative]** Chance a contact becomes a hold. Tiger hunting success of about 5–50% [Schaller 1967] is only a loose analogue.                                                                                                                   |
-| `tiger.dps`             | HP/s | 2    | 6     | 12    | 0–200  | yes  | **[speculative]** Damage rate while latched. See the calibration in §5.3.                                                                                                                                                                           |
-| `tiger.bleed`           | 1/s  | 0    | 0.002 | 0.005 | 0–0.1  | no   | **[speculative]** Fraction of accumulated wound HP lost per second (§3.3). Canines of about 5–7.5 cm and claws of about 8–10 cm [SDZWA] make shallow wounds relative to an animal of several tonnes, so the range starts at 0 (no bleeding).        |
-| `tiger.morale`          | 0–1  | 0.4  | 0.6   | 0.85  | 0–1    | yes  | **[speculative]** Initial morale. Tigers avoid injurious fights, and their usual prey is about 60–250 kg, occasionally gaur of about 1 t [Hayward 2012]. An 8 t animal is far outside that range.                                                   |
-| `tiger.moraleLoss`      | 0–1  | 0.03 | 0.08  | 0.15  | 0–1    | yes  | **[speculative]** Morale lost per tiger death within 40 m.                                                                                                                                                                                          |
+| Parameter              | Unit | min  | mode  | max   | Bounds | Ind. | Source / rationale                                                                                                                                                                                                                                  |
+| ---------------------- | ---- | ---- | ----- | ----- | ------ | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pack.mass`            | kg   | 100  | 180   | 260   | 30–500 | yes  | Bengal males are about 167–261 kg and females about 116–164 kg (Chitwan data of Sunquist and Smith, via [Wikipedia: Bengal tiger], a secondary source). Wild Amur males average 176 kg [Slaght 2005]. The range covers both sexes. It also sets HP. |
+| `pack.sprintSpeed`     | m/s  | 11   | 14    | 18    | 2–35   | yes  | **[speculative]** There is no peer-reviewed measurement of tiger sprint speed. Popular figures of 48–65 km/h (13–18 m/s) are unsourced. The range is set by analogy with measured wild lion locomotion [Wilson 2018].                               |
+| `pack.cruiseSpeed`     | m/s  | 4    | 6     | 8     | 0.5–20 | yes  | **[speculative]** Trot or canter used beyond 60 m. It is capped at the individual's sprint speed.                                                                                                                                                   |
+| `pack.sprintEndurance` | s    | 10   | 20    | 40    | 1–600  | yes  | **[speculative]** Tigers are ambush predators that make short charges [Schaller 1967]. This is the time from full stamina to exhaustion at sprint speed.                                                                                            |
+| `pack.latchEndurance`  | s    | 15   | 30    | 60    | 1–1200 | yes  | **[speculative]** How long a tiger can hold on to a moving animal 20–95× its mass.                                                                                                                                                                  |
+| `pack.recoveryTime`    | s    | 30   | 60    | 120   | 1–3600 | yes  | **[speculative]** Time to regain full stamina while resting. Re-engaging needs 80% of it.                                                                                                                                                           |
+| `pack.latchChance`     | p    | 0.15 | 0.35  | 0.6   | 0–1    | yes  | **[speculative]** Chance a contact becomes a hold. Tiger hunting success of about 5–50% [Schaller 1967] is only a loose analogue.                                                                                                                   |
+| `pack.dps`             | HP/s | 2    | 6     | 12    | 0–200  | yes  | **[speculative]** Damage rate while latched. See the calibration in §5.3.                                                                                                                                                                           |
+| `pack.bleed`           | 1/s  | 0    | 0.002 | 0.005 | 0–0.1  | no   | **[speculative]** Fraction of accumulated wound HP lost per second (§3.3). Canines of about 5–7.5 cm and claws of about 8–10 cm [SDZWA] make shallow wounds relative to an animal of several tonnes, so the range starts at 0 (no bleeding).        |
+| `pack.morale`          | 0–1  | 0.4  | 0.6   | 0.85  | 0–1    | yes  | **[speculative]** Initial morale. Tigers avoid injurious fights, and their usual prey is about 60–250 kg, occasionally gaur of about 1 t [Hayward 2012]. An 8 t animal is far outside that range.                                                   |
+| `pack.moraleLoss`      | 0–1  | 0.03 | 0.08  | 0.15  | 0–1    | yes  | **[speculative]** Morale lost per tiger death within 40 m.                                                                                                                                                                                          |
 
 ### 5.3 Calibration notes
 
-**Bite lethality (`trex.biteLethality`, 4–12 HP/kN).**
+**Bite lethality (`heavy.biteLethality`, 4–12 HP/kN).**
 
 - With the mode values, one bite deals `35 kN × 8 HP/kN × U(0.7, 1.3)` = 196–364 HP. A 180 kg tiger has 180 HP, so a typical hit at typical force is lethal.
 - At the low end, `8.5 kN × 4 HP/kN` = 24–44 HP per hit, so several hits are needed.
 - The range deliberately spans "one bite kills" to "one bite wounds". The mapping itself is **[speculative]**.
 
-**Tiger damage rate (`tiger.dps`, 2–12 HP/s).**
+**Tiger damage rate (`pack.dps`, 2–12 HP/s).**
 
 - Tiger bite force is about 1.2–1.5 kN [Wroe 2005; Christiansen & Wroe 2007]. Using the same lethality mapping as the T-Rex (4–12 HP/kN), one tiger bite is worth about 5–18 HP.
 - At roughly one bite or claw strike every 1–2 s, that gives about 2.4–18 HP/s.
@@ -538,19 +555,19 @@ These results are **indicative only**. They come from a local check of the engin
 - **With morale off**, the tigers fight to the death and battles last a median of 140–330 s, depending on tactic. All 100 tigers die. Across 500 runs only 6 T-Rex (flank) or 2 T-Rex (direct) died in total, out of 5,000.
 - `flank` lasts longer than `direct` without morale. Flankers spend more time out of bite cones, which also means more time not being killed.
 
-Top Spearman ρ against `trexAdvantage` (flank, 500 runs):
+Top Spearman ρ against `heavyAdvantage` (flank, 500 runs):
 
-| Rank | Morale on (default)        | Morale off                |
-| ---- | -------------------------- | ------------------------- |
-| 1    | `trex.biteForce` +0.43     | `tiger.dps` −0.50         |
-| 2    | `tiger.moraleLoss` +0.36   | `trex.biteAccuracy` +0.33 |
-| 3    | `trex.biteAccuracy` +0.29  | `trex.biteForce` +0.26    |
-| 4    | `tiger.dps` −0.27          | `tiger.cruiseSpeed` −0.22 |
-| 5    | `trex.biteLethality` +0.26 | `tiger.bleed` −0.22       |
-| 6    | `tiger.morale` −0.18       | `trex.shakeRate` +0.21    |
-| 7    | `tiger.mass` −0.15         | `trex.biteInterval` −0.18 |
+| Rank | Morale on (default)         | Morale off                 |
+| ---- | --------------------------- | -------------------------- |
+| 1    | `heavy.biteForce` +0.43     | `pack.dps` −0.50           |
+| 2    | `pack.moraleLoss` +0.36     | `heavy.biteAccuracy` +0.33 |
+| 3    | `heavy.biteAccuracy` +0.29  | `heavy.biteForce` +0.26    |
+| 4    | `pack.dps` −0.27            | `pack.cruiseSpeed` −0.22   |
+| 5    | `heavy.biteLethality` +0.26 | `pack.bleed` −0.22         |
+| 6    | `pack.morale` −0.18         | `heavy.shakeRate` +0.21    |
+| 7    | `pack.mass` −0.15           | `heavy.biteInterval` −0.18 |
 
-With morale on, the remaining T-Rex HP is driven by how fast tigers are killed (bite force, accuracy, lethality) and how quickly the rest break (morale parameters). With morale off, the tiger damage rate dominates (ρ ≈ −0.5), followed by T-Rex killing efficiency. In a separate 100-run check, `tiger.dps` reached ρ ≈ −0.6.
+With morale on, the remaining T-Rex HP is driven by how fast tigers are killed (bite force, accuracy, lethality) and how quickly the rest break (morale parameters). With morale off, the tiger damage rate dominates (ρ ≈ −0.5), followed by T-Rex killing efficiency. In a separate 100-run check, `pack.dps` reached ρ ≈ −0.6.
 
 **Bottom line: under the default assumptions, 10 T-Rex beat 100 tigers essentially every time.** This follows from the assumptions in §5, mainly the large mass and HP gap, a lethal bite and a modest tiger damage rate. It is not a forecast.
 
@@ -558,16 +575,16 @@ With morale on, the remaining T-Rex HP is driven by how fast tigers are killed (
 
 Single-change what-if checks used 100 runs each, seed 20261019, the flank tactic and otherwise default settings. They are indicative only, with confidence intervals of about ±10 percentage points.
 
-| Change from defaults             | Morale | T-Rex win | Tigers win | Draw | Median duration | T-Rex survivors (mean) |
-| -------------------------------- | ------ | --------- | ---------- | ---- | --------------- | ---------------------- |
-| none                             | off    | 99%       | 0%         | 1%   | 333 s           | 9.97                   |
-| `tiger.dps` 10 / 20 / 40         | off    | 92%       | 8%         | 0%   | 326 s           | 8.4                    |
-| `tiger.dps` 20 / 40 / 80         | off    | 54%       | 46%        | 0%   | 241 s           | 4.1                    |
-| `tiger.bleed` 0.01 / 0.02 / 0.04 | off    | 84%       | 16%        | 0%   | 322 s           | 7.1                    |
-| 300 tigers                       | off    | 78%       | 21%        | 1%   | 419 s           | 7.1                    |
-| 1,000 tigers                     | off    | 0%        | 100%       | 0%   | 106 s           | 0                      |
-| 1,000 tigers                     | on     | 97%       | 3%         | 0%   | 50 s            | 9.7                    |
-| `tiger.dps` 20 / 40 / 80         | on     | 100%      | 0%         | 0%   | 28 s            | 9.9                    |
+| Change from defaults            | Morale | T-Rex win | Tigers win | Draw | Median duration | T-Rex survivors (mean) |
+| ------------------------------- | ------ | --------- | ---------- | ---- | --------------- | ---------------------- |
+| none                            | off    | 99%       | 0%         | 1%   | 333 s           | 9.97                   |
+| `pack.dps` 10 / 20 / 40         | off    | 92%       | 8%         | 0%   | 326 s           | 8.4                    |
+| `pack.dps` 20 / 40 / 80         | off    | 54%       | 46%        | 0%   | 241 s           | 4.1                    |
+| `pack.bleed` 0.01 / 0.02 / 0.04 | off    | 84%       | 16%        | 0%   | 322 s           | 7.1                    |
+| 300 tigers                      | off    | 78%       | 21%        | 1%   | 419 s           | 7.1                    |
+| 1,000 tigers                    | off    | 0%        | 100%       | 0%   | 106 s           | 0                      |
+| 1,000 tigers                    | on     | 97%       | 3%         | 0%   | 50 s            | 9.7                    |
+| `pack.dps` 20 / 40 / 80         | on     | 100%      | 0%         | 0%   | 28 s            | 9.9                    |
 
 For the tigers to have a real chance, **several** assumptions have to move together:
 

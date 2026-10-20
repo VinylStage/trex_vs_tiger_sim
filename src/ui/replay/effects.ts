@@ -1,4 +1,4 @@
-import { TigerState, type TraceFrame } from '../../sim/engine';
+import { PackState, type TraceFrame } from '../../sim/engine';
 import { EventType } from '../../sim/events';
 import type { Viewport } from './draw';
 import {
@@ -7,7 +7,7 @@ import {
   biteCone,
   burst,
   ring,
-  tigerRadiusPx,
+  packRadiusPx,
   type Bucket,
   type PathSink,
 } from './glyphs';
@@ -29,9 +29,9 @@ export const FX_DURATION: Readonly<Partial<Record<number, number>>> = {
   [EventType.BiteMiss]: 0.22,
   [EventType.Latch]: 0.28,
   [EventType.Throw]: 0.36,
-  [EventType.TigerDeath]: 0.5,
+  [EventType.PackDeath]: 0.5,
   [EventType.Rout]: 0.3,
-  [EventType.TrexDeath]: 0.9,
+  [EventType.HeavyDeath]: 0.9,
 };
 /** Longest effect lifetime: the scan window is this many real seconds back. */
 export const FX_WINDOW_S = 0.9;
@@ -40,7 +40,7 @@ export const FX_MAX_PER_FRAME = 300;
 
 /**
  * Flash safety (WCAG 2.3.1; ANIMATION.md §3.4). A bite cone is filled only if
- * - the same T-Rex's previous bite was at least FLASH_GAP_S real seconds earlier, so one T-Rex
+ * - the same heavy's previous bite was at least FLASH_GAP_S real seconds earlier, so one heavy
  *   starts at most 3 fills in any second (0, 0.34, 0.68 s);
  * - playback is at most FLASH_MAX_SPEED× (above it every cone is an outline);
  * - the wedge is at most FLASH_WEDGE_MAX_PX, and the frame's filled area stays at most
@@ -66,10 +66,10 @@ export function mayFill(gapSim: number, speed: number, area: number, usedArea: n
 /** Motion trails: 3 s of sim time behind each agent, within budgets (ANIMATION.md §3.2). */
 export const TRAIL = {
   simSeconds: 3,
-  maxTrex: 100,
-  maxTigers: 400,
-  /** Tiger trails only when tigers are drawn as glyphs at least this large (r, CSS px). */
-  minTigerPx: 3,
+  maxHeavy: 100,
+  maxPack: 400,
+  /** Pack animal trails only when pack animals are drawn as glyphs at least this large (r, CSS px). */
+  minPackPx: 3,
   /** Off-screen margin (CSS px) inside which trails are still built. */
   cullPx: 50,
 } as const;
@@ -83,8 +83,8 @@ export interface FxCounters {
   fills: number;
   /** Filled bite-cone area (CSS px²). */
   flashArea: number;
-  trexTrails: number;
-  tigerTrails: number;
+  heavyTrails: number;
+  packTrails: number;
 }
 
 export const newFxCounters = (): FxCounters => ({
@@ -93,8 +93,8 @@ export const newFxCounters = (): FxCounters => ({
   wedges: 0,
   fills: 0,
   flashArea: 0,
-  trexTrails: 0,
-  tigerTrails: 0,
+  heavyTrails: 0,
+  packTrails: 0,
 });
 
 export interface FxOptions {
@@ -102,8 +102,8 @@ export interface FxOptions {
   speed: number;
   /** Adaptive quality may forbid fills altogether (outline-only effects). */
   fills: boolean;
-  /** Debug hook: called for every filled bite cone (event index, T-Rex). */
-  onFill?: ((event: number, trex: number) => void) | undefined;
+  /** Debug hook: called for every filled bite cone (event index, heavy). */
+  onFill?: ((event: number, heavy: number) => void) | undefined;
 }
 
 const RING_BITE_FROM = 1.2;
@@ -112,8 +112,8 @@ const RING_LATCH_FROM = 3.2;
 const RING_LATCH_SHRINK = 2;
 const RING_DEATH_GROW = 3;
 const RING_ROUT_GROW = 1.5;
-const TREX_DEATH_FROM_PX = 10;
-const TREX_DEATH_GROW_PX = 26;
+const HEAVY_DEATH_FROM_PX = 10;
+const HEAVY_DEATH_GROW_PX = 26;
 const BURST_FROM_PX = 4;
 const BURST_TRAVEL_PX = 10;
 const BURST_RAY_PX = 6;
@@ -145,7 +145,7 @@ export function collectEffects(
     else hi = mid;
   }
   const meta = p.trace.meta;
-  const r = tigerRadiusPx(meta.tigerRadius, scale);
+  const r = packRadiusPx(meta.packRadius, scale);
   const inView = (x: number, y: number, m: number): boolean =>
     x >= -m && y >= -m && x <= cssW + m && y <= cssH + m;
   for (let k = lo; k < p.evCount; k++) {
@@ -187,7 +187,7 @@ export function collectEffects(
         if (hit && b < p.M) {
           const tx = ox + (w.tx[b] as number) * scale;
           const ty = oy + (w.ty[b] as number) * scale;
-          ring(sink(FX_BUCKETS.trex[bk]), tx, ty, r * (RING_BITE_FROM + RING_BITE_GROW * prog));
+          ring(sink(FX_BUCKETS.heavy[bk]), tx, ty, r * (RING_BITE_FROM + RING_BITE_GROW * prog));
         }
         break;
       }
@@ -196,7 +196,7 @@ export function collectEffects(
         const x = ox + (w.tx[a] as number) * scale;
         const y = oy + (w.ty[a] as number) * scale;
         if (!inView(x, y, 4 * r)) continue;
-        ring(sink(FX_BUCKETS.tiger[bk]), x, y, r * (RING_LATCH_FROM - RING_LATCH_SHRINK * prog));
+        ring(sink(FX_BUCKETS.pack[bk]), x, y, r * (RING_LATCH_FROM - RING_LATCH_SHRINK * prog));
         break;
       }
       case EventType.Throw: {
@@ -215,25 +215,25 @@ export function collectEffects(
           uy /= ul;
         }
         const r0 = BURST_FROM_PX + BURST_TRAVEL_PX * prog;
-        burst(sink(FX_BUCKETS.trex[bk]), x, y, ux, uy, r0, r0 + BURST_RAY_PX);
+        burst(sink(FX_BUCKETS.heavy[bk]), x, y, ux, uy, r0, r0 + BURST_RAY_PX);
         break;
       }
-      case EventType.TigerDeath:
+      case EventType.PackDeath:
       case EventType.Rout: {
         if (a >= p.M) continue;
         const x = ox + (w.tx[a] as number) * scale;
         const y = oy + (w.ty[a] as number) * scale;
         if (!inView(x, y, 5 * r)) continue;
-        const death = type === EventType.TigerDeath;
+        const death = type === EventType.PackDeath;
         const rad = r * (1 + (death ? RING_DEATH_GROW : RING_ROUT_GROW) * prog);
         ring(sink((death ? FX_BUCKETS.dead : FX_BUCKETS.out)[bk]), x, y, rad);
         break;
       }
-      case EventType.TrexDeath: {
+      case EventType.HeavyDeath: {
         if (a >= p.N) continue;
         const x = ox + (w.rx[a] as number) * scale;
         const y = oy + (w.ry[a] as number) * scale;
-        const rad = TREX_DEATH_FROM_PX + TREX_DEATH_GROW_PX * prog;
+        const rad = HEAVY_DEATH_FROM_PX + HEAVY_DEATH_GROW_PX * prog;
         if (!inView(x, y, rad)) continue;
         ring(sink(FX_BUCKETS.dead[bk]), x, y, rad);
         break;
@@ -247,14 +247,14 @@ export function collectEffects(
  * Trails: a polyline from each agent's drawn position back through the frames of the last
  * TRAIL.simSeconds of sim time, split into three age buckets (pre-blended tones, newest darkest).
  * Drawn deterministically from the trace, so scrubbing and camera moves never smear.
- * At most TRAIL.maxTrex T-Rex and TRAIL.maxTigers tigers (approaching or routed, only while the
+ * At most TRAIL.maxHeavy heavy and TRAIL.maxPack pack animals (approaching or routed, only while the
  * frames show the same state) get a trail.
  */
 export function collectTrails(
   p: Prepared,
   w: World,
   vp: Viewport,
-  opt: { trex: boolean; tigers: boolean },
+  opt: { heavy: boolean; pack: boolean },
   sink: (b: Bucket) => PathSink,
   c: FxCounters,
 ): void {
@@ -269,18 +269,18 @@ export function collectTrails(
     const age = (time - (p.frameT[kk] as number)) / TRAIL.simSeconds;
     return age < 1 / 3 ? 0 : age < 2 / 3 ? 1 : 2;
   };
-  if (opt.trex) {
-    for (let i = 0; i < p.N && c.trexTrails < TRAIL.maxTrex; i++) {
+  if (opt.heavy) {
+    for (let i = 0; i < p.N && c.heavyTrails < TRAIL.maxHeavy; i++) {
       if (!w.ralive[i]) continue;
       let px = ox + (w.rx[i] as number) * scale;
       let py = oy + (w.ry[i] as number) * scale;
       if (px < -m || py < -m || px > cssW + m || py > cssH + m) continue;
-      c.trexTrails++;
+      c.heavyTrails++;
       for (let kk = k; kk >= k0; kk--) {
         const fr = frames[kk] as TraceFrame;
-        const x = ox + (fr.trex[i * 4] as number) * scale;
-        const y = oy + (fr.trex[i * 4 + 1] as number) * scale;
-        const s = sink(TRAIL_BUCKETS.trex[ageBucket(kk)]);
+        const x = ox + (fr.heavy[i * 4] as number) * scale;
+        const y = oy + (fr.heavy[i * 4 + 1] as number) * scale;
+        const s = sink(TRAIL_BUCKETS.heavy[ageBucket(kk)]);
         s.moveTo(px, py);
         s.lineTo(x, y);
         px = x;
@@ -288,20 +288,20 @@ export function collectTrails(
       }
     }
   }
-  if (!opt.tigers) return;
-  for (let j = 0; j < p.M && c.tigerTrails < TRAIL.maxTigers; j++) {
+  if (!opt.pack) return;
+  for (let j = 0; j < p.M && c.packTrails < TRAIL.maxPack; j++) {
     const st = w.ts[j] as number;
-    if (st !== TigerState.Approach && st !== TigerState.Routed) continue;
+    if (st !== PackState.Approach && st !== PackState.Routed) continue;
     let px = ox + (w.tx[j] as number) * scale;
     let py = oy + (w.ty[j] as number) * scale;
     if (px < -m || py < -m || px > cssW + m || py > cssH + m) continue;
-    c.tigerTrails++;
+    c.packTrails++;
     for (let kk = k; kk >= k0; kk--) {
       const fr = frames[kk] as TraceFrame;
-      if (fr.tiger[j * 3 + 2] !== st) break;
-      const x = ox + (fr.tiger[j * 3] as number) * scale;
-      const y = oy + (fr.tiger[j * 3 + 1] as number) * scale;
-      const s = sink(TRAIL_BUCKETS.tiger[ageBucket(kk)]);
+      if (fr.pack[j * 3 + 2] !== st) break;
+      const x = ox + (fr.pack[j * 3] as number) * scale;
+      const y = oy + (fr.pack[j * 3 + 1] as number) * scale;
+      const s = sink(TRAIL_BUCKETS.pack[ageBucket(kk)]);
       s.moveTo(px, py);
       s.lineTo(x, y);
       px = x;

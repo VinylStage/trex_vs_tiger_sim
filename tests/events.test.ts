@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { LIMITS } from '../src/sim/config';
+import { HEAVY_SPECIES, PACK_SPECIES } from '../src/sim/species';
 import {
   CONSTANTS,
   DT,
   TRACE_VERSION,
-  TigerState,
+  PackState,
   simulateBattle,
   type BattleTrace,
 } from '../src/sim/engine';
@@ -22,14 +23,13 @@ import {
   eventB,
   eventCount,
   eventStep,
-  eventTiger,
+  eventPack,
   eventType,
   eventValue,
   isCosmeticEvent,
-  tigerStateAfter,
+  packStateAfter,
   type EventLogLimits,
 } from '../src/sim/events';
-import { PARAMS } from '../src/sim/params';
 import { buildDesign, designRow } from '../src/sim/sampling';
 import { traceTransferList } from '../src/workers/protocol';
 import { checkTrace, framesDiff, noAttackParams, scenario } from './trace-helpers';
@@ -49,8 +49,8 @@ const decode = (events: Uint16Array): number[][] =>
 describe('event encoding bounds (C4)', () => {
   it('fits every stamp and agent index allowed by LIMITS into u16', () => {
     expect(Math.round(LIMITS.maxTime[1] / DT)).toBeLessThanOrEqual(EVENT_MAX_STEP);
-    expect(LIMITS.trexCount[1] - 1).toBeLessThanOrEqual(EVENT_MAX_INDEX);
-    expect(LIMITS.tigerCount[1] - 1).toBeLessThanOrEqual(EVENT_MAX_INDEX);
+    expect(LIMITS.heavyCount[1] - 1).toBeLessThanOrEqual(EVENT_MAX_INDEX);
+    expect(LIMITS.packCount[1] - 1).toBeLessThanOrEqual(EVENT_MAX_INDEX);
     expect(EVENT_MAX_INDEX).toBeLessThan(EVENT_NONE);
   });
 
@@ -98,22 +98,22 @@ describe('event semantics', () => {
   });
 
   it('maps every event to its tiger and resulting state', () => {
-    expect(eventTiger(EventType.BiteHit, 3, 7)).toBe(7);
-    expect(eventTiger(EventType.BiteMiss, 3, 7)).toBe(7);
-    expect(eventTiger(EventType.Latch, 7, 3)).toBe(7);
-    expect(eventTiger(EventType.TrexDeath, 3, EVENT_NONE)).toBe(-1);
-    expect(tigerStateAfter(EventType.BiteHit)).toBe(TigerState.Recover);
-    expect(tigerStateAfter(EventType.BiteMiss)).toBe(-1);
-    expect(tigerStateAfter(EventType.Latch)).toBe(TigerState.Latched);
-    expect(tigerStateAfter(EventType.LatchFail)).toBe(-1);
-    expect(tigerStateAfter(EventType.Throw)).toBe(TigerState.Recover);
-    expect(tigerStateAfter(EventType.Release)).toBe(TigerState.Recover);
-    expect(tigerStateAfter(EventType.TigerDeath)).toBe(TigerState.Dead);
-    expect(tigerStateAfter(EventType.Rout)).toBe(TigerState.Routed);
-    expect(tigerStateAfter(EventType.Exit)).toBe(TigerState.Left);
-    expect(tigerStateAfter(EventType.TrexDeath)).toBe(-1);
-    expect(tigerStateAfter(EventType.Exhausted)).toBe(TigerState.Recover);
-    expect(tigerStateAfter(EventType.Resume)).toBe(TigerState.Approach);
+    expect(eventPack(EventType.BiteHit, 3, 7)).toBe(7);
+    expect(eventPack(EventType.BiteMiss, 3, 7)).toBe(7);
+    expect(eventPack(EventType.Latch, 7, 3)).toBe(7);
+    expect(eventPack(EventType.HeavyDeath, 3, EVENT_NONE)).toBe(-1);
+    expect(packStateAfter(EventType.BiteHit)).toBe(PackState.Recover);
+    expect(packStateAfter(EventType.BiteMiss)).toBe(-1);
+    expect(packStateAfter(EventType.Latch)).toBe(PackState.Latched);
+    expect(packStateAfter(EventType.LatchFail)).toBe(-1);
+    expect(packStateAfter(EventType.Throw)).toBe(PackState.Recover);
+    expect(packStateAfter(EventType.Release)).toBe(PackState.Recover);
+    expect(packStateAfter(EventType.PackDeath)).toBe(PackState.Dead);
+    expect(packStateAfter(EventType.Rout)).toBe(PackState.Routed);
+    expect(packStateAfter(EventType.Exit)).toBe(PackState.Left);
+    expect(packStateAfter(EventType.HeavyDeath)).toBe(-1);
+    expect(packStateAfter(EventType.Exhausted)).toBe(PackState.Recover);
+    expect(packStateAfter(EventType.Resume)).toBe(PackState.Approach);
   });
 });
 
@@ -122,9 +122,9 @@ describe('EventLog', () => {
     const log = new EventLog(2, 3, roomy);
     log.beginStep(1);
     log.emit(EventType.BiteHit, 77, 1, 2);
-    log.emit(EventType.TigerDeath, 0, 2, 1);
+    log.emit(EventType.PackDeath, 0, 2, 1);
     log.beginStep(2);
-    log.emit(EventType.TrexDeath, 0, 0, EVENT_NONE);
+    log.emit(EventType.HeavyDeath, 0, 0, EVENT_NONE);
     const out = log.finish(2);
     expect(Array.from(out.events)).toEqual([
       1,
@@ -132,11 +132,11 @@ describe('EventLog', () => {
       1,
       2,
       1,
-      EventType.TigerDeath << 8,
+      EventType.PackDeath << 8,
       2,
       1,
       2,
-      EventType.TrexDeath << 8,
+      EventType.HeavyDeath << 8,
       0,
       EVENT_NONE,
     ]);
@@ -233,7 +233,7 @@ describe('EventLog', () => {
 });
 
 describe('battle trace v2', () => {
-  const c = scenario({ trexCount: 3, tigerCount: 40, runs: 4 });
+  const c = scenario({ heavyCount: 3, packCount: 40, runs: 4 });
   const row = designRow(buildDesign(c), 1);
 
   it('carries version, events and per-T-Rex geometry', () => {
@@ -243,8 +243,8 @@ describe('battle trace v2', () => {
     expect(trace.version).toBe(2);
     expect(eventCount(trace.events)).toBe(trace.eventStats.p0 + trace.eventStats.p1);
     expect(trace.meta.dt).toBe(DT);
-    expect(trace.meta.tigerRadius).toBe(CONSTANTS.tigerRadius);
-    const radius = PARAMS.find((p) => p.id === 'trex.bodyRadius')?.bounds ?? [0, 0];
+    expect(trace.meta.packRadius).toBe(PACK_SPECIES.tiger.constants.radius);
+    const radius = HEAVY_SPECIES.trex.bounds.bodyRadius;
     expect(trace.meta.bodyRadius).toBeGreaterThanOrEqual(radius[0]);
     expect(trace.meta.bodyRadius).toBeLessThanOrEqual(radius[1]);
     expect(trace.meta.reach).toHaveLength(3);
@@ -263,7 +263,7 @@ describe('battle trace v2', () => {
     const moved = structuredClone(trace, { transfer: list });
     expect(trace.events.byteLength).toBe(0);
     expect(trace.meta.reach.byteLength).toBe(0);
-    expect(trace.frames[0]?.trex.byteLength).toBe(0);
+    expect(trace.frames[0]?.heavy.byteLength).toBe(0);
     expect(moved).toEqual(expected);
   });
 });
@@ -271,8 +271,8 @@ describe('battle trace v2', () => {
 describe('event budget (C5)', () => {
   // Scaled-down churn (no latching, no hits): thousands of P0 and P1 events in 300 s.
   const c = scenario({
-    trexCount: 1,
-    tigerCount: 300,
+    heavyCount: 1,
+    packCount: 300,
     runs: 1,
     arenaSize: 200,
     maxTime: 300,

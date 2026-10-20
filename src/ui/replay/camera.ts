@@ -1,4 +1,4 @@
-import { TigerState } from '../../sim/engine';
+import { PackState } from '../../sim/engine';
 import type { World } from './world';
 
 /** Centre and side (m) of the visible square. */
@@ -8,7 +8,7 @@ export interface Camera {
   view: number;
 }
 
-/** Zoom modes: 0 = auto (follow the fight), 1 = whole arena, n > 1 = n× on the T-Rex centroid. */
+/** Zoom modes: 0 = auto (follow the fight), 1 = whole arena, n > 1 = n× on the heavy centroid. */
 export const ZOOM_AUTO = 0;
 export const ZOOM_FIT = 1;
 
@@ -20,8 +20,8 @@ export const CAMERA = {
   /** Trim the 2 % outliers on each side once the box has more than trimMinPoints points. */
   trim: 0.02,
   trimMinPoints: 40,
-  /** At most this many tigers (evenly strided) feed the auto box. */
-  maxTigers: 1500,
+  /** At most this many pack animals (evenly strided) feed the auto box. */
+  maxPack: 1500,
   /** SmoothDamp times for the centre and for log(view). */
   centreTime: 0.45,
   zoomTime: 0.6,
@@ -125,9 +125,9 @@ export class CameraTarget {
   private readonly stride: number;
   readonly out: Camera = { cx: 0, cy: 0, view: 1 };
 
-  constructor(trexCount: number, tigerCount: number) {
-    this.stride = Math.max(1, Math.ceil(tigerCount / CAMERA.maxTigers));
-    const cap = trexCount + Math.ceil(tigerCount / this.stride);
+  constructor(heavyCount: number, packCount: number) {
+    this.stride = Math.max(1, Math.ceil(packCount / CAMERA.maxPack));
+    const cap = heavyCount + Math.ceil(packCount / this.stride);
     this.xs = new Float64Array(cap);
     this.ys = new Float64Array(cap);
   }
@@ -158,7 +158,7 @@ export class CameraTarget {
       out.view = L / zoom;
       return out;
     }
-    // Auto: trimmed box of living T-Rex and tigers still in the fight (approach, latched, recover).
+    // Auto: trimmed box of living heavy and pack animals still in the fight (approach, latched, recover).
     const xs = this.xs;
     const ys = this.ys;
     let n = 0;
@@ -169,7 +169,7 @@ export class CameraTarget {
       n++;
     }
     for (let j = 0; j < p.M; j += this.stride) {
-      if ((w.ts[j] as number) > TigerState.Recover) continue;
+      if ((w.ts[j] as number) > PackState.Recover) continue;
       xs[n] = w.tx[j] as number;
       ys[n] = w.ty[j] as number;
       n++;

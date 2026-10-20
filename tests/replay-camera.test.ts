@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TigerState } from '../src/sim/engine';
+import { PackState } from '../src/sim/engine';
 import {
   CAMERA,
   CameraRig,
@@ -94,7 +94,7 @@ describe('camera damping', () => {
     // One far outlier (trimmed) and one far routed tiger (not a fighter).
     w.tx[0] = 990;
     w.ty[0] = 10;
-    w.ts[1] = TigerState.Routed;
+    w.ts[1] = PackState.Routed;
     w.tx[1] = 5;
     w.ty[1] = 5;
     const ct = new CameraTarget(N, M);
@@ -154,7 +154,7 @@ describe('adaptive quality', () => {
     expect(0.9 + took).toBeLessThan(2.5);
     feed(g, end, 10, 30, 14);
     expect(g.tier).toBe(TIERS.length - 1);
-    expect(TIERS[3]).toMatchObject({ forceLod: true, trexTrails: false, fills: false, dprCap: 2 });
+    expect(TIERS[3]).toMatchObject({ forceLod: true, heavyTrails: false, fills: false, dprCap: 2 });
   });
 
   it('steps back up after at least 5 s of headroom', () => {

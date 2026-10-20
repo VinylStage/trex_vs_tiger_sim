@@ -55,8 +55,8 @@ interface FlashReport {
   maxFillsPerSecond: number;
   fillStarts: number;
   fills: number;
-  maxTrexTrails: number;
-  maxTigerTrails: number;
+  maxHeavyTrails: number;
+  maxPackTrails: number;
 }
 
 /**
@@ -79,8 +79,8 @@ function playFlash(trace: BattleTrace, speed: number, fixedScale?: number): Flas
     maxFillsPerSecond: 0,
     fillStarts: 0,
     fills: 0,
-    maxTrexTrails: 0,
-    maxTigerTrails: 0,
+    maxHeavyTrails: 0,
+    maxPackTrails: 0,
   };
   const hz = 60;
   const sink: (b: Bucket) => PathSink = nullSink;
@@ -91,7 +91,7 @@ function playFlash(trace: BattleTrace, speed: number, fixedScale?: number): Flas
       ? makeViewport(620, 620, 2, rig.cx, rig.cy, 604 / fixedScale)
       : makeViewport(620, 620, 2, rig.cx, rig.cy, rig.view);
     Object.assign(c, newFxCounters());
-    collectTrails(p, w, vp, { trex: true, tigers: true }, sink, c);
+    collectTrails(p, w, vp, { heavy: true, pack: true }, sink, c);
     collectEffects(
       p,
       w,
@@ -112,8 +112,8 @@ function playFlash(trace: BattleTrace, speed: number, fixedScale?: number): Flas
     rep.maxArea = Math.max(rep.maxArea, c.flashArea);
     rep.maxEffects = Math.max(rep.maxEffects, c.effects);
     rep.fills += c.fills;
-    rep.maxTrexTrails = Math.max(rep.maxTrexTrails, c.trexTrails);
-    rep.maxTigerTrails = Math.max(rep.maxTigerTrails, c.tigerTrails);
+    rep.maxHeavyTrails = Math.max(rep.maxHeavyTrails, c.heavyTrails);
+    rep.maxPackTrails = Math.max(rep.maxPackTrails, c.packTrails);
   }
   for (const s of starts) {
     rep.fillStarts += s.length;
@@ -127,7 +127,7 @@ function playFlash(trace: BattleTrace, speed: number, fixedScale?: number): Flas
 
 describe('flash budget accounting (V3, Node)', () => {
   const t10 = traceOf({ runs: 20 }, 7).trace;
-  const t50 = traceOf({ trexCount: 50, tigerCount: 1000, runs: 2, maxTime: 60 }, 0).trace;
+  const t50 = traceOf({ heavyCount: 50, packCount: 1000, runs: 2, maxTime: 60 }, 0).trace;
 
   it.each([0.25, 1, 2, 4])('10v100 close view (12 px/m) at %s×: ≤ 3 fills/s per T-Rex', (speed) => {
     const r = playFlash(t10, speed, 12);
@@ -142,8 +142,8 @@ describe('flash budget accounting (V3, Node)', () => {
     expect(r.maxFillsPerSecond).toBeLessThanOrEqual(3);
     expect(r.maxArea).toBeLessThanOrEqual(FLASH_AREA_PX);
     expect(r.maxEffects).toBeLessThanOrEqual(FX_MAX_PER_FRAME);
-    expect(r.maxTrexTrails).toBeLessThanOrEqual(TRAIL.maxTrex);
-    expect(r.maxTigerTrails).toBeLessThanOrEqual(TRAIL.maxTigers);
+    expect(r.maxHeavyTrails).toBeLessThanOrEqual(TRAIL.maxHeavy);
+    expect(r.maxPackTrails).toBeLessThanOrEqual(TRAIL.maxPack);
     if (speed > FLASH_MAX_SPEED) expect(r.fills).toBe(0);
   });
 

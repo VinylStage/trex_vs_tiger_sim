@@ -65,8 +65,9 @@
           <h2 id="toc-title">목차</h2>
           <ol>
             <li><a href="#how-to-read">읽는 법</a></li>
-            <li><a href="#trex">티라노사우루스 파라미터 (11개)</a></li>
-            <li><a href="#tiger">호랑이 파라미터 (11개)</a></li>
+            <li><a href="#heavy">대형 동물 파라미터 (11개)</a></li>
+            <li><a href="#pack">무리 동물 파라미터 (11개)</a></li>
+            <li><a href="#species">종별 프리셋</a></li>
             <li><a href="#settings">시나리오 설정</a></li>
             <li><a href="#constants">고정 상수</a></li>
           </ol>
@@ -106,32 +107,35 @@
             </p>
           </section>
 
-          <section id="trex">
-            <h2>티라노사우루스 파라미터 (11개)</h2>
+          <section id="heavy">
+            <h2>대형 동물 파라미터 (11개)</h2>
             <p>
-              성체 <i>Tyrannosaurus rex</i>의 몸, 이동, 물기, 떨쳐내기에 관한 값입니다. T-Rex에게는
-              스태미나와 사기가 없습니다.
+              혼자 싸우는 대형 동물의 몸, 이동, 공격, 떨쳐내기에 관한 값입니다. 대형 동물에게는
+              스태미나와 사기가 없습니다. 아래 범위와 근거는 기본 종인 성체
+              <i>Tyrannosaurus rex</i> 기준이며, 다른 종의 값은 <a href="#species">종별 프리셋</a>에
+              있습니다. 코끼리, 물소, 불곰에서는 물기 관련 이름이 공격(엄니 · 뿔 · 앞발)으로
+              바뀌지만 계산은 같습니다.
             </p>
             <ul class="param-index">
-              <li><a href="#param-trex.mass">체중</a></li>
-              <li><a href="#param-trex.speed">이동 속도</a></li>
-              <li><a href="#param-trex.turnRate">선회 속도</a></li>
-              <li><a href="#param-trex.biteForce">무는 힘</a></li>
-              <li><a href="#param-trex.biteLethality">물기 치명도</a></li>
-              <li><a href="#param-trex.biteInterval">물기 간격</a></li>
-              <li><a href="#param-trex.biteReach">물기 사거리</a></li>
-              <li><a href="#param-trex.biteArc">물기 각도 (반각)</a></li>
-              <li><a href="#param-trex.biteAccuracy">물기 명중률</a></li>
-              <li><a href="#param-trex.shakeRate">떨쳐내기 빈도</a></li>
-              <li><a href="#param-trex.bodyRadius">몸 반경</a></li>
+              <li><a href="#param-heavy.mass">체중</a></li>
+              <li><a href="#param-heavy.speed">이동 속도</a></li>
+              <li><a href="#param-heavy.turnRate">선회 속도</a></li>
+              <li><a href="#param-heavy.biteForce">무는 힘</a></li>
+              <li><a href="#param-heavy.biteLethality">물기 치명도</a></li>
+              <li><a href="#param-heavy.biteInterval">물기 간격</a></li>
+              <li><a href="#param-heavy.biteReach">물기 사거리</a></li>
+              <li><a href="#param-heavy.biteArc">물기 각도 (반각)</a></li>
+              <li><a href="#param-heavy.biteAccuracy">물기 명중률</a></li>
+              <li><a href="#param-heavy.shakeRate">떨쳐내기 빈도</a></li>
+              <li><a href="#param-heavy.bodyRadius">몸 반경</a></li>
             </ul>
             <section
-              class="param species-trex"
-              id="param-trex.mass"
-              data-param="trex.mass"
+              class="param role-heavy"
+              id="param-heavy.mass"
+              data-param="heavy.mass"
               data-unit="kg"
             >
-              <h3>체중 <code>trex.mass</code> <span class="tag">문헌 기반</span></h3>
+              <h3>체중 <code>heavy.mass</code> <span class="tag">문헌 기반</span></h3>
               <dl class="facts">
                 <div>
                   <dt>기본 범위 (최소 · 최빈 · 최대)</dt>
@@ -167,12 +171,12 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.speed"
-              data-param="trex.speed"
+              class="param role-heavy"
+              id="param-heavy.speed"
+              data-param="heavy.speed"
               data-unit="m/s"
             >
-              <h3>이동 속도 <code>trex.speed</code> <span class="tag">문헌 기반</span></h3>
+              <h3>이동 속도 <code>heavy.speed</code> <span class="tag">문헌 기반</span></h3>
               <dl class="facts">
                 <div>
                   <dt>기본 범위 (최소 · 최빈 · 최대)</dt>
@@ -210,12 +214,12 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.turnRate"
-              data-param="trex.turnRate"
+              class="param role-heavy"
+              id="param-heavy.turnRate"
+              data-param="heavy.turnRate"
               data-unit="deg/s"
             >
-              <h3>선회 속도 <code>trex.turnRate</code> <span class="tag">문헌 기반</span></h3>
+              <h3>선회 속도 <code>heavy.turnRate</code> <span class="tag">문헌 기반</span></h3>
               <dl class="facts">
                 <div>
                   <dt>기본 범위 (최소 · 최빈 · 최대)</dt>
@@ -250,12 +254,12 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteForce"
-              data-param="trex.biteForce"
+              class="param role-heavy"
+              id="param-heavy.biteForce"
+              data-param="heavy.biteForce"
               data-unit="kN"
             >
-              <h3>무는 힘 <code>trex.biteForce</code> <span class="tag">문헌 기반</span></h3>
+              <h3>무는 힘 <code>heavy.biteForce</code> <span class="tag">문헌 기반</span></h3>
               <dl class="facts">
                 <div>
                   <dt>기본 범위 (최소 · 최빈 · 최대)</dt>
@@ -290,13 +294,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteLethality"
-              data-param="trex.biteLethality"
+              class="param role-heavy"
+              id="param-heavy.biteLethality"
+              data-param="heavy.biteLethality"
               data-unit="HP/kN"
             >
               <h3>
-                물기 치명도 <code>trex.biteLethality</code>
+                물기 치명도 <code>heavy.biteLethality</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -333,13 +337,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteInterval"
-              data-param="trex.biteInterval"
+              class="param role-heavy"
+              id="param-heavy.biteInterval"
+              data-param="heavy.biteInterval"
               data-unit="s"
             >
               <h3>
-                물기 간격 <code>trex.biteInterval</code>
+                물기 간격 <code>heavy.biteInterval</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -375,13 +379,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteReach"
-              data-param="trex.biteReach"
+              class="param role-heavy"
+              id="param-heavy.biteReach"
+              data-param="heavy.biteReach"
               data-unit="m"
             >
               <h3>
-                물기 사거리 <code>trex.biteReach</code>
+                물기 사거리 <code>heavy.biteReach</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -418,13 +422,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteArc"
-              data-param="trex.biteArc"
+              class="param role-heavy"
+              id="param-heavy.biteArc"
+              data-param="heavy.biteArc"
               data-unit="deg"
             >
               <h3>
-                물기 각도 (반각) <code>trex.biteArc</code>
+                물기 각도 (반각) <code>heavy.biteArc</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -463,13 +467,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.biteAccuracy"
-              data-param="trex.biteAccuracy"
+              class="param role-heavy"
+              id="param-heavy.biteAccuracy"
+              data-param="heavy.biteAccuracy"
               data-unit="p"
             >
               <h3>
-                물기 명중률 <code>trex.biteAccuracy</code>
+                물기 명중률 <code>heavy.biteAccuracy</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -502,13 +506,13 @@
               <p><strong>근거.</strong> 작고 민첩한 목표를 맞힐 확률에 대한 판단값입니다.</p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.shakeRate"
-              data-param="trex.shakeRate"
+              class="param role-heavy"
+              id="param-heavy.shakeRate"
+              data-param="heavy.shakeRate"
               data-unit="1/s"
             >
               <h3>
-                떨쳐내기 빈도 <code>trex.shakeRate</code>
+                떨쳐내기 빈도 <code>heavy.shakeRate</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -545,13 +549,13 @@
               </p>
             </section>
             <section
-              class="param species-trex"
-              id="param-trex.bodyRadius"
-              data-param="trex.bodyRadius"
+              class="param role-heavy"
+              id="param-heavy.bodyRadius"
+              data-param="heavy.bodyRadius"
               data-unit="m"
             >
               <h3>
-                몸 반경 <code>trex.bodyRadius</code> <span class="tag tag-speculative">추정</span>
+                몸 반경 <code>heavy.bodyRadius</code> <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
                 <div>
@@ -585,32 +589,33 @@
             </section>
           </section>
 
-          <section id="tiger">
-            <h2>호랑이 파라미터 (11개)</h2>
+          <section id="pack">
+            <h2>무리 동물 파라미터 (11개)</h2>
             <p>
-              성체 호랑이(<i>Panthera tigris</i>)의 몸, 이동과 스태미나, 매달리기와 공격, 사기에
-              관한 값입니다.
+              여럿이 공격하는 무리 동물의 몸, 이동과 스태미나, 매달리기와 공격, 사기에 관한
+              값입니다. 아래 범위와 근거는 기본 종인 성체 호랑이(<i>Panthera tigris</i>) 기준이며,
+              다른 종의 값은 <a href="#species">종별 프리셋</a>에 있습니다.
             </p>
             <ul class="param-index">
-              <li><a href="#param-tiger.mass">체중</a></li>
-              <li><a href="#param-tiger.sprintSpeed">질주 속도</a></li>
-              <li><a href="#param-tiger.cruiseSpeed">순항 속도</a></li>
-              <li><a href="#param-tiger.sprintEndurance">질주 지구력</a></li>
-              <li><a href="#param-tiger.latchEndurance">매달리기 지구력</a></li>
-              <li><a href="#param-tiger.recoveryTime">회복 시간</a></li>
-              <li><a href="#param-tiger.latchChance">매달리기 성공률</a></li>
-              <li><a href="#param-tiger.dps">초당 피해</a></li>
-              <li><a href="#param-tiger.bleed">출혈률</a></li>
-              <li><a href="#param-tiger.morale">초기 사기</a></li>
-              <li><a href="#param-tiger.moraleLoss">사기 손실</a></li>
+              <li><a href="#param-pack.mass">체중</a></li>
+              <li><a href="#param-pack.sprintSpeed">질주 속도</a></li>
+              <li><a href="#param-pack.cruiseSpeed">순항 속도</a></li>
+              <li><a href="#param-pack.sprintEndurance">질주 지구력</a></li>
+              <li><a href="#param-pack.latchEndurance">매달리기 지구력</a></li>
+              <li><a href="#param-pack.recoveryTime">회복 시간</a></li>
+              <li><a href="#param-pack.latchChance">매달리기 성공률</a></li>
+              <li><a href="#param-pack.dps">초당 피해</a></li>
+              <li><a href="#param-pack.bleed">출혈률</a></li>
+              <li><a href="#param-pack.morale">초기 사기</a></li>
+              <li><a href="#param-pack.moraleLoss">사기 손실</a></li>
             </ul>
             <section
-              class="param species-tiger"
-              id="param-tiger.mass"
-              data-param="tiger.mass"
+              class="param role-pack"
+              id="param-pack.mass"
+              data-param="pack.mass"
               data-unit="kg"
             >
-              <h3>체중 <code>tiger.mass</code> <span class="tag">문헌 기반</span></h3>
+              <h3>체중 <code>pack.mass</code> <span class="tag">문헌 기반</span></h3>
               <dl class="facts">
                 <div>
                   <dt>기본 범위 (최소 · 최빈 · 최대)</dt>
@@ -645,13 +650,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.sprintSpeed"
-              data-param="tiger.sprintSpeed"
+              class="param role-pack"
+              id="param-pack.sprintSpeed"
+              data-param="pack.sprintSpeed"
               data-unit="m/s"
             >
               <h3>
-                질주 속도 <code>tiger.sprintSpeed</code>
+                질주 속도 <code>pack.sprintSpeed</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -688,13 +693,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.cruiseSpeed"
-              data-param="tiger.cruiseSpeed"
+              class="param role-pack"
+              id="param-pack.cruiseSpeed"
+              data-param="pack.cruiseSpeed"
               data-unit="m/s"
             >
               <h3>
-                순항 속도 <code>tiger.cruiseSpeed</code>
+                순항 속도 <code>pack.cruiseSpeed</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -727,13 +732,13 @@
               <p><strong>근거.</strong> 속보나 구보 정도로 본 판단값입니다.</p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.sprintEndurance"
-              data-param="tiger.sprintEndurance"
+              class="param role-pack"
+              id="param-pack.sprintEndurance"
+              data-param="pack.sprintEndurance"
               data-unit="s"
             >
               <h3>
-                질주 지구력 <code>tiger.sprintEndurance</code>
+                질주 지구력 <code>pack.sprintEndurance</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -769,13 +774,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.latchEndurance"
-              data-param="tiger.latchEndurance"
+              class="param role-pack"
+              id="param-pack.latchEndurance"
+              data-param="pack.latchEndurance"
               data-unit="s"
             >
               <h3>
-                매달리기 지구력 <code>tiger.latchEndurance</code>
+                매달리기 지구력 <code>pack.latchEndurance</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -812,13 +817,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.recoveryTime"
-              data-param="tiger.recoveryTime"
+              class="param role-pack"
+              id="param-pack.recoveryTime"
+              data-param="pack.recoveryTime"
               data-unit="s"
             >
               <h3>
-                회복 시간 <code>tiger.recoveryTime</code>
+                회복 시간 <code>pack.recoveryTime</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -852,13 +857,13 @@
               <p><strong>근거.</strong> 판단값입니다.</p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.latchChance"
-              data-param="tiger.latchChance"
+              class="param role-pack"
+              id="param-pack.latchChance"
+              data-param="pack.latchChance"
               data-unit="p"
             >
               <h3>
-                매달리기 성공률 <code>tiger.latchChance</code>
+                매달리기 성공률 <code>pack.latchChance</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -894,14 +899,12 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.dps"
-              data-param="tiger.dps"
+              class="param role-pack"
+              id="param-pack.dps"
+              data-param="pack.dps"
               data-unit="HP/s"
             >
-              <h3>
-                초당 피해 <code>tiger.dps</code> <span class="tag tag-speculative">추정</span>
-              </h3>
+              <h3>초당 피해 <code>pack.dps</code> <span class="tag tag-speculative">추정</span></h3>
               <dl class="facts">
                 <div>
                   <dt>기본 범위 (최소 · 최빈 · 최대)</dt>
@@ -937,12 +940,12 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.bleed"
-              data-param="tiger.bleed"
+              class="param role-pack"
+              id="param-pack.bleed"
+              data-param="pack.bleed"
               data-unit="1/s"
             >
-              <h3>출혈률 <code>tiger.bleed</code> <span class="tag tag-speculative">추정</span></h3>
+              <h3>출혈률 <code>pack.bleed</code> <span class="tag tag-speculative">추정</span></h3>
               <dl class="facts">
                 <div>
                   <dt>기본 범위 (최소 · 최빈 · 최대)</dt>
@@ -976,13 +979,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.morale"
-              data-param="tiger.morale"
+              class="param role-pack"
+              id="param-pack.morale"
+              data-param="pack.morale"
               data-unit="0-1"
             >
               <h3>
-                초기 사기 <code>tiger.morale</code> <span class="tag tag-speculative">추정</span>
+                초기 사기 <code>pack.morale</code> <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
                 <div>
@@ -1019,13 +1022,13 @@
               </p>
             </section>
             <section
-              class="param species-tiger"
-              id="param-tiger.moraleLoss"
-              data-param="tiger.moraleLoss"
+              class="param role-pack"
+              id="param-pack.moraleLoss"
+              data-param="pack.moraleLoss"
               data-unit="0-1"
             >
               <h3>
-                사기 손실 <code>tiger.moraleLoss</code>
+                사기 손실 <code>pack.moraleLoss</code>
                 <span class="tag tag-speculative">추정</span>
               </h3>
               <dl class="facts">
@@ -1060,14 +1063,1211 @@
             </section>
           </section>
 
+          <section id="species">
+            <h2>종별 프리셋</h2>
+            <p>
+              시뮬레이터는 같은 22개 파라미터로 여러 종을 다룹니다. 혼자 싸우는
+              <strong>대형 동물</strong> 쪽은 위의 <code>heavy.*</code> 11개, 여럿이 공격하는
+              <strong>무리 동물</strong> 쪽은 <code>pack.*</code> 11개를 씁니다. 종을 고르면 아래
+              범위(최소 · 최빈 · 최대)가 기본값이 되고, 각 값 옆 글자는 근거 수준입니다:
+              <abbr class="ev ev-L" title="문헌 값">L</abbr> 문헌 값,
+              <abbr class="ev ev-D" title="문헌에서 유도">D</abbr> 문헌에서 공식으로 유도,
+              <abbr class="ev ev-S" title="추정">S</abbr> 추정,
+              <abbr class="ev ev-U" title="미검증 대중 수치">U</abbr> 동료 심사 출처를 찾지 못한
+              대중 수치. 행동에 관한 값(명중률, 사기, 매달리기)은 모든 종에서 추정입니다.
+            </p>
+            <p>
+              위의 파라미터별 설명과 허용 범위는 기본 종인 티라노사우루스와 호랑이 기준입니다. 다른
+              종은 필요한 곳만 허용 범위가 넓습니다(대형 동물 체중
+              <data data-k="wide" data-param="heavy.mass" data-end="lo" value="100">100</data>
+              kg부터, 공격 힘
+              <data data-k="wide" data-param="heavy.biteForce" data-end="lo" value="0.1">0.1</data>
+              kN부터, 무리 동물 체중
+              <data data-k="wide" data-param="pack.mass" data-end="lo" value="5">5</data>–<data
+                data-k="wide"
+                data-param="pack.mass"
+                data-end="hi"
+                value="1000"
+                >1,000</data
+              >
+              kg). 티라노사우루스와 호랑이의 허용 범위는 예전과 똑같아서 예전 공유 링크가 같은
+              결과를 냅니다.
+            </p>
+            <p>
+              상수 두 개는 샘플링하지 않습니다. <code>hide</code>는 대형 동물이 무리에게 받는
+              피해(초당 피해와 출혈의 원인이 되는 상처)에 곱하는 배율로, 두꺼운 가죽 · 지방 · 털을
+              나타냅니다(티라노사우루스 1). <code>radius</code>는 무리 동물의 몸 반경으로, 접촉
+              거리와 매달린 위치, 재생 화면의 점 크기에 쓰입니다(호랑이 0.8 m). 출처와 보정 근거는
+              <a href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/SPECIES.md"
+                >docs/SPECIES.md</a
+              >에 있습니다.
+            </p>
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-species-heavy"
+            >
+              <table class="species-table">
+                <caption id="caption-species-heavy">
+                  대형 동물 프리셋 (최소 · 최빈 · 최대)
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">파라미터</th>
+                    <th scope="col">티라노사우루스</th>
+                    <th scope="col">아프리카코끼리</th>
+                    <th scope="col">아프리카물소</th>
+                    <th scope="col">불곰</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.mass">체중 (kg)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="5650 8000 9500"
+                        >5,650 · 8,000 · 9,500</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="2600 3200 6900"
+                        >2,600 · 3,200 · 6,900</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="420 600 900"
+                        >420 · 600 · 900</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="130 220 450"
+                        >130 · 220 · 450</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.speed">이동 속도 (m/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.speed"
+                        data-ev="L"
+                        value="3.4 5.5 8"
+                        >3.4 · 5.5 · 8</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.speed"
+                        data-ev="L"
+                        value="3 4.5 6.8"
+                        >3 · 4.5 · 6.8</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.speed"
+                        data-ev="U"
+                        value="8 11 15.5"
+                        >8 · 11 · 15.5</data
+                      >
+                      <abbr class="ev ev-U" title="미검증 대중 수치">U</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.speed"
+                        data-ev="L"
+                        value="8 11 13.3"
+                        >8 · 11 · 13.3</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.turnRate">선회 속도 (°/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.turnRate"
+                        data-ev="L"
+                        value="22 30 45"
+                        >22 · 30 · 45</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.turnRate"
+                        data-ev="S"
+                        value="30 50 90"
+                        >30 · 50 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.turnRate"
+                        data-ev="S"
+                        value="60 90 150"
+                        >60 · 90 · 150</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.turnRate"
+                        data-ev="S"
+                        value="60 120 200"
+                        >60 · 120 · 200</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteForce">공격 힘 (kN)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteForce"
+                        data-ev="L"
+                        value="8.5 35 57"
+                        >8.5 · 35 · 57</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteForce"
+                        data-ev="S"
+                        value="8 20 45"
+                        >8 · 20 · 45</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteForce"
+                        data-ev="S"
+                        value="2 5 10"
+                        >2 · 5 · 10</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteForce"
+                        data-ev="D"
+                        value="0.6 1.2 3"
+                        >0.6 · 1.2 · 3</data
+                      >
+                      <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteLethality">치명도 (HP/kN)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="4 8 12"
+                        >4 · 8 · 12</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="2 5 9"
+                        >2 · 5 · 9</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="4 8 12"
+                        >4 · 8 · 12</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="4 8 12"
+                        >4 · 8 · 12</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteInterval">공격 간격 (s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="1.5 2.5 4"
+                        >1.5 · 2.5 · 4</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="2 4 8"
+                        >2 · 4 · 8</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="1 2 4"
+                        >1 · 2 · 4</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="0.8 1.5 3"
+                        >0.8 · 1.5 · 3</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteReach">공격 사거리 (m)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="4.5 5.5 6.5"
+                        >4.5 · 5.5 · 6.5</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="2.8 3.5 4.3"
+                        >2.8 · 3.5 · 4.3</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="1.5 1.8 2.2"
+                        >1.5 · 1.8 · 2.2</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="1.2 1.5 1.9"
+                        >1.2 · 1.5 · 1.9</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteArc">공격 각도 (°)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="30 45 70"
+                        >30 · 45 · 70</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="40 60 90"
+                        >40 · 60 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="30 45 70"
+                        >30 · 45 · 70</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="45 70 100"
+                        >45 · 70 · 100</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.biteAccuracy">명중률</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.3 0.5 0.7"
+                        >0.3 · 0.5 · 0.7</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.15 0.3 0.5"
+                        >0.15 · 0.3 · 0.5</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.2 0.35 0.55"
+                        >0.2 · 0.35 · 0.55</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.3 0.45 0.65"
+                        >0.3 · 0.45 · 0.65</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.shakeRate">떨쳐내기 (1/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.05 0.12 0.25"
+                        >0.05 · 0.12 · 0.25</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.08 0.2 0.4"
+                        >0.08 · 0.2 · 0.4</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.03 0.08 0.2"
+                        >0.03 · 0.08 · 0.2</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.1 0.25 0.5"
+                        >0.1 · 0.25 · 0.5</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-heavy.bodyRadius">몸 반경 (m)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="trex"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="2 2.5 3"
+                        >2 · 2.5 · 3</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="elephant"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="1.4 1.7 2"
+                        >1.4 · 1.7 · 2</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="buffalo"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="0.7 0.85 1"
+                        >0.7 · 0.85 · 1</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="brownBear"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="0.6 0.75 0.9"
+                        >0.6 · 0.75 · 0.9</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">무기</th>
+                    <td><data data-k="weapon" data-species="trex" value="bite">물기</data></td>
+                    <td>
+                      <data data-k="weapon" data-species="elephant" value="tusk">엄니 · 밟기</data>
+                    </td>
+                    <td><data data-k="weapon" data-species="buffalo" value="horn">뿔</data></td>
+                    <td>
+                      <data data-k="weapon" data-species="brownBear" value="pawBite"
+                        >물기 · 앞발</data
+                      >
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">가죽 배율 <code>hide</code></th>
+                    <td><data data-k="hide" data-species="trex" value="1">1</data></td>
+                    <td><data data-k="hide" data-species="elephant" value="0.3">0.3</data></td>
+                    <td><data data-k="hide" data-species="buffalo" value="0.5">0.5</data></td>
+                    <td><data data-k="hide" data-species="brownBear" value="0.5">0.5</data></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-species-pack"
+            >
+              <table class="species-table">
+                <caption id="caption-species-pack">
+                  무리 동물 프리셋 (최소 · 최빈 · 최대)
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">파라미터</th>
+                    <th scope="col">호랑이</th>
+                    <th scope="col">사자</th>
+                    <th scope="col">회색늑대</th>
+                    <th scope="col">점박이하이에나</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.mass">체중 (kg)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.mass"
+                        data-ev="L"
+                        value="100 180 260"
+                        >100 · 180 · 260</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.mass"
+                        data-ev="L"
+                        value="110 150 225"
+                        >110 · 150 · 225</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.mass"
+                        data-ev="L"
+                        value="30 42 60"
+                        >30 · 42 · 60</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.mass"
+                        data-ev="L"
+                        value="40 55 70"
+                        >40 · 55 · 70</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.sprintSpeed">질주 속도 (m/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.sprintSpeed"
+                        data-ev="S"
+                        value="11 14 18"
+                        >11 · 14 · 18</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.sprintSpeed"
+                        data-ev="L"
+                        value="11 14 20.6"
+                        >11 · 14 · 20.6</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.sprintSpeed"
+                        data-ev="U"
+                        value="12 15 18"
+                        >12 · 15 · 18</data
+                      >
+                      <abbr class="ev ev-U" title="미검증 대중 수치">U</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.sprintSpeed"
+                        data-ev="L"
+                        value="11 14 16.7"
+                        >11 · 14 · 16.7</data
+                      >
+                      <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.cruiseSpeed">순항 속도 (m/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.cruiseSpeed"
+                        data-ev="S"
+                        value="4 6 8"
+                        >4 · 6 · 8</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.cruiseSpeed"
+                        data-ev="S"
+                        value="3 5 7"
+                        >3 · 5 · 7</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.cruiseSpeed"
+                        data-ev="U"
+                        value="2.5 4 6"
+                        >2.5 · 4 · 6</data
+                      >
+                      <abbr class="ev ev-U" title="미검증 대중 수치">U</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.cruiseSpeed"
+                        data-ev="S"
+                        value="3 4.5 6"
+                        >3 · 4.5 · 6</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.sprintEndurance">질주 지구력 (s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.sprintEndurance"
+                        data-ev="S"
+                        value="10 20 40"
+                        >10 · 20 · 40</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.sprintEndurance"
+                        data-ev="S"
+                        value="8 15 30"
+                        >8 · 15 · 30</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.sprintEndurance"
+                        data-ev="S"
+                        value="20 40 90"
+                        >20 · 40 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.sprintEndurance"
+                        data-ev="S"
+                        value="30 60 150"
+                        >30 · 60 · 150</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">
+                      <a href="#param-pack.latchEndurance">매달리기 지구력 (s)</a>
+                    </th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.latchEndurance"
+                        data-ev="S"
+                        value="15 30 60"
+                        >15 · 30 · 60</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.latchEndurance"
+                        data-ev="S"
+                        value="20 45 120"
+                        >20 · 45 · 120</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.latchEndurance"
+                        data-ev="S"
+                        value="10 25 60"
+                        >10 · 25 · 60</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.latchEndurance"
+                        data-ev="S"
+                        value="15 30 60"
+                        >15 · 30 · 60</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.recoveryTime">회복 시간 (s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.recoveryTime"
+                        data-ev="S"
+                        value="30 60 120"
+                        >30 · 60 · 120</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.recoveryTime"
+                        data-ev="S"
+                        value="40 90 180"
+                        >40 · 90 · 180</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.recoveryTime"
+                        data-ev="S"
+                        value="30 60 120"
+                        >30 · 60 · 120</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.recoveryTime"
+                        data-ev="S"
+                        value="30 60 120"
+                        >30 · 60 · 120</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.latchChance">매달리기 성공률</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.latchChance"
+                        data-ev="S"
+                        value="0.15 0.35 0.6"
+                        >0.15 · 0.35 · 0.6</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.latchChance"
+                        data-ev="S"
+                        value="0.2 0.4 0.65"
+                        >0.2 · 0.4 · 0.65</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.latchChance"
+                        data-ev="S"
+                        value="0.1 0.25 0.45"
+                        >0.1 · 0.25 · 0.45</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.latchChance"
+                        data-ev="S"
+                        value="0.15 0.3 0.5"
+                        >0.15 · 0.3 · 0.5</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.dps">초당 피해 (HP/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.dps"
+                        data-ev="D"
+                        value="2 6 12"
+                        >2 · 6 · 12</data
+                      >
+                      <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.dps"
+                        data-ev="D"
+                        value="2.5 7 14"
+                        >2.5 · 7 · 14</data
+                      >
+                      <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.dps"
+                        data-ev="D"
+                        value="0.8 2.5 6"
+                        >0.8 · 2.5 · 6</data
+                      >
+                      <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.dps"
+                        data-ev="D"
+                        value="1.2 4 12"
+                        >1.2 · 4 · 12</data
+                      >
+                      <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.bleed">출혈률 (1/s)</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.bleed"
+                        data-ev="S"
+                        value="0 0.002 0.005"
+                        >0 · 0.002 · 0.005</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.bleed"
+                        data-ev="S"
+                        value="0 0.002 0.005"
+                        >0 · 0.002 · 0.005</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.bleed"
+                        data-ev="S"
+                        value="0.001 0.003 0.006"
+                        >0.001 · 0.003 · 0.006</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.bleed"
+                        data-ev="S"
+                        value="0.001 0.003 0.008"
+                        >0.001 · 0.003 · 0.008</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.morale">초기 사기</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.morale"
+                        data-ev="S"
+                        value="0.4 0.6 0.85"
+                        >0.4 · 0.6 · 0.85</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.morale"
+                        data-ev="S"
+                        value="0.45 0.65 0.9"
+                        >0.45 · 0.65 · 0.9</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.morale"
+                        data-ev="S"
+                        value="0.35 0.55 0.8"
+                        >0.35 · 0.55 · 0.8</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.morale"
+                        data-ev="S"
+                        value="0.35 0.55 0.8"
+                        >0.35 · 0.55 · 0.8</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row"><a href="#param-pack.moraleLoss">사기 손실</a></th>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="tiger"
+                        data-param="pack.moraleLoss"
+                        data-ev="S"
+                        value="0.03 0.08 0.15"
+                        >0.03 · 0.08 · 0.15</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="lion"
+                        data-param="pack.moraleLoss"
+                        data-ev="S"
+                        value="0.02 0.06 0.12"
+                        >0.02 · 0.06 · 0.12</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="wolf"
+                        data-param="pack.moraleLoss"
+                        data-ev="S"
+                        value="0.03 0.08 0.15"
+                        >0.03 · 0.08 · 0.15</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="hyena"
+                        data-param="pack.moraleLoss"
+                        data-ev="S"
+                        value="0.03 0.08 0.15"
+                        >0.03 · 0.08 · 0.15</data
+                      >
+                      <abbr class="ev ev-S" title="추정">S</abbr>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">몸 반경 상수 <code>radius</code> (m)</th>
+                    <td><data data-k="radius" data-species="tiger" value="0.8">0.8</data></td>
+                    <td><data data-k="radius" data-species="lion" value="0.8">0.8</data></td>
+                    <td><data data-k="radius" data-species="wolf" value="0.5">0.5</data></td>
+                    <td><data data-k="radius" data-species="hyena" value="0.6">0.6</data></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           <section id="settings">
             <h2>시나리오 설정</h2>
             <p>
               시나리오 패널에서 바로 바꾸는 값입니다. 공유 링크에는 기본값과 다른 설정만 저장되며,
               링크로 들어온 값도 아래 범위로 잘린 뒤 쓰입니다.
             </p>
-            <section class="setting" id="setting-trexCount" data-setting="trexCount">
-              <h3>T-Rex 수 <code>trexCount</code></h3>
+            <section class="setting" id="setting-heavySpecies" data-setting="heavySpecies">
+              <h3>대형 동물 <code>heavySpecies</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>기본값</dt>
+                  <dd><data data-k="default" value="trex">티라노사우루스</data></dd>
+                </div>
+                <div>
+                  <dt>선택지</dt>
+                  <dd>
+                    <data data-k="option" value="trex">티라노사우루스</data>,
+                    <data data-k="option" value="elephant">아프리카코끼리</data>,
+                    <data data-k="option" value="buffalo">아프리카물소</data>,
+                    <data data-k="option" value="brownBear">불곰</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                혼자 싸우는 대형 동물 쪽의 종입니다. 종을 고르면 그 종의 파라미터 11개 범위와 허용
+                범위, 그리고 무리에게 받는 피해 배율(가죽 두께 상수)이 함께 정해집니다. 공유
+                링크에는
+                <code>heavy</code> 키로 저장됩니다.
+              </p>
+            </section>
+            <section class="setting" id="setting-packSpecies" data-setting="packSpecies">
+              <h3>무리 동물 <code>packSpecies</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>기본값</dt>
+                  <dd><data data-k="default" value="tiger">호랑이</data></dd>
+                </div>
+                <div>
+                  <dt>선택지</dt>
+                  <dd>
+                    <data data-k="option" value="tiger">호랑이</data>,
+                    <data data-k="option" value="lion">사자</data>,
+                    <data data-k="option" value="wolf">회색늑대</data>,
+                    <data data-k="option" value="hyena">점박이하이에나</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                여럿이 달려드는 무리 쪽의 종입니다. 종을 고르면 그 종의 파라미터 11개 범위와 허용
+                범위, 그리고 몸 반경 상수(접촉 거리와 매달린 위치에 쓰임, 호랑이 0.8 m)가 함께
+                정해집니다. 공유 링크에는 <code>pack</code> 키로 저장됩니다.
+              </p>
+            </section>
+            <section class="setting" id="setting-heavyCount" data-setting="heavyCount">
+              <h3>T-Rex 수 <code>heavyCount</code></h3>
               <dl class="facts">
                 <div>
                   <dt>기본값</dt>
@@ -1086,8 +2286,8 @@
                 시작합니다. 계산량은 전체 마릿수에 비례합니다.
               </p>
             </section>
-            <section class="setting" id="setting-tigerCount" data-setting="tigerCount">
-              <h3>호랑이 수 <code>tigerCount</code></h3>
+            <section class="setting" id="setting-packCount" data-setting="packCount">
+              <h3>호랑이 수 <code>packCount</code></h3>
               <dl class="facts">
                 <div>
                   <dt>기본값</dt>
@@ -1229,8 +2429,8 @@
                 값을 독립적으로 뽑습니다.
               </p>
             </section>
-            <section class="setting" id="setting-tigerTactic" data-setting="tigerTactic">
-              <h3>호랑이 전술 <code>tigerTactic</code></h3>
+            <section class="setting" id="setting-packTactic" data-setting="packTactic">
+              <h3>무리 전술 <code>packTactic</code></h3>
               <dl class="facts">
                 <div>
                   <dt>기본값</dt>
@@ -1297,11 +2497,6 @@
                     <td><data data-k="value" value="0.1">0.1</data> s</td>
                     <td>시간 간격. 엔진은 0.1초마다 모든 동물을 갱신합니다.</td>
                   </tr>
-                  <tr data-constant="tigerRadius">
-                    <th scope="row"><code>tigerRadius</code></th>
-                    <td><data data-k="value" value="0.8">0.8</data> m</td>
-                    <td>호랑이 몸 반경. 접촉 거리, 물기 판정 여유, 매달린 위치에 쓰입니다.</td>
-                  </tr>
                   <tr data-constant="latchRetry">
                     <th scope="row"><code>latchRetry</code></th>
                     <td><data data-k="value" value="1">1</data> s</td>
@@ -1357,13 +2552,13 @@
                     <td><data data-k="value" value="0.25">0.25</data></td>
                     <td>순항 중 스태미나 회복 속도(휴식 대비).</td>
                   </tr>
-                  <tr data-constant="trexRetarget">
-                    <th scope="row"><code>trexRetarget</code></th>
+                  <tr data-constant="heavyRetarget">
+                    <th scope="row"><code>heavyRetarget</code></th>
                     <td><data data-k="value" value="0.5">0.5</data> s</td>
                     <td>T-Rex가 목표를 다시 고르는 간격.</td>
                   </tr>
-                  <tr data-constant="tigerRetarget">
-                    <th scope="row"><code>tigerRetarget</code></th>
+                  <tr data-constant="packRetarget">
+                    <th scope="row"><code>packRetarget</code></th>
                     <td><data data-k="value" value="1">1</data> s</td>
                     <td>호랑이가 목표를 다시 고르는 간격.</td>
                   </tr>
@@ -1415,9 +2610,10 @@
     <footer class="site-footer">
       <div class="site-footer-inner">
         <p class="footer-disclaimer" data-i18n="footer.disclaimer">
-          T. rex와 호랑이는 같은 시대에 산 적이 없고, 모든 상호작용 규칙은 가정입니다. 결과는
-          불확실한 입력에 따라 승패가 어떻게 달라지는지 보여 주는 교육용 모델일 뿐 실제 싸움의
-          예측이 아니며, 이 사이트는 실제 동물 싸움을 조장하거나 지지하지 않습니다.
+          모든 대결은 교육용 모델입니다. 티라노사우루스는 다른 어떤 종과도 같은 시대에 살지 않았고,
+          야생에서 관찰된 대결도 크게 단순화했으며, 모든 상호작용 규칙은 가정입니다. 결과는 불확실한
+          입력에 따라 승패가 어떻게 달라지는지 보여 줄 뿐 실제 싸움의 예측이 아니며, 이 사이트는
+          실제 동물 싸움을 조장하거나 지지하지 않습니다.
         </p>
         <ul class="footer-links" aria-label="사이트 정보와 링크" data-i18n-aria="footer.linksLabel">
           <li><a href="/about/" data-footer="about">소개 · 문의</a></li>

@@ -46,19 +46,19 @@ export interface Distribution {
 
 export interface AggregateResult {
   n: number;
-  trexWins: number;
-  tigerWins: number;
+  heavyWins: number;
+  packWins: number;
   draws: number;
-  pTrex: Interval;
-  pTigers: Interval;
+  pHeavy: Interval;
+  pPack: Interval;
   pDraw: Interval;
   duration: Distribution & { hist: Histogram };
-  trexSurvivors: Distribution & { hist: Histogram };
-  tigersKilled: Distribution;
-  tigersRouted: Distribution;
+  heavySurvivors: Distribution & { hist: Histogram };
+  packKilled: Distribution;
+  packRouted: Distribution;
   /**
-   * Pooled ratio: total tigers killed / total T-Rex lost across all runs.
-   * Infinity when tigers died but no T-Rex did; NaN when nobody died.
+   * Pooled ratio: total pack animals killed / total heavy lost across all runs.
+   * Infinity when pack animals died but no heavy did; NaN when nobody died.
    */
   exchangeRatio: number;
   sensitivity: Sensitivity[];
@@ -83,20 +83,20 @@ export function aggregate(
 ): AggregateResult {
   const sorted = [...summaries].sort((a, b) => a.run - b.run);
   const n = sorted.length;
-  let trexWins = 0;
-  let tigerWins = 0;
+  let heavyWins = 0;
+  let packWins = 0;
   let draws = 0;
   for (const s of sorted) {
-    if (s.outcome === Outcome.Trex) trexWins++;
-    else if (s.outcome === Outcome.Tigers) tigerWins++;
+    if (s.outcome === Outcome.Heavy) heavyWins++;
+    else if (s.outcome === Outcome.Pack) packWins++;
     else draws++;
   }
   const durations = sorted.map((s) => s.duration);
-  const survivors = sorted.map((s) => s.trexAlive);
-  const totalKilled = sorted.reduce((a, s) => a + s.tigersKilled, 0);
-  const totalTrexLost = sorted.reduce((a, s) => a + (config.trexCount - s.trexAlive), 0);
+  const survivors = sorted.map((s) => s.heavyAlive);
+  const totalKilled = sorted.reduce((a, s) => a + s.packKilled, 0);
+  const totalHeavyLost = sorted.reduce((a, s) => a + (config.heavyCount - s.heavyAlive), 0);
 
-  const adv = sorted.map((s) => s.trexAdvantage);
+  const adv = sorted.map((s) => s.heavyAdvantage);
   const sensitivity: Sensitivity[] = PARAMS.map((p, j) => {
     const xs = sorted.map((s) => design.values[s.run * design.dims + j] as number);
     const rho = spearman(xs, adv);
@@ -110,7 +110,7 @@ export function aggregate(
   let representativeRun = sorted[0]?.run ?? 0;
   let bestGap = Infinity;
   for (const s of sorted) {
-    const gap = Math.abs(s.trexAdvantage - medAdv);
+    const gap = Math.abs(s.heavyAdvantage - medAdv);
     if (gap < bestGap) {
       bestGap = gap;
       representativeRun = s.run;
@@ -129,24 +129,24 @@ export function aggregate(
   );
   return {
     n,
-    trexWins,
-    tigerWins,
+    heavyWins,
+    packWins,
     draws,
-    pTrex: wilson(trexWins, n),
-    pTigers: wilson(tigerWins, n),
+    pHeavy: wilson(heavyWins, n),
+    pPack: wilson(packWins, n),
     pDraw: wilson(draws, n),
     duration: {
       ...dist(durations),
       hist: { min: 0, max: durBins * stepsPerBin * DT, counts: durHist.counts },
     },
-    trexSurvivors: {
+    heavySurvivors: {
       ...dist(survivors),
-      hist: histogram(survivors, config.trexCount + 1, -0.5, config.trexCount + 0.5),
+      hist: histogram(survivors, config.heavyCount + 1, -0.5, config.heavyCount + 0.5),
     },
-    tigersKilled: dist(sorted.map((s) => s.tigersKilled)),
-    tigersRouted: dist(sorted.map((s) => s.tigersRouted)),
+    packKilled: dist(sorted.map((s) => s.packKilled)),
+    packRouted: dist(sorted.map((s) => s.packRouted)),
     exchangeRatio:
-      totalTrexLost > 0 ? totalKilled / totalTrexLost : totalKilled > 0 ? Infinity : NaN,
+      totalHeavyLost > 0 ? totalKilled / totalHeavyLost : totalKilled > 0 ? Infinity : NaN,
     sensitivity,
     representativeRun,
   };
