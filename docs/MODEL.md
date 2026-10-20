@@ -133,14 +133,14 @@ Each run returns a `RunSummary`:
 
 ### 2.5 Aggregate metrics
 
-| Metric                       | Definition (`montecarlo.ts`, `stats.ts`)                                                                                                                                                                               |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P(T-Rex), P(tigers), P(draw) | Proportion of runs, with a **Wilson score 95% interval** (`z = 1.95996`).                                                                                                                                              |
-| Duration, T-Rex survivors    | Mean, p5, p50 and p95, using linearly interpolated quantiles. Histograms: duration in ≤ 30 bins over `[0, maxTime]`, each bin a whole number of 0.1 s steps (no aliasing); survivors in `heavyCount + 1` integer bins. |
-| Tigers killed, tigers routed | Mean, p5, p50 and p95.                                                                                                                                                                                                 |
-| Exchange ratio               | Σ tigers killed ÷ Σ T-Rex lost over all runs (a ratio of totals). `Infinity` if tigers died but no T-Rex did; `NaN` if nobody died.                                                                                    |
-| Sensitivity                  | For each parameter, the **Spearman rank correlation ρ** (average ranks for ties) between its _run-level_ design value and `heavyAdvantage`. Sorted by \|ρ\|; a non-finite ρ becomes 0.                                 |
-| Representative run           | The run whose `heavyAdvantage` is closest to the median `heavyAdvantage`, with ties going to the lowest run index. The UI replays this run.                                                                            |
+| Metric                              | Definition (`montecarlo.ts`, `stats.ts`)                                                                                                                                                                               |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P(T-Rex), P(tigers), P(draw)        | Proportion of runs, with a **Wilson score 95% interval** (`z = 1.95996`).                                                                                                                                              |
+| Duration, T-Rex survivors           | Mean, p5, p50 and p95, using linearly interpolated quantiles. Histograms: duration in ≤ 30 bins over `[0, maxTime]`, each bin a whole number of 0.1 s steps (no aliasing); survivors in `heavyCount + 1` integer bins. |
+| Tigers incapacitated, tigers routed | Mean, p5, p50 and p95.                                                                                                                                                                                                 |
+| Exchange ratio                      | Σ tigers incapacitated ÷ Σ T-Rex lost over all runs (a ratio of totals). `Infinity` if tigers were incapacitated but no T-Rex was; `NaN` if nobody was.                                                                |
+| Sensitivity                         | For each parameter, the **Spearman rank correlation ρ** (average ranks for ties) between its _run-level_ design value and `heavyAdvantage`. Sorted by \|ρ\|; a non-finite ρ becomes 0.                                 |
+| Representative run                  | The run whose `heavyAdvantage` is closest to the median `heavyAdvantage`, with ties going to the lowest run index. The UI replays this run.                                                                            |
 
 How to read the sensitivity:
 
