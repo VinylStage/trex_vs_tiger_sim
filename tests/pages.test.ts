@@ -54,6 +54,7 @@ import {
   headerRouteOf,
   renderSiteHeader,
 } from '../src/pages/site-header';
+import { expandPatchNotes } from '../src/pages/patch-notes-page';
 import { findHtmlEntries } from '../vite.pages';
 
 /*
@@ -65,11 +66,18 @@ import { findHtmlEntries } from '../vite.pages';
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (rel: string): string => readFileSync(join(ROOT, rel), 'utf8');
 /**
- * A page as the build and the dev server serve it: its source with the shared header filled in
- * by the same function vite.pages.ts runs (src/pages/site-header.ts).
+ * A page as the build and the dev server serve it: its source with the shared header and the
+ * patch notes board filled in by the same functions vite.pages.ts runs (src/pages/site-header.ts,
+ * src/pages/patch-notes-page.ts).
  */
+const VERSION = (JSON.parse(read('package.json')) as { version: string }).version;
 const readPage = (rel: string): string =>
-  expandSiteHeader(read(rel), headerRouteOf(`/${rel}`), rel);
+  expandPatchNotes(
+    expandSiteHeader(read(rel), headerRouteOf(`/${rel}`), rel),
+    headerRouteOf(`/${rel}`),
+    VERSION,
+    rel,
+  );
 const sourceOf = (page: ContentPage, lang: Lang): string =>
   lang === 'ko' ? `${page}/index.html` : `en/${page}/index.html`;
 const other = (lang: Lang): Lang => (lang === 'ko' ? 'en' : 'ko');

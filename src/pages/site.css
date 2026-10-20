@@ -684,6 +684,135 @@ tbody tr:last-child > * {
   color: var(--accent-fill-fg);
 }
 
+/* ---------- patch notes board (docs/PAGES.md#patch-notes) ---------- */
+
+.patch-index ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0;
+  list-style: none;
+}
+
+.patch-index li + li {
+  margin-top: 0;
+}
+
+.patch-index a {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+}
+
+.patch-index-latest,
+.patch-new {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--accent-fill);
+  color: var(--accent-fill-fg);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.7;
+  vertical-align: middle;
+}
+
+.page-body > .patch-card + .patch-card {
+  margin-top: 20px;
+}
+
+.patch-card {
+  padding: 18px 20px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  scroll-margin-top: 16px;
+}
+
+.patch-card.is-latest {
+  border-color: var(--accent);
+  box-shadow:
+    inset 4px 0 0 var(--accent),
+    var(--shadow);
+}
+
+.patch-card:target {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.patch-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  margin: 0 0 6px !important;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.patch-card-meta time {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.patch-version {
+  padding: 1px 10px;
+  border-radius: var(--radius-small);
+  background: var(--surface-2);
+  color: var(--fg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+}
+
+.patch-version:hover {
+  text-decoration: underline;
+}
+
+.patch-card .patch-new {
+  margin-left: 0;
+}
+
+.page-body .patch-card h2 {
+  margin: 0 0 4px;
+  padding-top: 0;
+  font-size: 1.25rem;
+}
+
+.page-body .patch-group h3 {
+  margin: 14px 0 6px;
+  font-size: 0.95rem;
+}
+
+.page-body .patch-group ul {
+  margin-bottom: 0;
+}
+
+.patch-refs {
+  color: var(--muted);
+  font-size: 0.85em;
+}
+
+.page-body .patch-card-foot {
+  margin: 14px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--grid);
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.page-body .patch-older {
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
 /* ---------- license texts ---------- */
 
 /* Verbatim license files: keep line breaks, wrap long lines so the page never scrolls sideways. */
@@ -718,6 +847,10 @@ tbody tr:last-child > * {
   .param,
   .setting {
     padding: 14px 14px 2px;
+  }
+
+  .patch-card {
+    padding: 14px 14px 12px;
   }
 }
 
@@ -767,6 +900,7 @@ tbody tr:last-child > * {
 
   .param,
   .setting,
+  .patch-card,
   .table-wrap,
   figure {
     break-inside: avoid;
