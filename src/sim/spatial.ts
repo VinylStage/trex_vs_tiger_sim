@@ -91,6 +91,43 @@ export class SpatialGrid {
   }
 
   /**
+   * Number of `accept`ed points within distance `r` of (x, y), counting at most `cap`: the scan
+   * stops as soon as `cap` is reached, so a dense crowd costs O(cap) instead of O(neighbours).
+   * Points are visited in the same order as `query`.
+   */
+  countWithin(
+    x: number,
+    y: number,
+    r: number,
+    xs: Float64Array,
+    ys: Float64Array,
+    accept: (i: number) => boolean,
+    cap: number,
+  ): number {
+    if (cap <= 0) return 0;
+    const r2 = r * r;
+    const c0 = this.col(x - r);
+    const c1 = this.col(x + r);
+    const r0 = this.col(y - r);
+    const r1 = this.col(y + r);
+    let count = 0;
+    for (let row = r0; row <= r1; row++) {
+      for (let col = c0; col <= c1; col++) {
+        const c = row * this.cols + col;
+        const end = this.cellStart[c + 1] as number;
+        for (let k = this.cellStart[c] as number; k < end; k++) {
+          const i = this.items[k] as number;
+          const dx = (xs[i] as number) - x;
+          const dy = (ys[i] as number) - y;
+          if (dx * dx + dy * dy > r2 || !accept(i)) continue;
+          if (++count >= cap) return count;
+        }
+      }
+    }
+    return count;
+  }
+
+  /**
    * Nearest indexed point to (x, y) among those `accept`ed, searching rings of cells outward
    * and stopping once no unvisited ring can hold a closer point. Returns -1 if none.
    * Distances use the points' true coordinates `xs`/`ys`.
