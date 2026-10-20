@@ -24,16 +24,19 @@ Epic: #20.
 | Research records (UX, performance, SEO/GEO, AdSense, species, replay) | #35 (PR) | Done        |
 | Brand: title, OG cards, icons                                         | #29      | Done        |
 | Pretendard as the single typeface                                     | #31      | Done        |
-| Footer, license page, auto-generated sitemap                          | #28      | In progress |
-| SEO, AIEO and GEO setup                                               | #30      | In progress |
-| UI/UX and performance refactor                                        | #24      | Planned     |
-| Multi-species roster                                                  | #25      | Planned     |
-| Replay animation v2 (abstract glyphs, event log)                      | #26      | In progress |
+| Footer, license page, auto-generated sitemap                          | #28      | Done (#43)  |
+| SEO, AIEO and GEO setup                                               | #30      | Done (#43)  |
+| UI/UX and performance refactor                                        | #24      | In progress |
+| Multi-species roster                                                  | #25      | Done (#45)  |
+| Replay animation v2 (abstract glyphs, event log)                      | #26      | Done (#44)  |
 | AdSense readiness plan and content framing rules                      | #27      | Done (#36)  |
+| Header logo restored to the original icon                             | —        | Done (#41)  |
+| Rout (flee) rate in the results                                       | #42      | Planned     |
 
 ## Later (candidates, not committed)
 
 - Terrain / obstacles (currently pure open field)
+- Species calibration follow-ups (buffalo vs hyenas, first-heavy-death metric M3)
 - Phase-2 species (Giganotosaurus, Allosaurus, polar bear, dromaeosaurids, African wild dog), see docs/research/SPECIES.md
 - Sobol-index sensitivity analysis (currently Spearman rank correlation)
 - Export results as CSV/JSON

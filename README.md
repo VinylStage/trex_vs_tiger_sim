@@ -11,16 +11,16 @@ A Monte Carlo, agent-based battle simulator: N _Tyrannosaurus rex_ vs M tigers o
 
 ## Features
 
-- Set the T-Rex and tiger counts, the number of Monte Carlo runs, the seed, the arena size, the time limit and the tiger tactic and morale options yourself
+- Pick the species on each side (T. rex, elephant, buffalo, brown bear vs tiger, lion, wolf, hyena) or a matchup preset, then set the counts, the number of Monte Carlo runs, the seed, the arena size, the time limit and the pack tactic and morale options yourself
 - Edit every model parameter's `(min, mode, max)` range
 - Latin Hypercube or plain random sampling, plus per-individual variation
 - Results:
   - win / draw probabilities with Wilson 95% confidence intervals
   - histograms of battle duration and survivors
   - Spearman sensitivity (tornado chart) of each parameter
-- Animated replay of a single battle
+- Animated replay of a single battle with abstract glyphs, an event timeline, skip-to-contact, speeds 0.25×–16× and a reduced-motion overview
 - Share any scenario as a URL; the seed is included, so results reproduce exactly in the same browser engine (and statistically across engines)
-- Korean / English UI, plus static guide, model, parameter, about and privacy pages in both languages
+- Korean (`/`) and English (`/en/`) UI, plus static guide, model, parameter, about, privacy and license pages in both languages; generated sitemap, robots.txt, llms.txt and structured data
 - Interactive guided tour (header **튜토리얼 / Tutorial** button or `?tour=1`)
 - Release version badge that detects newer deployments and can reload the latest version after clearing this site's cache and storage
 - No backend: every simulation runs in your browser
@@ -45,6 +45,9 @@ Node: see `.node-version` (24).
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)           | Cloudflare Pages setup and free-plan budget                               |
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md)     | Every config file explained                                               |
 | [docs/adr/](docs/adr/README.md)                    | Architecture Decision Records                                             |
+| [docs/SPECIES.md](docs/SPECIES.md)                 | Species roster, presets, bounds, sources, calibration                     |
+| [docs/REPLAY.md](docs/REPLAY.md)                   | Replay renderer v2: glyphs, camera, timeline, accessibility               |
+| [docs/SEO.md](docs/SEO.md)                         | URL languages, head tags, sitemap/robots/llms, IndexNow, owner actions    |
 | [docs/PAGES.md](docs/PAGES.md)                     | Static content pages, URL scheme, drift guard                             |
 | [docs/TUTORIAL.md](docs/TUTORIAL.md)               | Guided tour steps, accessibility, deep link                               |
 | [docs/VERSIONING.md](docs/VERSIONING.md)           | Version badge, update detection, cache/storage reset                      |
