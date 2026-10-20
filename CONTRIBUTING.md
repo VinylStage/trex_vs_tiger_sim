@@ -18,7 +18,7 @@ Releasing is part of every work cycle, not a separate milestone:
 3. Squash-merge it. release-please then creates the tag (`trex-vs-tiger-sim-vX.Y.Z`) and the GitHub Release, and the IndexNow job submits the sitemap once production serves the new version.
 4. Confirm the GitHub Release exists and that `https://trex-vs-tiger.vinylims.com/version.json` reports the new version; the site's version badge then offers the update to open tabs.
 
-While the version is below 1.0.0, `feat` bumps the minor version and `fix` the patch version (`bump-minor-pre-major`).
+While the version is below 1.0.0, every routine release bumps the **patch** version (`feat` and `fix` alike, `bump-patch-for-minor-pre-major`), and a breaking change (`feat!`) bumps the minor version (`bump-minor-pre-major`). A minor release for a large planned batch (an epic such as v0.2.0) is requested explicitly with a `Release-As: 0.X.0` footer in the commit that completes it.
 
 ## Local development
 
