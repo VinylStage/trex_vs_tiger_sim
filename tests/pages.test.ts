@@ -28,6 +28,7 @@ import {
 import {
   CONTENT_PAGES,
   NAV_LABEL_KEYS,
+  NAV_PAGES,
   RELEASES_URL,
   pagePath,
   parsePagePath,
@@ -44,6 +45,15 @@ import {
 } from '../src/ui/i18n';
 import { PRESETS } from '../src/ui/form';
 import { footerItems, siteNavItems } from '../src/ui/site-nav';
+import {
+  APP_LOGO_PLACEHOLDER,
+  BRAND_TEXT_KEY,
+  SITE_HEADER_PLACEHOLDER,
+  SITE_LOGO,
+  expandSiteHeader,
+  headerRouteOf,
+  renderSiteHeader,
+} from '../src/pages/site-header';
 import { findHtmlEntries } from '../vite.pages';
 
 /*
@@ -54,6 +64,12 @@ import { findHtmlEntries } from '../vite.pages';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (rel: string): string => readFileSync(join(ROOT, rel), 'utf8');
+/**
+ * A page as the build and the dev server serve it: its source with the shared header filled in
+ * by the same function vite.pages.ts runs (src/pages/site-header.ts).
+ */
+const readPage = (rel: string): string =>
+  expandSiteHeader(read(rel), headerRouteOf(`/${rel}`), rel);
 const sourceOf = (page: ContentPage, lang: Lang): string =>
   lang === 'ko' ? `${page}/index.html` : `en/${page}/index.html`;
 const other = (lang: Lang): Lang => (lang === 'ko' ? 'en' : 'ko');
@@ -63,7 +79,7 @@ const PAGES = LANGS.flatMap((lang) =>
     page,
     lang,
     file: sourceOf(page, lang),
-    html: read(sourceOf(page, lang)),
+    html: readPage(sourceOf(page, lang)),
   })),
 );
 
@@ -73,7 +89,7 @@ const APP_PAGES = LANGS.map((lang) => ({
   page: 'simulator' as const,
   lang,
   file: appSourceOf(lang),
-  html: read(appSourceOf(lang)),
+  html: readPage(appSourceOf(lang)),
 }));
 
 /** Every page with the shared site shell (static footer, i18n-bound text). */
@@ -88,7 +104,7 @@ const NOT_FOUND_PAGES = LANGS.map((lang) => ({
   page: '404' as const,
   lang,
   file: notFoundSourceOf(lang),
-  html: read(notFoundSourceOf(lang)),
+  html: readPage(notFoundSourceOf(lang)),
 }));
 
 /** Every page with the shared shell: header or app header, static footer, i18n-bound text. */
@@ -253,7 +269,7 @@ describe('every HTML page is CSP-safe', () => {
   });
 
   it.each(files)('%s has no inline script, style block, style attribute or handler', (file) => {
-    const html = read(file);
+    const html = readPage(file);
     for (const s of elements(html, 'script')) {
       expect(s.attrs['src'], `${file}: <script> without src`).toBeTruthy();
       expect(s.inner.trim(), `${file}: inline script body`).toBe('');
@@ -356,7 +372,7 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
   });
 
   it('uses the same section ids as its counterpart, so language switches keep the reader’s place', () => {
-    expect(sectionIds(html)).toEqual(sectionIds(read(sourceOf(page, other(lang)))));
+    expect(sectionIds(html)).toEqual(sectionIds(readPage(sourceOf(page, other(lang)))));
   });
 
   it('makes every table a focusable scroll region named by its caption', () => {
@@ -404,7 +420,7 @@ function checkLinks(html: string, lang: Lang): void {
       }
       expect(query, `${href}: content pages take no query`).toBeUndefined();
       if (frag !== undefined) {
-        expect(ids(read(sourceOf(target.page, lang))), href).toContain(frag);
+        expect(ids(readPage(sourceOf(target.page, lang))), href).toContain(frag);
       }
     } else {
       expect(href, 'external links use https').toMatch(/^https:\/\//);
@@ -498,7 +514,7 @@ describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
           .filter((a) => a in t.attrs)
           .map((a) => `${a}=${t.attrs[a] ?? ''}`),
       );
-    expect(keysOf(html)).toEqual(keysOf(read(appSourceOf(other(lang)))));
+    expect(keysOf(html)).toEqual(keysOf(readPage(appSourceOf(other(lang)))));
   });
 
   it('shows every intro and FAQ message exactly once', () => {
@@ -709,6 +725,81 @@ describe.each(SHELL_PAGES)('$file shell', ({ page, lang, file, html }) => {
       expect(textOf(brand.inner)).toBe(d['app.shortTitle']);
     }
   });
+});
+
+// ---------- the shared header (src/pages/site-header.ts): one logo everywhere ----------
+
+describe('shared site header', () => {
+  const RAW_SHELL = SHELL_PAGES.map((p) => ({ ...p, source: read(p.file) }));
+
+  it.each(RAW_SHELL)(
+    '$file takes its header from the shared module, never hand-written',
+    ({ page, source }) => {
+      if (page === 'simulator') {
+        expect(source.split(APP_LOGO_PLACEHOLDER)).toHaveLength(2);
+        expect(source).not.toContain(SITE_HEADER_PLACEHOLDER);
+      } else {
+        expect(source.split(SITE_HEADER_PLACEHOLDER)).toHaveLength(2);
+        expect(source).not.toContain(APP_LOGO_PLACEHOLDER);
+        expect(source).not.toContain('class="site-header"');
+      }
+      // No page source names a logo file itself: the logo is SITE_LOGO, filled in by the build.
+      expect(tags(source, 'img').filter((i) => /logo|favicon/.test(i.attrs['src'] ?? ''))).toEqual(
+        [],
+      );
+    },
+  );
+
+  it.each(SHELL_PAGES)(
+    '$file shows the shared logo (src, size, alt) in its header',
+    ({ page, html }) => {
+      const header = one(
+        elements(html, 'header').filter((h) =>
+          /\b(site-header|app-static-head)\b/.test(h.attrs['class'] ?? ''),
+        ),
+        'header',
+      );
+      const img = one(tags(header.inner, 'img'), 'header logo');
+      const size = String(SITE_LOGO.size[page === 'simulator' ? 'app' : 'page']);
+      expect(img.attrs).toMatchObject({
+        src: SITE_LOGO.src,
+        alt: SITE_LOGO.alt,
+        width: size,
+        height: size,
+      });
+    },
+  );
+
+  it('uses one logo file on every page, the app header included', () => {
+    const logos = new Set(
+      SHELL_PAGES.flatMap(({ html }) =>
+        elements(html, 'header').flatMap((h) => tags(h.inner, 'img').map((i) => i.attrs['src'])),
+      ),
+    );
+    expect([...logos]).toEqual([SITE_LOGO.src]);
+    // The app builds its header from the same constant (logoAttrs), not from a literal path.
+    const app = read('src/ui/app.ts');
+    expect(app).toContain("logoAttrs('app')");
+    expect(app).not.toMatch(/['"]\/(?:header-logo|favicon)\.svg['"]/);
+  });
+
+  it.each(SHELL_PAGES.filter((p) => p.page !== 'simulator'))(
+    '$file has exactly the rendered header: brand, nav, language link',
+    ({ page, lang, html }) => {
+      const current = page === '404' ? null : page;
+      const header = outerElement(html, (t) => t.name === 'header');
+      expect(header.outer).toBe(renderSiteHeader(lang, current));
+      const brand = one(
+        elements(header.inner, 'a').filter((a) => a.attrs['class'] === 'site-brand'),
+        'brand',
+      );
+      expect(textOf(brand.inner)).toBe(DICTIONARIES[lang][BRAND_TEXT_KEY]);
+      const marked = tags(header.inner, 'a').filter((a) => a.attrs['aria-current'] === 'page');
+      expect(marked.map((a) => a.attrs['data-page'])).toEqual(
+        current && NAV_PAGES.includes(current) ? [current] : [],
+      );
+    },
+  );
 });
 
 // ---------- license pages ----------

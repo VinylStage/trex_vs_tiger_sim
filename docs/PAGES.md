@@ -8,6 +8,7 @@
 > - 공통 스타일은 `src/pages/site.css`(앱과 같은 색 토큰, 다크 모드, 인쇄용), 공통 스크립트는 `src/pages/site.ts`(현재 메뉴 표시, 언어 링크 유지, 푸터 버전 표시)입니다. 인라인 스크립트·스타일은 쓰지 않습니다(CSP).
 > - 글꼴은 앱과 같은 자체 호스팅 Pretendard입니다. `site.ts`가 앱과 같은 `@font-face` 스타일시트를 불러오므로 빌드 결과에서 앱과 페이지가 파일 하나를 함께 씁니다.
 > - 접근성: 본문 크기 글자는 양쪽 테마에서 명도 대비 4.5:1 이상([색 대비](#colour-contrast)), 가로로 스크롤되는 표는 키보드로 초점을 옮겨 스크롤할 수 있습니다.
+> - 상단 헤더(로고, 사이트 이름, 메뉴, 언어 링크)는 페이지마다 손으로 쓰지 않습니다. 원본에는 `<!-- site-header -->` 한 줄만 두고, 빌드(개발 서버 포함)가 `src/pages/site-header.ts`의 `renderSiteHeader(lang, page)`로 채웁니다. 로고는 모든 페이지와 앱이 같은 `SITE_LOGO`(`/header-logo.svg`)를 씁니다([사이트 헤더](#site-header)).
 > - 앱에서 쓸 메뉴는 `src/ui/site-nav.ts`의 `createSiteNav(lang)`이 만듭니다.
 > - canonical, hreflang, Open Graph, Twitter 카드, JSON-LD는 손으로 쓰지 않고 빌드할 때 `vite.seo.ts`가 각 페이지의 제목·설명·본문에서 만들어 넣습니다. `sitemap.xml`, `robots.txt`, `llms.txt`도 빌드 때 생성됩니다([SEO.md](SEO.md)). 알 수 없는 주소에는 `404.html`(영어는 `en/404.html`)이 상태 코드 404로 응답합니다.
 > - `tests/pages.test.ts`가 파라미터 값, 시나리오 설정, 엔진 상수를 코드와 대조하고, 제목·설명, 메뉴, 링크, CSP, `_headers`, 404 페이지, 색 토큰을 검사합니다. 생성되는 SEO 태그는 `tests/seo.test.ts`가 검사합니다. 코드 값을 바꾸면 이 테스트가 페이지 수정이 필요한 곳을 알려 줍니다.
@@ -21,6 +22,7 @@
 - [How the build finds pages](#how-the-build-finds-pages)
 - [Adding a page](#adding-a-page)
 - [Writing and markup rules](#writing-and-markup-rules)
+- [Site header](#site-header)
 - [The simulator pages (`/`, `/en/`)](#the-simulator-pages--en)
 - [Footer](#footer)
 - [Colour contrast](#colour-contrast)
@@ -60,14 +62,15 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 
 | File                                        | Role                                                                                                                                                                                                                                                                                                               |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `<page>/index.html`, `en/<page>/index.html` | The pages: complete, crawlable HTML with their own title, description, icons and manifest link, shared header/nav, `<main>` article and footer. The build adds the SEO head ([SEO.md](SEO.md))                                                                                                                     |
+| `<page>/index.html`, `en/<page>/index.html` | The pages: complete, crawlable HTML with their own title, description, icons and manifest link, the `<!-- site-header -->` placeholder (filled by the build), `<main>` article and footer. The build adds the SEO head ([SEO.md](SEO.md))                                                                          |
 | `404.html`, `en/404.html`                   | Not-found pages (noindex): site nav, links to the main pages and the other language, shared footer                                                                                                                                                                                                                 |
 | `src/pages/site.css`                        | Shared stylesheet. Its `:root` tokens mirror `src/ui/styles.css` (light and dark); responsive; print rules. Imports `src/ui/site-nav.css`                                                                                                                                                                          |
 | `src/pages/site.ts`                         | Imports the self-hosted Pretendard stylesheet (see [Fonts](#fonts)). Otherwise progressive enhancement only: `aria-current` on the nav, language link keeps the `#hash`, writes `v<version>` into the footer. Stores nothing. Never imports `i18n.ts` at run time (it would pull the dictionaries into every page) |
-| `src/pages/routes.ts`                       | DOM-free page registry and path helpers (`pagePath`, `parsePagePath`, `counterpartPath`, `pageLang`, `switchedAppUrl`, `canonicalUrl`), `SITE_ORIGIN`, owner URLs, `NAV_LABEL_KEYS`, `FOOTER_LINKS`                                                                                                                |
+| `src/pages/routes.ts`                       | DOM-free page registry and path helpers (`pagePath`, `parsePagePath`, `counterpartPath`, `pageLang`, `notFoundLang`, `switchedAppUrl`, `canonicalUrl`), `SITE_ORIGIN`, owner URLs, `NAV_LABEL_KEYS`, `FOOTER_LINKS`                                                                                                |
+| `src/pages/site-header.ts`                  | The site header in one place ([Site header](#site-header)): `SITE_LOGO`, `siteNavItems()`, `renderSiteHeader()`, `renderAppLogo()`, `expandSiteHeader()`. DOM-free; used by the build, the app and the tests, never by `site.ts`                                                                                   |
 | `src/ui/site-footer.css`                    | Footer styles shared by the app and the pages (imported by `src/ui/app.ts` and `site.css`)                                                                                                                                                                                                                         |
-| `src/ui/site-nav.ts`, `src/ui/site-nav.css` | `createSiteNav(lang, current?)` for the app, the pure `siteNavItems()` and `footerItems()` the tests compare the static navs and footers against, `renderFooterLinks()` and `relocalizeLinks()` for the in-place language switch                                                                                   |
-| `vite.pages.ts`                             | `findHtmlEntries(root)`: the build input map (every `index.html` and `404.html`)                                                                                                                                                                                                                                   |
+| `src/ui/site-nav.ts`, `src/ui/site-nav.css` | `createSiteNav(lang, current?)` for the app (its items are `siteNavItems()` from `src/pages/site-header.ts`, re-exported), the pure `footerItems()` the tests compare the static footers against, `renderFooterLinks()` and `relocalizeLinks()` for the in-place language switch                                   |
+| `vite.pages.ts`                             | `findHtmlEntries(root)`: the build input map (every `index.html` and `404.html`); `siteHeader()`: the plugin that fills the header placeholders                                                                                                                                                                    |
 | `vite.seo.ts`, `src/seo/*.ts`               | Build-time SEO: head tags and JSON-LD per page, `sitemap.xml`, `robots.txt`, `llms.txt`, `llms-full.txt`, 404 asset URLs ([SEO.md](SEO.md))                                                                                                                                                                        |
 | `public/_headers` rule `/*/`                | `Cache-Control: no-cache, no-transform` on every directory-style page (see [DEPLOYMENT.md](DEPLOYMENT.md#rule--content-pages))                                                                                                                                                                                     |
 
@@ -83,8 +86,8 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 
 **A content page in both languages** (e.g. a FAQ; `license` was added this way):
 
-1. Add its id to `CONTENT_PAGES` and `NAV_LABEL_KEYS` in `src/pages/routes.ts`, a `nav.<id>` key to both dictionaries in `src/ui/i18n.ts` (it names the page in breadcrumbs and `llms.txt`), and its schema.org type to `PAGE_TYPE` in `src/seo/site.ts`. If it belongs in the header, also add it to `NAV_PAGES` and add the link to the nav of every page.
-2. Copy an existing pair (for example `about/index.html` and `en/about/index.html`) to `<id>/index.html` and `en/<id>/index.html`. Update `<title>`, the meta description, the language link and the content. Keep section ids identical in both languages, and keep the header and the footer exactly as copied. Do not write canonical, hreflang, `og:*`, `twitter:*` or JSON-LD: the build generates them, and the sitemap and `llms.txt` pick the page up from the registry.
+1. Add its id to `CONTENT_PAGES` and `NAV_LABEL_KEYS` in `src/pages/routes.ts`, a `nav.<id>` key to both dictionaries in `src/ui/i18n.ts` (it names the page in breadcrumbs and `llms.txt`), and its schema.org type to `PAGE_TYPE` in `src/seo/site.ts`. If it belongs in the header, also add it to `NAV_PAGES`; every page's header nav follows, because the header is generated ([Site header](#site-header)).
+2. Copy an existing pair (for example `about/index.html` and `en/about/index.html`) to `<id>/index.html` and `en/<id>/index.html`. Update `<title>`, the meta description and the content. Keep section ids identical in both languages, keep the `<!-- site-header -->` line (the build turns it into this page's header, language link included) and keep the footer exactly as copied. Do not write canonical, hreflang, `og:*`, `twitter:*` or JSON-LD: the build generates them, and the sitemap and `llms.txt` pick the page up from the registry.
 3. Run `npm run check`. `tests/pages.test.ts` and `tests/seo.test.ts` list anything missing or inconsistent.
 
 **A utility page** (e.g. a future `reset/index.html`): just create the directory and its `index.html`. The build picks it up, the `/*/` header rule covers it, and the CSP checks in `tests/pages.test.ts` run on it automatically. Add `<meta name="robots" content="noindex" />`; it is not in `CONTENT_PAGES`, so it stays out of the sitemap, `llms.txt` and the generated head tags.
@@ -98,6 +101,26 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 - **Content**: write natural Korean and English (not word-for-word translation), keep claims consistent with `docs/MODEL.md` and `src/sim`, avoid describing UI details that are likely to change, and update the "last updated" date (`p.page-meta <time datetime>`, both languages) when a page changes materially: it is also the page's sitemap `lastmod` and JSON-LD `dateModified`, and the build warns when a page was committed after it ([SEO.md](SEO.md#sitemap-and-lastmod)). Korean uses `word-break: keep-all` so words are not split.
 - **Colour**: use the page colour roles for accent text and filled controls, not `--accent` (see [Colour contrast](#colour-contrast)).
 - Format with Prettier (`npx prettier --write <file>`); `npm run format:check` covers HTML.
+
+## Site header
+
+The header is not written by hand. Every content page and both 404 pages have one line where the header goes, right after the skip link:
+
+```html
+<a class="skip-link" href="#main">…</a>
+<!-- site-header -->
+<main id="main" class="site-main">…</main>
+```
+
+`siteHeader()` in `vite.pages.ts` is a `transformIndexHtml` hook (`order: 'pre'`, so Vite then handles the logo URL like hand-written markup; it runs in `npm run dev` too) that replaces the line with `renderSiteHeader(lang, page)` from `src/pages/site-header.ts`. Language and page come from the source path (`headerRouteOf`: `/en/guide/index.html` → `en`, `guide`; `/404.html` → `ko`, no current page). The built HTML therefore contains the complete static header, for crawlers and readers without JavaScript:
+
+- `a.site-brand` to the simulator of the page's language: the logo `<img>` (`SITE_LOGO`) and the brand text (`app.shortTitle`);
+- `nav.site-nav` with `siteNavItems(lang, page)` (the list the app's `createSiteNav` uses), the current page marked `aria-current="page"`;
+- `a.lang-switch[data-lang-switch]` to the same page in the other language (the other language's simulator on a 404). `site.ts` adds the `#hash` at run time.
+
+**One logo.** `SITE_LOGO` is the only place the header logo is named: `/header-logo.svg` (the owner's icon, [BRANDING.md](BRANDING.md#assets)), 40 px in the app header and 32 px in the content-page header. The app takes it from the same constant: `src/ui/app.ts` builds its logo with `logoAttrs('app')`, and the static head of `index.html` / `en/index.html` has an `<!-- app-logo -->` line the same plugin replaces with `renderAppLogo()`. To change the logo or its size, change `SITE_LOGO` and nothing else.
+
+A placeholder on a page whose path the plugin cannot resolve, `<!-- site-header -->` on the simulator or `<!-- app-logo -->` on a content page fails the build. `tests/pages.test.ts` runs the same `expandSiteHeader` over the sources, so every other page test sees the header as built, and fails if a source hand-writes a header or a logo `<img>`, lacks its placeholder, or if any page's header logo (src, size, alt) differs from `SITE_LOGO`.
 
 ## The simulator pages (`/`, `/en/`)
 
@@ -117,7 +140,7 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 <!-- shared footer -->
 ```
 
-- **Static header and `<h1>`.** `#app` starts with a static header in the app header's classes: logo, `<h1 data-i18n="app.title">` and `<a data-lang-switch hreflang lang data-i18n="lang.switch">` to the other language's app. Crawlers that do not run JavaScript thus get the page heading and the language link. `startApp` moves the `<h1>` element into its own header and removes the rest (the language button replaces the link), so the page always has exactly one `<h1>`.
+- **Static header and `<h1>`.** `#app` starts with a static header in the app header's classes: logo (the `<!-- app-logo -->` line, see [Site header](#site-header)), `<h1 data-i18n="app.title">` and `<a data-lang-switch hreflang lang data-i18n="lang.switch">` to the other language's app. Crawlers that do not run JavaScript thus get the page heading and the language link. `startApp` moves the `<h1>` element into its own header and removes the rest (the language button replaces the link), so the page always has exactly one `<h1>`.
 - **Outside `#app`.** The intro, FAQ and footer are siblings of `#app`, so they exist without JavaScript (crawlers that do not run scripts, see [SEO.md](SEO.md)) and stay in the DOM after the app mounts.
 - **Answer first, compact.** The intro says what the simulator is, how it works in four steps, what you learn (Monte Carlo, confidence intervals, sensitivity) and links to the guide, the model's preliminary results (`/model/#results`), the parameters and the tour. It states no simulation result numbers; the only number (22 parameters) is pinned to `PARAMS.length` by a test.
 - **Below the simulator, no layout shift.** The simulator stays at the top. `#app` reserves one viewport (`min-height: 100vh` / `100svh` in `src/ui/styles.css`), so the intro starts below the fold before the app mounts and stays there after it; mounting shifts nothing on screen (measured CLS 0.0000 at 1366/390/320 px). Without JavaScript (`@media (scripting: none)`) `#app` drops the reservation and shows only the static header; the `<noscript>` notice and the intro follow.
@@ -200,6 +223,7 @@ No ad code is included yet. The pages were written with an AdSense review in min
 - on any page, a `data-i18n` (`-aria`, `-title`) text differs from the dictionary, the footer links differ from `footerItems(lang)` (href, label, rel), the version link does not point at the releases, the header brand differs from `app.shortTitle`, or the footer still claims "no tracking";
 - the license pages' MIT text differs from `LICENSE`, or the OFL text from `src/assets/fonts/pretendard/LICENSE.txt`; `package.json` gains runtime `dependencies`;
 - a `'trexsim.*'` storage key in `src/` is missing from either privacy page, or a privacy page names a key the code does not use;
+- a page source hand-writes its header or a logo `<img>` instead of the `<!-- site-header -->` / `<!-- app-logo -->` placeholder, or a page's header logo (src, size, alt) differs from `SITE_LOGO` ([Site header](#site-header));
 - a static nav differs from `siteNavItems(lang, page)`; the language link is wrong; ko/en section ids differ; an internal link or `#anchor` points nowhere; an external link is not `https`;
 - a table is not inside a `.table-wrap` with `role="region"`, `tabindex="0"` and an `aria-labelledby` that names its own `<caption id>`;
 - any discovered HTML file (including the app's `index.html`) has inline script, style blocks, style attributes, event handlers or `javascript:` URLs;
@@ -209,7 +233,7 @@ No ad code is included yet. The pages were written with an AdSense review in min
 
 `tests/seo.test.ts` runs the build's generators over the real sources and checks the generated head of every page (canonical, hreflang, OG, Twitter, JSON-LD and `FAQPage` = visible FAQ), the sitemap against the registry and the build entries, `robots.txt`, `llms.txt`, git dates and the IndexNow key ([SEO.md](SEO.md#tests)).
 
-`tests/site.test.ts` covers the path helpers (including `/en/` and the language from the URL, `switchedAppUrl` keeping query and fragment), `siteNavItems`, `FOOTER_LINKS`/`footerItems` (order, hrefs, `rel="me"`), `relocalizeLinks` and `findHtmlEntries` (including the ignored directories, the `en` entry and the 404 entries). `tests/i18n.test.ts` checks that the language state never touches `localStorage`.
+`tests/site.test.ts` covers the header renderer (`renderSiteHeader`, `renderAppLogo`, `headerRouteOf`, `expandSiteHeader` and its errors, the plugin's `pre` order), the path helpers (including `/en/` and the language from the URL, `switchedAppUrl` keeping query and fragment), `siteNavItems`, `FOOTER_LINKS`/`footerItems` (order, hrefs, `rel="me"`), `relocalizeLinks` and `findHtmlEntries` (including the ignored directories, the `en` entry and the 404 entries). `tests/i18n.test.ts` checks that the language state never touches `localStorage`.
 
 ## Mounting the site navigation in the app
 

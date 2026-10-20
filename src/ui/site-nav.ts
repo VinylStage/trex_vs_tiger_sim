@@ -1,33 +1,12 @@
-import {
-  FOOTER_LINKS,
-  NAV_LABEL_KEYS,
-  NAV_PAGES,
-  footerHref,
-  pagePath,
-  type PageId,
-} from '../pages/routes';
+import { FOOTER_LINKS, NAV_LABEL_KEYS, footerHref, pagePath, type PageId } from '../pages/routes';
+import { siteNavItems } from '../pages/site-header';
 import { h } from './dom';
 import { DICTIONARIES, type Lang } from './i18n';
 import './site-nav.css';
 
-export { NAV_LABEL_KEYS };
-
-export interface SiteNavItem {
-  page: PageId;
-  href: string;
-  label: string;
-  current: boolean;
-}
-
-/** Links of the shared site navigation in `lang` (same order and labels as the static pages). */
-export function siteNavItems(lang: Lang, current: PageId = 'simulator'): SiteNavItem[] {
-  return NAV_PAGES.map((page) => ({
-    page,
-    href: pagePath(page, lang),
-    label: DICTIONARIES[lang][NAV_LABEL_KEYS[page]],
-    current: page === current,
-  }));
-}
+// The nav items come from the shared header module, so the app and the static pages agree.
+export { NAV_LABEL_KEYS, siteNavItems };
+export type { SiteNavItem } from '../pages/site-header';
 
 /**
  * `<nav>` linking the simulator and the content pages for `lang`, with `current` marked
