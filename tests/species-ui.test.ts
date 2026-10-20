@@ -17,6 +17,7 @@ import {
   initLang,
   paramLabel,
   setNamePair,
+  speciesCounter,
   speciesVars,
   t,
   teamLabel,
@@ -71,6 +72,41 @@ describe('species names in messages', () => {
     expect(t('field.packCount')).toBe('Tiger count');
   });
 
+  it('counts Homo erectus with 명 in Korean and every animal with 마리', () => {
+    initLang('ko');
+    const pair = { heavySpecies: 'homoErectus', packSpecies: 'wolf' } as const;
+    expect(speciesCounter('homoErectus')).toBe('명');
+    for (const id of ['trex', 'mammoth', 'wolf', 'tiger'] as const) {
+      expect(speciesCounter(id)).toBe('마리');
+    }
+    expect(teamLabel('wolf', 8)).toBe('늑대 8마리');
+    expect(teamLabel('homoErectus', 1)).toBe('호모 에렉투스 1명');
+    expect(t('stat.ofN', { n: '1', counter: speciesCounter('homoErectus') })).toBe('1명 중');
+    expect(t('stat.ofN', { n: '8', counter: speciesCounter('wolf') })).toBe('8마리 중');
+    setNamePair(pair);
+    expect(t('stat.exchangeSub')).toBe('호모 에렉투스 1명 손실당 전투 불능 늑대');
+    expect(
+      t('replay.scene', {
+        time: '0:10',
+        alive: '1',
+        total: '1',
+        approach: '8',
+        latched: '0',
+        recover: '0',
+        out: '0',
+        dead: '0',
+      }),
+    ).toMatch(/^0:10: 호모 에렉투스 1명 중 1명 생존\./);
+    setNamePair({ heavySpecies: 'trex', packSpecies: 'tiger' });
+    expect(t('stat.exchangeSub')).toBe('T-Rex 1마리 손실당 전투 불능 호랑이');
+    // English has no counter word.
+    initLang('en');
+    setNamePair(pair);
+    expect(speciesCounter('homoErectus')).toBe('');
+    expect(t('stat.ofN', { n: '1', counter: speciesCounter('homoErectus') })).toBe('of 1');
+    expect(t('stat.exchangeSub')).toBe('wolves incapacitated per Homo erectus lost');
+  });
+
   it('names the woolly mammoth and Homo erectus in both languages', () => {
     initLang('en');
     expect(teamLabel('mammoth', 1)).toBe('1 mammoth');
@@ -79,7 +115,7 @@ describe('species names in messages', () => {
     expect(teamLabel('homoErectus', 100)).toBe('100 Homo erectus');
     expect(paramLabel('heavy.biteForce', 'hands')).toBe('Bare-hand strike and grip force');
     initLang('ko');
-    expect(teamLabel('homoErectus', 100)).toBe('호모 에렉투스 100마리');
+    expect(teamLabel('homoErectus', 100)).toBe('호모 에렉투스 100명');
     expect(teamLabel('mammoth', 1)).toBe('매머드 1마리');
     expect(paramLabel('heavy.biteForce', 'hands')).toBe('맨손 타격 · 붙잡기 힘');
   });

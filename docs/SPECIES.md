@@ -446,7 +446,7 @@ Findings from the mammoth and _Homo erectus_ runs:
 - Every species carries `adSafe`; a living-human species would be `false` and its matchups would load no ads ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)). All current species are `true`.
 - The replay keeps abstract glyphs and role colours for every species (heavy = blue triangle scaled from the species body radius, exactly 7 m for _T. rex_; pack = orange dot sized from `radius`); no gore.
 - Only pairings separated by geological time (_T. rex_) are labelled "never met"; a recently extinct species without a sourced overlap is "no recorded encounters" (`unrecorded`). Documented pairings link to sourced notes. Elephant and mammoth copy mentions tusks only as anatomy.
-- Korean UI strings never put a particle after a species name; English strings use singular/plural forms chosen with `Intl.PluralRules`.
+- Korean UI strings never put a particle after a species name; English strings use singular/plural forms chosen with `Intl.PluralRules`. Korean head counts use the counter `명` for _Homo erectus_ and `마리` for every animal (`speciesCounter`, the `{counter}` and `{heavyCounter}` placeholders); English has none.
 
 ## 10. References
 

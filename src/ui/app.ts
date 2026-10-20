@@ -22,6 +22,7 @@ import {
   setLang,
   setNamePair,
   t,
+  speciesCounter,
   teamLabel,
   type Lang,
   type MsgKey,
@@ -540,17 +541,17 @@ export function startApp(root: HTMLElement): void {
       card(
         t('stat.survivors'),
         formatNum(agg.heavySurvivors.mean, 2),
-        t('stat.ofN', { n: formatInt(cfg.heavyCount) }),
+        t('stat.ofN', { n: formatInt(cfg.heavyCount), counter: speciesCounter(cfg.heavySpecies) }),
       ),
       card(
         t('stat.killed'),
         formatNum(agg.packKilled.mean, 1),
-        t('stat.ofN', { n: formatInt(cfg.packCount) }),
+        t('stat.ofN', { n: formatInt(cfg.packCount), counter: speciesCounter(cfg.packSpecies) }),
       ),
       card(
         t('stat.routed'),
         formatNum(agg.packRouted.mean, 1),
-        t('stat.ofN', { n: formatInt(cfg.packCount) }),
+        t('stat.ofN', { n: formatInt(cfg.packCount), counter: speciesCounter(cfg.packSpecies) }),
       ),
       card(
         t('stat.exchange'),

@@ -76,8 +76,8 @@ const ko = {
   'preset.default': '{label} (기본)',
   'preset.hint':
     '양쪽 종, 마릿수, 실행 횟수를 한 번에 바꾸고 파라미터 범위를 그 종의 기본값으로 되돌립니다. 나머지 설정은 그대로입니다.',
-  'team.one': '{name} {n}마리',
-  'team.other': '{name} {n}마리',
+  'team.one': '{name} {n}{counter}',
+  'team.other': '{name} {n}{counter}',
 
   'field.heavyCount': '{Heavy} 수',
   'field.packCount': '{Pack} 수',
@@ -212,11 +212,11 @@ const ko = {
   'stat.duration': '전투 시간 (중앙값)',
   'stat.durationSub': '5–95%: {p5} – {p95}',
   'stat.survivors': '{Heavy} 생존 (평균)',
-  'stat.ofN': '{n}마리 중',
+  'stat.ofN': '{n}{counter} 중',
   'stat.killed': '전투 불능 {PackPl} (평균)',
   'stat.routed': '도주한 {PackPl} (평균)',
   'stat.exchange': '교환비',
-  'stat.exchangeSub': '{heavy} 1마리 손실당 전투 불능 {packPl}',
+  'stat.exchangeSub': '{heavy} 1{heavyCounter} 손실당 전투 불능 {packPl}',
   'stat.exchangeInf': '{heavy} 손실 없음',
   'stat.exchangeNone': '전투 불능 없음',
 
@@ -270,7 +270,7 @@ const ko = {
   'replay.skipContact': '첫 접촉으로',
   'replay.valueText': '{cur} / {total}',
   'replay.scene':
-    '{time}: {heavyPl} {total}마리 중 {alive}마리 생존. {PackPl} 상태: 접근 {approach}, 매달림 {latched}, 회복 {recover}, 도주·이탈 {out}, 전투 불능 {dead}',
+    '{time}: {heavyPl} {total}{heavyCounter} 중 {alive}{heavyCounter} 생존. {PackPl} 상태: 접근 {approach}, 매달림 {latched}, 회복 {recover}, 도주·이탈 {out}, 전투 불능 {dead}',
   'replay.overviewLabel':
     '전투 전체 요약 그림: 선은 이동 경로, 마름모는 {packPl} 개체가 매달린 곳, ×는 {packPl} 개체가 쓰러진 곳, 삼각형은 {heavy}의 마지막 위치입니다',
   'replay.overviewNote':
@@ -542,8 +542,8 @@ const en: Dictionary = {
   'preset.default': '{label} (default)',
   'preset.hint':
     'Sets both species, the head counts and the number of runs, and resets the ranges to those species’ presets. Other settings are kept.',
-  'team.one': '{n} {name}',
-  'team.other': '{n} {name}',
+  'team.one': '{n}{counter} {name}',
+  'team.other': '{n}{counter} {name}',
 
   'field.heavyCount': '{Heavy} count',
   'field.packCount': '{Pack} count',
@@ -678,11 +678,11 @@ const en: Dictionary = {
   'stat.duration': 'Battle duration (median)',
   'stat.durationSub': '5–95%: {p5} – {p95}',
   'stat.survivors': '{Heavy} survivors (mean)',
-  'stat.ofN': 'of {n}',
+  'stat.ofN': 'of {n}{counter}',
   'stat.killed': '{PackPl} incapacitated (mean)',
   'stat.routed': '{PackPl} routed (mean)',
   'stat.exchange': 'Exchange ratio',
-  'stat.exchangeSub': '{packPl} incapacitated per {heavy} lost',
+  'stat.exchangeSub': '{packPl} incapacitated per {heavy}{heavyCounter} lost',
   'stat.exchangeInf': 'no {heavy} lost',
   'stat.exchangeNone': 'none incapacitated',
 
@@ -735,7 +735,7 @@ const en: Dictionary = {
   'replay.skipContact': 'Skip to contact',
   'replay.valueText': '{cur} of {total}',
   'replay.scene':
-    '{time}: {alive} of {total} {heavyPl} alive. {PackPl}: {approach} approaching, {latched} latched, {recover} recovering, {out} fled or gone, {dead} incapacitated',
+    '{time}: {alive}{heavyCounter} of {total}{heavyCounter} {heavyPl} alive. {PackPl}: {approach} approaching, {latched} latched, {recover} recovering, {out} fled or gone, {dead} incapacitated',
   'replay.overviewLabel':
     'Summary of the whole battle: lines are paths, diamonds mark where {packPl} latched, crosses where {packPl} were incapacitated, triangles the final {heavy} positions',
   'replay.overviewNote':
@@ -1019,14 +1019,29 @@ export function speciesVars(pair: NamePair = names, lang: Lang = current): Recor
     out[`${role}Pl`] = other;
     out[Role] = capitalize(one);
     out[`${Role}Pl`] = capitalize(other);
+    out[`${role}Counter`] = speciesCounter(id, lang);
   }
   return out;
 }
 
-/** "10 T-Rex" / "T-Rex 10마리": a head count with the right plural form. */
+/**
+ * Korean counter word for a species: 명 for the hominin, 마리 for animals. English has none, so
+ * the `{counter}` placeholders in English messages are empty.
+ */
+const KO_COUNTERS: Partial<Record<SpeciesId, string>> = { homoErectus: '명' };
+
+export function speciesCounter(id: SpeciesId, lang: Lang = current): string {
+  return lang === 'ko' ? (KO_COUNTERS[id] ?? '마리') : '';
+}
+
+/** "10 T-Rex" / "T-Rex 10마리" / "호모 에렉투스 100명": a head count with the right forms. */
 export function teamLabel(id: SpeciesId, n: number): string {
   const rule = new Intl.PluralRules(locale()).select(n) === 'one' ? 'one' : 'other';
-  return t(`team.${rule}`, { n: n.toLocaleString(locale()), name: speciesShort(id, rule) });
+  return t(`team.${rule}`, {
+    n: n.toLocaleString(locale()),
+    name: speciesShort(id, rule),
+    counter: speciesCounter(id),
+  });
 }
 
 export function t(key: MsgKey, vars?: Vars): string {
