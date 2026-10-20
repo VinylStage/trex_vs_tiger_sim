@@ -34,7 +34,14 @@ import {
 import { pageLastmod, sitemapXml, visibleDateIsStale } from '../src/seo/sitemap';
 import { DICTIONARIES, LANGS, type Lang } from '../src/ui/i18n';
 import { findHtmlEntries } from '../vite.pages';
-import { absolutizeUrls, gitHistory, gitLastmod, notFoundLang, unshallow } from '../vite.seo';
+import {
+  absolutizeUrls,
+  gitHistory,
+  gitLastmod,
+  needsRootAbsoluteUrls,
+  notFoundLang,
+  unshallow,
+} from '../vite.seo';
 
 /*
  * Build-time SEO (docs/SEO.md). The generators are pure; these tests run them over the real page
@@ -625,6 +632,35 @@ describe('404 pages', () => {
     expect(
       absolutizeUrls('<img src="../favicon.svg"><script src="../assets/b.js">', 'en/404.html'),
     ).toBe('<img src="/favicon.svg"><script src="/assets/b.js">');
+  });
+});
+
+describe('root-absolute URLs on every built page', () => {
+  it('covers the app entries, the /r/ pages, content pages and the 404 pages', () => {
+    for (const f of [
+      'index.html',
+      'en/index.html',
+      'r/index.html',
+      'en/r/index.html',
+      'guide/index.html',
+      '404.html',
+    ]) {
+      expect(needsRootAbsoluteUrls(f), f).toBe(true);
+    }
+    expect(needsRootAbsoluteUrls('sitemap.xml')).toBe(false);
+    expect(needsRootAbsoluteUrls('assets/main-abc.js')).toBe(false);
+  });
+
+  it('keeps the icon on the root after the app switches from / to /en/ in place', () => {
+    const head =
+      '<link rel="icon" href="./favicon.svg"><link rel="manifest" href="./site.webmanifest">';
+    const out = absolutizeUrls(head, 'index.html');
+    expect(out).toBe(
+      '<link rel="icon" href="/favicon.svg"><link rel="manifest" href="/site.webmanifest">',
+    );
+    // Resolved against the address after pushState to /en/, the icon is still the root file.
+    const href = /href="([^"]+)"/.exec(out)?.[1] ?? '';
+    expect(new URL(href, 'https://site.invalid/en/').pathname).toBe('/favicon.svg');
   });
 });
 

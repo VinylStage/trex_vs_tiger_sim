@@ -15,6 +15,7 @@ import {
   tornadoTable,
   type HistogramOptions,
 } from './charts';
+import { announce } from './announce';
 import { clear, h } from './dom';
 import { costSummary, isCostOk } from './cost';
 import { createConfigForm, matchupBadge, matchupNote, qualifiedParamLabel } from './form';
@@ -142,12 +143,15 @@ export function startApp(root: HTMLElement): void {
     i18nTitle: 'share.hint',
     attrs: { type: 'button', 'data-tour': 'share' },
   });
-  const toast = h('div', { class: 'toast', attrs: { role: 'status', 'aria-live': 'polite' } });
+  // The toast is visual only; screen readers hear the message through the persistent announcer,
+  // because a live region that was `hidden` misses text set as it appears (#69).
+  const toast = h('div', { class: 'toast', attrs: { 'aria-hidden': 'true' } });
   toast.hidden = true;
   let toastTimer = 0;
   const showToast = (text: string): void => {
     toast.textContent = text;
     toast.hidden = false;
+    announce(text);
     clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => {
       toast.hidden = true;

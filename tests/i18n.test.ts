@@ -48,6 +48,13 @@ describe('i18n dictionaries', () => {
   });
 });
 
+describe('language button (WCAG 2.5.3 label in name, #71)', () => {
+  it.each(LANGS)('%s: the accessible name contains the visible text', (lang) => {
+    const d = DICTIONARIES[lang];
+    expect(d['lang.switchAria']).toContain(d['lang.switch']);
+  });
+});
+
 describe('t / interpolate', () => {
   it('interpolates placeholders and leaves unknown ones', () => {
     expect(interpolate('{a} + {b} = {c}', { a: 1, b: '2' })).toBe('1 + 2 = {c}');
