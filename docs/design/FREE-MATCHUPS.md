@@ -7,9 +7,9 @@
 > - **대칭 모델:** 모든 개체가 같은 행동 모델(이동, 스태미나, 정면 공격, 떨쳐내기, 사기)을 쓰고, 값만 종마다 다릅니다. **매달리기**는 매달릴 수 있는 종이고 상대가 자기보다 3배 이상 무거울 때만 가능합니다(가정, 민감도 2–5배). 그렇지 않으면 정면 타격으로 싸웁니다. 맞으면 물러나는지는 몸무게 비율로 정하고, 맞을 때 잃는 사기는 받은 피해에 비례합니다.
 > - **무리 버프:** `social` 종(사자, 늑대, 점박이하이에나, 호모 에렉투스)만 받습니다. 같은 진영에 살아 있는 동료가 결속 반경 안에 1마리 이상 있으면 켜지고, 그 조건이 2초 넘게 깨지면 꺼집니다. 효과 다섯 가지(협동 접근·포위, 공동 목표, 집단 매달리기, 사기 지원·전염, 교대)는 각각 따로 끌 수 있고 크기에 상한이 있습니다. 모든 수치는 출처를 달거나 가정(S)으로 표시하고 민감도 범위를 줍니다. 비사회성 종(호랑이, 불곰, 티라노 등)은 수가 많아도 이 효과가 전혀 없고, 같은 목표에 몰리면 서로 방해합니다.
 > - **UI:** 양쪽 모두 "모든 종" 선택, 진영마다 "무리 버프 적용 / Pack buff active" 배지와 규칙 팝오버, 결과에 버프 활성 시간, 리플레이에서는 버프 받은 개체에 추상적인 고리 표시만 붙입니다.
-> - 단계별 PR 계획(8단계)과 소유자에게 묻는 질문(권장 기본값 포함)은 §8, §9에 있습니다.
+> - 단계별 PR 계획(P0–P8)은 §8에 있습니다. 소유자가 2026-10-20에 설계를 승인했고, 결정 사항(엔진 두 갈래, 기본 화면은 P8 보정 전까지 기존 모델, 무리 초식동물의 집단 방어는 #72로 분리, 진영당 한 종, 나머지는 권장 기본값)은 §9에 정리했습니다.
 
-Status: **Proposed** (design only, no code). Issue: [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50) and its owner comment. Decision record: [ADR-0007](../adr/0007-symmetric-sides.md). Base: `main` at v0.2.2 (includes #24 and #47).
+Status: **Accepted** by the owner on 2026-10-20 (§9). Implementation follows §8. Issue: [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50) and its owner comment. Decision record: [ADR-0007](../adr/0007-symmetric-sides.md). Base: `main` at v0.2.2 (includes #24 and #47).
 
 Evidence tags follow [SPECIES.md §3](../SPECIES.md#3-evidence-tags-and-formulas): **L** literature, **D** derived, **S** speculative / assumption, **U** unverified popular figure. Every new number in this document is either cited or tagged **S** with a sensitivity range, and every **S** number becomes a sampled triangular range (so it shows up in the tornado chart) unless noted.
 
@@ -23,7 +23,7 @@ Evidence tags follow [SPECIES.md §3](../SPECIES.md#3-evidence-tags-and-formulas
 6. [UI and transparency](#6-ui-and-transparency)
 7. [Performance](#7-performance)
 8. [Phased implementation plan](#8-phased-implementation-plan)
-9. [Open questions for the owner](#9-open-questions-for-the-owner)
+9. [Decisions](#9-decisions)
 10. [References](#10-references)
 
 ## 1. Current model analysis
@@ -95,7 +95,7 @@ export interface FreeConfig {
 export type ScenarioConfig = LegacyConfig | FreeConfig; // LegacyConfig = today's interface + mode: 'legacy'
 ```
 
-One species per side (mixed sides are an open question, §9). Both sides may pick the same species.
+One species per side (decision D4, §9; mixed sides are deferred). Both sides may pick the same species.
 
 ### 2.2 Unified trait set
 
@@ -132,7 +132,7 @@ For _Homo erectus_ the two existing role presets merge: mass is identical; heavy
 
 ### 2.3 Which species are social
 
-`social` means **a cooperative group hunter or group fighter**, the trait the owner asked for ("무리동물일 시에"). It is not "lives in groups": elephants, buffalo and mammoths are gregarious but defend as a herd rather than hunt as a pack; herd defence is mechanic M4 (SPECIES.md §8), a separate future layer (§9 Q2).
+`social` means **a cooperative group hunter or group fighter**, the trait the owner asked for ("무리동물일 시에"). It is not "lives in groups": elephants, buffalo and mammoths are gregarious but defend as a herd rather than hunt as a pack; herd defence is mechanic M4 (SPECIES.md §8), a separate future layer, split out to [#72](https://github.com/VinylStage/trex_vs_tiger_sim/issues/72) (decision D2, §9).
 
 | Species                    |        `social`        | Evidence                                                                                                                                                                                                                                                                                                     |
 | -------------------------- | :--------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -357,16 +357,21 @@ Each phase is one PR. Every PR runs the full `npm run check`; the v1, v2 and #47
 | P7    | `feat(replay): trace v3`                        | Size-based glyphs, buff ring, legend, `BuffOn`/`BuffOff` events.                                                                                                                  | replay-world, glyph raster, events-determinism (event log changes no summary), legacy trace v2 rendering unchanged.                                                                                                                                                                                                                        |
 | P8    | `docs: free model`                              | MODEL.md "Free model" section, SPECIES.md social table and calibration runs (mirror matchups, 5 tigers vs 5 lions, 10 wolves vs 1 bear), parameter pages, PERFORMANCE.md numbers. | pages tests; calibration table regenerated from the shipped engine.                                                                                                                                                                                                                                                                        |
 
-## 9. Open questions for the owner
+## 9. Decisions
 
-| #   | Question                                                                     | Recommended default                                                                                                                                    |
-| --- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Q1  | Which model does the bare page (no link) open with?                          | Keep the classic 10 _T. rex_ vs 100 tigers until P8 calibration is done, then switch the default to the free model. Old links stay classic either way. |
-| Q2  | Should herd animals (elephant, buffalo, mammoth) get a group effect?         | Not in #50. They are `social = false` for the pack buff; herd defence (mobbing, rescue, M4) becomes its own issue.                                     |
-| Q3  | Is _Homo erectus_ social?                                                    | Yes, with lower **S** values (§5.3), based on group footprints [Hatala 2016].                                                                          |
-| Q4  | Mixed species on one side (e.g. 5 lions + 10 hyenas)?                        | No: one species per side in v3; revisit later.                                                                                                         |
-| Q5  | Should large animals (_T. rex_, elephant) be able to flee in the free model? | Yes, with high morale presets and damage-scaled morale loss; the `morale` toggle turns fleeing off for both sides.                                     |
-| Q6  | Latching threshold `R_latch`.                                                | 3× heavier target (sampled 2–5).                                                                                                                       |
+The owner approved this design on 2026-10-20 ([#50 comment](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50#issuecomment-6284898507)). The former open questions are resolved as follows.
+
+| #   | Question                                                       | Decision                                                                                                                                                                |
+| --- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D0  | Engine strategy (§3)                                           | Two paths. The legacy role-based engine is frozen and keeps serving v1/v2 links bit-identically; new configs and v3 links run on `engine-free.ts`.                      |
+| D1  | Which model does the bare page (no link) open with?            | The legacy 10 _T. rex_ vs 100 tigers until free-model calibration (P8) is done, then the free model. Old links always open in the legacy model.                         |
+| D2  | Herd animals (elephant, buffalo, mammoth) and group defence    | Split out to [#72](https://github.com/VinylStage/trex_vs_tiger_sim/issues/72). #50 covers pack buffs for social predators only; herd animals are `social = false` here. |
+| D3  | Is _Homo erectus_ social?                                      | Yes, with lower **S** values (§5.3), based on group footprints [Hatala 2016].                                                                                           |
+| D4  | Species per side                                               | One species per side. Either side may pick any species; mirror matchups are allowed. Mixed sides are deferred.                                                          |
+| D5  | Can large animals (_T. rex_, elephant) flee in the free model? | Yes, with a higher morale default and damage-scaled morale loss; the `morale` toggle turns fleeing off for both sides.                                                  |
+| D6  | Latching threshold `R_latch`                                   | A species latches only onto a target at least 3× its mass; the threshold is sampled between 2× and 5×.                                                                  |
+
+No open questions remain for #50. New questions found during implementation are added here as they are decided.
 
 ## 10. References
 
