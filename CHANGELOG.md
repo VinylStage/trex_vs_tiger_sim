@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.7...trex-vs-tiger-sim-v0.2.8) (2026-10-20)
+
+
+### Bug Fixes
+
+* **a11y:** chart tables, status announcements, label-in-name, absolute asset URLs ([#88](https://github.com/VinylStage/trex_vs_tiger_sim/issues/88)) ([5f2b17c](https://github.com/VinylStage/trex_vs_tiger_sim/commit/5f2b17ca58ffb364e67e71777923d22ec290ede9))
+
 ## [0.2.7](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.6...trex-vs-tiger-sim-v0.2.7) (2026-10-20)
 
 
