@@ -59,7 +59,9 @@ export const FREE_CONSTANTS = {
   /** E4a: bound on the numbers-based morale support `c` (**S**, 0–0.2). */
   supportCap: 0.1,
   /** E4a: allies and enemies counted for morale support, at most (cost cap, §7). */
-  supportCountCap: 32,
+  supportCountCap: 16,
+  /** E4a support is refreshed every this many ticks (2 s), staggered; it changes slowly. */
+  supportRefreshTicks: 20,
 } as const;
 
 /**
@@ -162,11 +164,21 @@ const TAU = Math.PI * 2;
 const DEG = Math.PI / 180;
 
 const wrap = (a: number): number => {
-  a %= TAU;
+  // `a % TAU` is exactly `a` when |a| < TAU, so skipping it there changes no result.
+  if (a >= TAU || a <= -TAU) a %= TAU;
   if (a > Math.PI) a -= TAU;
   else if (a < -Math.PI) a += TAU;
   return a;
 };
+
+/** Design-row column of each side's traits, keyed by trait id (no string building per call). */
+const SIDE_COLUMNS: readonly Readonly<Record<string, number>>[] = ['a', 'b'].map((side) =>
+  Object.fromEntries(
+    Object.entries(FREE_PARAM_INDEX)
+      .filter(([key]) => key.startsWith(`${side}.`))
+      .map(([key, col]) => [key.slice(2), col]),
+  ),
+);
 
 /** Individual traits drawn per agent, in draw order (`TRAITS` order, run-level ones skipped). */
 const DRAWN: readonly TraitId[] = TRAITS.filter((t) => t.individual).map((t) => t.id);
@@ -197,9 +209,8 @@ export function simulateFreeBattle(
     new Rng(deriveSeed(config.seed, run, SALT_A)),
     new Rng(deriveSeed(config.seed, run, SALT_B)),
   ];
-  const SIDE = ['a', 'b'] as const;
   const val = (s: number, id: string): number =>
-    row[FREE_PARAM_INDEX[`${SIDE[s]}.${id}`] as number] as number;
+    row[(SIDE_COLUMNS[s] as Readonly<Record<string, number>>)[id] as number] as number;
   const glob = (id: GlobalId): number => row[FREE_PARAM_INDEX[`g.${id}`] as number] as number;
 
   // Run-level per side.
@@ -292,6 +303,7 @@ export function simulateFreeBattle(
   const reliefTarget = new Int32Array(n).fill(-1);
   const wasBuffed = new Uint8Array(n);
   const routedNow = new Uint8Array(n);
+  const engagedBySide = [0, 0];
 
   // --- spawn ---
   const sep = Math.min(200, 0.4 * L);
@@ -385,10 +397,17 @@ export function simulateFreeBattle(
     nstate[j] === FreeState.Approach &&
     (stamina[j] as number) >= C.resumeStamina;
   const reliefFilters = [(k: number): boolean => fresh(k), (k: number): boolean => fresh(nA + k)];
+  // Scratch doubles shared with the search callbacks. Kept in a typed array, not in closure
+  // variables, so assigning a new double value does not allocate a boxed number (GC, §7).
+  const scratch = new Float64Array(6);
+  const SHOCK_R = 0;
+  const SHOCK_LOSS = 1;
+  const FOCUS_SCORE = 2;
+  const FOCUS_BONUS = 3;
+  const ENEMY_R = 4;
+  const BEST_SCORE = 5;
   // E4b contagion: morale loss for buffed allies near a fallen or routed agent.
   let shockFrom = -1;
-  let shockR = 0;
-  let shockLossFixed = 0;
   let shockOff = 0;
   const shockVisit = (k: number): void => {
     const j = shockOff + k;
@@ -396,16 +415,19 @@ export function simulateFreeBattle(
     if (nstate[j] === FreeState.Dead) return;
     const dx = (x[j] as number) - (x[shockFrom] as number);
     const dy = (y[j] as number) - (y[shockFrom] as number);
-    if (dx * dx + dy * dy > shockR * shockR) return;
+    if (dx * dx + dy * dy > (scratch[SHOCK_R] as number) * (scratch[SHOCK_R] as number)) return;
     morale[j] =
-      (morale[j] as number) - (shockLossFixed > 0 ? shockLossFixed : (moraleLoss[j] as number));
+      (morale[j] as number) -
+      ((scratch[SHOCK_LOSS] as number) > 0
+        ? (scratch[SHOCK_LOSS] as number)
+        : (moraleLoss[j] as number));
     (stats[side[j] as 0 | 1] as BuffStats).contagion += 1;
   };
   const shock = (i: number, r: number, fixedLoss: number): void => {
     const s = side[i] as number;
     shockFrom = i;
-    shockR = r;
-    shockLossFixed = fixedLoss;
+    scratch[SHOCK_R] = r;
+    scratch[SHOCK_LOSS] = fixedLoss;
     shockOff = offOf(s);
     (grids[s] as SpatialGrid).query(x[i] as number, y[i] as number, r + C.shockPad, shockVisit);
   };
@@ -438,17 +460,16 @@ export function simulateFreeBattle(
 
   // E2 shared target: score = distance − focusBonus × buffed allies already engaged on it.
   let focusBest = -1;
-  let focusScore = Infinity;
   let focusFrom = 0;
-  let focusBonusNow = 0;
   const focusVisit = (k: number): void => {
     const j = selfOff + k;
     if ((state[j] as number) >= FreeState.Routed) return;
     const dx = (x[j] as number) - (x[focusFrom] as number);
     const dy = (y[j] as number) - (y[focusFrom] as number);
-    const score = Math.sqrt(dx * dx + dy * dy) - focusBonusNow * (buffEngaged[j] as number);
-    if (score < focusScore) {
-      focusScore = score;
+    const score =
+      Math.sqrt(dx * dx + dy * dy) - (scratch[FOCUS_BONUS] as number) * (buffEngaged[j] as number);
+    if (score < (scratch[FOCUS_SCORE] as number)) {
+      scratch[FOCUS_SCORE] = score;
       focusBest = j;
     }
   };
@@ -456,6 +477,8 @@ export function simulateFreeBattle(
     const near = nearestEnemy(i);
     if (near < 0) return near;
     const s = side[i] as number;
+    // With no buffed ally engaged anywhere every score is a plain distance: the nearest wins.
+    if (engagedBySide[s] === 0 || (focusBonus[s] as number) <= 0) return near;
     const e = 1 - s;
     const d0 = Math.hypot(
       (x[near] as number) - (x[i] as number),
@@ -463,13 +486,18 @@ export function simulateFreeBattle(
     );
     focusFrom = i;
     selfOff = offOf(e);
-    focusBonusNow = focusBonus[s] as number;
+    scratch[FOCUS_BONUS] = focusBonus[s] as number;
     focusBest = -1;
-    focusScore = Infinity;
+    scratch[FOCUS_SCORE] = Infinity;
     // Only enemies within d0 + focusBonus can beat the nearest one.
-    (grids[e] as SpatialGrid).query(x[i] as number, y[i] as number, d0 + focusBonusNow, focusVisit);
-    const nearScore = d0 - focusBonusNow * (buffEngaged[near] as number);
-    const pick = focusBest >= 0 && focusScore < nearScore ? focusBest : near;
+    (grids[e] as SpatialGrid).query(
+      x[i] as number,
+      y[i] as number,
+      d0 + (scratch[FOCUS_BONUS] as number),
+      focusVisit,
+    );
+    const nearScore = d0 - (scratch[FOCUS_BONUS] as number) * (buffEngaged[near] as number);
+    const pick = focusBest >= 0 && (scratch[FOCUS_SCORE] as number) < nearScore ? focusBest : near;
     if (pick !== near) (stats[s] as BuffStats).focus += 1;
     return pick;
   };
@@ -477,21 +505,19 @@ export function simulateFreeBattle(
   // Strike target search (phase 2).
   let striker = 0;
   let enemyOff = 0;
-  let enemyR = 0;
   let best: number;
-  let bestScore: number;
   const strikeVisit = (k: number): void => {
     const j = enemyOff + k;
     if ((state[j] as number) >= FreeState.Dead) return;
     const dx = (x[j] as number) - (x[striker] as number);
     const dy = (y[j] as number) - (y[striker] as number);
     const d = Math.sqrt(dx * dx + dy * dy);
-    if (d > (reach[striker] as number) + enemyR) return;
+    if (d > (reach[striker] as number) + (scratch[ENEMY_R] as number)) return;
     if (Math.abs(wrap(Math.atan2(dy, dx) - (h[striker] as number))) > (arc[striker] as number))
       return;
     const score = state[j] === FreeState.Latched && host[j] === striker ? d - 1000 : d;
-    if (score < bestScore) {
-      bestScore = score;
+    if (score < (scratch[BEST_SCORE] as number)) {
+      scratch[BEST_SCORE] = score;
       best = j;
     }
   };
@@ -588,7 +614,7 @@ export function simulateFreeBattle(
         crowdable[i] = buffed[i] && sw.coordinate ? 0 : 1;
         if (!buffed[i] || !moraleBuff) {
           support[i] = 0;
-        } else if (step === 0 || (i + step) % R === 0) {
+        } else if (step === 0 || (i + step) % F.supportRefreshTicks === 0) {
           const cap = F.supportCountCap;
           const a = countAllies(i, C.moraleRadius, cap, true);
           const e = countEnemies(i, C.moraleRadius, cap);
@@ -600,6 +626,8 @@ export function simulateFreeBattle(
       buffEngaged.fill(0);
       buffRiders.fill(0);
       slotN.fill(0);
+      engagedBySide[0] = 0;
+      engagedBySide[1] = 0;
     }
 
     carry.fill(0);
@@ -613,6 +641,7 @@ export function simulateFreeBattle(
         if (buffed[i]) {
           buffEngaged[hst] = (buffEngaged[hst] as number) + 1;
           buffRiders[hst] = (buffRiders[hst] as number) + 1;
+          engagedBySide[side[i] as number] = (engagedBySide[side[i] as number] as number) + 1;
         }
       } else if (st === FreeState.Approach) {
         const t = target[i] as number;
@@ -630,7 +659,10 @@ export function simulateFreeBattle(
         const r = (reach[i] as number) + (radius[side[t] as number] as number);
         if (dx * dx + dy * dy <= r * r) {
           if (crowdable[i]) engaged[t] = (engaged[t] as number) + 1;
-          if (buffed[i]) buffEngaged[t] = (buffEngaged[t] as number) + 1;
+          if (buffed[i]) {
+            buffEngaged[t] = (buffEngaged[t] as number) + 1;
+            engagedBySide[side[i] as number] = (engagedBySide[side[i] as number] as number) + 1;
+          }
         }
       }
     }
@@ -690,10 +722,9 @@ export function simulateFreeBattle(
           const ang = (h[t] as number) + Math.PI + ((slot[i] as number) - (m - 1) / 2) * spread;
           const ax = (x[t] as number) + Math.cos(ang) * stop - (x[i] as number);
           const ay = (y[t] as number) + Math.sin(ang) * stop - (y[i] as number);
-          const rel = wrap(Math.atan2(-dy, -dx) - (h[t] as number));
-          const danger =
-            dist < (reach[t] as number) + C.dangerMargin &&
-            Math.abs(rel) < (arc[t] as number) + C.dangerArcPad;
+          const near = dist < (reach[t] as number) + C.dangerMargin;
+          const rel = near ? wrap(Math.atan2(-dy, -dx) - (h[t] as number)) : 0;
+          const danger = near && Math.abs(rel) < (arc[t] as number) + C.dangerArcPad;
           gap = Math.sqrt(ax * ax + ay * ay);
           if (danger) {
             heading = (h[t] as number) + (rel >= 0 ? 1 : -1) * (Math.PI / 2);
@@ -788,13 +819,13 @@ export function simulateFreeBattle(
         if ((cd[i] as number) <= 0) {
           striker = i;
           enemyOff = offOf(e);
-          enemyR = radius[e] as number;
+          scratch[ENEMY_R] = radius[e] as number;
           best = -1;
-          bestScore = Infinity;
+          scratch[BEST_SCORE] = Infinity;
           (grids[e] as SpatialGrid).query(
             x[i] as number,
             y[i] as number,
-            (reach[i] as number) + enemyR,
+            (reach[i] as number) + (scratch[ENEMY_R] as number),
             strikeVisit,
           );
           if (best >= 0) {
@@ -860,27 +891,24 @@ export function simulateFreeBattle(
         } else if (
           buffed[i] &&
           sw.relief &&
+          (i + step) % F.buffRefreshTicks === 0 &&
           (stamina[i] as number) < (reliefStamina[s] as number)
         ) {
-          // E5 relief: hand the target to a fresh buffed ally within cohesion range.
-          const k = (grids[s] as SpatialGrid).nearest(
+          // E5 relief (checked on the agent's refresh ticks): hand the target to a fresh buffed
+          // ally within cohesion range.
+          const k = (grids[s] as SpatialGrid).firstWithin(
             x[i] as number,
             y[i] as number,
+            cohesion[s] as number,
             xs[s] as Float64Array,
             ys[s] as Float64Array,
             reliefFilters[s] as (k: number) => boolean,
           );
-          const j = k < 0 ? -1 : offOf(s) + k;
-          if (j >= 0) {
-            const dx = (x[j] as number) - (x[i] as number);
-            const dy = (y[j] as number) - (y[i] as number);
-            const r = cohesion[s] as number;
-            if (dx * dx + dy * dy <= r * r) {
-              nstate[i] = FreeState.Recover;
-              recTimer[i] = 0;
-              reliefTarget[j] = hst;
-              (stats[s as 0 | 1] as BuffStats).relief += 1;
-            }
+          if (k >= 0) {
+            nstate[i] = FreeState.Recover;
+            recTimer[i] = 0;
+            reliefTarget[offOf(s) + k] = hst;
+            (stats[s as 0 | 1] as BuffStats).relief += 1;
           }
         }
       }

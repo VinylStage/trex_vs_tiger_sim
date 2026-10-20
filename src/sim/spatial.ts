@@ -77,10 +77,12 @@ export class SpatialGrid {
 
   /** Visit candidate indices whose cell intersects the square around (x, y) of half-size r. */
   query(x: number, y: number, r: number, visit: (i: number) => void): void {
-    const c0 = this.col(x - r);
-    const c1 = this.col(x + r);
-    const r0 = this.col(y - r);
-    const r1 = this.col(y + r);
+    // Clipped to the occupied box: cells outside it are empty, so the same points are visited
+    // in the same order as without the clip (bit-identical; docs/PERFORMANCE.md).
+    const c0 = Math.max(this.col(x - r), this.minCol);
+    const c1 = Math.min(this.col(x + r), this.maxCol);
+    const r0 = Math.max(this.col(y - r), this.minRow);
+    const r1 = Math.min(this.col(y + r), this.maxRow);
     for (let row = r0; row <= r1; row++) {
       for (let col = c0; col <= c1; col++) {
         const c = row * this.cols + col;
@@ -106,10 +108,10 @@ export class SpatialGrid {
   ): number {
     if (cap <= 0) return 0;
     const r2 = r * r;
-    const c0 = this.col(x - r);
-    const c1 = this.col(x + r);
-    const r0 = this.col(y - r);
-    const r1 = this.col(y + r);
+    const c0 = Math.max(this.col(x - r), this.minCol);
+    const c1 = Math.min(this.col(x + r), this.maxCol);
+    const r0 = Math.max(this.col(y - r), this.minRow);
+    const r1 = Math.min(this.col(y + r), this.maxRow);
     let count = 0;
     for (let row = r0; row <= r1; row++) {
       for (let col = c0; col <= c1; col++) {
@@ -125,6 +127,38 @@ export class SpatialGrid {
       }
     }
     return count;
+  }
+
+  /**
+   * First `accept`ed point within distance `r` of (x, y) in cell order (the order `query`
+   * visits), or -1. Stops at the first match.
+   */
+  firstWithin(
+    x: number,
+    y: number,
+    r: number,
+    xs: Float64Array,
+    ys: Float64Array,
+    accept: (i: number) => boolean,
+  ): number {
+    const r2 = r * r;
+    const c0 = Math.max(this.col(x - r), this.minCol);
+    const c1 = Math.min(this.col(x + r), this.maxCol);
+    const r0 = Math.max(this.col(y - r), this.minRow);
+    const r1 = Math.min(this.col(y + r), this.maxRow);
+    for (let row = r0; row <= r1; row++) {
+      for (let col = c0; col <= c1; col++) {
+        const c = row * this.cols + col;
+        const end = this.cellStart[c + 1] as number;
+        for (let k = this.cellStart[c] as number; k < end; k++) {
+          const i = this.items[k] as number;
+          const dx = (xs[i] as number) - x;
+          const dy = (ys[i] as number) - y;
+          if (dx * dx + dy * dy <= r2 && accept(i)) return i;
+        }
+      }
+    }
+    return -1;
   }
 
   /**
