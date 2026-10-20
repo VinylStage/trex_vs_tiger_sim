@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.9...trex-vs-tiger-sim-v0.2.10) (2026-10-20)
+
+
+### Bug Fixes
+
+* test stability, gore wording guard, docs resync ([#91](https://github.com/VinylStage/trex_vs_tiger_sim/issues/91)) ([7b2b28b](https://github.com/VinylStage/trex_vs_tiger_sim/commit/7b2b28bcfad1833a6af84e91b4521c61a28ff476))
+
 ## [0.2.9](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.8...trex-vs-tiger-sim-v0.2.9) (2026-10-20)
 
 
