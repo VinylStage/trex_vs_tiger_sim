@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://trex-vs-tiger.vinylims.com/sitemap.xml

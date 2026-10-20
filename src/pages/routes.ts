@@ -1,4 +1,4 @@
-import type { Lang, MsgKey } from '../ui/i18n';
+import type { Lang, MsgKey } from '../ui/i18n.ts';
 
 /** Production origin used for canonical URLs, hreflang alternates and the sitemap. */
 export const SITE_ORIGIN = 'https://trex-vs-tiger.vinylims.com';
@@ -31,6 +31,17 @@ export type PageId = 'simulator' | ContentPage;
 
 /** Order of the shared site navigation (header). Privacy and license are in the footer only. */
 export const NAV_PAGES: readonly PageId[] = ['simulator', 'guide', 'model', 'parameters', 'about'];
+
+/** Dictionary key of each page's short name (navigation, breadcrumbs, llms.txt). */
+export const NAV_LABEL_KEYS: Readonly<Record<PageId, MsgKey>> = {
+  simulator: 'nav.simulator',
+  guide: 'nav.guide',
+  model: 'nav.model',
+  parameters: 'nav.parameters',
+  about: 'nav.about',
+  privacy: 'nav.privacy',
+  license: 'nav.license',
+};
 
 const otherLang = (lang: Lang): Lang => (lang === 'ko' ? 'en' : 'ko');
 

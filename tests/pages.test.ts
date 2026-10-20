@@ -15,8 +15,6 @@ import { PARAMS } from '../src/sim/params';
 import {
   CONTENT_PAGES,
   RELEASES_URL,
-  SITE_ORIGIN,
-  canonicalUrl,
   pagePath,
   parsePagePath,
   type ContentPage,
@@ -60,6 +58,21 @@ const APP_PAGES = LANGS.map((lang) => ({
 const ALL_PAGES: readonly { page: PageId; lang: Lang; file: string; html: string }[] = [
   ...APP_PAGES,
   ...PAGES,
+];
+
+/** The not-found pages Cloudflare Pages serves for unknown URLs (`/…` and `/en/…`). */
+const notFoundSourceOf = (lang: Lang): string => (lang === 'ko' ? '404.html' : 'en/404.html');
+const NOT_FOUND_PAGES = LANGS.map((lang) => ({
+  page: '404' as const,
+  lang,
+  file: notFoundSourceOf(lang),
+  html: read(notFoundSourceOf(lang)),
+}));
+
+/** Every page with the shared shell: header or app header, static footer, i18n-bound text. */
+const SHELL_PAGES: readonly { page: PageId | '404'; lang: Lang; file: string; html: string }[] = [
+  ...ALL_PAGES,
+  ...NOT_FOUND_PAGES,
 ];
 
 /** Search-result limits used in docs/SEO.md: titles up to 60 characters, descriptions ~160. */
@@ -148,10 +161,11 @@ const shownNumber = (s: string): number => Number(textOf(s).replace(/[,\s]/g, ''
 describe('every HTML page is CSP-safe', () => {
   const files = Object.values(findHtmlEntries(ROOT)).map((f) => relative(ROOT, f));
 
-  it('includes the app and all content pages', () => {
+  it('includes the app, all content pages and both 404 pages', () => {
     expect(files).toContain('index.html');
     expect(files).toContain('en/index.html');
     for (const p of PAGES) expect(files).toContain(p.file);
+    for (const p of NOT_FOUND_PAGES) expect(files).toContain(p.file);
   });
 
   it.each(files)('%s has no inline script, style block, style attribute or handler', (file) => {
@@ -178,49 +192,13 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
     expect(one(tags(html, 'html'), '<html>').attrs['lang']).toBe(lang);
   });
 
-  it('has a title, description, canonical URL and hreflang alternates', () => {
+  it('has a title and description of search-result length', () => {
     const title = one(elements(html, 'title'), '<title>').inner.trim();
     expect(title.length).toBeGreaterThan(10);
     expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
     const description = one(meta(html, 'name', 'description'), 'meta description');
     expect(description.length).toBeGreaterThanOrEqual(50);
     expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION);
-
-    const links = tags(html, 'link');
-    const canonical = one(
-      links.filter((l) => l.attrs['rel'] === 'canonical'),
-      'canonical',
-    );
-    expect(canonical.attrs['href']).toBe(canonicalUrl(page, lang));
-    const alternates = Object.fromEntries(
-      links
-        .filter((l) => l.attrs['rel'] === 'alternate')
-        .map((l) => [l.attrs['hreflang'], l.attrs['href']]),
-    );
-    expect(alternates).toEqual({
-      ko: canonicalUrl(page, 'ko'),
-      en: canonicalUrl(page, 'en'),
-      'x-default': canonicalUrl(page, 'ko'),
-    });
-  });
-
-  it('has Open Graph, Twitter, theme-colour, viewport and favicon tags', () => {
-    expect(one(meta(html, 'property', 'og:url'), 'og:url')).toBe(canonicalUrl(page, lang));
-    expect(one(meta(html, 'property', 'og:title'), 'og:title')).toBe(
-      decode(one(elements(html, 'title'), '<title>').inner.trim()),
-    );
-    expect(one(meta(html, 'property', 'og:description'), 'og:description')).toBe(
-      one(meta(html, 'name', 'description'), 'description'),
-    );
-    expect(one(meta(html, 'property', 'og:locale'), 'og:locale')).toBe(
-      lang === 'ko' ? 'ko_KR' : 'en_US',
-    );
-    expect(one(meta(html, 'name', 'twitter:card'), 'twitter:card')).toBe('summary');
-    expect(meta(html, 'name', 'twitter:title')).toHaveLength(1);
-    expect(meta(html, 'name', 'twitter:description')).toHaveLength(1);
-    expect(meta(html, 'name', 'theme-color')).toHaveLength(2);
-    expect(meta(html, 'name', 'viewport')).toHaveLength(1);
-    expect(tags(html, 'link').some((l) => l.attrs['rel'] === 'icon')).toBe(true);
   });
 
   it('loads the shared stylesheet and script', () => {
@@ -314,7 +292,7 @@ function checkLinks(html: string, lang: Lang): void {
       const target = parsePagePath(path);
       expect(target, href).not.toBeNull();
       if (!target) continue;
-      const expected = 'data-lang-switch' in a.attrs ? other(lang) : lang;
+      const expected = a.attrs['hreflang'] ?? ('data-lang-switch' in a.attrs ? other(lang) : lang);
       expect(target.lang, `${href}: link language`).toBe(expected);
       expect(path, `${href}: canonical form`).toBe(pagePath(target.page, target.lang));
       if (target.page === 'simulator') {
@@ -356,35 +334,12 @@ describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
     const title = decode(one(elements(html, 'title'), '<title>').inner.trim());
     expect(title).toBe(d['app.documentTitle']);
     expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
-    expect(one(meta(html, 'property', 'og:title'), 'og:title')).toBe(title);
-    expect(one(meta(html, 'name', 'twitter:title'), 'twitter:title')).toBe(title);
   });
 
-  it('has a description, canonical URL, hreflang alternates and Open Graph tags', () => {
+  it('has a description of search-result length', () => {
     const description = one(meta(html, 'name', 'description'), 'description');
     expect(description.length).toBeGreaterThanOrEqual(50);
     expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION);
-    expect(one(meta(html, 'property', 'og:description'), 'og:description')).toBe(description);
-    const links = tags(html, 'link');
-    const canonical = one(
-      links.filter((l) => l.attrs['rel'] === 'canonical'),
-      'canonical',
-    );
-    expect(canonical.attrs['href']).toBe(canonicalUrl('simulator', lang));
-    const alternates = Object.fromEntries(
-      links
-        .filter((l) => l.attrs['rel'] === 'alternate')
-        .map((l) => [l.attrs['hreflang'], l.attrs['href']]),
-    );
-    expect(alternates).toEqual({
-      ko: canonicalUrl('simulator', 'ko'),
-      en: canonicalUrl('simulator', 'en'),
-      'x-default': canonicalUrl('simulator', 'ko'),
-    });
-    expect(one(meta(html, 'property', 'og:url'), 'og:url')).toBe(canonicalUrl('simulator', lang));
-    expect(one(meta(html, 'property', 'og:locale'), 'og:locale')).toBe(
-      lang === 'ko' ? 'ko_KR' : 'en_US',
-    );
   });
 
   it('loads the app script and keeps #app empty for it', () => {
@@ -457,6 +412,52 @@ describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
   });
 });
 
+// ---------- 404 pages ----------
+
+describe.each(NOT_FOUND_PAGES)('$file (not found)', ({ lang, html }) => {
+  it('is a noindex page in its language with a unique short title and no canonical', () => {
+    expect(one(tags(html, 'html'), '<html>').attrs['lang']).toBe(lang);
+    expect(one(meta(html, 'name', 'robots'), 'robots')).toBe('noindex');
+    const title = one(elements(html, 'title'), '<title>').inner.trim();
+    expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
+    const titles = ALL_PAGES.map((p) => one(elements(p.html, 'title'), 'title').inner.trim());
+    expect(titles).not.toContain(title);
+    expect(tags(html, 'link').filter((l) => l.attrs['rel'] === 'canonical')).toHaveLength(0);
+  });
+
+  it('has the site navigation, a link to the other language and links to the main pages', () => {
+    const nav = one(
+      elements(html, 'nav').filter((n) => n.attrs['class'] === 'site-nav'),
+      'site nav',
+    );
+    expect(elements(nav.inner, 'a').map((a) => a.attrs['href'])).toEqual(
+      siteNavItems(lang).map((i) => i.href),
+    );
+    const sw = one(
+      tags(html, 'a').filter((a) => 'data-lang-switch' in a.attrs),
+      'language link',
+    );
+    expect(sw.attrs['href']).toBe(pagePath('simulator', other(lang)));
+    const main = one(elements(html, 'main'), '<main>').inner;
+    const hrefs = tags(main, 'a').map((a) => a.attrs['href']);
+    for (const p of ['simulator', 'guide', 'model', 'parameters', 'about'] as const) {
+      expect(hrefs).toContain(pagePath(p, lang));
+    }
+    expect(hrefs).toContain(pagePath('simulator', other(lang)));
+    checkLinks(html, lang);
+  });
+
+  it('loads the shared stylesheet and script with root-absolute URLs', () => {
+    expect(one(tags(html, 'script'), '<script>').attrs['src']).toBe('/src/pages/site.ts');
+    for (const t of tags(html)) {
+      for (const attr of ['src', 'href']) {
+        const v = t.attrs[attr];
+        if (v !== undefined) expect(v, `${t.name} ${attr}`).toMatch(/^(\/|#|https:\/\/)/);
+      }
+    }
+  });
+});
+
 // ---------- shared shell on every page: i18n-bound text, footer, brand ----------
 
 /** Text of every element bound to a message key, with the binding attribute. */
@@ -481,7 +482,7 @@ function boundTexts(
 
 const norm = (s: string): string => s.replace(/\s+/g, ' ').trim();
 
-describe.each(ALL_PAGES)('$file shell', ({ page, lang, html }) => {
+describe.each(SHELL_PAGES)('$file shell', ({ page, lang, file, html }) => {
   const d: Readonly<Record<string, string>> = DICTIONARIES[lang];
 
   it('repeats the dictionary text exactly wherever text is bound to a message key', () => {
@@ -522,8 +523,26 @@ describe.each(ALL_PAGES)('$file shell', ({ page, lang, html }) => {
     expect(textOf(footer.inner)).not.toMatch(/추적 없음|no tracking/i);
   });
 
+  it('has the static head every page shares; the generated SEO tags are not hand-written', () => {
+    expect(meta(html, 'name', 'viewport')).toHaveLength(1);
+    expect(meta(html, 'name', 'theme-color')).toHaveLength(2);
+    const links = tags(html, 'link');
+    const rels = (rel: string): Tag[] => links.filter((l) => l.attrs['rel'] === rel);
+    expect(one(rels('icon'), 'icon').attrs['href']).toBe('/favicon.svg');
+    expect(one(rels('apple-touch-icon'), 'apple-touch-icon').attrs['href']).toBe(
+      '/apple-touch-icon.png',
+    );
+    expect(one(rels('manifest'), 'manifest').attrs['href']).toBe('/site.webmanifest');
+    // canonical, hreflang, og:*, twitter:* and JSON-LD are generated (vite.seo.ts, tests/seo.test.ts)
+    expect(rels('canonical')).toHaveLength(0);
+    expect(rels('alternate')).toHaveLength(0);
+    for (const t of tags(html, 'meta')) {
+      expect(t.attrs['property'] ?? '', file).not.toMatch(/^og:/);
+      expect(t.attrs['name'] ?? '', file).not.toMatch(/^twitter:/);
+    }
+  });
+
   it('names the site consistently', () => {
-    expect(one(meta(html, 'property', 'og:site_name'), 'og:site_name')).toBe(d['app.shortTitle']);
     if (page !== 'simulator') {
       const brand = one(
         elements(html, 'a').filter((a) => a.attrs['class'] === 'site-brand'),
@@ -849,39 +868,15 @@ describe('public/_headers', () => {
     expect(headersFor(src, '/version.json')['cache-control']).toEqual(['no-store']);
   });
 
+  it('sends the CSP on unknown paths, where the 404 pages are served', () => {
+    for (const path of ['/nope', '/en/nope', '/a/b/c', '/404.html']) {
+      expect(headersFor(src, path)['content-security-policy'], path).toHaveLength(1);
+    }
+  });
+
   it('keeps long-lived caching on hashed assets', () => {
     expect(headersFor(src, '/assets/site-abc123.js')['cache-control']).toEqual([
       'public, max-age=31536000, immutable',
     ]);
-  });
-});
-
-describe('robots.txt and sitemap.xml', () => {
-  it('allows crawling and points at the sitemap', () => {
-    const robots = read('public/robots.txt');
-    expect(robots).toMatch(/^User-agent: \*$/m);
-    expect(robots).not.toMatch(/^Disallow: \/\s*$/m);
-    expect(robots).toContain(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`);
-  });
-
-  it('lists the app and every page with hreflang alternates', () => {
-    const xml = read('public/sitemap.xml');
-    const urls = elements(xml, 'url').map((u) => ({
-      loc: textOf(one(elements(u.inner, 'loc'), 'loc').inner),
-      alternates: Object.fromEntries(
-        tags(u.inner, 'xhtml:link').map((l) => [l.attrs['hreflang'], l.attrs['href']]),
-      ),
-    }));
-    expect(urls.map((u) => u.loc).sort()).toEqual(
-      ALL_PAGES.map((p) => canonicalUrl(p.page, p.lang)).sort(),
-    );
-    for (const p of ALL_PAGES) {
-      const entry = urls.find((u) => u.loc === canonicalUrl(p.page, p.lang));
-      expect(entry?.alternates).toEqual({
-        ko: canonicalUrl(p.page, 'ko'),
-        en: canonicalUrl(p.page, 'en'),
-        'x-default': canonicalUrl(p.page, 'ko'),
-      });
-    }
   });
 });

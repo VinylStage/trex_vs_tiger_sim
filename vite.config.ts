@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
 import { findHtmlEntries } from './vite.pages.ts';
+import { seo } from './vite.seo.ts';
 
 interface BuildInfo {
   version: string;
@@ -56,6 +57,7 @@ function versionJson(info: BuildInfo): Plugin {
 }
 
 const info = readBuildInfo();
+const root = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   base: './',
@@ -64,13 +66,13 @@ export default defineConfig({
     __BUILD_SHA__: JSON.stringify(info.sha),
     __BUILD_TIME__: JSON.stringify(info.builtAt),
   },
-  plugins: [versionJson(info)],
+  plugins: [versionJson(info), seo({ root, version: info.version })],
   build: {
     target: 'es2022',
     sourcemap: false,
     modulePreload: { polyfill: false },
     rolldownOptions: {
-      input: findHtmlEntries(fileURLToPath(new URL('.', import.meta.url))),
+      input: findHtmlEntries(root),
     },
   },
   worker: {

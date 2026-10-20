@@ -1,4 +1,4 @@
-import type { ParamId } from '../sim/params';
+import type { ParamId } from '../sim/params.ts';
 
 export type Lang = 'ko' | 'en';
 export const LANGS: readonly Lang[] = ['ko', 'en'];

@@ -1,17 +1,16 @@
-import { FOOTER_LINKS, NAV_PAGES, footerHref, pagePath, type PageId } from '../pages/routes';
+import {
+  FOOTER_LINKS,
+  NAV_LABEL_KEYS,
+  NAV_PAGES,
+  footerHref,
+  pagePath,
+  type PageId,
+} from '../pages/routes';
 import { h } from './dom';
-import { DICTIONARIES, type Lang, type MsgKey } from './i18n';
+import { DICTIONARIES, type Lang } from './i18n';
 import './site-nav.css';
 
-export const NAV_LABEL_KEYS: Readonly<Record<PageId, MsgKey>> = {
-  simulator: 'nav.simulator',
-  guide: 'nav.guide',
-  model: 'nav.model',
-  parameters: 'nav.parameters',
-  about: 'nav.about',
-  privacy: 'nav.privacy',
-  license: 'nav.license',
-};
+export { NAV_LABEL_KEYS };
 
 export interface SiteNavItem {
   page: PageId;
