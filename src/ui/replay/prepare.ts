@@ -3,7 +3,13 @@ import {
   EventType,
   ReleaseCause,
   byteAngle,
+  eventA,
+  eventB,
+  eventCount,
   eventPack,
+  eventStep,
+  eventType,
+  eventValue,
   isCosmeticEvent,
   packStateAfter,
 } from '../../sim/events';
@@ -143,7 +149,8 @@ export function prepare(trace: BattleTrace, options: PrepareOptions = {}): Prepa
 
   // --- decode ---
   const raw = trace.events;
-  const evCount = Math.floor(raw.length / 4);
+  // The decoders of src/sim/events.ts, the layout's single definition (EVENT_STRIDE).
+  const evCount = Math.floor(eventCount(raw));
   const evStep = new Uint16Array(evCount);
   const evType = new Uint8Array(evCount);
   const evV = new Uint8Array(evCount);
@@ -152,15 +159,14 @@ export function prepare(trace: BattleTrace, options: PrepareOptions = {}): Prepa
   const evGap = new Float32Array(evCount);
   const lastBite = new Int32Array(N).fill(-1);
   for (let k = 0; k < evCount; k++) {
-    const tv = raw[k * 4 + 1] as number;
-    const step = raw[k * 4] as number;
-    const type = tv >>> 8;
-    const a = raw[k * 4 + 2] as number;
+    const step = eventStep(raw, k);
+    const type = eventType(raw, k);
+    const a = eventA(raw, k);
     evStep[k] = step;
     evType[k] = type;
-    evV[k] = tv & 0xff;
+    evV[k] = eventValue(raw, k);
     evA[k] = a;
-    evB[k] = raw[k * 4 + 3] as number;
+    evB[k] = eventB(raw, k);
     if ((type === EventType.BiteHit || type === EventType.BiteMiss) && a < N) {
       const prev = lastBite[a] as number;
       evGap[k] = prev < 0 ? Infinity : (step - prev) * dt;

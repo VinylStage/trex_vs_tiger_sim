@@ -55,9 +55,9 @@ All values are the site tokens from `src/ui/styles.css`, plus one darker text to
 | Border (`--border`, light)             | `#d9d8d2` | OG hairline frame, replay panel border                   |
 | Grid (`--grid`, light)                 | `#e3e2de` | Replay grid                                              |
 | Draw (`--c-draw`)                      | `#8d8c87` | Scale bar                                                |
-| T-Rex (`--c-trex`, light)              | `#2a78d6` | OG triangles, rule, bottom band                          |
-| T-Rex (`--c-trex`, dark)               | `#3987e5` | Icon triangles (they sit on the dark tile)               |
-| Tiger (`--c-tiger`, light)             | `#eb6834` | Dots everywhere, rule, bottom band                       |
+| T-Rex (`--c-heavy`, light)             | `#2a78d6` | OG triangles, rule, bottom band                          |
+| T-Rex (`--c-heavy`, dark)              | `#3987e5` | Icon triangles (they sit on the dark tile)               |
+| Tiger (`--c-pack`, light)              | `#eb6834` | Dots everywhere, rule, bottom band                       |
 | Icon edge (`--border`, dark)           | `#3b3b38` | 1 px icon outline                                        |
 | Crosshair dots (OG background texture) | `#c9c8c2` | Faint background grid, faded out behind the title        |
 

@@ -25,8 +25,8 @@
   --accent-fill-fg: #ffffff;
   --control-border: #85847f;
   --focus: #2a78d6;
-  --c-trex: #2a78d6;
-  --c-tiger: #eb6834;
+  --c-heavy: #2a78d6;
+  --c-pack: #eb6834;
   --warn-fg: #6b4300;
   --warn-bg: #fff3dc;
   --warn-border: #f0c36a;
@@ -54,8 +54,8 @@
     --accent-fg: #ffffff;
     --control-border: #77766f;
     --focus: #6da7ec;
-    --c-trex: #3987e5;
-    --c-tiger: #d95926;
+    --c-heavy: #3987e5;
+    --c-pack: #d95926;
     --warn-fg: #ffd58a;
     --warn-bg: #33270f;
     --warn-border: #7a5a1c;
@@ -638,11 +638,11 @@ tbody tr:last-child > * {
 }
 
 .role-heavy {
-  border-left: 4px solid var(--c-trex);
+  border-left: 4px solid var(--c-heavy);
 }
 
 .role-pack {
-  border-left: 4px solid var(--c-tiger);
+  border-left: 4px solid var(--c-pack);
 }
 
 /* ---------- call to action ---------- */

@@ -48,7 +48,8 @@ export function findHtmlEntries(root: string): Record<string, string> {
 }
 
 /**
- * Fills the shared header into every page (docs/PAGES.md#site-header): `<!-- site-header -->` in
+ * Fills the shared header and footer into every page (docs/PAGES.md#site-header, #footer):
+ * `<!-- site-footer -->` in every page with the footer, `<!-- site-header -->` in
  * the content and 404 pages and `<!-- app-logo -->` in the simulator's static head become the
  * markup of src/pages/site-header.ts. It runs before Vite's own HTML processing (`order: 'pre'`),
  * so the logo URL is handled like hand-written markup, and in dev as well as in the build, so the

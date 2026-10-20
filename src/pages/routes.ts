@@ -52,7 +52,8 @@ export const NAV_LABEL_KEYS: Readonly<Record<PageId, MsgKey>> = {
   license: 'nav.license',
 };
 
-const otherLang = (lang: Lang): Lang => (lang === 'ko' ? 'en' : 'ko');
+/** The other of the two languages. */
+export const otherLang = (lang: Lang): Lang => (lang === 'ko' ? 'en' : 'ko');
 
 /** Root-relative path of a page in a language. */
 export function pagePath(page: PageId, lang: Lang): string {

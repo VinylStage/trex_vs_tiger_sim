@@ -70,9 +70,10 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 | `src/pages/site.ts`                         | Imports the self-hosted Pretendard stylesheet (see [Fonts](#fonts)). Otherwise progressive enhancement only: `aria-current` on the nav, language link keeps the `#hash`, writes `v<version>` into the footer. Stores nothing. Never imports `i18n.ts` at run time (it would pull the dictionaries into every page) |
 | `src/pages/routes.ts`                       | DOM-free page registry and path helpers (`pagePath`, `parsePagePath`, `counterpartPath`, `pageLang`, `notFoundLang`, `switchedAppUrl`, `canonicalUrl`), `SITE_ORIGIN`, owner URLs, `NAV_LABEL_KEYS`, `FOOTER_LINKS`                                                                                                |
 | `src/pages/site-header.ts`                  | The site header in one place ([Site header](#site-header)): `SITE_LOGO`, `siteNavItems()`, `renderSiteHeader()`, `renderAppLogo()`, `expandSiteHeader()`. DOM-free; used by the build, the app and the tests, never by `site.ts`                                                                                   |
+| `src/pages/site-footer.ts`                  | The site footer in one place ([Footer](#footer)): `renderSiteFooter(lang)` from the dictionaries and `FOOTER_LINKS`, filled in for `<!-- site-footer -->` by `expandSiteHeader`                                                                                                                                    |
 | `src/ui/site-footer.css`                    | Footer styles shared by the app and the pages (imported by `src/ui/app.ts` and `site.css`)                                                                                                                                                                                                                         |
-| `src/ui/site-nav.ts`, `src/ui/site-nav.css` | `createSiteNav(lang, current?)` for the app (its items are `siteNavItems()` from `src/pages/site-header.ts`, re-exported), the pure `footerItems()` the tests compare the static footers against, `renderFooterLinks()` and `relocalizeLinks()` for the in-place language switch                                   |
-| `vite.pages.ts`                             | `findHtmlEntries(root)`: the build input map (every `index.html` and `404.html`); `siteHeader()`: the plugin that fills the header placeholders                                                                                                                                                                    |
+| `src/ui/site-nav.ts`, `src/ui/site-nav.css` | `createSiteNav(lang, current?)` for the app (its items are `siteNavItems()` from `src/pages/site-header.ts`, re-exported), the pure `footerItems()` the tests compare the generated footers against, `renderFooterLinks()` and `relocalizeLinks()` for the in-place language switch                                |
+| `vite.pages.ts`                             | `findHtmlEntries(root)`: the build input map (every `index.html` and `404.html`); `siteHeader()`: the plugin that fills the header and footer placeholders                                                                                                                                                         |
 | `vite.seo.ts`, `src/seo/*.ts`               | Build-time SEO: head tags and JSON-LD per page, `sitemap.xml`, `robots.txt`, `llms.txt`, `llms-full.txt`, 404 asset URLs ([SEO.md](SEO.md))                                                                                                                                                                        |
 | `public/_headers` rule `/*/`                | `Cache-Control: no-cache, no-transform` on every directory-style page (see [DEPLOYMENT.md](DEPLOYMENT.md#rule--content-pages))                                                                                                                                                                                     |
 
@@ -89,7 +90,7 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 **A content page in both languages** (e.g. a FAQ; `license` was added this way):
 
 1. Add its id to `CONTENT_PAGES` and `NAV_LABEL_KEYS` in `src/pages/routes.ts`, a `nav.<id>` key to both dictionaries in `src/ui/i18n.ts` (it names the page in breadcrumbs and `llms.txt`), and its schema.org type to `PAGE_TYPE` in `src/seo/site.ts`. If it belongs in the header, also add it to `NAV_PAGES`; every page's header nav follows, because the header is generated ([Site header](#site-header)).
-2. Copy an existing pair (for example `about/index.html` and `en/about/index.html`) to `<id>/index.html` and `en/<id>/index.html`. Update `<title>`, the meta description and the content. Keep section ids identical in both languages, keep the `<!-- site-header -->` line (the build turns it into this page's header, language link included) and keep the footer exactly as copied. Do not write canonical, hreflang, `og:*`, `twitter:*` or JSON-LD: the build generates them, and the sitemap and `llms.txt` pick the page up from the registry.
+2. Copy an existing pair (for example `about/index.html` and `en/about/index.html`) to `<id>/index.html` and `en/<id>/index.html`. Update `<title>`, the meta description and the content. Keep section ids identical in both languages, keep the `<!-- site-header -->` and `<!-- site-footer -->` lines (the build turns them into this page's header, language link included, and footer). Do not write canonical, hreflang, `og:*`, `twitter:*` or JSON-LD: the build generates them, and the sitemap and `llms.txt` pick the page up from the registry.
 3. Run `npm run check`. `tests/pages.test.ts` and `tests/seo.test.ts` list anything missing or inconsistent.
 
 **A utility page** (e.g. a future `reset/index.html`): just create the directory and its `index.html`. The build picks it up, the `/*/` header rule covers it, and the CSP checks in `tests/pages.test.ts` run on it automatically. Add `<meta name="robots" content="noindex" />`; it is not in `CONTENT_PAGES`, so it stays out of the sitemap, `llms.txt` and the generated head tags.
@@ -149,8 +150,8 @@ The app's version dialog links "패치노트 보기" / "Patch notes" to the runn
 <!-- answer-first intro -->
 <section class="site-faq" id="faq">…</section>
 <!-- 4 visible Q&A -->
-<footer class="site-footer">…</footer>
-<!-- shared footer -->
+<!-- site-footer -->
+<!-- shared footer, filled by the build -->
 ```
 
 - **Static header and `<h1>`.** `#app` starts with a static header in the app header's classes: logo (the `<!-- app-logo -->` line, see [Site header](#site-header)), `<h1 data-i18n="app.title">` and `<a data-lang-switch hreflang lang data-i18n="lang.switch">` to the other language's app. Crawlers that do not run JavaScript thus get the page heading and the language link. `startApp` moves the `<h1>` element into its own header and removes the rest (the language button replaces the link), so the page always has exactly one `<h1>`.
@@ -161,7 +162,7 @@ The app's version dialog links "패치노트 보기" / "Patch notes" to the runn
 
 ## Footer
 
-Every page (both app entries, all content pages including the license pages) has exactly one static `<footer class="site-footer">`:
+Every page (both app entries, all content pages including the license pages, the 404 and `/r/` pages) has exactly one static `<footer class="site-footer">`. The sources contain only the `<!-- site-footer -->` line; the build (and the dev server) replaces it with `renderSiteFooter(lang)` from `src/pages/site-footer.ts`, the same plugin pass that fills the header (`expandSiteHeader`, [Site header](#site-header)), so a disclaimer or link change is one edit in the dictionaries or `FOOTER_LINKS` (#64). The footer contains:
 
 1. the educational disclaimer (`footer.disclaimer`, including that the site does not promote or endorse real animal fighting);
 2. `ul.footer-links` in the order of `FOOTER_LINKS` (`src/pages/routes.ts`): about · privacy · license (site pages of the page's language), source code (GitHub repository, `rel="noopener"`), blog `https://vinylims.com` and Linktree `https://link.vinylims.com` (both `rel="me noopener"`, they identify the owner);

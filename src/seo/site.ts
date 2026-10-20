@@ -2,7 +2,6 @@ import {
   BLOG_URL,
   CONTENT_PAGES,
   LINKTREE_URL,
-  REPO_URL,
   SITE_ORIGIN,
   canonicalUrl,
   type PageId,
@@ -105,8 +104,6 @@ export const TOPICS: readonly { name: string; sameAs: string[] }[] = [
   },
   { name: 'Monte Carlo method', sameAs: ['https://www.wikidata.org/wiki/Q232207'] },
 ];
-
-export const SOURCE_URL = REPO_URL;
 
 /**
  * Webmaster-tool ownership codes (owner action, docs/SEO.md#owner-actions). A non-empty value

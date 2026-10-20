@@ -30,8 +30,8 @@ export function readTheme(): Theme {
     muted: v('--muted', '#5f5e5a'),
     grid: v('--grid', '#e3e2de'),
     surface: v('--surface', '#ffffff'),
-    heavy: v('--c-trex', '#2a78d6'),
-    pack: v('--c-tiger', '#eb6834'),
+    heavy: v('--c-heavy', '#2a78d6'),
+    pack: v('--c-pack', '#eb6834'),
     draw: v('--c-draw', '#8d8c87'),
     neutral: v('--c-neutral', '#6250d6'),
     latched: v('--c-latched', '#1baf7a'),
@@ -64,6 +64,25 @@ function watchColorScheme(): void {
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     for (const c of live) c.redraw();
   });
+  watchDpr();
+}
+
+/**
+ * Redraw every chart when devicePixelRatio changes without a width change (window moved to a
+ * monitor with another scale, browser zoom), so the canvas backing store matches again (#81).
+ * A `(resolution: Xdppx)` query fires once when the ratio leaves X, so it re-arms for the new one,
+ * like the replay's watcher.
+ */
+function watchDpr(): void {
+  const dpr = globalThis.devicePixelRatio || 1;
+  matchMedia(`(resolution: ${dpr}dppx)`).addEventListener(
+    'change',
+    () => {
+      redrawAllCharts();
+      watchDpr();
+    },
+    { once: true },
+  );
 }
 
 /** Redraw every live chart (e.g. after a language change). */

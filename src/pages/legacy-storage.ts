@@ -12,8 +12,11 @@ export interface RemovableStorage {
   removeItem(key: string): void;
 }
 
-/** `localStorage`, or null when it is missing or access throws (blocked storage). */
-function localStorageOrNull(): RemovableStorage | null {
+/**
+ * `localStorage`, or null when it is missing or access throws (blocked storage). The one copy of
+ * this guard: the tour uses it too (src/ui/tour.ts).
+ */
+export function localStorageOrNull(): Storage | null {
   try {
     return globalThis.localStorage ?? null;
   } catch {

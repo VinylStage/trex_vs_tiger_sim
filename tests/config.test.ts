@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { clamp as replayClamp } from '../src/ui/replay/interp';
 import {
   LIMITS,
   MAX_WORK,
+  clamp,
   defaultConfig,
   maxRunsFor,
   sanitizeConfig,
@@ -170,5 +172,19 @@ describe('species in the config', () => {
     expect(PACK_SPECIES.tiger.bounds.mass).toEqual([30, 500]);
     expect(HEAVY_SPECIES.trex.constants.hide).toBe(1);
     expect(PACK_SPECIES.tiger.constants.radius).toBe(0.8);
+  });
+});
+
+describe('clamp (the one shared definition, #63)', () => {
+  it('limits to [lo, hi] and passes NaN through, so callers decide what NaN means', () => {
+    expect(clamp(5, 0, 3)).toBe(3);
+    expect(clamp(-1, 0, 3)).toBe(0);
+    expect(clamp(2, 0, 3)).toBe(2);
+    expect(clamp(Number.NaN, 0, 3)).toBeNaN();
+    expect(clamp(Number.POSITIVE_INFINITY, 0, 3)).toBe(3);
+  });
+
+  it('is the same function the replay uses', () => {
+    expect(replayClamp).toBe(clamp);
   });
 });

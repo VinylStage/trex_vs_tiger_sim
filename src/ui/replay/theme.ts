@@ -12,8 +12,8 @@ export const REPLAY_TOKENS = {
   arena: '--replay-arena',
   grid: '--replay-grid',
   border: '--replay-border',
-  heavy: '--replay-trex',
-  pack: '--replay-tiger',
+  heavy: '--replay-heavy',
+  pack: '--replay-pack',
   out: '--replay-out',
   dead: '--replay-dead',
 } as const;
