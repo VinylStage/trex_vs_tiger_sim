@@ -29,7 +29,14 @@ import {
   type ContentPage,
   type PageId,
 } from '../src/pages/routes';
-import { DICTIONARIES, LANGS, type Lang, type MsgKey } from '../src/ui/i18n';
+import {
+  DICTIONARIES,
+  LANGS,
+  interpolate,
+  speciesVars,
+  type Lang,
+  type MsgKey,
+} from '../src/ui/i18n';
 import { footerItems, siteNavItems } from '../src/ui/site-nav';
 import { findHtmlEntries } from '../vite.pages';
 
@@ -840,7 +847,11 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
     );
     expect(s.attrs['id']).toBe(`setting-${key}`);
     expect(textOf(one(elements(s.inner, 'h3'), 'h3').inner)).toContain(
-      DICTIONARIES[lang][`field.${key}` as MsgKey],
+      // Labels name the species; the page describes the default pair (T. rex and tigers).
+      interpolate(
+        DICTIONARIES[lang][`field.${key}` as MsgKey],
+        speciesVars({ heavySpecies: DEFAULT_HEAVY, packSpecies: DEFAULT_PACK }, lang),
+      ),
     );
     const options = choices[key];
     if (options) {

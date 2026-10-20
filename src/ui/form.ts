@@ -2,34 +2,78 @@ import {
   LIMITS,
   SAMPLING_METHODS,
   PACK_TACTICS,
-  defaultConfig,
   maxRunsFor,
   type SamplingMethod,
   type ScenarioConfig,
   type PackTactic,
 } from '../sim/config';
 import { PARAMS, type ParamDef, type ParamId, type Role, type Triangular } from '../sim/params';
-import { paramBounds, presetRange } from '../sim/species';
+import {
+  HEAVY_SPECIES,
+  HEAVY_SPECIES_IDS,
+  PACK_SPECIES,
+  PACK_SPECIES_IDS,
+  matchupAnchor,
+  matchupClass,
+  paramBounds,
+  paramEvidence,
+  presetRange,
+  speciesRanges,
+  type Era,
+  type HeavySpeciesId,
+  type MatchupClass,
+  type PackSpeciesId,
+} from '../sim/species';
+import { pagePath } from '../pages/routes';
 import { costLevel, estimateTotalMs } from './cost';
 import { clear, h, uniqueId } from './dom';
 import { formatDuration } from './format';
-import { paramHelp, paramLabel, t, type MsgKey } from './i18n';
+import {
+  getLang,
+  paramHelp,
+  paramLabel,
+  speciesName,
+  speciesVars,
+  t,
+  teamLabel,
+  type MsgKey,
+  type NamePair,
+} from './i18n';
 
+/** A matchup preset: both species, head counts and the run count. */
 export interface Preset {
-  key: MsgKey;
+  heavySpecies: HeavySpeciesId;
+  packSpecies: PackSpeciesId;
   heavyCount: number;
   packCount: number;
   runs: number;
 }
 
-/** Presets change head counts and the run count only; everything else is kept. */
+/**
+ * Matchup presets (docs/SPECIES.md). A preset sets the species, head counts and runs and resets
+ * the ranges to the species' presets; every other setting is kept. The first is the default.
+ */
 export const PRESETS: readonly Preset[] = [
-  { key: 'preset.default', heavyCount: 10, packCount: 100, runs: 500 },
-  { key: 'preset.1v100', heavyCount: 1, packCount: 100, runs: 500 },
-  { key: 'preset.1v10', heavyCount: 1, packCount: 10, runs: 1000 },
-  { key: 'preset.10v1000', heavyCount: 10, packCount: 1000, runs: 200 },
-  { key: 'preset.1v1', heavyCount: 1, packCount: 1, runs: 2000 },
+  { heavySpecies: 'trex', packSpecies: 'tiger', heavyCount: 10, packCount: 100, runs: 500 },
+  { heavySpecies: 'trex', packSpecies: 'tiger', heavyCount: 1, packCount: 10, runs: 1000 },
+  { heavySpecies: 'elephant', packSpecies: 'lion', heavyCount: 5, packCount: 30, runs: 500 },
+  { heavySpecies: 'buffalo', packSpecies: 'lion', heavyCount: 1, packCount: 6, runs: 1000 },
+  { heavySpecies: 'buffalo', packSpecies: 'hyena', heavyCount: 1, packCount: 15, runs: 1000 },
+  { heavySpecies: 'brownBear', packSpecies: 'wolf', heavyCount: 1, packCount: 8, runs: 1000 },
+  { heavySpecies: 'brownBear', packSpecies: 'tiger', heavyCount: 1, packCount: 1, runs: 2000 },
 ];
+
+/** "10 T-Rex vs 100 tigers" / "T-Rex 10마리 vs 호랑이 100마리". */
+export function matchupLabel(
+  pair: NamePair & Pick<ScenarioConfig, 'heavyCount' | 'packCount'>,
+): string {
+  return `${teamLabel(pair.heavySpecies, pair.heavyCount)} vs ${teamLabel(pair.packSpecies, pair.packCount)}`;
+}
+
+export function presetLabel(p: Preset): string {
+  const label = matchupLabel(p);
+  return p === PRESETS[0] ? t('preset.default', { label }) : label;
+}
 
 type NumKey = keyof typeof LIMITS;
 
@@ -60,14 +104,46 @@ export function unitLabel(unit: string): string {
   return UNIT_DISPLAY[unit] ?? unit;
 }
 
-export function speciesLabel(s: Role): string {
-  return t(s === 'heavy' ? 'species.trex' : 'species.tiger');
+/** Full name of the species on one side, e.g. "African bush elephant". */
+export function speciesLabel(role: Role, pair: NamePair): string {
+  return speciesName(role === 'heavy' ? pair.heavySpecies : pair.packSpecies);
 }
 
-/** Parameter name including the species, e.g. "Tiger · Sprint speed". */
-export function qualifiedParamLabel(id: ParamId): string {
-  const species: Role = id.startsWith('heavy.') ? 'heavy' : 'pack';
-  return `${species === 'heavy' ? 'T-Rex' : t('species.tiger')} · ${paramLabel(id)}`;
+/** Parameter name including the species, e.g. "Lion · Sprint speed". */
+export function qualifiedParamLabel(id: ParamId, pair: NamePair): string {
+  const v = speciesVars(pair);
+  const heavy = id.startsWith('heavy.');
+  const weapon = HEAVY_SPECIES[pair.heavySpecies].weapon;
+  return `${heavy ? v['Heavy'] : v['Pack']} · ${paramLabel(id, weapon)}`;
+}
+
+/** The matchup badge of a species pair: its class, text and a link to the field records. */
+export function matchupInfo(pair: NamePair): {
+  kind: MatchupClass;
+  text: string;
+  href: string | null;
+} {
+  const kind = matchupClass(pair.heavySpecies, pair.packSpecies);
+  const anchor = matchupAnchor(pair.heavySpecies, pair.packSpecies);
+  return {
+    kind,
+    text: t(`matchup.${kind}`),
+    href: anchor ? `${pagePath('model', getLang())}#matchup-${anchor}` : null,
+  };
+}
+
+/** The badge element (`.matchup-badge`), shared by the form and the results. */
+export function matchupBadge(pair: NamePair): HTMLElement {
+  const info = matchupInfo(pair);
+  return h(
+    'p',
+    { class: `matchup-badge matchup-${info.kind}` },
+    h('span', { class: 'matchup-dot', attrs: { 'aria-hidden': 'true' } }),
+    h('span', { text: info.text }),
+    info.href
+      ? h('a', { class: 'matchup-link', text: t('matchup.sources'), attrs: { href: info.href } })
+      : null,
+  );
 }
 
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -80,6 +156,40 @@ function parseNum(raw: string): number | null {
 
 function sameRange(a: Triangular, b: Triangular): boolean {
   return a.min === b.min && a.mode === b.mode && a.max === b.max;
+}
+
+/** Whether any parameter of `role` differs from the presets of the config's species. */
+export function roleEdited(c: ScenarioConfig, role?: Role): boolean {
+  const presets = speciesRanges(c.heavySpecies, c.packSpecies);
+  return PARAMS.some(
+    (p) => (role === undefined || p.role === role) && !sameRange(c.params[p.id], presets[p.id]),
+  );
+}
+
+/**
+ * Switch one side to another species: that side's eleven ranges become the new species'
+ * presets; the other side is kept.
+ */
+export function withSpecies(c: ScenarioConfig, role: Role, id: string): ScenarioConfig {
+  const next: ScenarioConfig = structuredClone(c);
+  if (role === 'heavy') next.heavySpecies = id as HeavySpeciesId;
+  else next.packSpecies = id as PackSpeciesId;
+  const presets = speciesRanges(next.heavySpecies, next.packSpecies);
+  for (const p of PARAMS) if (p.role === role) next.params[p.id] = presets[p.id];
+  return next;
+}
+
+/** Apply a matchup preset: species, counts and runs; all ranges back to the presets. */
+export function withPreset(c: ScenarioConfig, p: Preset): ScenarioConfig {
+  return {
+    ...structuredClone(c),
+    heavySpecies: p.heavySpecies,
+    packSpecies: p.packSpecies,
+    heavyCount: p.heavyCount,
+    packCount: p.packCount,
+    runs: p.runs,
+    params: speciesRanges(p.heavySpecies, p.packSpecies),
+  };
 }
 
 /** Keep `min ≤ mode ≤ max` while honouring the field the user just edited. */
@@ -112,19 +222,23 @@ export interface ConfigForm {
   refresh(): void;
 }
 
+/** A short message with an optional undo action (the app shows it as a toast). */
+export type Notify = (message: string, undo?: () => void) => void;
+
 export function createConfigForm(
   initial: ScenarioConfig,
   workers: number,
   onChange: (c: ScenarioConfig) => void,
+  notify: Notify = () => undefined,
 ): ConfigForm {
   let cfg: ScenarioConfig = structuredClone(initial);
-  const defaults = defaultConfig();
   const root = h('form', { class: 'config-form', attrs: { novalidate: '' } });
   root.addEventListener('submit', (e) => e.preventDefault());
 
   const numInputs = new Map<NumKey, HTMLInputElement>();
   const paramInputs = new Map<ParamId, Record<keyof Triangular, HTMLInputElement>>();
   const paramRows = new Map<ParamId, HTMLTableRowElement>();
+  const speciesSels = new Map<Role, HTMLSelectElement>();
   let samplingSel: HTMLSelectElement | null = null;
   let tacticSel: HTMLSelectElement | null = null;
   let moraleBox: HTMLInputElement | null = null;
@@ -132,10 +246,21 @@ export function createConfigForm(
   let modifiedEl: HTMLSpanElement | null = null;
   let detailsOpen = false;
 
+  /** Name placeholders of the edited config's species (the app's may name the shown results). */
+  const names = (): Record<string, string> => speciesVars(cfg);
+
   const emit = (): void => {
     updateDerived();
     onChange(structuredClone(cfg));
   };
+
+  /** Replace the whole config (species changes relabel everything) and keep focus in place. */
+  function replace(next: ScenarioConfig, focusRole?: Role): void {
+    cfg = next;
+    build();
+    if (focusRole) speciesSels.get(focusRole)?.focus();
+    emit();
+  }
 
   function updateDerived(): void {
     if (costEl) {
@@ -153,9 +278,10 @@ export function createConfigForm(
       }
       costEl.textContent = parts.join(' ');
     }
+    const presets = speciesRanges(cfg.heavySpecies, cfg.packSpecies);
     let modified = 0;
     for (const p of PARAMS) {
-      const changed = !sameRange(cfg.params[p.id], defaults.params[p.id]);
+      const changed = !sameRange(cfg.params[p.id], presets[p.id]);
       if (changed) modified++;
       paramRows.get(p.id)?.classList.toggle('modified', changed);
     }
@@ -170,6 +296,10 @@ export function createConfigForm(
     if (samplingSel) samplingSel.value = cfg.sampling;
     if (tacticSel) tacticSel.value = cfg.packTactic;
     if (moraleBox) moraleBox.checked = cfg.morale;
+    const heavySel = speciesSels.get('heavy');
+    const packSel = speciesSels.get('pack');
+    if (heavySel) heavySel.value = cfg.heavySpecies;
+    if (packSel) packSel.value = cfg.packSpecies;
     for (const [id, inputs] of paramInputs) {
       const r = cfg.params[id];
       inputs.min.value = String(r.min);
@@ -179,8 +309,8 @@ export function createConfigForm(
   }
 
   function field(
-    labelKey: MsgKey,
-    helpKey: MsgKey,
+    label: string,
+    help: string,
     control: HTMLElement,
     id: string,
     described: HTMLElement = control,
@@ -190,9 +320,9 @@ export function createConfigForm(
     return h(
       'div',
       { class: 'field' },
-      h('label', { attrs: { for: id }, text: t(labelKey) }),
+      h('label', { attrs: { for: id }, text: label }),
       control,
-      h('small', { class: 'hint', id: hintId, text: t(helpKey) }),
+      h('small', { class: 'hint', id: hintId, text: help }),
     );
   }
 
@@ -253,11 +383,68 @@ export function createConfigForm(
     return { el, id };
   }
 
+  /** Offer to undo a change that discarded edited ranges. */
+  function offerUndo(message: string, previous: ScenarioConfig): void {
+    notify(message, () => {
+      replace(previous);
+      notify(t('toast.restored'));
+    });
+  }
+
+  function speciesField(role: Role): HTMLElement {
+    const id = uniqueId(`f-${role}-species`);
+    const el = h('select', { id, class: 'species-select' });
+    const ids: readonly string[] = role === 'heavy' ? HEAVY_SPECIES_IDS : PACK_SPECIES_IDS;
+    const eraOf = (s: string): Era =>
+      role === 'heavy'
+        ? HEAVY_SPECIES[s as HeavySpeciesId].era
+        : PACK_SPECIES[s as PackSpeciesId].era;
+    for (const group of ['extant', 'extinct'] as const) {
+      const members = ids.filter((s) => (eraOf(s) === 'extant') === (group === 'extant'));
+      if (members.length === 0) continue;
+      const og = h('optgroup', { attrs: { label: t(`species.group.${group}`) } });
+      for (const s of members) {
+        og.append(
+          h('option', {
+            attrs: { value: s },
+            text: speciesName(s as HeavySpeciesId | PackSpeciesId),
+          }),
+        );
+      }
+      el.append(og);
+    }
+    el.value = role === 'heavy' ? cfg.heavySpecies : cfg.packSpecies;
+    el.addEventListener('change', () => {
+      if (!ids.includes(el.value)) return;
+      const previous = structuredClone(cfg);
+      const edited = roleEdited(previous, role);
+      replace(withSpecies(previous, role, el.value), role);
+      if (edited) {
+        const name = speciesName(role === 'heavy' ? cfg.heavySpecies : cfg.packSpecies);
+        offerUndo(t('toast.rangesReset', { name }), previous);
+      }
+    });
+    speciesSels.set(role, el);
+    const label = t(role === 'heavy' ? 'field.heavySpecies' : 'field.packSpecies');
+    const help = t(role === 'heavy' ? 'help.heavySpecies' : 'help.packSpecies');
+    return field(label, help, el, id);
+  }
+
+  function buildSpecies(): HTMLElement {
+    return h(
+      'div',
+      { class: 'species-pickers' },
+      h('div', { class: 'species-grid' }, speciesField('heavy'), speciesField('pack')),
+      matchupBadge(cfg),
+    );
+  }
+
   function buildBasic(): HTMLElement {
     const grid = h('div', { class: 'field-grid' });
+    const nv = names();
     const add = (key: NumKey, label: MsgKey, help: MsgKey, tour?: string): void => {
       const { input, id } = numberField(key);
-      const el = field(label, help, input, id);
+      const el = field(t(label, nv), t(help, nv), input, id);
       if (tour) el.dataset.tour = tour;
       grid.append(el);
     };
@@ -278,7 +465,7 @@ export function createConfigForm(
       },
     );
     samplingSel = sampling.el;
-    grid.append(field('field.sampling', 'help.sampling', sampling.el, sampling.id));
+    grid.append(field(t('field.sampling'), t('help.sampling'), sampling.el, sampling.id));
 
     const tactic = select<PackTactic>(
       PACK_TACTICS,
@@ -290,7 +477,7 @@ export function createConfigForm(
       },
     );
     tacticSel = tactic.el;
-    grid.append(field('field.packTactic', 'help.packTactic', tactic.el, tactic.id));
+    grid.append(field(t('field.packTactic'), t('help.packTactic', nv), tactic.el, tactic.id));
 
     const seed = numberField('seed');
     const randomBtn = h('button', {
@@ -306,7 +493,7 @@ export function createConfigForm(
       emit();
     });
     const seedRow = h('div', { class: 'input-row' }, seed.input, randomBtn);
-    const seedField = field('field.seed', 'help.seed', seedRow, seed.id, seed.input);
+    const seedField = field(t('field.seed'), t('help.seed'), seedRow, seed.id, seed.input);
     seedField.classList.add('field-wide');
     seedField.dataset.tour = 'seed';
     grid.append(seedField);
@@ -333,7 +520,7 @@ export function createConfigForm(
           box,
           h('span', { text: t('morale.on') }),
         ),
-        h('small', { class: 'hint', id: `${moraleId}-hint`, text: t('help.morale') }),
+        h('small', { class: 'hint', id: `${moraleId}-hint`, text: t('help.morale', nv) }),
       ),
     );
     return grid;
@@ -344,25 +531,40 @@ export function createConfigForm(
     const labelId = uniqueId('presets');
     group.setAttribute('aria-labelledby', labelId);
     for (const p of PRESETS) {
-      const btn = h('button', { class: 'btn btn-chip', text: t(p.key), attrs: { type: 'button' } });
+      const label = presetLabel(p);
+      const btn = h('button', { class: 'btn btn-chip', text: label, attrs: { type: 'button' } });
       btn.addEventListener('click', () => {
-        cfg = { ...cfg, heavyCount: p.heavyCount, packCount: p.packCount, runs: p.runs };
-        syncInputs();
-        emit();
+        const previous = structuredClone(cfg);
+        replace(withPreset(previous, p));
+        if (roleEdited(previous)) {
+          offerUndo(t('toast.presetApplied', { label: matchupLabel(p) }), previous);
+        }
       });
       group.append(btn);
     }
     return h(
       'div',
-      { class: 'presets', attrs: { 'data-tour': 'presets' } },
+      { class: 'presets' },
       h('span', { class: 'field-label', id: labelId, text: t('config.presets') }),
       group,
       h('small', { class: 'hint', text: t('preset.hint') }),
     );
   }
 
+  function evidenceChip(p: ParamDef): HTMLElement {
+    const tag = paramEvidence(p.id, cfg.heavySpecies, cfg.packSpecies);
+    const title = t(`evidence.${tag}`);
+    return h('span', {
+      class: `evidence ev-${tag}`,
+      text: tag,
+      attrs: { role: 'img', title, 'aria-label': t('evidence.aria', { tag: title }) },
+    });
+  }
+
   function paramRow(p: ParamDef): HTMLTableRowElement {
-    const name = `${speciesLabel(p.role)} ${paramLabel(p.id)}`;
+    const weapon = HEAVY_SPECIES[cfg.heavySpecies].weapon;
+    const label = paramLabel(p.id, weapon);
+    const name = `${speciesLabel(p.role, cfg)} ${label}`;
     const helpId = uniqueId('ph');
     const inputs = {} as Record<keyof Triangular, HTMLInputElement>;
     const bounds = paramBounds(p.id, cfg.heavySpecies, cfg.packSpecies);
@@ -407,10 +609,8 @@ export function createConfigForm(
       },
     });
     reset.addEventListener('click', () => {
-      cfg = {
-        ...cfg,
-        params: { ...cfg.params, [p.id]: presetRange(p.id, cfg.heavySpecies, cfg.packSpecies) },
-      };
+      const preset = presetRange(p.id, cfg.heavySpecies, cfg.packSpecies);
+      cfg = { ...cfg, params: { ...cfg.params, [p.id]: preset } };
       syncInputs();
       emit();
     });
@@ -420,8 +620,10 @@ export function createConfigForm(
       h(
         'th',
         { attrs: { scope: 'row' }, class: 'col-name' },
-        h('span', { class: 'param-name', text: paramLabel(p.id) }),
-        h('small', { class: 'param-help', id: helpId, text: paramHelp(p.id) }),
+        h('span', { class: 'param-name', text: label }),
+        ' ',
+        evidenceChip(p),
+        h('small', { class: 'param-help', id: helpId, text: paramHelp(p.id, names()) }),
       ),
       ...cells,
       h('td', { class: 'col-unit', text: unitLabel(p.unit) }),
@@ -454,17 +656,20 @@ export function createConfigForm(
       ),
     );
     const table = h('table', { class: 'param-table' }, head);
-    for (const species of ['heavy', 'pack'] as const) {
+    for (const role of ['heavy', 'pack'] as const) {
       const body = h(
         'tbody',
         {},
         h(
           'tr',
           { class: 'group-row' },
-          h('th', { attrs: { scope: 'colgroup', colspan: '6' }, text: speciesLabel(species) }),
+          h('th', {
+            attrs: { scope: 'colgroup', colspan: '6' },
+            text: speciesLabel(role, cfg),
+          }),
         ),
       );
-      for (const p of PARAMS) if (p.role === species) body.append(paramRow(p));
+      for (const p of PARAMS) if (p.role === role) body.append(paramRow(p));
       table.append(body);
     }
     const resetAll = h('button', {
@@ -473,7 +678,7 @@ export function createConfigForm(
       attrs: { type: 'button' },
     });
     resetAll.addEventListener('click', () => {
-      cfg = { ...cfg, params: structuredClone(defaults.params) };
+      cfg = { ...cfg, params: speciesRanges(cfg.heavySpecies, cfg.packSpecies) };
       syncInputs();
       emit();
     });
@@ -491,8 +696,19 @@ export function createConfigForm(
     numInputs.clear();
     paramInputs.clear();
     paramRows.clear();
+    speciesSels.clear();
     costEl = h('p', { class: 'cost-warning', attrs: { role: 'status' } });
-    root.append(buildPresets(), buildBasic(), costEl, buildAdvanced());
+    root.append(
+      h(
+        'div',
+        { class: 'matchup', attrs: { 'data-tour': 'presets' } },
+        buildSpecies(),
+        buildPresets(),
+      ),
+      buildBasic(),
+      costEl,
+      buildAdvanced(),
+    );
     updateDerived();
   }
 
@@ -501,8 +717,10 @@ export function createConfigForm(
   return {
     el: root,
     setConfig(c: ScenarioConfig): void {
+      const relabel = c.heavySpecies !== cfg.heavySpecies || c.packSpecies !== cfg.packSpecies;
       cfg = structuredClone(c);
-      syncInputs();
+      if (relabel) build();
+      else syncInputs();
       updateDerived();
     },
     refresh(): void {

@@ -11,7 +11,7 @@ import {
   redrawAllCharts,
 } from './charts';
 import { clear, h } from './dom';
-import { createConfigForm, qualifiedParamLabel } from './form';
+import { createConfigForm, matchupBadge, qualifiedParamLabel } from './form';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import {
   applyI18n,
@@ -19,7 +19,9 @@ import {
   initLang,
   onLangChange,
   setLang,
+  setNamePair,
   t,
+  teamLabel,
   type Lang,
   type MsgKey,
   type Vars,
@@ -104,19 +106,37 @@ export function startApp(root: HTMLElement): void {
   const toast = h('div', { class: 'toast', attrs: { role: 'status', 'aria-live': 'polite' } });
   toast.hidden = true;
   let toastTimer = 0;
-  const showToast = (key: MsgKey): void => {
-    toast.textContent = t(key);
+  /** A short notice; with `undo`, an Undo button that stays a little longer. */
+  const showToast = (text: string, undo?: () => void): void => {
+    clear(toast);
+    toast.append(h('span', { text }));
+    if (undo) {
+      const btn = h('button', {
+        class: 'btn btn-small toast-action',
+        text: t('toast.undo'),
+        attrs: { type: 'button' },
+      });
+      btn.addEventListener('click', () => {
+        toast.hidden = true;
+        clearTimeout(toastTimer);
+        undo();
+      });
+      toast.append(btn);
+    }
     toast.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => {
-      toast.hidden = true;
-    }, 2500);
+    toastTimer = window.setTimeout(
+      () => {
+        toast.hidden = true;
+      },
+      undo ? 8000 : 2500,
+    );
   };
   shareBtn.addEventListener('click', () => {
     writeUrl();
     const url = location.href;
-    const done = (): void => showToast('share.copied');
-    const fail = (): void => showToast('share.failed');
+    const done = (): void => showToast(t('share.copied'));
+    const fail = (): void => showToast(t('share.failed'));
     if (navigator.clipboard?.writeText) navigator.clipboard.writeText(url).then(done, fail);
     else fail();
   });
@@ -151,11 +171,26 @@ export function startApp(root: HTMLElement): void {
   header.append(siteNav);
 
   // ---------- config panel ----------
-  const form = createConfigForm(config, pool.size, (c) => {
-    config = c;
-    writeUrl();
-    updateStale();
-  });
+  const form = createConfigForm(
+    config,
+    pool.size,
+    (c) => {
+      config = c;
+      writeUrl();
+      updateStale();
+      syncNames();
+    },
+    showToast,
+  );
+
+  /**
+   * Messages without explicit names (results, charts, replay, tour) name the species of the shown
+   * results, or of the edited scenario before the first run.
+   */
+  function syncNames(): void {
+    setNamePair(result?.config ?? config);
+  }
+  syncNames();
 
   const runBtn = h('button', {
     class: 'btn btn-primary btn-large',
@@ -222,6 +257,7 @@ export function startApp(root: HTMLElement): void {
   staleEl.hidden = true;
   const verdictEl = h('p', { class: 'verdict' });
   const basisEl = h('p', { class: 'verdict-basis' });
+  const badgeSlot = h('div', { class: 'verdict-badge' });
   const cardsEl = h('div', { class: 'stat-cards', attrs: { 'data-tour': 'stat-cards' } });
   const outcomeChart = new CanvasChart('chart.outcome', 'h-outcome');
   const durationChart = new CanvasChart('chart.duration', 'h-hist');
@@ -261,6 +297,7 @@ export function startApp(root: HTMLElement): void {
       },
       verdictEl,
       basisEl,
+      badgeSlot,
     ),
     cardsEl,
     h(
@@ -476,6 +513,9 @@ export function startApp(root: HTMLElement): void {
     updateStale();
     if (!result) return;
     const { agg, config: cfg } = result;
+    syncNames();
+    // Static bindings (replay legend and controls) name the species of these results.
+    applyI18n(resultsBody);
     const ivText = (iv: { lo: number; hi: number }): Vars => ({
       lo: formatPct(iv.lo),
       hi: formatPct(iv.hi),
@@ -487,9 +527,10 @@ export function startApp(root: HTMLElement): void {
       { key: 'verdict.draw' as const, iv: agg.pDraw },
     ].reduce((a, b) => (b.iv.p > a.iv.p ? b : a));
     verdictEl.textContent = t(best.key, { p: formatPct(best.iv.p), ...ivText(best.iv) });
+    badgeSlot.replaceChildren(matchupBadge(cfg));
     basisEl.textContent = t('verdict.basis', {
-      heavy: formatInt(cfg.heavyCount),
-      pack: formatInt(cfg.packCount),
+      heavyTeam: teamLabel(cfg.heavySpecies, cfg.heavyCount),
+      packTeam: teamLabel(cfg.packSpecies, cfg.packCount),
       n: formatInt(agg.n),
       seed: String(cfg.seed),
       elapsed: formatDuration(result.elapsedMs / 1000),
@@ -579,10 +620,10 @@ export function startApp(root: HTMLElement): void {
     );
     const top = agg.sensitivity.slice(0, 10);
     tornadoChart.set(
-      paintTornado(top, qualifiedParamLabel),
+      paintTornado(top, (id) => qualifiedParamLabel(id, cfg)),
       top
         .slice(0, 5)
-        .map((s) => `${qualifiedParamLabel(s.id)} ${formatNum(s.rho, 2)}`)
+        .map((s) => `${qualifiedParamLabel(s.id, cfg)} ${formatNum(s.rho, 2)}`)
         .join(', '),
       Math.max(120, 24 + top.length * 28),
     );
@@ -615,6 +656,7 @@ export function startApp(root: HTMLElement): void {
     config = c;
     form.setConfig(c);
     updateStale();
+    syncNames();
   });
 
   // ---------- guided tour ----------

@@ -47,17 +47,18 @@
         <h2 id="intro-title" data-i18n="intro.title">What is the T-Rex vs Tiger Simulator?</h2>
         <p class="intro-lead" data-i18n="intro.lead">
           What happens if N Tyrannosaurus rex meet M tigers on an open field? This free educational
-          tool uses that question to let you try the Monte Carlo method yourself. Instead of a
-          single fight, it repeats the battle hundreds of times with uncertain, literature-based
-          traits and shows the win probabilities together with their uncertainty.
+          tool uses that question to let you try the Monte Carlo method yourself, and it also offers
+          match-ups observed in the wild, such as elephants and lions or brown bears and wolves.
+          Instead of a single fight, it repeats the battle hundreds of times with uncertain,
+          literature-based traits and shows the win probabilities together with their uncertainty.
         </p>
         <div class="intro-grid">
           <div class="intro-block">
             <h3 data-i18n="intro.howTitle">How does it work?</h3>
             <ol class="intro-steps">
               <li data-i18n="intro.how1">
-                Choose the head counts, the tiger tactic and the number of runs, and optionally edit
-                the ranges of the 22 traits.
+                Choose the species and head counts on both sides, the pack tactic and the number of
+                runs, and optionally edit the ranges of the 22 traits.
               </li>
               <li data-i18n="intro.how2">
                 Every battle draws fresh traits, such as body mass, bite force and speed, from those
@@ -156,8 +157,19 @@
           <div class="faq-item">
             <h3 data-i18n="faq.q4">Can I share or reproduce a result?</h3>
             <p data-i18n="faq.a4">
-              Yes. Copy link creates an address that holds the head counts, parameter ranges and
-              seed. Opening that link and running it gives the same result.
+              Yes. Copy link creates an address that holds the species, head counts, parameter
+              ranges and seed. Opening that link and running it gives the same result.
+            </p>
+          </div>
+          <div class="faq-item">
+            <h3 data-i18n="faq.q5">Which animals can I choose?</h3>
+            <p data-i18n="faq.a5">
+              The large animals are Tyrannosaurus rex, the African bush elephant, the African
+              buffalo and the brown bear; the pack animals are the tiger, the lion, the gray wolf
+              and the spotted hyena. Match-ups observed in the wild, such as elephants and lions,
+              buffalo and lions or brown bears and wolves, are marked, and every preset value shows
+              its evidence level (literature, derived, speculative or unverified). Humans and
+              domestic animals are not included.
             </p>
           </div>
         </div>
@@ -166,9 +178,10 @@
     <footer class="site-footer">
       <div class="site-footer-inner">
         <p class="footer-disclaimer" data-i18n="footer.disclaimer">
-          T. rex and tigers never coexisted, and every interaction rule is an assumption. This
-          educational model shows how the outcome depends on uncertain inputs; it does not predict a
-          real fight, and this site does not promote or endorse real animal fighting.
+          Every match-up is an educational model. T. rex never lived alongside any of the other
+          species, match-ups seen in the wild are heavily simplified, and every interaction rule is
+          an assumption. The model shows how the outcome depends on uncertain inputs; it does not
+          predict a real fight, and this site does not promote or endorse real animal fighting.
         </p>
         <ul
           class="footer-links"

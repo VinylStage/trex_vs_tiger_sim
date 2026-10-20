@@ -340,6 +340,90 @@ input[type='checkbox'] {
   gap: 16px;
 }
 
+.matchup {
+  display: grid;
+  gap: 12px;
+}
+
+.species-pickers {
+  display: grid;
+  gap: 8px;
+}
+
+.species-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 420px) {
+  .species-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.matchup-badge {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  min-height: 28px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--fg);
+  font-size: 0.8rem;
+  font-weight: 500;
+  justify-self: start;
+}
+
+.matchup-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.matchup-documented .matchup-dot {
+  background: var(--c-latched);
+}
+
+.matchup-neverMet .matchup-dot {
+  background: var(--c-neutral);
+}
+
+.matchup-link {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.verdict-badge:not(:empty) {
+  margin-top: 8px;
+}
+
+.evidence {
+  display: inline-block;
+  min-width: 1.5em;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1.5;
+  text-align: center;
+  vertical-align: 1px;
+  cursor: help;
+}
+
+.evidence.ev-L,
+.evidence.ev-D {
+  border-color: var(--c-latched);
+  color: var(--fg);
+}
+
 .presets {
   display: grid;
   gap: 6px;
@@ -1143,6 +1227,19 @@ input[type='checkbox'] {
   color: var(--bg);
   font-size: 0.9rem;
   box-shadow: 0 4px 16px rgb(0 0 0 / 0.2);
+}
+
+.toast:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+}
+
+.toast-action {
+  border-color: var(--bg);
+  background: transparent;
+  color: var(--bg);
 }
 
 @media (max-width: 560px) {

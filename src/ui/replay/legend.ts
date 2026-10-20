@@ -43,7 +43,7 @@ export const LEGEND_ITEMS: readonly { key: MsgKey; head?: true; build?: SwatchBu
     key: 'replay.legendHeavyDead',
     build: (s) => heavyTriangle(s('deadHeavy'), cx, cy, 1, 0, HEAVY_LEN),
   },
-  { key: 'species.tiger', head: true },
+  { key: 'replay.legendPack', head: true },
   { key: 'state.approach', build: (s) => packGlyph('approach', s, cx - 4, cy, PACK_R, 1, 0) },
   {
     key: 'state.latched',

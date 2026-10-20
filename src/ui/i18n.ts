@@ -1,4 +1,12 @@
 import type { ParamId } from '../sim/params.ts';
+import {
+  DEFAULT_HEAVY,
+  DEFAULT_PACK,
+  type HeavySpeciesId,
+  type PackSpeciesId,
+  type SpeciesId,
+  type Weapon,
+} from '../sim/species.ts';
 
 export type Lang = 'ko' | 'en';
 export const LANGS: readonly Lang[] = ['ko', 'en'];
@@ -64,38 +72,52 @@ const ko = {
   'version.footerTitle': '릴리스 노트 보기',
 
   'config.title': '시나리오',
-  'config.presets': '프리셋',
-  'preset.default': '10 vs 100 (기본)',
-  'preset.1v100': '1 vs 100',
-  'preset.1v10': '1 vs 10',
-  'preset.10v1000': '10 vs 1000',
-  'preset.1v1': '1 vs 1',
-  'preset.hint': '마릿수와 실행 횟수만 바뀌고 나머지 설정은 유지됩니다.',
+  'config.presets': '대결 프리셋',
+  'preset.default': '{label} (기본)',
+  'preset.hint':
+    '양쪽 종, 마릿수, 실행 횟수를 한 번에 바꾸고 파라미터 범위를 그 종의 기본값으로 되돌립니다. 나머지 설정은 그대로입니다.',
+  'team.one': '{name} {n}마리',
+  'team.other': '{name} {n}마리',
 
-  'field.heavyCount': 'T-Rex 수',
-  'field.packCount': '호랑이 수',
+  'field.heavyCount': '{Heavy} 수',
+  'field.packCount': '{Pack} 수',
   'field.runs': '시뮬레이션 횟수',
   'field.seed': '시드',
   'field.arenaSize': '경기장 한 변 (m)',
   'field.maxTime': '제한 시간 (초)',
   'field.sampling': '샘플링 방법',
   'field.individualCV': '개체 변동 (CV)',
-  'field.packTactic': '호랑이 전술',
+  'field.packTactic': '무리 전술',
   'field.heavySpecies': '대형 동물',
   'field.packSpecies': '무리 동물',
+  'help.heavySpecies':
+    '혼자 싸우는 대형 동물입니다. 바꾸면 이쪽 파라미터 범위가 그 종의 기본값으로 바뀝니다.',
+  'help.packSpecies':
+    '여럿이 함께 공격하는 무리 동물입니다. 바꾸면 이쪽 파라미터 범위가 그 종의 기본값으로 바뀝니다.',
+  'species.group.extant': '현생 동물',
+  'species.group.extinct': '멸종 동물',
+  'matchup.label': '대결 성격',
+  'matchup.documented': '야생에서 관찰된 대결',
+  'matchup.neverMet': '서로 만난 적 없는 종',
+  'matchup.undocumented': '관찰 기록 없는 가상 대결',
+  'matchup.sources': '근거 보기',
+  'toast.rangesReset': '파라미터 범위를 {name} 기본값으로 바꿨습니다.',
+  'toast.presetApplied': '{label} 프리셋을 적용했습니다.',
+  'toast.undo': '되돌리기',
+  'toast.restored': '이전 설정을 되살렸습니다.',
   'field.morale': '사기 · 도주',
-  'help.heavyCount': '성체 티라노사우루스 마릿수.',
-  'help.packCount': '성체 호랑이 마릿수.',
+  'help.heavyCount': '성체 {heavyPl} 마릿수.',
+  'help.packCount': '성체 {packPl} 마릿수.',
   'help.runs': '실행 횟수가 많을수록 신뢰구간이 좁아집니다.',
   'help.seed': '같은 시드와 설정이면 결과가 정확히 재현됩니다.',
-  'help.arenaSize': '정사각형 경기장. 도주한 호랑이는 경계를 벗어나면 전투에서 이탈합니다.',
+  'help.arenaSize': '정사각형 경기장. 도주한 {packPl} 개체는 경계를 벗어나면 전투에서 이탈합니다.',
   'help.maxTime': '이 시간까지 승부가 나지 않으면 무승부입니다.',
   'help.sampling': 'LHS는 같은 실행 횟수로 파라미터 공간을 더 고르게 덮습니다.',
   'help.individualCV':
     '한 실행 안에서 개체마다 능력치에 N(1, CV) 계수를 곱합니다 (0.5–1.5로 절단).',
   'help.packTactic':
-    '측면 포위: 턱 앞을 피해 옆·뒤로 접근. 정면 돌격: 가장 가까운 T-Rex에 곧장 달려듦.',
-  'help.morale': '끄면 호랑이는 사기 저하로 도주하지 않습니다.',
+    '측면 포위: 정면 공격 범위를 피해 옆·뒤로 접근. 정면 돌격: 가장 가까운 {heavy} 쪽으로 곧장 달려듦.',
+  'help.morale': '끄면 {packPl} 무리는 사기가 떨어져도 도주하지 않습니다.',
   'seed.randomize': '무작위',
   'seed.randomizeAria': '무작위 시드 생성',
   'sampling.lhs': 'LHS (라틴 하이퍼큐브)',
@@ -106,15 +128,15 @@ const ko = {
 
   'advanced.title': '고급: 모델 파라미터 범위',
   'advanced.intro':
-    '각 파라미터는 실행마다 삼각분포(최소 · 최빈 · 최대)에서 샘플링됩니다. 기본값의 출처와 근거는 MODEL.md를 참고하세요.',
+    '각 파라미터는 실행마다 삼각분포(최소 · 최빈 · 최대)에서 샘플링됩니다. 기본값은 고른 종의 프리셋이고, 이름 옆 글자는 근거 수준입니다(L 문헌, D 문헌에서 유도, S 추정, U 미검증). 출처는 파라미터 설명 페이지와 docs/SPECIES.md에 있습니다.',
   'advanced.param': '파라미터',
   'advanced.min': '최소',
   'advanced.mode': '최빈',
   'advanced.max': '최대',
   'advanced.unit': '단위',
-  'advanced.reset': '기본값',
-  'advanced.resetRowAria': '{name} 범위를 기본값으로 되돌리기',
-  'advanced.resetAll': '모든 파라미터를 기본값으로',
+  'advanced.reset': '종 기본값',
+  'advanced.resetRowAria': '{name} 범위를 종 기본값으로 되돌리기',
+  'advanced.resetAll': '모든 파라미터를 종 기본값으로',
   'advanced.modified': '{n}개 변경됨',
   'advanced.inputAria': '{name} {which}',
   'species.trex': '티라노사우루스',
@@ -125,6 +147,27 @@ const ko = {
   'species.lion': '사자',
   'species.wolf': '회색늑대',
   'species.hyena': '점박이하이에나',
+  'species.trex.one': 'T-Rex',
+  'species.trex.other': 'T-Rex',
+  'species.elephant.one': '코끼리',
+  'species.elephant.other': '코끼리',
+  'species.buffalo.one': '물소',
+  'species.buffalo.other': '물소',
+  'species.brownBear.one': '불곰',
+  'species.brownBear.other': '불곰',
+  'species.tiger.one': '호랑이',
+  'species.tiger.other': '호랑이',
+  'species.lion.one': '사자',
+  'species.lion.other': '사자',
+  'species.wolf.one': '늑대',
+  'species.wolf.other': '늑대',
+  'species.hyena.one': '하이에나',
+  'species.hyena.other': '하이에나',
+  'evidence.L': '문헌 값',
+  'evidence.D': '문헌에서 유도한 값',
+  'evidence.S': '추정값',
+  'evidence.U': '미검증 대중 수치',
+  'evidence.aria': '근거: {tag}',
 
   'cost.capped': '작업량 한도 때문에 실행 시 반복 횟수가 {n}회로 줄어듭니다.',
   'cost.heavy':
@@ -147,38 +190,37 @@ const ko = {
   'results.empty':
     '설정을 확인하고 “시뮬레이션 실행”을 누르세요. 모든 계산은 이 브라우저 안에서 이뤄집니다.',
   'results.stale': '설정이 바뀌었습니다. 아래 결과는 이전 설정 기준입니다.',
-  'verdict.heavy': 'T-Rex 승리 확률 {p} (95% CI {lo}–{hi})',
-  'verdict.pack': '호랑이 승리 확률 {p} (95% CI {lo}–{hi})',
+  'verdict.heavy': '{Heavy} 승리 확률 {p} (95% CI {lo}–{hi})',
+  'verdict.pack': '{Pack} 승리 확률 {p} (95% CI {lo}–{hi})',
   'verdict.draw': '무승부(시간 초과) 확률 {p} (95% CI {lo}–{hi})',
-  'verdict.basis':
-    'T-Rex {heavy} vs 호랑이 {pack} · {n}회 시뮬레이션 · 시드 {seed} · 계산 {elapsed}',
+  'verdict.basis': '{heavyTeam} vs {packTeam} · {n}회 시뮬레이션 · 시드 {seed} · 계산 {elapsed}',
 
-  'outcome.heavy': 'T-Rex 승리',
-  'outcome.pack': '호랑이 승리',
+  'outcome.heavy': '{Heavy} 승리',
+  'outcome.pack': '{Pack} 승리',
   'outcome.draw': '무승부',
   'stat.ci': '95% CI {lo}–{hi}',
   'stat.duration': '전투 시간 (중앙값)',
   'stat.durationSub': '5–95%: {p5} – {p95}',
-  'stat.survivors': 'T-Rex 생존 (평균)',
+  'stat.survivors': '{Heavy} 생존 (평균)',
   'stat.ofN': '{n}마리 중',
-  'stat.killed': '죽은 호랑이 (평균)',
-  'stat.routed': '도주한 호랑이 (평균)',
+  'stat.killed': '죽은 {PackPl} (평균)',
+  'stat.routed': '도주한 {PackPl} (평균)',
   'stat.exchange': '교환비',
-  'stat.exchangeSub': 'T-Rex 1마리 손실당 죽은 호랑이',
-  'stat.exchangeInf': 'T-Rex 손실 없음',
+  'stat.exchangeSub': '{heavy} 1마리 손실당 죽은 {packPl}',
+  'stat.exchangeInf': '{heavy} 손실 없음',
   'stat.exchangeNone': '사망 없음',
 
   'chart.outcome': '승패 확률과 95% 신뢰구간',
   'chart.duration': '전투 시간 분포',
-  'chart.survivors': 'T-Rex 생존 수 분포',
+  'chart.survivors': '{Heavy} 생존 수 분포',
   'chart.sensitivity': '민감도 (스피어만 상관, 상위 10개)',
   'chart.sensitivityHelp':
-    '각 파라미터 값과 “T-Rex 우세도”(T-Rex 남은 체력 비율 − 남은 호랑이 비율)의 순위 상관. 양수는 값이 클수록 T-Rex에 유리합니다.',
-  'chart.favHeavy': 'T-Rex 유리 →',
-  'chart.favPack': '← 호랑이 유리',
+    '각 파라미터 값과 “{heavy} 우세도”({heavy} 남은 체력 비율 − 아직 싸우는 {packPl} 비율)의 순위 상관. 양수는 값이 클수록 {heavyPl} 쪽에 유리합니다.',
+  'chart.favHeavy': '{heavyPl} 유리 →',
+  'chart.favPack': '← {packPl} 유리',
   'chart.runs': '실행 수',
   'chart.seconds': '초',
-  'chart.heavyAlive': '생존 T-Rex',
+  'chart.heavyAlive': '생존 {HeavyPl}',
   'chart.binTip': '{range}: {count}회 ({pct})',
   'chart.outcomeTip': '{name}: {p} (95% CI {lo}–{hi})',
   'chart.rhoTip': '{name}: ρ = {rho}',
@@ -188,7 +230,7 @@ const ko = {
   'replay.loading': '전투를 다시 계산하는 중…',
   'replay.representative': '대표 전투',
   'replay.random': '무작위 전투',
-  'replay.repNote': 'T-Rex 우세도가 중앙값에 가장 가까운 전투',
+  'replay.repNote': '{heavy} 우세도가 중앙값에 가장 가까운 전투',
   'replay.randomNote': '무작위로 고른 전투',
   'replay.runInfo': '실행 #{run} · {outcome} · {duration}',
   'replay.play': '재생',
@@ -197,17 +239,19 @@ const ko = {
   'replay.zoom': '보기',
   'replay.zoomAuto': '자동 (전투 따라가기)',
   'replay.zoomFit': '경기장 전체',
-  'replay.zoom2': 'T-Rex 중심 2배',
-  'replay.zoom4': 'T-Rex 중심 4배',
+  'replay.zoom2': '{heavyPl} 중심 2배',
+  'replay.zoom4': '{heavyPl} 중심 4배',
   'replay.scrub': '재생 위치',
   'replay.canvasLabel':
-    '전투 재생 애니메이션: 삼각형은 T-Rex, 호랑이는 상태에 따라 점(접근), 마름모(매달림), 고리(회복), 화살표(도주), ×(사망)로 표시합니다',
+    '전투 재생 애니메이션: 삼각형은 {heavyPl}, 무리 동물({packPl})은 상태에 따라 점(접근), 마름모(매달림), 고리(회복), 화살표(도주), ×(사망)로 표시합니다',
   'replay.legendLabel': '재생 범례',
-  'replay.legendHeavy': 'T-Rex',
-  'replay.legendHp': '다친 T-Rex (채운 면적 = 남은 체력)',
-  'replay.legendHeavyDead': '쓰러진 T-Rex',
-  'replay.legendBite': '물기 범위 (명중은 채워 표시, 빠른 재생에서는 윤곽만)',
-  'replay.lodNote': '멀리서는 호랑이를 작은 사각형으로 그립니다. 확대하면 상태별 모양이 보입니다.',
+  'replay.legendHeavy': '{Heavy}',
+  'replay.legendHp': '다친 {heavy} (채운 면적 = 남은 체력)',
+  'replay.legendHeavyDead': '쓰러진 {heavy}',
+  'replay.legendPack': '{PackPl}',
+  'replay.legendBite': '공격 범위 (명중은 채워 표시, 빠른 재생에서는 윤곽만)',
+  'replay.lodNote':
+    '멀리서는 {packPl} 개체를 작은 사각형으로 그립니다. 확대하면 상태별 모양이 보입니다.',
   'replay.reducedNote':
     '{time} 이후는 기록 한도를 넘어 저장된 표본 사이를 이어 그립니다. 상태 변화가 늦게 보이거나 빠질 수 있습니다.',
   'replay.failed': '재생을 불러오지 못했습니다: {msg}',
@@ -216,9 +260,9 @@ const ko = {
   'replay.skipContact': '첫 접촉으로',
   'replay.valueText': '{cur} / {total}',
   'replay.scene':
-    '{time}: T-Rex {total}마리 중 {alive}마리 생존. 호랑이는 접근 {approach}, 매달림 {latched}, 회복 {recover}, 도주·이탈 {out}, 사망 {dead}',
+    '{time}: {heavyPl} {total}마리 중 {alive}마리 생존. {PackPl} 상태: 접근 {approach}, 매달림 {latched}, 회복 {recover}, 도주·이탈 {out}, 사망 {dead}',
   'replay.overviewLabel':
-    '전투 전체 요약 그림: 선은 이동 경로, 마름모는 호랑이가 매달린 곳, ×는 호랑이가 쓰러진 곳, 삼각형은 T-Rex의 마지막 위치입니다',
+    '전투 전체 요약 그림: 선은 이동 경로, 마름모는 {packPl} 개체가 매달린 곳, ×는 {packPl} 개체가 쓰러진 곳, 삼각형은 {heavy}의 마지막 위치입니다',
   'replay.overviewNote':
     '동작 줄이기 설정이 켜져 있어 전투 전체를 한 장으로 보여 줍니다(선: 이동 경로, 마름모: 매달린 곳, ×: 쓰러진 곳). 재생을 누르면 효과 없이 재생합니다.',
   'replay.announceSpeed': '재생 속도 {speed}',
@@ -250,7 +294,7 @@ const ko = {
   'time.hourMin': '{h}시간 {m}분',
 
   'footer.disclaimer':
-    'T. rex와 호랑이는 같은 시대에 산 적이 없고, 모든 상호작용 규칙은 가정입니다. 결과는 불확실한 입력에 따라 승패가 어떻게 달라지는지 보여 주는 교육용 모델일 뿐 실제 싸움의 예측이 아니며, 이 사이트는 실제 동물 싸움을 조장하거나 지지하지 않습니다.',
+    '모든 대결은 교육용 모델입니다. 티라노사우루스는 다른 어떤 종과도 같은 시대에 살지 않았고, 야생에서 관찰된 대결도 크게 단순화했으며, 모든 상호작용 규칙은 가정입니다. 결과는 불확실한 입력에 따라 승패가 어떻게 달라지는지 보여 줄 뿐 실제 싸움의 예측이 아니며, 이 사이트는 실제 동물 싸움을 조장하거나 지지하지 않습니다.',
   'footer.linksLabel': '사이트 정보와 링크',
   'footer.about': '소개 · 문의',
   'footer.privacy': '개인정보처리방침',
@@ -263,9 +307,9 @@ const ko = {
 
   'intro.title': '티렉스 대 호랑이 시뮬레이터란?',
   'intro.lead':
-    '티라노사우루스 N마리와 호랑이 M마리가 탁 트인 평지에서 맞붙으면 어떻게 될까요? 이 시뮬레이터는 이 질문을 출발점으로 몬테카를로 방법을 직접 체험해 보는 무료 교육용 도구입니다. 한 판의 승패 대신, 문헌에 근거한 불확실한 능력치로 전투를 수백 번 반복해 승률과 그 불확실성을 함께 보여 줍니다.',
+    '티라노사우루스 N마리와 호랑이 M마리가 탁 트인 평지에서 맞붙으면 어떻게 될까요? 이 시뮬레이터는 이 질문을 출발점으로 몬테카를로 방법을 직접 체험해 보는 무료 교육용 도구입니다. 코끼리와 사자, 불곰과 늑대처럼 야생에서 관찰된 대결도 고를 수 있습니다. 한 판의 승패 대신, 문헌에 근거한 불확실한 능력치로 전투를 수백 번 반복해 승률과 그 불확실성을 함께 보여 줍니다.',
   'intro.howTitle': '어떻게 작동하나요?',
-  'intro.how1': '마릿수, 전술, 실행 횟수를 정하고, 원하면 22개 능력치의 범위도 바꿉니다.',
+  'intro.how1': '양쪽 종과 마릿수, 전술, 실행 횟수를 정하고, 원하면 22개 능력치의 범위도 바꿉니다.',
   'intro.how2': '전투마다 체중, 무는 힘, 속도 같은 능력치를 범위 안에서 새로 뽑습니다.',
   'intro.how3':
     '개체마다 단순한 규칙으로 움직이는 에이전트 기반 전투를 브라우저가 여러 번 계산합니다.',
@@ -292,7 +336,10 @@ const ko = {
     '불확실한 값을 무작위로 뽑아 같은 실험을 여러 번 반복하고, 결과의 분포로 답을 추정하는 방법입니다. 실행 횟수가 많을수록 승률의 신뢰구간이 좁아집니다.',
   'faq.q4': '결과를 공유하거나 다시 재현할 수 있나요?',
   'faq.a4':
-    '네. 링크 복사를 누르면 마릿수, 파라미터 범위, 시드가 담긴 주소가 만들어집니다. 같은 링크를 열고 실행하면 같은 결과가 나옵니다.',
+    '네. 링크 복사를 누르면 종, 마릿수, 파라미터 범위, 시드가 담긴 주소가 만들어집니다. 같은 링크를 열고 실행하면 같은 결과가 나옵니다.',
+  'faq.q5': '어떤 동물을 고를 수 있나요?',
+  'faq.a5':
+    '대형 동물은 티라노사우루스, 아프리카코끼리, 아프리카물소, 불곰이고, 무리 동물은 호랑이, 사자, 회색늑대, 점박이하이에나입니다. 코끼리와 사자, 물소와 사자, 불곰과 늑대처럼 야생에서 관찰된 대결에는 표시가 붙고, 기본값마다 근거 수준(문헌, 유도, 추정, 미검증)을 함께 보여 줍니다. 사람과 가축은 다루지 않습니다.',
 
   'tour.start': '튜토리얼',
   'tour.counter': '{n} / {total}',
@@ -314,10 +361,10 @@ const ko = {
   'tour.offer.dismiss': '괜찮아요',
   'tour.welcome.title': '시뮬레이터 둘러보기',
   'tour.welcome.body':
-    '티라노사우루스 N마리와 호랑이 M마리가 넓은 들판에서 싸우면 누가 이길까요? 이 시뮬레이터는 문헌에서 가져온 불확실한 능력치를 전투마다 새로 뽑아 수백 번 싸움을 붙이고, 승률과 신뢰구간을 보여줍니다. 모든 계산은 이 브라우저 안에서 이뤄집니다. ← → 키로 이동하고 Esc로 닫을 수 있습니다.',
-  'tour.presets.title': '프리셋',
+    '두 종의 동물이 넓은 들판에서 싸우면 누가 이길까요? 기본은 티라노사우루스 10마리와 호랑이 100마리이고, 야생에서 관찰된 대결도 고를 수 있습니다. 이 시뮬레이터는 문헌에서 가져온 불확실한 능력치를 전투마다 새로 뽑아 수백 번 싸움을 붙이고, 승률과 신뢰구간을 보여줍니다. 모든 계산은 이 브라우저 안에서 이뤄집니다. ← → 키로 이동하고 Esc로 닫을 수 있습니다.',
+  'tour.presets.title': '종과 대결 프리셋',
   'tour.presets.body':
-    '자주 쓰는 대결 구도를 한 번에 고릅니다. 프리셋은 마릿수와 실행 횟수만 바꾸고 나머지 설정은 그대로 둡니다.',
+    '위쪽 목록에서 대형 동물과 무리 동물을 고르고, 아래 프리셋으로 대결 구도를 한 번에 정할 수 있습니다. 프리셋은 양쪽 종, 마릿수, 실행 횟수를 바꾸고 파라미터 범위를 그 종의 기본값으로 되돌립니다. 배지는 야생에서 관찰된 대결인지, 서로 만난 적 없는 종인지 알려 줍니다.',
   'tour.counts.title': '마릿수',
   'tour.counts.body':
     '양쪽 마릿수를 직접 정합니다. 마릿수가 많을수록 전투 한 번을 계산하는 시간이 길어지며, 무거운 설정이면 아래에 예상 시간 경고가 나타납니다.',
@@ -338,13 +385,13 @@ const ko = {
     '가장 가능성이 높은 결과와 그 확률, 95% 신뢰구간(Wilson)입니다. 카드에는 결과별 확률, 전투 시간 중앙값, 평균 생존 · 사망 · 도주 수, 교환비가 있습니다.',
   'tour.outcome.title': '승패 확률 차트',
   'tour.outcome.body':
-    '막대는 결과별 확률, 가는 선은 95% 신뢰구간입니다. 마우스를 올리거나 탭하면 정확한 값이 나옵니다. 아래 히스토그램은 전투 시간과 T-Rex 생존 수의 분포입니다.',
+    '막대는 결과별 확률, 가는 선은 95% 신뢰구간입니다. 마우스를 올리거나 탭하면 정확한 값이 나옵니다. 아래 히스토그램은 전투 시간과 {heavy} 생존 수의 분포입니다.',
   'tour.sensitivity.title': '민감도',
   'tour.sensitivity.body':
-    '어떤 가정이 승패를 가장 크게 좌우하는지 보여줍니다. 오른쪽(양수) 막대는 값이 클수록 T-Rex에, 왼쪽(음수)은 호랑이에 유리하다는 뜻입니다. 긴 막대의 범위를 고급 설정에서 바꿔 보세요.',
+    '어떤 가정이 승패를 가장 크게 좌우하는지 보여줍니다. 오른쪽(양수) 막대는 값이 클수록 {heavyPl} 쪽에, 왼쪽(음수)은 {packPl} 쪽에 유리하다는 뜻입니다. 긴 막대의 범위를 고급 설정에서 바꿔 보세요.',
   'tour.replay.title': '전투 재생',
   'tour.replay.body':
-    '대표 전투(T-Rex 우세도가 중앙값에 가장 가까운 전투)나 무작위 전투를 다시 계산해 애니메이션으로 보여줍니다. 재생 · 일시정지, 속도, 보기 배율, 재생 위치를 조절할 수 있습니다.',
+    '대표 전투({heavy} 우세도가 중앙값에 가장 가까운 전투)나 무작위 전투를 다시 계산해 애니메이션으로 보여줍니다. 재생 · 일시정지, 속도, 보기 배율, 재생 위치를 조절할 수 있습니다.',
   'tour.share.title': '링크 공유',
   'tour.share.body':
     '시드를 포함한 현재 설정 전체가 주소에 담깁니다. 링크를 보내면 받는 사람도 같은 시나리오와 같은 결과를 봅니다. 서버에는 아무것도 저장되지 않습니다.',
@@ -377,29 +424,39 @@ const ko = {
   'param.pack.bleed': '출혈률',
   'param.pack.morale': '초기 사기',
   'param.pack.moraleLoss': '사기 손실',
+  'param.weapon.tusk': '엄니 · 밟기 힘',
+  'param.weapon.horn': '뿔 들이받기 힘',
+  'param.weapon.pawBite': '물기 · 앞발 힘',
+  'param.attack.biteLethality': '공격 치명도',
+  'param.attack.biteInterval': '공격 간격',
+  'param.attack.biteReach': '공격 사거리',
+  'param.attack.biteArc': '공격 각도 (반각)',
+  'param.attack.biteAccuracy': '공격 명중률',
 
-  'paramHelp.heavy.mass': '체력(HP)과 같습니다. 매달린 호랑이 무게에 따른 감속에도 쓰입니다.',
-  'paramHelp.heavy.speed': '추격 속도. 매달린 호랑이가 무거울수록 느려집니다.',
+  'paramHelp.heavy.mass': '체력(HP)과 같습니다. 매달린 {packPl} 무게에 따른 감속에도 쓰입니다.',
+  'paramHelp.heavy.speed': '추격 속도. 매달린 {packPl} 무게가 무거울수록 느려집니다.',
   'paramHelp.heavy.turnRate': '몸과 머리를 돌릴 수 있는 최대 각속도.',
-  'paramHelp.heavy.biteForce': '한 번 물 때 피해 = 무는 힘 × 치명도 × (0.7–1.3).',
-  'paramHelp.heavy.biteLethality': '무는 힘 1 kN당 피해(HP). 개체 변동 없음.',
-  'paramHelp.heavy.biteInterval': '물기 시도 사이의 재정비 시간.',
-  'paramHelp.heavy.biteReach': '몸 중심에서 물 수 있는 거리.',
-  'paramHelp.heavy.biteArc': '정면 기준 좌우로 물 수 있는 각도.',
-  'paramHelp.heavy.biteAccuracy': '물기 성공 확률. 매달린 호랑이에겐 1.5배 (최대 0.95).',
+  'paramHelp.heavy.biteForce': '한 번 공격할 때 피해 = 공격 힘 × 치명도 × (0.7–1.3).',
+  'paramHelp.heavy.biteLethality': '공격 힘 1 kN당 피해(HP). 개체 변동 없음.',
+  'paramHelp.heavy.biteInterval': '공격 시도 사이의 재정비 시간.',
+  'paramHelp.heavy.biteReach': '몸 중심에서 공격이 닿는 거리.',
+  'paramHelp.heavy.biteArc': '정면 기준 좌우로 공격할 수 있는 각도.',
+  'paramHelp.heavy.biteAccuracy': '공격 성공 확률. 매달린 {pack} 개체에겐 1.5배 (최대 0.95).',
   'paramHelp.heavy.shakeRate':
-    '매달린 호랑이를 초당 떨쳐낼 확률. 떨어진 호랑이는 최대 체력의 10% 피해.',
-  'paramHelp.heavy.bodyRadius': '호랑이가 달라붙는 접촉 거리를 정합니다. 개체 변동 없음.',
-  'paramHelp.pack.mass': '체력(HP)과 같습니다. 매달리면 이 무게만큼 T-Rex를 느리게 합니다.',
+    '매달린 {pack} 개체를 초당 떨쳐낼 확률. 떨어진 개체는 최대 체력의 10% 피해.',
+  'paramHelp.heavy.bodyRadius': '{pack} 개체가 달라붙는 접촉 거리를 정합니다. 개체 변동 없음.',
+  'paramHelp.pack.mass':
+    '체력(HP)과 같습니다. 매달린 {pack} 개체는 이 무게만큼 {heavy} 개체를 느리게 합니다.',
   'paramHelp.pack.sprintSpeed': '목표 60 m 이내에서 질주하며 스태미나를 소모합니다.',
   'paramHelp.pack.cruiseSpeed': '먼 거리 이동 · 후퇴 속도.',
   'paramHelp.pack.sprintEndurance': '스태미나가 바닥날 때까지 질주할 수 있는 시간.',
   'paramHelp.pack.latchEndurance': '물고 매달려 있을 수 있는 최대 시간.',
   'paramHelp.pack.recoveryTime': '스태미나를 0에서 가득 채우는 데 걸리는 시간.',
   'paramHelp.pack.latchChance': '접촉했을 때 물고 매달리기에 성공할 확률 (실패 시 1초 후 재시도).',
-  'paramHelp.pack.dps': '매달려 있는 동안 T-Rex에게 주는 초당 피해.',
+  'paramHelp.pack.dps':
+    '매달려 있는 동안 {heavy} 개체에게 주는 초당 피해. {heavy} 쪽 가죽 배율이 곱해집니다.',
   'paramHelp.pack.bleed':
-    'T-Rex가 매초 (누적 상처 피해 × 출혈률)만큼 체력을 잃습니다. 개체 변동 없음.',
+    '{heavy} 개체가 매초 (누적 상처 피해 × 출혈률)만큼 체력을 잃습니다. 개체 변동 없음.',
   'paramHelp.pack.morale': '0.2 아래로 떨어지면 도주합니다 (사기 모델 사용 시).',
   'paramHelp.pack.moraleLoss': '40 m 이내의 동료가 죽을 때마다 잃는 사기.',
 } as const;
@@ -470,38 +527,52 @@ const en: Dictionary = {
   'version.footerTitle': 'View release notes',
 
   'config.title': 'Scenario',
-  'config.presets': 'Presets',
-  'preset.default': '10 vs 100 (default)',
-  'preset.1v100': '1 vs 100',
-  'preset.1v10': '1 vs 10',
-  'preset.10v1000': '10 vs 1000',
-  'preset.1v1': '1 vs 1',
-  'preset.hint': 'Presets change only the head counts and run count; other settings are kept.',
+  'config.presets': 'Matchup presets',
+  'preset.default': '{label} (default)',
+  'preset.hint':
+    'Sets both species, the head counts and the number of runs, and resets the ranges to those species’ presets. Other settings are kept.',
+  'team.one': '{n} {name}',
+  'team.other': '{n} {name}',
 
-  'field.heavyCount': 'T-Rex count',
-  'field.packCount': 'Tiger count',
+  'field.heavyCount': '{Heavy} count',
+  'field.packCount': '{Pack} count',
   'field.runs': 'Monte Carlo runs',
   'field.seed': 'Seed',
   'field.arenaSize': 'Arena side (m)',
   'field.maxTime': 'Time limit (s)',
   'field.sampling': 'Sampling',
   'field.individualCV': 'Individual variation (CV)',
-  'field.packTactic': 'Tiger tactic',
+  'field.packTactic': 'Pack tactic',
   'field.heavySpecies': 'Large animal',
   'field.packSpecies': 'Pack animal',
+  'help.heavySpecies':
+    'The large animals that fight alone. Changing it resets this side’s ranges to the species’ presets.',
+  'help.packSpecies':
+    'The animals that attack in numbers. Changing it resets this side’s ranges to the species’ presets.',
+  'species.group.extant': 'Living species',
+  'species.group.extinct': 'Extinct species',
+  'matchup.label': 'Match-up type',
+  'matchup.documented': 'Documented in the wild',
+  'matchup.neverMet': 'These species never met',
+  'matchup.undocumented': 'No recorded encounters',
+  'matchup.sources': 'Sources',
+  'toast.rangesReset': 'Ranges reset to the {name} presets.',
+  'toast.presetApplied': 'Applied the {label} preset.',
+  'toast.undo': 'Undo',
+  'toast.restored': 'Previous settings restored.',
   'field.morale': 'Morale & routing',
-  'help.heavyCount': 'Number of adult Tyrannosaurus rex.',
-  'help.packCount': 'Number of adult tigers.',
+  'help.heavyCount': 'Number of adult {heavyPl}.',
+  'help.packCount': 'Number of adult {packPl}.',
   'help.runs': 'More runs give narrower confidence intervals.',
   'help.seed': 'The same seed and settings reproduce the results exactly.',
-  'help.arenaSize': 'Square arena. Routed tigers that cross the edge leave the fight.',
+  'help.arenaSize': 'Square arena. Routed {packPl} that cross the edge leave the fight.',
   'help.maxTime': 'If neither side has won by then, the battle is a draw.',
   'help.sampling': 'LHS covers the parameter space more evenly for the same number of runs.',
   'help.individualCV':
     "Within a run, each animal's traits are multiplied by N(1, CV), truncated to 0.5–1.5.",
   'help.packTactic':
-    'Flank: avoid the jaws and close in from the side or rear. Direct: charge straight at the nearest T-Rex.',
-  'help.morale': 'When off, tigers never rout because of low morale.',
+    'Flank: avoid the frontal attack cone and close in from the side or rear. Direct: charge straight at the nearest {heavy}.',
+  'help.morale': 'When off, {packPl} never rout because of low morale.',
   'seed.randomize': 'Random',
   'seed.randomizeAria': 'Generate a random seed',
   'sampling.lhs': 'LHS (Latin hypercube)',
@@ -512,15 +583,15 @@ const en: Dictionary = {
 
   'advanced.title': 'Advanced: model parameter ranges',
   'advanced.intro':
-    'Each parameter is sampled per run from a triangular (min · mode · max) distribution. See MODEL.md for the sources behind the defaults.',
+    'Each parameter is sampled per run from a triangular (min · mode · max) distribution. The defaults are the selected species’ presets; the letter next to each name shows its evidence (L literature, D derived from literature, S speculative, U unverified). Sources are on the parameter reference page and in docs/SPECIES.md.',
   'advanced.param': 'Parameter',
   'advanced.min': 'Min',
   'advanced.mode': 'Mode',
   'advanced.max': 'Max',
   'advanced.unit': 'Unit',
-  'advanced.reset': 'Default',
-  'advanced.resetRowAria': 'Reset {name} to its default range',
-  'advanced.resetAll': 'Reset all parameters',
+  'advanced.reset': 'Preset',
+  'advanced.resetRowAria': 'Reset {name} to the species preset',
+  'advanced.resetAll': 'Reset all to species presets',
   'advanced.modified': '{n} modified',
   'advanced.inputAria': '{name} {which}',
   'species.trex': 'Tyrannosaurus rex',
@@ -531,6 +602,27 @@ const en: Dictionary = {
   'species.lion': 'Lion',
   'species.wolf': 'Gray wolf',
   'species.hyena': 'Spotted hyena',
+  'species.trex.one': 'T-Rex',
+  'species.trex.other': 'T-Rex',
+  'species.elephant.one': 'elephant',
+  'species.elephant.other': 'elephants',
+  'species.buffalo.one': 'buffalo',
+  'species.buffalo.other': 'buffalo',
+  'species.brownBear.one': 'brown bear',
+  'species.brownBear.other': 'brown bears',
+  'species.tiger.one': 'tiger',
+  'species.tiger.other': 'tigers',
+  'species.lion.one': 'lion',
+  'species.lion.other': 'lions',
+  'species.wolf.one': 'wolf',
+  'species.wolf.other': 'wolves',
+  'species.hyena.one': 'hyena',
+  'species.hyena.other': 'hyenas',
+  'evidence.L': 'Literature value',
+  'evidence.D': 'Derived from literature',
+  'evidence.S': 'Speculative',
+  'evidence.U': 'Unverified popular figure',
+  'evidence.aria': 'Evidence: {tag}',
 
   'cost.capped': 'Runs will be reduced to {n} to stay within the work budget.',
   'cost.heavy':
@@ -553,38 +645,37 @@ const en: Dictionary = {
   'results.empty':
     'Review the settings and press “Run simulation”. Everything is computed inside this browser.',
   'results.stale': 'Settings changed — the results below are for the previous settings.',
-  'verdict.heavy': 'T-Rex win probability {p} (95% CI {lo}–{hi})',
-  'verdict.pack': 'Tiger win probability {p} (95% CI {lo}–{hi})',
+  'verdict.heavy': '{Heavy} win probability {p} (95% CI {lo}–{hi})',
+  'verdict.pack': '{Pack} win probability {p} (95% CI {lo}–{hi})',
   'verdict.draw': 'Draw (time limit) probability {p} (95% CI {lo}–{hi})',
-  'verdict.basis':
-    '{heavy} T-Rex vs {pack} tigers · {n} runs · seed {seed} · computed in {elapsed}',
+  'verdict.basis': '{heavyTeam} vs {packTeam} · {n} runs · seed {seed} · computed in {elapsed}',
 
-  'outcome.heavy': 'T-Rex wins',
-  'outcome.pack': 'Tigers win',
+  'outcome.heavy': '{Heavy} victory',
+  'outcome.pack': '{Pack} victory',
   'outcome.draw': 'Draw',
   'stat.ci': '95% CI {lo}–{hi}',
   'stat.duration': 'Battle duration (median)',
   'stat.durationSub': '5–95%: {p5} – {p95}',
-  'stat.survivors': 'T-Rex survivors (mean)',
+  'stat.survivors': '{Heavy} survivors (mean)',
   'stat.ofN': 'of {n}',
-  'stat.killed': 'Tigers killed (mean)',
-  'stat.routed': 'Tigers routed (mean)',
+  'stat.killed': '{PackPl} killed (mean)',
+  'stat.routed': '{PackPl} routed (mean)',
   'stat.exchange': 'Exchange ratio',
-  'stat.exchangeSub': 'tigers killed per T-Rex lost',
-  'stat.exchangeInf': 'no T-Rex lost',
+  'stat.exchangeSub': '{packPl} killed per {heavy} lost',
+  'stat.exchangeInf': 'no {heavy} lost',
   'stat.exchangeNone': 'no deaths',
 
   'chart.outcome': 'Outcome probability with 95% CI',
   'chart.duration': 'Battle duration distribution',
-  'chart.survivors': 'T-Rex survivors distribution',
+  'chart.survivors': '{Heavy} survivors distribution',
   'chart.sensitivity': 'Sensitivity (Spearman correlation, top 10)',
   'chart.sensitivityHelp':
-    'Rank correlation between each parameter and the “T-Rex advantage” (T-Rex HP fraction left − fraction of tigers still fighting). Positive: higher values favour the T-Rex.',
-  'chart.favHeavy': 'favours T-Rex →',
-  'chart.favPack': '← favours tigers',
+    'Rank correlation between each parameter and the “{heavy} advantage” ({heavy} HP fraction left − fraction of {packPl} still fighting). Positive: higher values favour the {heavyPl}.',
+  'chart.favHeavy': 'favours {heavyPl} →',
+  'chart.favPack': '← favours {packPl}',
   'chart.runs': 'runs',
   'chart.seconds': 's',
-  'chart.heavyAlive': 'T-Rex alive',
+  'chart.heavyAlive': '{HeavyPl} alive',
   'chart.binTip': '{range}: {count} runs ({pct})',
   'chart.outcomeTip': '{name}: {p} (95% CI {lo}–{hi})',
   'chart.rhoTip': '{name}: ρ = {rho}',
@@ -594,7 +685,7 @@ const en: Dictionary = {
   'replay.loading': 'Re-simulating the battle…',
   'replay.representative': 'Representative battle',
   'replay.random': 'Random battle',
-  'replay.repNote': 'the battle closest to the median T-Rex advantage',
+  'replay.repNote': 'the battle closest to the median {heavy} advantage',
   'replay.randomNote': 'a randomly picked battle',
   'replay.runInfo': 'Run #{run} · {outcome} · {duration}',
   'replay.play': 'Play',
@@ -603,17 +694,18 @@ const en: Dictionary = {
   'replay.zoom': 'View',
   'replay.zoomAuto': 'Auto (follow the fight)',
   'replay.zoomFit': 'Whole arena',
-  'replay.zoom2': '2× on T-Rex',
-  'replay.zoom4': '4× on T-Rex',
+  'replay.zoom2': '2× on {heavyPl}',
+  'replay.zoom4': '4× on {heavyPl}',
   'replay.scrub': 'Playback position',
   'replay.canvasLabel':
-    'Battle replay animation: triangles are T-Rex; tigers are dots (approaching), diamonds (latched), rings (recovering), arrows (routed) or crosses (dead)',
+    'Battle replay animation: triangles are {heavyPl}; {packPl} are dots (approaching), diamonds (latched), rings (recovering), arrows (routed) or crosses (dead)',
   'replay.legendLabel': 'Replay legend',
-  'replay.legendHeavy': 'T-Rex',
-  'replay.legendHp': 'Wounded T-Rex (filled area = HP left)',
-  'replay.legendHeavyDead': 'Dead T-Rex',
-  'replay.legendBite': 'Bite reach (filled on a hit; outline only at high speed)',
-  'replay.lodNote': 'Zoomed out, tigers are small squares. Zoom in to see their shapes.',
+  'replay.legendHeavy': '{Heavy}',
+  'replay.legendHp': 'Wounded {heavy} (filled area = HP left)',
+  'replay.legendHeavyDead': 'Dead {heavy}',
+  'replay.legendPack': '{PackPl}',
+  'replay.legendBite': 'Attack reach (filled on a hit; outline only at high speed)',
+  'replay.lodNote': 'Zoomed out, {packPl} are small squares. Zoom in to see their shapes.',
   'replay.reducedNote':
     'After {time} the event log was full, so the replay joins stored samples: state changes may show late or not at all.',
   'replay.failed': 'Could not load the replay: {msg}',
@@ -622,9 +714,9 @@ const en: Dictionary = {
   'replay.skipContact': 'Skip to contact',
   'replay.valueText': '{cur} of {total}',
   'replay.scene':
-    '{time}: {alive} of {total} T-Rex alive. Tigers: {approach} approaching, {latched} latched, {recover} recovering, {out} fled or gone, {dead} dead',
+    '{time}: {alive} of {total} {heavyPl} alive. {PackPl}: {approach} approaching, {latched} latched, {recover} recovering, {out} fled or gone, {dead} dead',
   'replay.overviewLabel':
-    'Summary of the whole battle: lines are paths, diamonds mark where tigers latched, crosses where tigers died, triangles the final T-Rex positions',
+    'Summary of the whole battle: lines are paths, diamonds mark where {packPl} latched, crosses where {packPl} died, triangles the final {heavy} positions',
   'replay.overviewNote':
     'Reduced motion is on, so the whole battle is shown in one picture (lines: paths, diamonds: latches, crosses: deaths). Press Play to animate it without effects.',
   'replay.announceSpeed': 'Playback speed {speed}',
@@ -656,7 +748,7 @@ const en: Dictionary = {
   'time.hourMin': '{h} h {m} min',
 
   'footer.disclaimer':
-    'T. rex and tigers never coexisted, and every interaction rule is an assumption. This educational model shows how the outcome depends on uncertain inputs; it does not predict a real fight, and this site does not promote or endorse real animal fighting.',
+    'Every match-up is an educational model. T. rex never lived alongside any of the other species, match-ups seen in the wild are heavily simplified, and every interaction rule is an assumption. The model shows how the outcome depends on uncertain inputs; it does not predict a real fight, and this site does not promote or endorse real animal fighting.',
   'footer.linksLabel': 'Site information and links',
   'footer.about': 'About & contact',
   'footer.privacy': 'Privacy',
@@ -669,10 +761,10 @@ const en: Dictionary = {
 
   'intro.title': 'What is the T-Rex vs Tiger Simulator?',
   'intro.lead':
-    'What happens if N Tyrannosaurus rex meet M tigers on an open field? This free educational tool uses that question to let you try the Monte Carlo method yourself. Instead of a single fight, it repeats the battle hundreds of times with uncertain, literature-based traits and shows the win probabilities together with their uncertainty.',
+    'What happens if N Tyrannosaurus rex meet M tigers on an open field? This free educational tool uses that question to let you try the Monte Carlo method yourself, and it also offers match-ups observed in the wild, such as elephants and lions or brown bears and wolves. Instead of a single fight, it repeats the battle hundreds of times with uncertain, literature-based traits and shows the win probabilities together with their uncertainty.',
   'intro.howTitle': 'How does it work?',
   'intro.how1':
-    'Choose the head counts, the tiger tactic and the number of runs, and optionally edit the ranges of the 22 traits.',
+    'Choose the species and head counts on both sides, the pack tactic and the number of runs, and optionally edit the ranges of the 22 traits.',
   'intro.how2':
     'Every battle draws fresh traits, such as body mass, bite force and speed, from those ranges.',
   'intro.how3':
@@ -700,7 +792,10 @@ const en: Dictionary = {
     'It repeats the same experiment many times with uncertain values drawn at random and estimates the answer from the spread of the results. The more runs, the narrower the confidence interval of the win probability.',
   'faq.q4': 'Can I share or reproduce a result?',
   'faq.a4':
-    'Yes. Copy link creates an address that holds the head counts, parameter ranges and seed. Opening that link and running it gives the same result.',
+    'Yes. Copy link creates an address that holds the species, head counts, parameter ranges and seed. Opening that link and running it gives the same result.',
+  'faq.q5': 'Which animals can I choose?',
+  'faq.a5':
+    'The large animals are Tyrannosaurus rex, the African bush elephant, the African buffalo and the brown bear; the pack animals are the tiger, the lion, the gray wolf and the spotted hyena. Match-ups observed in the wild, such as elephants and lions, buffalo and lions or brown bears and wolves, are marked, and every preset value shows its evidence level (literature, derived, speculative or unverified). Humans and domestic animals are not included.',
 
   'tour.start': 'Tutorial',
   'tour.counter': '{n} / {total}',
@@ -722,10 +817,10 @@ const en: Dictionary = {
   'tour.offer.dismiss': 'No thanks',
   'tour.welcome.title': 'Welcome to the simulator',
   'tour.welcome.body':
-    'Who wins if N Tyrannosaurus rex fight M tigers on an open field? The simulator draws uncertain, literature-based traits afresh for every battle, fights hundreds of battles and reports win probabilities with confidence intervals. Everything runs in this browser. Use the ← → keys to move and Esc to close.',
-  'tour.presets.title': 'Presets',
+    'Who wins when two species meet on an open field? The default is 10 Tyrannosaurus rex against 100 tigers, and match-ups observed in the wild are available too. The simulator draws uncertain, literature-based traits afresh for every battle, fights hundreds of battles and reports win probabilities with confidence intervals. Everything runs in this browser. Use the ← → keys to move and Esc to close.',
+  'tour.presets.title': 'Species and matchup presets',
   'tour.presets.body':
-    'Pick a common match-up in one click. A preset changes only the head counts and the number of runs; everything else stays as it is.',
+    'Choose the large animal and the pack animal from the lists at the top, or set a whole match-up with a preset. A preset sets both species, the head counts and the number of runs, and resets the ranges to those species’ presets. The badge tells you whether the match-up has been seen in the wild or the species never met.',
   'tour.counts.title': 'Head counts',
   'tour.counts.body':
     'Set how many animals fight on each side. Bigger battles take longer to compute; when a setting is heavy, a warning with the estimated time appears below.',
@@ -746,13 +841,13 @@ const en: Dictionary = {
     'The most likely outcome with its probability and 95% (Wilson) confidence interval. The cards add the probability of each outcome, the median battle duration, mean survivors, kills and routs, and the exchange ratio.',
   'tour.outcome.title': 'Outcome chart',
   'tour.outcome.body':
-    'Bars show the probability of each outcome and the thin lines its 95% confidence interval. Hover or tap for exact values. The histograms below show the distribution of battle duration and T-Rex survivors.',
+    'Bars show the probability of each outcome and the thin lines its 95% confidence interval. Hover or tap for exact values. The histograms below show the distribution of battle duration and {heavy} survivors.',
   'tour.sensitivity.title': 'Sensitivity',
   'tour.sensitivity.body':
-    'Shows which assumptions drive the outcome most. A bar to the right (positive) means larger values favour the T-Rex; to the left, the tigers. Try changing the range of a long bar under Advanced.',
+    'Shows which assumptions drive the outcome most. A bar to the right (positive) means larger values favour the {heavyPl}; to the left, the {packPl}. Try changing the range of a long bar under Advanced.',
   'tour.replay.title': 'Battle replay',
   'tour.replay.body':
-    'Re-simulates the representative battle (closest to the median T-Rex advantage) or a random one and animates it. Use play/pause, speed, view zoom and the position slider.',
+    'Re-simulates the representative battle (closest to the median {heavy} advantage) or a random one and animates it. Use play/pause, speed, view zoom and the position slider.',
   'tour.share.title': 'Share a link',
   'tour.share.body':
     'All current settings, including the seed, live in the page address. Send the link and the recipient sees the same scenario and the same results. Nothing is stored on a server.',
@@ -785,32 +880,44 @@ const en: Dictionary = {
   'param.pack.bleed': 'Bleed rate',
   'param.pack.morale': 'Initial morale',
   'param.pack.moraleLoss': 'Morale loss',
+  'param.weapon.tusk': 'Tusk and trample force',
+  'param.weapon.horn': 'Horn force',
+  'param.weapon.pawBite': 'Bite and paw force',
+  'param.attack.biteLethality': 'Attack lethality',
+  'param.attack.biteInterval': 'Attack interval',
+  'param.attack.biteReach': 'Attack reach',
+  'param.attack.biteArc': 'Attack arc (half-angle)',
+  'param.attack.biteAccuracy': 'Attack accuracy',
 
-  'paramHelp.heavy.mass': 'Equals hit points (HP). Also sets how much latched tigers slow it down.',
-  'paramHelp.heavy.speed': 'Chasing speed; reduced by the weight of latched tigers.',
+  'paramHelp.heavy.mass':
+    'Equals hit points (HP). Also sets how much latched {packPl} slow it down.',
+  'paramHelp.heavy.speed': 'Chasing speed; reduced by the weight of latched {packPl}.',
   'paramHelp.heavy.turnRate': 'Maximum rate at which it can turn its body and head.',
-  'paramHelp.heavy.biteForce': 'Damage per bite = bite force × lethality × (0.7–1.3).',
-  'paramHelp.heavy.biteLethality': 'HP of damage per kN of bite force. No individual variation.',
-  'paramHelp.heavy.biteInterval': 'Recovery time between bite attempts.',
-  'paramHelp.heavy.biteReach': 'Distance from the body centre it can bite.',
-  'paramHelp.heavy.biteArc': 'Angle either side of straight ahead in which it can bite.',
+  'paramHelp.heavy.biteForce': 'Damage per hit = force × lethality × (0.7–1.3).',
+  'paramHelp.heavy.biteLethality': 'HP of damage per kN of force. No individual variation.',
+  'paramHelp.heavy.biteInterval': 'Recovery time between attacks.',
+  'paramHelp.heavy.biteReach': 'Distance from the body centre it can strike.',
+  'paramHelp.heavy.biteArc': 'Angle either side of straight ahead in which it can strike.',
   'paramHelp.heavy.biteAccuracy':
-    'Chance a bite connects; ×1.5 against a latched tiger (max 0.95).',
+    'Chance an attack connects; ×1.5 against a latched {pack} (max 0.95).',
   'paramHelp.heavy.shakeRate':
-    'Per-second chance of throwing off a latched tiger, which takes 10% of its max HP as damage.',
-  'paramHelp.heavy.bodyRadius': 'Sets the contact distance for latching. No individual variation.',
-  'paramHelp.pack.mass': 'Equals hit points (HP). A latched tiger slows the T-Rex by its weight.',
+    'Per-second chance of throwing off a latched {pack}, which takes 10% of its max HP as damage.',
+  'paramHelp.heavy.bodyRadius':
+    'Sets the contact distance for a latching {pack}. No individual variation.',
+  'paramHelp.pack.mass':
+    'Equals hit points (HP). A latched {pack} slows the {heavy} by its weight.',
   'paramHelp.pack.sprintSpeed': 'Used within 60 m of the target; drains stamina.',
   'paramHelp.pack.cruiseSpeed': 'Speed when far away or falling back.',
   'paramHelp.pack.sprintEndurance': 'Seconds of sprinting before stamina runs out.',
   'paramHelp.pack.latchEndurance': 'How long it can hang on before tiring.',
   'paramHelp.pack.recoveryTime': 'Time to refill stamina from empty to full.',
   'paramHelp.pack.latchChance': 'Chance to latch on when in contact (retry after 1 s on failure).',
-  'paramHelp.pack.dps': 'Damage dealt to the T-Rex per second while latched.',
+  'paramHelp.pack.dps':
+    'Damage dealt to the {heavy} per second while latched, times the {heavy}’s hide multiplier.',
   'paramHelp.pack.bleed':
-    'The T-Rex loses (accumulated wound damage × rate) HP every second. No individual variation.',
-  'paramHelp.pack.morale': 'The tiger routs when morale drops below 0.2 (morale model on).',
-  'paramHelp.pack.moraleLoss': 'Morale lost whenever a tiger within 40 m is killed.',
+    'The {heavy} loses (accumulated wound damage × rate) HP every second. No individual variation.',
+  'paramHelp.pack.morale': 'Routs when morale drops below 0.2 (morale model on).',
+  'paramHelp.pack.moraleLoss': 'Morale lost whenever a packmate within 40 m is killed.',
 };
 
 export const DICTIONARIES: Readonly<Record<Lang, Dictionary>> = { ko, en };
@@ -836,16 +943,99 @@ export function getLang(): Lang {
   return current;
 }
 
+/** The species pair whose names fill `{heavy}`, `{Pack}`, … in messages (see `speciesVars`). */
+export interface NamePair {
+  heavySpecies: HeavySpeciesId;
+  packSpecies: PackSpeciesId;
+}
+
+let names: NamePair = { heavySpecies: DEFAULT_HEAVY, packSpecies: DEFAULT_PACK };
+
+/**
+ * Set the species named by messages that do not pass their own names: the results, charts and
+ * replay of the shown run. The form passes its own (`speciesVars`).
+ */
+export function setNamePair(pair: NamePair): void {
+  names = { heavySpecies: pair.heavySpecies, packSpecies: pair.packSpecies };
+}
+
+export function getNamePair(): NamePair {
+  return { ...names };
+}
+
+const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Short species name, singular (`one`) or plural (`other`), in the current language. */
+export function speciesShort(
+  id: SpeciesId,
+  form: 'one' | 'other' = 'one',
+  lang: Lang = current,
+): string {
+  return DICTIONARIES[lang][`species.${id}.${form}`];
+}
+
+/** Full species name (pickers, table headings). */
+export function speciesName(id: SpeciesId): string {
+  return DICTIONARIES[current][`species.${id}`];
+}
+
+/**
+ * Name placeholders for a species pair: `{heavy}` short singular, `{heavyPl}` plural, and
+ * capitalised `{Heavy}`/`{HeavyPl}` (the same for `pack`). Korean has no plural or case, so all
+ * four are the same there; messages therefore never put a particle after a name.
+ */
+export function speciesVars(pair: NamePair = names, lang: Lang = current): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [role, id] of [
+    ['heavy', pair.heavySpecies],
+    ['pack', pair.packSpecies],
+  ] as const) {
+    const one = speciesShort(id, 'one', lang);
+    const other = speciesShort(id, 'other', lang);
+    const Role = capitalize(role);
+    out[role] = one;
+    out[`${role}Pl`] = other;
+    out[Role] = capitalize(one);
+    out[`${Role}Pl`] = capitalize(other);
+  }
+  return out;
+}
+
+/** "10 T-Rex" / "T-Rex 10마리": a head count with the right plural form. */
+export function teamLabel(id: SpeciesId, n: number): string {
+  const rule = new Intl.PluralRules(locale()).select(n) === 'one' ? 'one' : 'other';
+  return t(`team.${rule}`, { n: n.toLocaleString(locale()), name: speciesShort(id, rule) });
+}
+
 export function t(key: MsgKey, vars?: Vars): string {
-  return interpolate(DICTIONARIES[current][key], vars);
+  const template = DICTIONARIES[current][key];
+  // Name placeholders default to the current name pair; explicit vars win.
+  return interpolate(template, template.includes('{') ? { ...speciesVars(), ...vars } : vars);
 }
 
-export function paramLabel(id: ParamId): string {
-  return t(`param.${id}`);
+/** The label key of a parameter, with the heavy species' weapon overrides (docs/SPECIES.md). */
+export function paramLabelKey(id: ParamId, weapon: Weapon = 'bite'): MsgKey {
+  if (weapon !== 'bite') {
+    if (id === 'heavy.biteForce') return `param.weapon.${weapon}`;
+    if (
+      id === 'heavy.biteLethality' ||
+      id === 'heavy.biteInterval' ||
+      id === 'heavy.biteReach' ||
+      id === 'heavy.biteArc' ||
+      id === 'heavy.biteAccuracy'
+    ) {
+      return `param.attack.${id.slice('heavy.'.length) as 'biteLethality'}`;
+    }
+  }
+  return `param.${id}`;
 }
 
-export function paramHelp(id: ParamId): string {
-  return t(`paramHelp.${id}`);
+export function paramLabel(id: ParamId, weapon?: Weapon): string {
+  return t(paramLabelKey(id, weapon));
+}
+
+export function paramHelp(id: ParamId, vars?: Vars): string {
+  return t(`paramHelp.${id}`, vars);
 }
 
 /** BCP 47 locale for number formatting. */
