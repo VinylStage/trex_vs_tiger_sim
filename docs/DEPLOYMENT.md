@@ -58,7 +58,7 @@ The deployed site is static. Cloudflare Pages only serves the files Vite writes 
 
 Nothing else is deployed:
 
-- There is no `functions/` directory and no `_worker.js`, so no request runs server-side code.
+- The only server-side code is the result-preview Pages Function in `functions/`, which `_routes.json` limits to `/r/*` and `/en/r/*` ([below](#pages-function-r-previews)). There is no `_worker.js`; every other request is a static asset.
 - There are no API calls, cookies, analytics or third-party origins.
 - All Monte Carlo compute happens in the visitor's browser. [ADR-0001](adr/0001-client-side-compute.md) explains why: Workers Free allows 10 ms of CPU per request, and one battle takes longer than that.
 - The hosting choice is in [ADR-0002](adr/0002-cloudflare-pages-git-integration.md). It also covers Cloudflare's 2026 advice to start new projects on Workers static assets. Pages keeps working and has no announced end-of-life, so this project stays on Pages.
