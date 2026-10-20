@@ -228,13 +228,18 @@ function glyphField(
     const tx = heavyX + (1 - v * v) * 30 + (rnd() - 0.5) * 12;
     triangle(ctx, tx, ty, tri);
   }
+  // A loose, uneven cloud ahead of the heavy line: rejection-sampled with a minimum spacing and
+  // a density that grows to the right, so it never closes into an outline or a letter.
   ctx.fillStyle = CARD_PALETTE.pack;
-  for (let i = 0; i < nPack; i++) {
-    const a = (rnd() - 0.5) * Math.PI * 1.5;
-    const r = (0.45 + rnd() * 0.5) * Math.min(w * 0.42, h * 0.5);
-    const px = heavyX + 70 + Math.cos(a) * r * 1.35;
-    const py = cy + Math.sin(a) * r * 0.9;
-    if (px < x + 16 || px > x + w - 16 || py < y + 16 || py > y + h - 16) continue;
+  const left = heavyX + 70;
+  const span = x + w - 24 - left;
+  const placed: [number, number][] = [];
+  for (let guard = 0; placed.length < nPack && guard < 6000; guard++) {
+    const px = left + Math.pow(rnd(), 0.8) * span;
+    const py = y + 22 + rnd() * (h - 44);
+    if (rnd() > 0.35 + 0.65 * ((px - left) / span)) continue;
+    if (placed.some(([qx, qy]) => Math.hypot(qx - px, qy - py) < 26)) continue;
+    placed.push([px, py]);
     dot(ctx, px, py, 8);
   }
   ctx.restore();
