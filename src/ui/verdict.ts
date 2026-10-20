@@ -30,12 +30,24 @@ export function formatShare(k: number, n: number): string {
   return formatPct(p, digits);
 }
 
+/**
+ * An observed share in a data table (a histogram bin): exactly none or all of the runs print
+ * 0% / 100%, anything else as `formatShare` (never rounded onto 0% or 100%).
+ */
+export function formatCountShare(k: number, n: number): string {
+  if (n <= 0) return '—';
+  if (k <= 0) return formatPct(0, 0);
+  if (k >= n) return formatPct(1, 0);
+  return formatShare(k, n);
+}
+
 /** Wilson bounds of 0/n or n/n land within rounding error of 0 or 1. */
 const EDGE = 1e-9;
 
 /**
  * An interval bound with the share's precision. Bounds of 0 or 1 print as 0% / 100%; any other
- * bound gets one or two more decimals rather than rounding to them.
+ * bound gets one or two more decimals rather than rounding to them, and one still within 0.005
+ * points of 0% or 100% after two decimals prints as "< 0.01%" / "> 99.99%".
  */
 export function formatBound(x: number, n: number): string {
   if (x <= EDGE) return formatPct(0, 0);
@@ -47,6 +59,10 @@ export function formatBound(x: number, n: number): string {
     if (rounded > 0 && rounded < 1) break;
     digits++;
   }
+  const step = 10 ** -digits / 100;
+  const rounded = Math.round(x / step) * step;
+  if (rounded <= 0) return `< ${formatPct(step, digits)}`;
+  if (rounded >= 1) return `> ${formatPct(1 - step, digits)}`;
   return formatPct(x, digits);
 }
 

@@ -31,10 +31,18 @@ describe('chart data tables', () => {
     initLang('en');
     const table = histogramTable({ min: 0, max: 30, counts: [3, 0, 1] }, (lo, hi) => `${lo}–${hi}`);
     expect(table.rows).toEqual([
-      ['0–10', '3', '75.0%'],
-      ['10–20', '0', '0.0%'],
-      ['20–30', '1', '25.0%'],
+      ['0–10', '3', '75%'],
+      ['10–20', '0', '0%'],
+      ['20–30', '1', '25%'],
     ]);
+  });
+
+  it('never rounds a bin share onto 0% or 100%', () => {
+    initLang('en');
+    const table = histogramTable({ min: 0, max: 20, counts: [4999, 1] }, String);
+    expect(table.rows.map((r) => r[2])).toEqual(['> 99.9%', '< 0.1%']);
+    const all = histogramTable({ min: 0, max: 20, counts: [0, 50] }, String);
+    expect(all.rows.map((r) => r[2])).toEqual(['0%', '100%']);
   });
 
   it('lists the plotted sensitivities with sign and the side they favour', () => {

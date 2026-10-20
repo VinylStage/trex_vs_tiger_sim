@@ -4,7 +4,7 @@ import { histogram, type Histogram } from '../sim/stats';
 import { h } from './dom';
 import { formatFixed, formatInt, formatNum, formatPct } from './format';
 import { t, type MsgKey } from './i18n';
-import { formatBound, formatShare, outcomes } from './verdict';
+import { formatBound, formatCountShare, formatShare, outcomes } from './verdict';
 
 /** Colors and font read from CSS custom properties, so charts follow the light/dark theme. */
 export interface Theme {
@@ -543,7 +543,7 @@ export function paintHistogram(hist: Histogram, opts: HistogramOptions): Painter
         text: t('chart.binTip', {
           range: opts.binLabel(lo, lo + binW),
           count: formatNum(c, 0),
-          pct: formatPct(c / total),
+          pct: formatCountShare(c, total),
         }),
       });
     });
@@ -671,7 +671,7 @@ export function histogramTable(
     head: [t('table.range'), t('table.runs'), t('table.share')],
     rows: hist.counts.map((c, i) => {
       const lo = hist.min + i * binW;
-      return [binLabel(lo, lo + binW), formatInt(c), total > 0 ? formatPct(c / total) : '—'];
+      return [binLabel(lo, lo + binW), formatInt(c), formatCountShare(c, total)];
     }),
   };
 }

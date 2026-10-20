@@ -4,6 +4,7 @@ import { wilson } from '../src/sim/stats';
 import { initLang, setNamePair } from '../src/ui/i18n';
 import {
   formatBound,
+  formatCountShare,
   formatShare,
   headline,
   leadingOutcome,
@@ -73,6 +74,32 @@ describe('formatBound', () => {
     expect(formatBound(0.4321, 500)).toBe('43%');
     expect(formatBound(0.4321, 5000)).toBe('43.2%');
   });
+
+  it('prints bounds within 0.005 points of 0% or 100% as < 0.01% / > 99.99%', () => {
+    initLang('en');
+    expect(formatBound(0.99996, 20000)).toBe('> 99.99%');
+    expect(formatBound(0.00004, 20000)).toBe('< 0.01%');
+    initLang('ko');
+    expect(formatBound(0.99996, 20000)).toBe('> 99.99%');
+    expect(formatBound(0.00004, 20000)).toBe('< 0.01%');
+  });
+
+  it('never prints 0.00% or 100.00% for any outcome of 20,000 runs', () => {
+    initLang('en');
+    const n = 20000;
+    for (let k = 0; k <= n; k++) {
+      const iv = wilson(k, n);
+      for (const [x, s] of [
+        [iv.lo, formatBound(iv.lo, n)],
+        [iv.hi, formatBound(iv.hi, n)],
+      ] as const) {
+        if (x > 1e-9 && x < 1 - 1e-9) expect(s).not.toMatch(/^(0(\.0+)?|100(\.0+)?)%$/);
+        expect(s).not.toMatch(/^(0\.0+|100\.0+)%$/);
+      }
+    }
+    // The case from review: 19,999 of 20,000.
+    expect(formatBound(wilson(19999, n).hi, n)).toBe('> 99.99%');
+  });
 });
 
 describe('headline', () => {
@@ -110,5 +137,16 @@ describe('headline', () => {
     expect(line).toContain('number of runs');
     initLang('ko');
     expect(precisionLine(leadingOutcome(agg(250, 250, 0)))).toContain('46%–54%');
+  });
+});
+
+describe('formatCountShare', () => {
+  it('prints exactly none or all of the runs as 0% / 100% and nothing else onto them', () => {
+    initLang('en');
+    expect(formatCountShare(0, 500)).toBe('0%');
+    expect(formatCountShare(500, 500)).toBe('100%');
+    expect(formatCountShare(499, 500)).toBe('> 99%');
+    expect(formatCountShare(1, 500)).toBe('< 1%');
+    expect(formatCountShare(3, 0)).toBe('—');
   });
 });
