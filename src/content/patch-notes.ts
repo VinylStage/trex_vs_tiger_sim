@@ -59,6 +59,47 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.12',
+    date: '2026-10-20',
+    title: {
+      ko: '뭉치면 강해진다: 무리 버프 등장 🐺',
+      en: 'Stronger together: the pack buff arrives 🐺',
+    },
+    prs: [100],
+    items: [
+      {
+        cat: 'new',
+        refs: [50],
+        ko: '자유 대결에 무리 버프가 들어왔습니다! 사자 · 늑대 · 하이에나 · 호모 에렉투스가 한 진영에 2마리 이상이면 진영 카드에 ‘무리 버프 적용’ 배지가 붙어요.',
+        en: 'Free matchups now have a pack buff! Put two or more lions, wolves, hyenas or Homo erectus on a side and its card lights up with a “Pack buff active” badge.',
+      },
+      {
+        cat: 'new',
+        refs: [50],
+        ko: '‘무리 버프 규칙’을 펼치면 언제 켜지고 꺼지는지, 다섯 가지 효과가 무엇인지 한눈에 볼 수 있어요. 막연한 보너스가 아니라 정해진 규칙입니다.',
+        en: 'Open “Pack-buff rules” to see exactly when the buff switches on and off and what its five effects do. Real rules, not a vague bonus.',
+      },
+      {
+        cat: 'new',
+        refs: [50],
+        ko: '협동 접근 · 공동 목표 · 집단 매달리기 · 사기 지원 · 교대, 다섯 효과를 하나씩 켜고 끌 수 있습니다. 설정은 공유 링크에도 그대로 담겨요.',
+        en: 'Coordinated approach, shared target, group latching, morale support and relief: switch each one on or off, and your choice travels in the share link.',
+      },
+      {
+        cat: 'new',
+        refs: [50],
+        ko: '결과 카드에 진영별 ‘무리 버프 활성’ 시간이 나옵니다. 무리가 얼마나 오래 똘똘 뭉쳐 싸웠는지 확인해 보세요.',
+        en: 'Results now show how much of the fight each side spent with its pack buff on, so you can see how long the pack held together.',
+      },
+      {
+        cat: 'improved',
+        refs: [50],
+        ko: '호랑이, 불곰, 티라노처럼 혼자 사는 종은 아무리 많아도 각자 싸웁니다. 같은 상대에게 몰리면 오히려 서로 방해가 돼요.',
+        en: 'Loners like tigers, brown bears and T. rex fight on their own however many you bring, and crowding one target only gets them in each other’s way.',
+      },
+    ],
+  },
+  {
     version: '0.2.11',
     date: '2026-10-20',
     title: {
