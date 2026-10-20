@@ -126,7 +126,7 @@ Even so, with an active buff a free agent-step costs more than a legacy one: per
 
 The non-social rows (tigers) re-measured on the same run: 0.93, 0.61 and 0.44.
 
-**Regression test.** `tests/free-perf.test.ts` runs the 10 v 100 comparison in every `npm test`, once with tigers and once with wolves and the buff on, and fails if the free engine costs more than 1.5× the legacy engine per (weighted) agent-step (retried twice, so only a sustained slowdown under full-suite load fails it). Both engines run in the same process, alternately, so machine load affects both alike.
+**Regression test.** `tests/free-perf.test.ts` has two halves. In every `npm test` it checks the deterministic part of the claim: `freeWorkEstimate` counts the same agent-steps as `workEstimate` for the same matchup (and exactly `FREE_WORK_WEIGHT_BUFF` times as many with an active pack buff), and seeded 10 v 100 batches (tigers, and wolves with the buff on) never simulate more (weighted) agent-steps than the budget counted. The timing gates (the free engine costs at most 1.5× the legacy engine per agent-step at 10 v 100 with tigers, and per weighted agent-step with wolves and the buff on; median of 7 interleaved rounds after a warm-up) run only with `BENCH=1 npx vitest run tests/free-perf.test.ts`: wall time is not deterministic, and in the default suite a single slow round on a loaded machine failed them (#82). Run the gates whenever `src/sim/free/engine.ts` changes.
 
 ## Not changed
 
