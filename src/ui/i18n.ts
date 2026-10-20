@@ -145,8 +145,17 @@ const ko = {
   'replay.zoom2': 'T-Rex 중심 2배',
   'replay.zoom4': 'T-Rex 중심 4배',
   'replay.scrub': '재생 위치',
-  'replay.canvasLabel': '전투 재생 애니메이션: 삼각형은 T-Rex, 점은 호랑이',
-  'replay.legendTrex': 'T-Rex (색 = 남은 체력)',
+  'replay.canvasLabel':
+    '전투 재생 애니메이션: 삼각형은 T-Rex, 호랑이는 상태에 따라 점(접근), 마름모(매달림), 고리(회복), 화살표(도주), ×(사망)로 표시합니다',
+  'replay.legendLabel': '재생 범례',
+  'replay.legendTrex': 'T-Rex',
+  'replay.legendHp': '다친 T-Rex (채운 면적 = 남은 체력)',
+  'replay.legendTrexDead': '쓰러진 T-Rex',
+  'replay.legendBite': '물기 범위 (명중하면 채워짐)',
+  'replay.lodNote':
+    '멀리서 볼 때는 호랑이를 작은 사각형으로 그려 상태를 색과 크기로만 구분합니다. 확대하면 모양이 보입니다.',
+  'replay.reducedNote':
+    '{time} 이후는 이벤트 기록 한도를 넘어, 저장해 둔 표본 사이를 이어서 그립니다. 상태 변화가 늦게 보이거나 빠질 수 있습니다.',
   'replay.failed': '재생을 불러오지 못했습니다: {msg}',
   'state.approach': '접근',
   'state.latched': '매달림',
@@ -356,8 +365,17 @@ const en: Dictionary = {
   'replay.zoom2': '2× on T-Rex',
   'replay.zoom4': '4× on T-Rex',
   'replay.scrub': 'Playback position',
-  'replay.canvasLabel': 'Battle replay animation: triangles are T-Rex, dots are tigers',
-  'replay.legendTrex': 'T-Rex (colour = HP left)',
+  'replay.canvasLabel':
+    'Battle replay animation: triangles are T-Rex; tigers are dots (approaching), diamonds (latched), rings (recovering), arrows (routed) or crosses (dead)',
+  'replay.legendLabel': 'Replay legend',
+  'replay.legendTrex': 'T-Rex',
+  'replay.legendHp': 'Wounded T-Rex (filled area = HP left)',
+  'replay.legendTrexDead': 'Dead T-Rex',
+  'replay.legendBite': 'Bite reach (filled on a hit)',
+  'replay.lodNote':
+    'Zoomed out, tigers are small squares and their state shows only as colour and size. Zoom in to see the shapes.',
+  'replay.reducedNote':
+    'After {time} the event log was full, so the replay only joins stored samples: state changes may show late or not at all.',
   'replay.failed': 'Could not load the replay: {msg}',
   'state.approach': 'Approaching',
   'state.latched': 'Latched',
