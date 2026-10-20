@@ -25,6 +25,7 @@ import {
   type PackSpeciesId,
 } from '../sim/species';
 import { pagePath } from '../pages/routes';
+import { announce } from './announce';
 import { costSummary, isCostOk } from './cost';
 import { clear, h, uniqueId } from './dom';
 import { formatDuration, formatNum } from './format';
@@ -309,6 +310,8 @@ export function createConfigForm(
     notice = nextNotice;
     build();
     focusOn(focus);
+    // build() recreated the notice, so it cannot be the live region itself (#69).
+    if (nextNotice) announce(nextNotice.message);
     emit();
   }
 
@@ -460,10 +463,7 @@ export function createConfigForm(
 
   /** Offer to undo a change that discarded edited ranges. */
   function buildNotice(): HTMLElement {
-    const region = h('div', {
-      class: 'undo-notice',
-      attrs: { role: 'status', 'aria-live': 'polite' },
-    });
+    const region = h('div', { class: 'undo-notice' });
     const n = notice;
     if (!n) {
       region.hidden = true;

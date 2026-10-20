@@ -153,10 +153,33 @@ export async function shareLink(data: {
   }
 }
 
+/** Delay between emptying a live region and writing its new text. */
+export const LIVE_TEXT_DELAY_MS = 100;
+const pendingText = new WeakMap<HTMLElement, number>();
+
+/**
+ * Write `text` into a live region so that it is announced, also when it equals the current text:
+ * empty the region now and write after a short delay, a change screen readers always pick up
+ * (WCAG 4.1.3, #69). The region itself must already be in the document and rendered.
+ */
+export function setLiveText(target: HTMLElement, text: string, then?: () => void): void {
+  window.clearTimeout(pendingText.get(target));
+  target.textContent = '';
+  pendingText.set(
+    target,
+    window.setTimeout(() => {
+      pendingText.delete(target);
+      target.textContent = text;
+      then?.();
+    }, LIVE_TEXT_DELAY_MS),
+  );
+}
+
 /** A short status line that clears itself. */
 export function flash(target: HTMLElement, text: string): void {
-  target.textContent = text;
-  window.setTimeout(() => {
-    if (target.textContent === text) target.textContent = '';
-  }, 3000);
+  setLiveText(target, text, () => {
+    window.setTimeout(() => {
+      if (target.textContent === text) target.textContent = '';
+    }, 3000);
+  });
 }
