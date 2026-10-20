@@ -1,7 +1,10 @@
 import type { ScenarioConfig } from '../sim/config';
 import type { BattleTrace, RunSummary } from '../sim/engine';
+import type { FreeConfig } from '../sim/free/config';
+import type { FreeRunSummary } from '../sim/free/engine';
 import { packSummaries, type AggregateResult } from '../sim/montecarlo';
 import type { WorkerRequest, WorkerResponse } from '../workers/protocol';
+import workerUrl from '../workers/sim.worker.ts?worker&url';
 import { estimateRemainingMs, poolSize, splitRuns, type RunRange } from './chunks';
 
 export interface PoolProgress {
@@ -21,8 +24,41 @@ export class CancelledError extends Error {
 
 const PROGRESS_THROTTLE_MS = 100;
 
+/** The subset of the Trusted Types API used here (not in TypeScript's DOM lib yet). */
+interface TrustedTypesLike {
+  createPolicy(
+    name: string,
+    rules: { createScriptURL(input: string): string },
+  ): { createScriptURL(input: string): unknown };
+}
+
+/**
+ * The CSP's only Trusted Types policy (`trusted-types sim-worker`, docs/DEPLOYMENT.md). The Worker
+ * constructor is a TrustedScriptURL sink, so under `require-trusted-types-for 'script'` it needs a
+ * policy-made value. The policy accepts nothing but the bundled worker URL.
+ */
+export const WORKER_POLICY = 'sim-worker';
+
+/** `url` as the Worker constructor accepts it under Trusted Types; the plain URL elsewhere. */
+export function trustedWorkerUrl(url: string, tt: TrustedTypesLike | undefined): string {
+  if (!tt) return url;
+  const policy = tt.createPolicy(WORKER_POLICY, {
+    createScriptURL(input) {
+      if (input !== url) throw new TypeError(`${WORKER_POLICY}: unexpected URL`);
+      return input;
+    },
+  });
+  return policy.createScriptURL(url) as string;
+}
+
+let workerScript: string | undefined;
+
 function spawnWorker(): Worker {
-  return new Worker(new URL('../workers/sim.worker.ts', import.meta.url), { type: 'module' });
+  workerScript ??= trustedWorkerUrl(
+    workerUrl,
+    (globalThis as { trustedTypes?: TrustedTypesLike }).trustedTypes,
+  );
+  return new Worker(workerScript, { type: 'module' });
 }
 
 interface Chunk {
@@ -31,15 +67,16 @@ interface Chunk {
 }
 
 interface RunJob {
-  config: ScenarioConfig;
+  /** A legacy config, or a free-model one (the worker dispatches on `mode: 'free'`). */
+  config: ScenarioConfig | FreeConfig;
   queue: RunRange[];
   inFlight: Map<number, Chunk>;
   completedRuns: number;
-  summaries: RunSummary[];
+  summaries: (RunSummary | FreeRunSummary)[];
   startedAt: number;
   lastReport: number;
   onProgress: (p: PoolProgress) => void;
-  resolve: (s: RunSummary[]) => void;
+  resolve: (s: (RunSummary | FreeRunSummary)[]) => void;
   reject: (e: Error) => void;
 }
 
@@ -79,9 +116,21 @@ export class SimPool {
 
   /** Run every Monte Carlo run of `config`. Rejects with CancelledError if cancelled. */
   run(config: ScenarioConfig, onProgress: (p: PoolProgress) => void): Promise<RunSummary[]> {
+    return this.start(config, onProgress) as Promise<RunSummary[]>;
+  }
+
+  /** Run every run of a free-model config (src/sim/free) on the same workers. */
+  runFree(config: FreeConfig, onProgress: (p: PoolProgress) => void): Promise<FreeRunSummary[]> {
+    return this.start(config, onProgress) as Promise<FreeRunSummary[]>;
+  }
+
+  private start(
+    config: ScenarioConfig | FreeConfig,
+    onProgress: (p: PoolProgress) => void,
+  ): Promise<(RunSummary | FreeRunSummary)[]> {
     this.cancel();
     const chunks = splitRuns(config.runs, this.size);
-    return new Promise<RunSummary[]>((resolve, reject) => {
+    return new Promise<(RunSummary | FreeRunSummary)[]>((resolve, reject) => {
       const job: RunJob = {
         config,
         queue: chunks,

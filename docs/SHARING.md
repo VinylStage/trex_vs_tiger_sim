@@ -22,6 +22,14 @@ The DOM-free core (`config-code.ts`, `result-codec.ts`, `result-text.ts`, `messa
 - An import is shown as a preview (matchup, runs, seed, number of edited ranges) and applied only on **Apply**. It never starts a run.
 - Clipboard failures (no API, denied permission, insecure context) open a dialog with the text selected in a read-only field. The existing **Copy settings link** button (formerly "Copy link") uses the same fallback.
 
+## Free matchups (#50)
+
+Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and-share-schema-v3)) use their own payload, `src/ui/share-free.ts`:
+
+- **Settings link** `#s=` with payload **v3** and the mode marker `m: "free"`, e.g. `{"v":3,"m":"free","a":{"sp":"tiger","n":5},"b":{"sp":"lion","n":5},"runs":1000}`. Per side `sp` species and `n` count, then `p`/`bf` edited trait and pack-buff ranges, `buff` switches turned off and `g` edited global constants, diffed against the species presets and the free defaults. A v3 link opens the simulator in free mode; every other link opens classic, and v1/v2 payloads decode exactly as before (the goldens guard them).
+- **Settings code** `TVT3-<v3 payload>`. Pasting one (or a v3 link) into the classic import field switches to free mode and applies it; free mode has a "Copy settings code" button. `TVT2-` stays the classic code.
+- **Result links** (`/r/`), the result card and the text share are classic-only for now; free results get result format v2 in a follow-up.
+
 ## Result links
 
 `/r/?r=<base64url(JSON { v: 1, c: { v: 2, …configDiff }, s: summary })>`. The query, not a fragment, so link-preview crawlers see it.

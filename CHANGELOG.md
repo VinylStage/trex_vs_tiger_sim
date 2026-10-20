@@ -1,5 +1,40 @@
 # Changelog
 
+## [0.2.10](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.9...trex-vs-tiger-sim-v0.2.10) (2026-10-20)
+
+
+### Bug Fixes
+
+* test stability, gore wording guard, docs resync ([#91](https://github.com/VinylStage/trex_vs_tiger_sim/issues/91)) ([7b2b28b](https://github.com/VinylStage/trex_vs_tiger_sim/commit/7b2b28bcfad1833a6af84e91b4521c61a28ff476))
+
+## [0.2.9](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.8...trex-vs-tiger-sim-v0.2.9) (2026-10-20)
+
+
+### Features
+
+* **ui:** free matchup mode, any species vs any species ([#90](https://github.com/VinylStage/trex_vs_tiger_sim/issues/90)) ([7711199](https://github.com/VinylStage/trex_vs_tiger_sim/commit/771119948c83811e85b8bf48dda2472388ad7ae2))
+
+## [0.2.8](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.7...trex-vs-tiger-sim-v0.2.8) (2026-10-20)
+
+
+### Bug Fixes
+
+* **a11y:** chart tables, status announcements, label-in-name, absolute asset URLs ([#88](https://github.com/VinylStage/trex_vs_tiger_sim/issues/88)) ([5f2b17c](https://github.com/VinylStage/trex_vs_tiger_sim/commit/5f2b17ca58ffb364e67e71777923d22ec290ede9))
+
+## [0.2.7](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.6...trex-vs-tiger-sim-v0.2.7) (2026-10-20)
+
+
+### Bug Fixes
+
+* **security:** pin Actions, add HSTS, enforce Trusted Types ([#85](https://github.com/VinylStage/trex_vs_tiger_sim/issues/85)) ([7d1f2e6](https://github.com/VinylStage/trex_vs_tiger_sim/commit/7d1f2e6764fee48b4776d34cb4c285f577aa4252))
+
+## [0.2.6](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.5...trex-vs-tiger-sim-v0.2.6) (2026-10-20)
+
+
+### Features
+
+* **sim:** symmetric free engine, individual layer ([#83](https://github.com/VinylStage/trex_vs_tiger_sim/issues/83)) ([8a629c7](https://github.com/VinylStage/trex_vs_tiger_sim/commit/8a629c722f178c285737453e4fc519cd54a7f306))
+
 ## [0.2.5](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.4...trex-vs-tiger-sim-v0.2.5) (2026-10-20)
 
 

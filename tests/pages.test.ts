@@ -35,6 +35,7 @@ import {
   type ContentPage,
   type PageId,
 } from '../src/pages/routes';
+import { SHARE_MESSAGES } from '../src/share/messages';
 import {
   DICTIONARIES,
   LANGS,
@@ -1235,6 +1236,33 @@ function headersFor(src: string, path: string): Record<string, string[]> {
   return out;
 }
 
+describe('English pages mark Korean words (WCAG 3.1.2 language of parts, #71)', () => {
+  it.each(SHELL_PAGES.filter((p) => p.lang === 'en').map((p) => [p.file, p.html] as const))(
+    '%s',
+    (_file, html) => {
+      const body = (/<body[\s\S]*<\/body>/.exec(html)?.[0] ?? '').replace(
+        /<script[\s\S]*?<\/script>/g,
+        '',
+      );
+      // Drop every element marked lang="ko" (none of them nest another element of the same tag).
+      const unmarked = body.replace(/<(\w+)[^>]*\blang="ko"[^>]*>[\s\S]*?<\/\1>/g, '');
+      const text = unmarked.replace(/<[^>]*>/g, ' ');
+      expect(text.match(/[가-힣]+/g) ?? []).toEqual([]);
+    },
+  );
+});
+
+describe('public/site.webmanifest', () => {
+  it('writes name, short name and description in its declared language (#71)', () => {
+    const m = JSON.parse(read('public/site.webmanifest')) as Record<string, string>;
+    expect(m['lang']).toBe('ko');
+    for (const k of ['name', 'short_name', 'description']) {
+      expect(m[k], k).toMatch(/[가-힣]/);
+      expect(m[k], k).not.toMatch(/\b(the|and|on|in|your)\b/i);
+    }
+  });
+});
+
 describe('public/_headers', () => {
   const src = read('public/_headers');
   const htmlPaths = ALL_PAGES.map((p) => pagePath(p.page, p.lang));
@@ -1251,6 +1279,20 @@ describe('public/_headers', () => {
     expect(h['cache-control']?.join(', ')).toBe('no-cache, no-transform, no-store');
     expect(h['clear-site-data']).toEqual(['"cache", "storage"']);
     expect(headersFor(src, '/version.json')['cache-control']).toEqual(['no-store']);
+  });
+
+  it('sends HSTS once everywhere, scoped to this host (no includeSubDomains, no preload)', () => {
+    for (const path of ['/', '/en/', '/reset/', '/version.json', '/assets/a.js', '/nope']) {
+      expect(headersFor(src, path)['strict-transport-security'], path).toEqual([
+        'max-age=31536000',
+      ]);
+    }
+  });
+
+  it('enforces Trusted Types with only the worker policy', () => {
+    const [csp] = headersFor(src, '/')['content-security-policy'] ?? [];
+    expect(csp).toContain("require-trusted-types-for 'script'");
+    expect(csp).toMatch(/trusted-types sim-worker(;|$)/);
   });
 
   it('sends the CSP on unknown paths, where the 404 pages are served', () => {
@@ -1275,6 +1317,13 @@ describe('public/_headers', () => {
 const DEATH_WORDS =
   /(?<!가)죽[은을는지기음었]|사망|\b(?:dead|killed|kills?|died|dies|die)\b|to the death/i;
 
+/**
+ * Words CONTRIBUTING.md forbids in any content (#66), field records included. 피 counts only as
+ * its own word (피를, 피가), so 피로 (fatigue), 피부 (skin), 피해 (damage) and 회피 (evasion) pass.
+ */
+const GORE_WORDS =
+  /(?<![가-힣])피[를가]|유혈|학살|도륙|잔혹|\b(?:blood\w*|massacre\w*|gore|gory)\b|kill count/i;
+
 const withoutFieldRecords = (html: string): string =>
   html.replace(/<section id="matchup-[^"]*">[\s\S]*?<\/section>/g, '');
 
@@ -1290,6 +1339,36 @@ describe('neutral outcome wording', () => {
       DEATH_WORDS.test(v.replace(/\{\w+\}/g, '')),
     );
     expect(hits).toEqual([]);
+  });
+
+  it.each(SHELL_PAGES.map((p) => [p.file, p] as const))(
+    '%s uses no gore words anywhere, field records included',
+    (_, p) => {
+      expect(GORE_WORDS.exec(textOf(p.html))?.[0] ?? null).toBeNull();
+    },
+  );
+
+  it.each(LANGS)('the %s dictionaries (app and sharing) use no gore words', (lang) => {
+    const strings = { ...DICTIONARIES[lang], ...SHARE_MESSAGES[lang] };
+    const hits = Object.entries(strings).filter(([, v]) => GORE_WORDS.test(v));
+    expect(hits).toEqual([]);
+  });
+
+  it('recognises the gore words, and allows 피로, 피부, 피해 and 회피', () => {
+    for (const s of [
+      '피를 보지 않고',
+      '피가 났다',
+      '유혈 충돌',
+      '학살',
+      'bloodshed',
+      'gore',
+      'kill count',
+    ]) {
+      expect(GORE_WORDS.test(s), s).toBe(true);
+    }
+    for (const s of ['T-Rex의 피로', '피부 흔적', '피해량', '회피가 늘었다', 'Gorenflo']) {
+      expect(GORE_WORDS.test(s), s).toBe(false);
+    }
   });
 
   it('still recognises the words it rejects, and allows 가죽 (hide)', () => {

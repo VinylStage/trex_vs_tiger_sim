@@ -1,0 +1,113 @@
+/* Free matchups (src/ui/free-mode.ts). Tokens come from styles.css. */
+
+.mode-switch {
+  border: 0;
+  margin: 0 0 16px;
+  padding: 0;
+  min-width: 0;
+}
+
+.mode-switch legend {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.mode-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.mode-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.mode-option:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.mode-option:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mode-switch .hint {
+  display: block;
+  margin-top: 6px;
+}
+
+.free-sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+}
+
+.free-side,
+.free-shared {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  padding: 12px;
+  margin: 0 0 12px;
+  min-width: 0;
+}
+
+.free-side legend,
+.free-shared legend {
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.free-side-a {
+  border-left: 4px solid var(--accent);
+}
+
+.free-side-b {
+  border-left: 4px solid var(--muted);
+}
+
+.free-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.free-badges li {
+  font-size: 0.85rem;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow-wrap: anywhere;
+}
+
+.free-badges li.is-social {
+  border-color: var(--accent);
+}
+
+.free-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+  margin: 0 0 12px;
+}
+
+.free-provisional {
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.free-tools {
+  margin-top: 12px;
+}
