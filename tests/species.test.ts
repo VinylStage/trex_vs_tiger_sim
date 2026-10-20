@@ -160,12 +160,30 @@ describe('matchups', () => {
     expect(matchupClass('mammoth', 'hyena')).toBe('undocumented');
     expect(matchupClass('mammoth', 'homoErectus')).toBe('undocumented');
     expect(matchupClass('homoErectus', 'homoErectus')).toBe('undocumented');
-    expect(matchupClass('mammoth', 'lion')).toBe('neverMet');
     expect(matchupClass('trex', 'homoErectus')).toBe('neverMet');
     for (const m of COEXISTING_MATCHUPS) {
       expect(HEAVY_SPECIES[m.heavy].era === 'extant').not.toBe(
         PACK_SPECIES[m.pack].era === 'extant',
       );
+    }
+  });
+
+  it('never claims "never met" for a recent extinct species without a sourced overlap', () => {
+    for (const [h, p] of [
+      ['mammoth', 'lion'],
+      ['mammoth', 'tiger'],
+      ['homoErectus', 'lion'],
+      ['homoErectus', 'wolf'],
+      ['buffalo', 'homoErectus'],
+      ['brownBear', 'homoErectus'],
+    ] as const) {
+      expect(matchupClass(h, p), `${h}/${p}`).toBe('unrecorded');
+    }
+    // Only T. rex, 66 million years apart, never met the living species.
+    for (const h of HEAVY_SPECIES_IDS) {
+      for (const p of PACK_SPECIES_IDS) {
+        if (matchupClass(h, p) === 'neverMet') expect(h).toBe('trex');
+      }
     }
   });
 

@@ -455,8 +455,20 @@ export const speciesOf = (role: Role, h: HeavySpeciesId, p: PackSpeciesId): Spec
 
 // --- matchups ---
 
-/** How a pairing relates to the real world. */
-export type MatchupClass = 'documented' | 'neverMet' | 'undocumented';
+/**
+ * How a pairing relates to the real world: `documented` field observations; `undocumented`
+ * species that lived at the same time and place without a recorded encounter; `unrecorded` an
+ * extinct and a living species whose overlap is not established (so the UI does not claim they
+ * never met); `neverMet` species separated by geological time.
+ */
+export type MatchupClass = 'documented' | 'neverMet' | 'undocumented' | 'unrecorded';
+
+/**
+ * An extinct species that disappeared at least this long ago (Ma) never met any living species
+ * in the roster: every _T. rex_ pairing (66 Ma). Younger extinct species may have overlapped
+ * with living ones, so without a sourced overlap they are `unrecorded`, not `neverMet`.
+ */
+const NEVER_MET_MA = 5;
 
 /**
  * Pairings with field observations (docs/SPECIES.md §5). The anchor names the section of
@@ -491,16 +503,18 @@ export const COEXISTING_MATCHUPS: readonly { heavy: HeavySpeciesId; pack: PackSp
   { heavy: 'mammoth', pack: 'wolf' },
 ];
 
-const eraOverlap = (a: Era, b: Era): boolean => {
-  if (a === 'extant' || b === 'extant') return a === b;
-  return a.toMa <= b.fromMa && b.toMa <= a.fromMa;
-};
-
-/** Classify a pairing: documented in the field, never alive at the same time, or neither. */
+/** Classify a pairing (see `MatchupClass`). */
 export function matchupClass(h: HeavySpeciesId, p: PackSpeciesId): MatchupClass {
   if (DOCUMENTED_MATCHUPS.some((m) => m.heavy === h && m.pack === p)) return 'documented';
   if (COEXISTING_MATCHUPS.some((m) => m.heavy === h && m.pack === p)) return 'undocumented';
-  return eraOverlap(HEAVY_SPECIES[h].era, PACK_SPECIES[p].era) ? 'undocumented' : 'neverMet';
+  const a = HEAVY_SPECIES[h].era;
+  const b = PACK_SPECIES[p].era;
+  if (a === 'extant' && b === 'extant') return 'undocumented';
+  if (a !== 'extant' && b !== 'extant') {
+    return a.toMa <= b.fromMa && b.toMa <= a.fromMa ? 'undocumented' : 'neverMet';
+  }
+  const extinct = a === 'extant' ? (b as Exclude<Era, 'extant'>) : a;
+  return extinct.toMa >= NEVER_MET_MA ? 'neverMet' : 'unrecorded';
 }
 
 /** docs/SPECIES.md anchor for a documented pairing, or null. */

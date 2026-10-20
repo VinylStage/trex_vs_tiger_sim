@@ -318,7 +318,7 @@ Unchanged from MODEL.md §5.2. One additional documented interaction is worth a 
 
 ## 5. Documented match-ups
 
-The matchup badge marks a pairing **documented** when field observations exist (`DOCUMENTED_MATCHUPS` in `src/sim/species.ts`), **never met** when the species' eras do not overlap (every _T. rex_ pairing), and **no recorded encounters** otherwise. Extant species carry no first-appearance date, so an extinct species against a living one counts as "never met" unless it is listed in `COEXISTING_MATCHUPS` (below). The badge links to the matching section of the model page (`/model/#matchup-<anchor>`). Documented match-ups are still heavily simplified.
+The matchup badge marks a pairing **documented** when field observations exist (`DOCUMENTED_MATCHUPS` in `src/sim/species.ts`), **never met** only when geological time separates the species (every _T. rex_ pairing: both eras dated and disjoint, or an extinct species gone for at least 5 Ma against a living one), **no recorded encounters** (`undocumented`) when they lived at the same time and place, and **기록된 조우 없음 / No recorded encounters** (`unrecorded`) when a recently extinct species meets a living one whose overlap is not established. Extant species carry no first-appearance date, so the sourced overlaps are listed in `COEXISTING_MATCHUPS` (below); every other pairing of the mammoth or _H. erectus_ with a living species is `unrecorded`, never "never met". The badge links to the matching section of the model page (`/model/#matchup-<anchor>`). Documented match-ups are still heavily simplified.
 
 ### Elephants and lions
 
@@ -353,7 +353,7 @@ These pairings are labelled **no recorded encounters**: the fossil records overl
 | Woolly mammoths and spotted hyenas              | Eurasian cave hyenas (_Crocuta_) for at least a million years [WP: Spotted hyena; WP: Woolly mammoth]                    |
 | Woolly mammoths and _H. erectus_ (both extinct) | The era rule finds the overlap (0.4–0.11 Ma); no shared site is known                                                    |
 
-**Known gap.** Other extinct–living pairings with _H. erectus_ (lions, wolves, buffalo, brown bears) and the mammoth (lions, tigers) fall back to "never met" for want of a sourced overlap; some of them, such as lions and Pleistocene hominins in Africa, probably did overlap. First-appearance dates for the extant species would replace the special list.
+**Unconfirmed overlaps.** The other extinct–living pairings with _H. erectus_ (lions, wolves, buffalo, brown bears) and the mammoth (lions, tigers) are `unrecorded`: the badge says only that no encounter is recorded. Some of them, such as lions and _H. erectus_ in Africa, probably overlapped, but no source checked for this work places them at the same time and place (the East African lion fossil found in this search, the Natodomeri skull of about 200 ka [Manthi 2017, Abs], is not tied to an _H. erectus_ site), so lions are not in `COEXISTING_MATCHUPS`.
 
 ## 6. Compatibility rules
 
@@ -383,27 +383,27 @@ Share payload v2: `{"v":2,"heavy":"elephant","pack":"lion","heavyCount":5,"packC
 
 **Woolly mammoth and _Homo erectus_** ([#47](https://github.com/VinylStage/trex_vs_tiger_sim/issues/47); same method, 200 runs each, computed on this branch with `intimidation` = 0.02 for the heavy _H. erectus_). "Heavy wins" includes every run in which all attackers fled; the mean numbers of attackers incapacitated (`packKilled` in the code) and fled are given because flight, not incapacitation, decides most pack-of-hominin runs.
 
-| Matchup                                 | Class     | Heavy wins | Pack wins | Draw | Median duration | Pack incapacitated / fled (mean) | Reality check                                                    |
-| --------------------------------------- | --------- | ---------: | --------: | ---: | --------------: | -------------------------------: | ---------------------------------------------------------------- |
-| 1 mammoth vs 12 wolves (preset)         | no record |       92 % |       0 % |  8 % |           309 s |                       1.3 / 10.6 | Adults "could effectively defend themselves"; plausible          |
-| 1 mammoth vs 30 wolves                  | no record |       91 % |       4 % |  5 % |           331 s |                       1.3 / 28.6 | Morale routs large packs before damage adds up                   |
-| 1 mammoth vs 15 hyenas                  | no record |       85 % |       2 % | 14 % |           307 s |                       0.9 / 14.0 | —                                                                |
-| 1 mammoth vs 20 lions                   | never met |       77 % |      11 % | 13 % |           689 s |                       2.2 / 17.1 | Modern lions never met mammoths (cave lions are another species) |
-| 1 _T. rex_ vs 100 _H. erectus_ (preset) | never met |       92 % |       6 % |  2 % |           302 s |                       1.8 / 96.4 | Fantasy; nearly every attacker flees                             |
-| 1 _T. rex_ vs 300 _H. erectus_          | never met |       36 % |      65 % |  0 % |           187 s |                      0.7 / 199.0 | Numbers win once total damage outpaces routing                   |
-| 1 _T. rex_ vs 30 _H. erectus_           | never met |       96 % |       0 % |  5 % |           249 s |                       2.1 / 27.9 | —                                                                |
-| 1 elephant vs 30 _H. erectus_           | no record |       98 % |       0 % |  3 % |           225 s |                       1.5 / 28.4 | Unarmed hominins do not bring down an adult elephant; plausible  |
-| 1 mammoth vs 30 _H. erectus_            | no record |       97 % |       0 % |  3 % |           241 s |                       1.6 / 28.3 | As the elephant                                                  |
-| 1 buffalo vs 20 _H. erectus_            | never met |       92 % |       8 % |  0 % |           193 s |                       3.4 / 15.9 | —                                                                |
-| 1 _H. erectus_ vs 8 wolves              | never met |        0 % |     100 % |  0 % |            22 s |                        0.0 / 0.0 | An unarmed adult has no chance against a pack; plausible         |
-| 1 _H. erectus_ vs 3 wolves              | never met |        0 % |     100 % |  0 % |            30 s |                        0.0 / 0.0 | Plausible                                                        |
-| 1 _H. erectus_ vs 1 wolf                | never met |       57 % |      41 % |  3 % |           349 s |                        0.5 / 0.1 | Closer to even; still favours the hominin somewhat (see below)   |
-| 1 _H. erectus_ vs 3 hyenas              | no record |        0 % |     100 % |  0 % |            24 s |                        0.0 / 0.0 | Plausible                                                        |
-| 1 _H. erectus_ vs 1 hyena               | no record |       32 % |      60 % |  8 % |           420 s |                        0.2 / 0.1 | The hominin loses most runs                                      |
-| 1 _H. erectus_ vs 1 tiger               | no record |       12 % |      73 % | 15 % |           354 s |                        0.0 / 0.1 | The hominin loses most runs; draws are 20-minute stand-offs      |
-| 1 _H. erectus_ vs 1 lion                | never met |       14 % |      79 % |  8 % |           312 s |                        0.0 / 0.1 | The hominin loses most runs                                      |
-| 1 _H. erectus_ vs 1 _H. erectus_        | no record |       79 % |      18 % |  4 % |           472 s |                        0.5 / 0.3 | The heavy role wins symmetric duels: a role artefact             |
-| 1 _H. erectus_ vs 2 _H. erectus_        | no record |        8 % |      92 % |  1 % |           195 s |                        0.2 / 0.0 | —                                                                |
+| Matchup                                 | Class      | Heavy wins | Pack wins | Draw | Median duration | Pack incapacitated / fled (mean) | Reality check                                                   |
+| --------------------------------------- | ---------- | ---------: | --------: | ---: | --------------: | -------------------------------: | --------------------------------------------------------------- |
+| 1 mammoth vs 12 wolves (preset)         | no record  |       92 % |       0 % |  8 % |           309 s |                       1.3 / 10.6 | Adults "could effectively defend themselves"; plausible         |
+| 1 mammoth vs 30 wolves                  | no record  |       91 % |       4 % |  5 % |           331 s |                       1.3 / 28.6 | Morale routs large packs before damage adds up                  |
+| 1 mammoth vs 15 hyenas                  | no record  |       85 % |       2 % | 14 % |           307 s |                       0.9 / 14.0 | —                                                               |
+| 1 mammoth vs 20 lions                   | unrecorded |       77 % |      11 % | 13 % |           689 s |                       2.2 / 17.1 | No sourced overlap (cave lions are another species)             |
+| 1 _T. rex_ vs 100 _H. erectus_ (preset) | never met  |       92 % |       6 % |  2 % |           302 s |                       1.8 / 96.4 | Fantasy; nearly every attacker flees                            |
+| 1 _T. rex_ vs 300 _H. erectus_          | never met  |       36 % |      65 % |  0 % |           187 s |                      0.7 / 199.0 | Numbers win once total damage outpaces routing                  |
+| 1 _T. rex_ vs 30 _H. erectus_           | never met  |       96 % |       0 % |  5 % |           249 s |                       2.1 / 27.9 | —                                                               |
+| 1 elephant vs 30 _H. erectus_           | no record  |       98 % |       0 % |  3 % |           225 s |                       1.5 / 28.4 | Unarmed hominins do not bring down an adult elephant; plausible |
+| 1 mammoth vs 30 _H. erectus_            | no record  |       97 % |       0 % |  3 % |           241 s |                       1.6 / 28.3 | As the elephant                                                 |
+| 1 buffalo vs 20 _H. erectus_            | unrecorded |       92 % |       8 % |  0 % |           193 s |                       3.4 / 15.9 | —                                                               |
+| 1 _H. erectus_ vs 8 wolves              | unrecorded |        0 % |     100 % |  0 % |            22 s |                        0.0 / 0.0 | An unarmed adult has no chance against a pack; plausible        |
+| 1 _H. erectus_ vs 3 wolves              | unrecorded |        0 % |     100 % |  0 % |            30 s |                        0.0 / 0.0 | Plausible                                                       |
+| 1 _H. erectus_ vs 1 wolf                | unrecorded |       57 % |      41 % |  3 % |           349 s |                        0.5 / 0.1 | Closer to even; still favours the hominin somewhat (see below)  |
+| 1 _H. erectus_ vs 3 hyenas              | no record  |        0 % |     100 % |  0 % |            24 s |                        0.0 / 0.0 | Plausible                                                       |
+| 1 _H. erectus_ vs 1 hyena               | no record  |       32 % |      60 % |  8 % |           420 s |                        0.2 / 0.1 | The hominin loses most runs                                     |
+| 1 _H. erectus_ vs 1 tiger               | no record  |       12 % |      73 % | 15 % |           354 s |                        0.0 / 0.1 | The hominin loses most runs; draws are 20-minute stand-offs     |
+| 1 _H. erectus_ vs 1 lion                | unrecorded |       14 % |      79 % |  8 % |           312 s |                        0.0 / 0.1 | The hominin loses most runs                                     |
+| 1 _H. erectus_ vs 1 _H. erectus_        | no record  |       79 % |      18 % |  4 % |           472 s |                        0.5 / 0.3 | The heavy role wins symmetric duels: a role artefact            |
+| 1 _H. erectus_ vs 2 _H. erectus_        | no record  |        8 % |      92 % |  1 % |           195 s |                        0.2 / 0.0 | —                                                               |
 
 Before `intimidation` (every heavy hit cost 0.25 morale), the same seed gave the hominin 98 % against one tiger, 99 % against one hyena and 100 % against one wolf: the lone predator fled after two or three bare-hand hits. The mammoth and pack-of-hominin rows are unchanged because only the heavy _H. erectus_ has `intimidation` ≠ 1.
 
@@ -445,7 +445,7 @@ Findings from the mammoth and _Homo erectus_ runs:
 - The one hominin, the extinct _Homo erectus_, is modelled unclothed, with no tools, weapons, fire or trained skill, from an average adult's physical capability. Every matchup with it shows the thought-experiment note under the badge (`matchup.thoughtExperiment`: a physical-capability thought experiment that does not depict or endorse real violence), and the model and parameter pages repeat it. Wording stays neutral (incapacitated, fled), with the scientific name only.
 - Every species carries `adSafe`; a living-human species would be `false` and its matchups would load no ads ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)). All current species are `true`.
 - The replay keeps abstract glyphs and role colours for every species (heavy = blue triangle scaled from the species body radius, exactly 7 m for _T. rex_; pack = orange dot sized from `radius`); no gore.
-- Cross-era pairings are labelled "never met"; documented pairings link to sourced notes. Elephant and mammoth copy mentions tusks only as anatomy.
+- Only pairings separated by geological time (_T. rex_) are labelled "never met"; a recently extinct species without a sourced overlap is "no recorded encounters" (`unrecorded`). Documented pairings link to sourced notes. Elephant and mammoth copy mentions tusks only as anatomy.
 - Korean UI strings never put a particle after a species name; English strings use singular/plural forms chosen with `Intl.PluralRules`.
 
 ## 10. References
@@ -475,6 +475,7 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 - **[Jimenez 2008]** Gray wolves, _Canis lupus_, killed by cougars, _Puma concolor_, and a grizzly bear, _Ursus arctos_, in Montana, Alberta, and Wyoming. _Can. Field-Nat._ 122:76–78. <https://doi.org/10.22621/cfn.v122i1.550> [Abs]
 - **[Joubert 2006]** Hunting behaviour of lions (_Panthera leo_) on elephants (_Loxodonta africana_) in the Chobe National Park, Botswana. _Afr. J. Ecol._ 44:279–281. <https://doi.org/10.1111/j.1365-2028.2006.00626.x> [WP]
 - **[Larramendi 2016]** Shoulder height, body mass and shape of proboscideans. _Acta Palaeontol. Pol._ 61:537–574. <https://doi.org/10.4202/app.00136.2014> [WP]
+- **[Manthi 2017]** Manthi F.K. et al. Gigantic lion, _Panthera leo_, from the Pleistocene of Natodomeri, eastern Africa. _J. Paleontol._ (2017). [Abs; data at <https://doi.org/10.5061/dryad.279n4>]
 - **[MacNulty 2014]** MacNulty D.R., Tallian A., Stahler D.R., Smith D.W. Influence of group size on the success of wolves hunting bison. _PLoS ONE_ 9:e112884. <https://doi.org/10.1371/journal.pone.0112884> [FT]
 - **[Power & Compion 2009]** Lion predation on elephants in the Savuti, Chobe National Park, Botswana. _African Zoology_ 44:36–44. <https://doi.org/10.3377/004.044.0104> [Abs]
 - **[Rayfield 2001]** Cranial design and function in a large theropod dinosaur. _Nature_ 409:1033–1037. <https://doi.org/10.1038/35059070> [Abs]

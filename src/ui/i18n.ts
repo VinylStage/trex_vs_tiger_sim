@@ -100,6 +100,7 @@ const ko = {
   'matchup.documented': '야생에서 관찰된 대결',
   'matchup.neverMet': '서로 만난 적 없는 종',
   'matchup.undocumented': '관찰 기록 없는 가상 대결',
+  'matchup.unrecorded': '기록된 조우 없음',
   'matchup.sources': '근거 보기',
   'matchup.thoughtExperiment':
     '신체 능력만 비교하는 사고 실험입니다(옷 · 도구 · 무기 · 불 · 훈련 없음). 실제 폭력을 묘사하거나 지지하지 않습니다.',
@@ -565,6 +566,7 @@ const en: Dictionary = {
   'matchup.documented': 'Documented in the wild',
   'matchup.neverMet': 'These species never met',
   'matchup.undocumented': 'No recorded encounters',
+  'matchup.unrecorded': 'No recorded encounters',
   'matchup.sources': 'Sources',
   'matchup.thoughtExperiment':
     'A thought experiment comparing physical capability only (no clothing, tools, weapons, fire or training). It does not depict or endorse real violence.',
