@@ -1,7 +1,7 @@
 import type { AggregateResult, Sensitivity } from '../sim/montecarlo';
 import type { ParamId } from '../sim/params';
 import { histogram, type Histogram } from '../sim/stats';
-import { h } from './dom';
+import { h, uniqueId } from './dom';
 import { formatFixed, formatInt, formatNum, formatPct } from './format';
 import { t, type MsgKey } from './i18n';
 import { formatBound, formatCountShare, formatShare, outcomes } from './verdict';
@@ -110,11 +110,19 @@ export class CanvasChart {
 
   constructor(titleKey: MsgKey, className: string, note?: MsgKey) {
     this.titleKey = titleKey;
-    this.canvas = h('canvas', { attrs: { role: 'img' } });
+    // `role="img"` only while there is a picture to name (set); an empty canvas stays out of the
+    // accessibility tree instead of being a nameless image (WCAG 1.1.1, #70).
+    this.canvas = h('canvas');
     this.tip = h('div', { class: 'chart-tip', attrs: { 'aria-hidden': 'true' } });
     this.tip.hidden = true;
     this.box = h('div', { class: `chart-box ${className}` }, this.canvas, this.tip);
-    this.tableSlot = h('div', { class: 'chart-table-wrap' });
+    const titleId = uniqueId('chart-title');
+    // The table can scroll, so keyboard users must be able to focus it (WCAG 2.1.1, #68),
+    // the same pattern as the content pages' `.table-wrap` (docs/PAGES.md).
+    this.tableSlot = h('div', {
+      class: 'chart-table-wrap',
+      attrs: { role: 'region', tabindex: '0', 'aria-labelledby': titleId },
+    });
     this.details = h(
       'details',
       { class: 'chart-data' },
@@ -128,7 +136,7 @@ export class CanvasChart {
     this.el = h(
       'figure',
       { class: 'chart' },
-      h('figcaption', {}, h('span', { class: 'chart-title', i18n: titleKey })),
+      h('figcaption', {}, h('span', { class: 'chart-title', id: titleId, i18n: titleKey })),
       note ? h('p', { class: 'chart-note', i18n: note }) : null,
       this.box,
       this.details,
@@ -168,6 +176,7 @@ export class CanvasChart {
     opts: { cssHeight?: number; table?: ChartTable; deferPaint?: boolean } = {},
   ): void {
     this.painter = painter;
+    this.canvas.setAttribute('role', 'img');
     this.canvas.setAttribute('aria-label', `${ariaLabel}. ${t('chart.tableHint')}`);
     this.canvas.tabIndex = 0;
     if (opts.cssHeight !== undefined) this.canvas.style.height = `${opts.cssHeight}px`;
@@ -187,6 +196,7 @@ export class CanvasChart {
     this.tableDirty = true;
     this.hits = [];
     this.hideTip();
+    this.canvas.removeAttribute('role');
     this.canvas.removeAttribute('aria-label');
     this.canvas.removeAttribute('tabindex');
     this.renderTable();
