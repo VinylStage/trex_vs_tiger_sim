@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.12](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.11...trex-vs-tiger-sim-v0.2.12) (2026-10-20)
+
+
+### Features
+
+* **sim:** pack buff for social species in free mode ([#100](https://github.com/VinylStage/trex_vs_tiger_sim/issues/100)) ([167c11a](https://github.com/VinylStage/trex_vs_tiger_sim/commit/167c11aa1d7731bae34679dfb9509d2812863944))
+
 ## [0.2.11](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.10...trex-vs-tiger-sim-v0.2.11) (2026-10-20)
 
 
