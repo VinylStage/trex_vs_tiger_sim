@@ -1,4 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { renderSiteFooter, SITE_FOOTER_PLACEHOLDER } from '../src/pages/site-footer';
+import { escapeHtml } from '../src/seo/html';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -389,5 +391,39 @@ describe('shared site header (src/pages/site-header.ts)', () => {
     expect(hook.handler(`<body>${SITE_HEADER_PLACEHOLDER}</body>`, { path: '/en/404.html' })).toBe(
       `<body>${renderSiteHeader('en', null)}</body>`,
     );
+  });
+});
+
+describe('site footer sources (#64)', () => {
+  const root = fileURLToPath(new URL('..', import.meta.url));
+  const sources = Object.values(findHtmlEntries(root)).filter((f) => !f.includes('reset'));
+
+  it.each(sources.map((f) => [f.slice(root.length)] as const))(
+    '%s has the footer placeholder, not a hand-written footer',
+    (rel) => {
+      const html = readFileSync(join(root, rel), 'utf8');
+      expect(html.split(SITE_FOOTER_PLACEHOLDER)).toHaveLength(2);
+      expect(html).not.toContain('<footer');
+    },
+  );
+
+  it.each(LANGS)('renders one %s footer from the dictionaries and FOOTER_LINKS', (lang) => {
+    const html = renderSiteFooter(lang);
+    expect(html.match(/<footer/g)).toHaveLength(1);
+    for (const item of footerItems(lang)) {
+      expect(html).toContain(`href="${item.href}"`);
+      expect(html).toContain(`data-footer="${item.id}"`);
+    }
+    expect(html).toContain(escapeHtml(DICTIONARIES[lang]['footer.disclaimer']));
+  });
+
+  it('fills the footer through the same plugin pass as the header', () => {
+    expect(
+      expandSiteHeader(
+        `<body>${SITE_FOOTER_PLACEHOLDER}</body>`,
+        { lang: 'en', page: 'guide' },
+        'x',
+      ),
+    ).toBe(`<body>${renderSiteFooter('en')}</body>`);
   });
 });
