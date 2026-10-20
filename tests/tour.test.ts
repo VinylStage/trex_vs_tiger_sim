@@ -7,6 +7,7 @@ import {
   TOUR_STORAGE_KEY,
   availableIndices,
   clampIndex,
+  expandNow,
   findStep,
   guideHref,
   inflateRect,
@@ -14,6 +15,7 @@ import {
   isStepAvailable,
   mergeRects,
   parseTourFlag,
+  MIN_POPOVER_ROOM,
   placePopover,
   readTourFlag,
   resolveStep,
@@ -289,6 +291,37 @@ describe('placePopover', () => {
     const p = placePopover({ x: 6, y: 0, w: 378, h: 820 }, { w: 366, h: 260 }, phone);
     expect(p).toEqual({ x: 12, y: 844 - 12 - 260, side: 'dock' });
   });
+
+  it('takes the side with more room and scrolls when the popover fits nowhere whole', () => {
+    // 320×568 phone, a tall run bar resting at the bottom: 336 px above it, nothing below.
+    const phone = { w: 320, h: 568 };
+    const bar = { x: 6, y: 360, w: 308, h: 202 };
+    const p = placePopover(bar, { w: 296, h: 356 }, phone);
+    expect(p).toEqual({ x: 12, y: 12, side: 'top', maxH: 360 - 12 - 12 });
+    // The popover ends `gap` above the target, so it never covers it.
+    expect(p.y + (p.maxH ?? 0)).toBe(bar.y - 12);
+    // More room below than above: below, capped to the room left.
+    const head = { x: 6, y: 40, w: 308, h: 200 };
+    expect(placePopover(head, { w: 296, h: 356 }, phone)).toEqual({
+      x: 12,
+      y: 252,
+      side: 'bottom',
+      maxH: 568 - 12 - 252,
+    });
+  });
+
+  it('docks rather than squeeze the popover below the readable minimum', () => {
+    const phone = { w: 320, h: 568 };
+    const p = placePopover({ x: 6, y: 100, w: 308, h: 340 }, { w: 296, h: 300 }, phone);
+    expect(p.side).toBe('dock');
+    expect(MIN_POPOVER_ROOM).toBeGreaterThan(100 - 24);
+  });
+
+  it('caps a docked popover taller than the viewport', () => {
+    const land = { w: 667, h: 375 };
+    const p = placePopover({ x: 0, y: 0, w: 667, h: 375 }, { w: 380, h: 420 }, land);
+    expect(p).toEqual({ x: 143.5, y: 12, side: 'dock', maxH: 375 - 24 });
+  });
 });
 
 describe('first-visit flag', () => {
@@ -350,5 +383,36 @@ describe('deep link and guide', () => {
   it('links the guide page for each language', () => {
     expect(guideHref('ko')).toBe('/guide/');
     expect(guideHref('en')).toBe('/en/guide/');
+  });
+});
+
+describe('expandNow', () => {
+  /** A `<details>` stand-in whose body is built lazily on `toggle`, like the advanced table. */
+  class LazyDetails extends EventTarget {
+    open = false;
+    rows = 0;
+    constructor() {
+      super();
+      this.addEventListener('toggle', () => {
+        if (this.open && this.rows === 0) this.rows = 22;
+      });
+    }
+  }
+
+  it('builds lazy content before the step measures its target', () => {
+    const d = new LazyDetails();
+    expandNow(d);
+    // Same task: the spotlight is measured right after this, so the rows must already exist.
+    expect(d.open).toBe(true);
+    expect(d.rows).toBe(22);
+  });
+
+  it('leaves an already open section alone', () => {
+    const d = new LazyDetails();
+    d.open = true;
+    let toggles = 0;
+    d.addEventListener('toggle', () => toggles++);
+    expandNow(d);
+    expect(toggles).toBe(0);
   });
 });

@@ -80,6 +80,18 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
 ];
 
+/**
+ * Open a `<details>` for a step and fire its `toggle` event now. The native event is queued, but
+ * content built lazily on `toggle` (the advanced parameter table) must exist before the step is
+ * scrolled to and measured in the same task. Listeners must be idempotent: the native event
+ * still follows.
+ */
+export function expandNow(details: EventTarget & { open: boolean }): void {
+  if (details.open) return;
+  details.open = true;
+  details.dispatchEvent(new Event('toggle'));
+}
+
 /** Answers whether the element(s) with a given `data-tour` id are present and visible. */
 export type VisibleFn = (tourId: string) => boolean;
 
@@ -228,15 +240,25 @@ export interface Placement {
   x: number;
   y: number;
   side: PopoverSide;
+  /**
+   * Set when the popover only fits by scrolling inside itself: the height (px) it may take up.
+   * For `dock` the popover covers the bottom of the viewport and the caller trims the spotlight to
+   * the part above it.
+   */
+  maxH?: number;
 }
 
 const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
 
+/** A popover shorter than this (px) is too cramped to read; dock instead. */
+export const MIN_POPOVER_ROOM = 160;
+
 /**
  * Where to put the popover (top-left corner, viewport coordinates). Tries below, above, right and
- * left of the target in that order; when none fits it docks to the bottom edge, overlapping the
- * target. Without a target it is centred. The result always stays `margin` inside the viewport
- * when the popover fits at all.
+ * left of the target in that order. When none fits whole, it goes on the side (above or below)
+ * with more room and scrolls inside itself (`maxH`), as long as that leaves `MIN_POPOVER_ROOM`;
+ * otherwise it docks to the bottom edge. Without a target it is centred. The result always stays
+ * `margin` inside the viewport when the popover fits at all.
  */
 export function placePopover(
   target: Rect | null,
@@ -264,7 +286,20 @@ export function placePopover(
   if (right + pop.w <= viewport.w - margin) return { x: right, y: cy, side: 'right' };
   const left = target.x - gap - pop.w;
   if (left >= margin) return { x: left, y: cy, side: 'left' };
-  return { x: clamp((viewport.w - pop.w) / 2, margin, maxX), y: maxY, side: 'dock' };
+  const roomBelow = Math.floor(viewport.h - margin - below);
+  const roomAbove = Math.floor(target.y - gap - margin);
+  if (Math.max(roomAbove, roomBelow) >= Math.min(pop.h, MIN_POPOVER_ROOM)) {
+    return roomBelow >= roomAbove
+      ? { x: cx, y: below, side: 'bottom', maxH: roomBelow }
+      : { x: cx, y: margin, side: 'top', maxH: roomAbove };
+  }
+  const maxH = Math.max(0, viewport.h - 2 * margin);
+  return {
+    x: clamp((viewport.w - pop.w) / 2, margin, maxX),
+    y: maxY,
+    side: 'dock',
+    ...(pop.h > maxH ? { maxH } : {}),
+  };
 }
 
 // ---------- first-visit flag ----------
