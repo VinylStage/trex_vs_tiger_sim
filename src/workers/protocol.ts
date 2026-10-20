@@ -19,6 +19,6 @@ export type WorkerResponse =
  */
 export function traceTransferList(trace: BattleTrace): ArrayBuffer[] {
   const list: ArrayBuffer[] = [trace.events.buffer, trace.meta.reach.buffer, trace.meta.arc.buffer];
-  for (const f of trace.frames) list.push(f.trex.buffer, f.tiger.buffer);
+  for (const f of trace.frames) list.push(f.heavy.buffer, f.pack.buffer);
   return list;
 }

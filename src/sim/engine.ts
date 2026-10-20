@@ -20,7 +20,7 @@ export const DT = 0.1;
 
 /** Model constants not exposed as uncertain parameters. Documented in docs/MODEL.md. */
 export const CONSTANTS = {
-  tigerRadius: 0.8,
+  packRadius: 0.8,
   latchRetry: 1,
   moraleRadius: 40,
   routThreshold: 0.2,
@@ -32,8 +32,8 @@ export const CONSTANTS = {
   resumeStamina: 0.8,
   sprintTriggerDistance: 60,
   cruiseRegenFactor: 0.25,
-  trexRetarget: 0.5,
-  tigerRetarget: 1,
+  heavyRetarget: 0.5,
+  packRetarget: 1,
   minCarrySpeedFactor: 0.3,
   latchedAccuracyBonus: 1.5,
   maxAccuracy: 0.95,
@@ -53,7 +53,7 @@ export const CONSTANTS = {
   shockPad: 6.5,
 } as const;
 
-export const TigerState = {
+export const PackState = {
   Approach: 0,
   Latched: 1,
   Recover: 2,
@@ -62,28 +62,28 @@ export const TigerState = {
   Left: 5,
 } as const;
 
-export const Outcome = { Trex: 0, Tigers: 1, Draw: 2 } as const;
+export const Outcome = { Heavy: 0, Pack: 1, Draw: 2 } as const;
 export type OutcomeCode = (typeof Outcome)[keyof typeof Outcome];
 
 export interface RunSummary {
   run: number;
   outcome: OutcomeCode;
   duration: number;
-  trexAlive: number;
-  tigersKilled: number;
-  tigersRouted: number;
-  tigersActive: number;
-  trexHpFrac: number;
+  heavyAlive: number;
+  packKilled: number;
+  packRouted: number;
+  packActive: number;
+  heavyHpFrac: number;
   /** trexHpFrac − (active tigers / initial tigers), in [−1, 1]. Used for sensitivity. */
-  trexAdvantage: number;
+  heavyAdvantage: number;
 }
 
 export interface TraceFrame {
   t: number;
   /** Per T-Rex: x, y, heading, hpFrac (hpFrac ≤ 0 → dead). */
-  trex: Float32Array<ArrayBuffer>;
+  heavy: Float32Array<ArrayBuffer>;
   /** Per tiger: x, y, state. */
-  tiger: Float32Array<ArrayBuffer>;
+  pack: Float32Array<ArrayBuffer>;
 }
 
 /** Static per-run data the replay needs for geometry (bite wedges, latch positions). */
@@ -91,7 +91,7 @@ export interface TraceMeta {
   /** Integration step in seconds; event time = stamp × dt. */
   dt: number;
   bodyRadius: number;
-  tigerRadius: number;
+  packRadius: number;
   /** Per T-Rex bite reach (m). */
   reach: Float32Array<ArrayBuffer>;
   /** Per T-Rex bite half-angle (rad). */
@@ -103,8 +103,8 @@ export const TRACE_VERSION = 2;
 export interface BattleTrace {
   version: typeof TRACE_VERSION;
   arenaSize: number;
-  trexCount: number;
-  tigerCount: number;
+  heavyCount: number;
+  packCount: number;
   frames: TraceFrame[];
   /** Event log, 4 × u16 per event (events.ts, docs/MODEL.md §2.6). */
   events: Uint16Array<ArrayBuffer>;
@@ -156,8 +156,8 @@ export function simulateBattle(
 ): BattleOutput {
   const C = CONSTANTS;
   const rng = new Rng(deriveSeed(config.seed, run, BATTLE_SALT));
-  const N = config.trexCount;
-  const M = config.tigerCount;
+  const N = config.heavyCount;
+  const M = config.packCount;
   const L = config.arenaSize;
   const cv = config.individualCV;
 
@@ -191,9 +191,9 @@ export function simulateBattle(
   const rTarget = new Int32Array(N).fill(-1);
   const rTimer = new Float64Array(N);
   const rAlive = new Uint8Array(N);
-  const radius = runVal(P['trex.bodyRadius']);
-  const lethality = runVal(P['trex.biteLethality']);
-  const bleed = runVal(P['tiger.bleed']);
+  const radius = runVal(P['heavy.bodyRadius']);
+  const lethality = runVal(P['heavy.biteLethality']);
+  const bleed = runVal(P['pack.bleed']);
 
   const sep = Math.min(200, 0.4 * L);
   const spacing = Math.min(15, (0.8 * L) / Math.max(1, N));
@@ -201,18 +201,18 @@ export function simulateBattle(
     rx[i] = L / 2 - sep / 2;
     ry[i] = L / 2 + (i - (N - 1) / 2) * spacing;
     rh[i] = 0;
-    rMass[i] = indiv(P['trex.mass']);
+    rMass[i] = indiv(P['heavy.mass']);
     rHp[i] = rMaxHp[i] = rMass[i] as number;
-    rSpeed[i] = indiv(P['trex.speed']);
-    rTurn[i] = indiv(P['trex.turnRate']) * DEG;
-    rBiteDmg[i] = indiv(P['trex.biteForce']) * lethality;
-    rBiteInt[i] = indiv(P['trex.biteInterval']);
-    rReach[i] = indiv(P['trex.biteReach']);
-    rArc[i] = indiv(P['trex.biteArc']) * DEG;
-    rAcc[i] = indiv(P['trex.biteAccuracy']);
-    rShake[i] = indiv(P['trex.shakeRate']);
+    rSpeed[i] = indiv(P['heavy.speed']);
+    rTurn[i] = indiv(P['heavy.turnRate']) * DEG;
+    rBiteDmg[i] = indiv(P['heavy.biteForce']) * lethality;
+    rBiteInt[i] = indiv(P['heavy.biteInterval']);
+    rReach[i] = indiv(P['heavy.biteReach']);
+    rArc[i] = indiv(P['heavy.biteArc']) * DEG;
+    rAcc[i] = indiv(P['heavy.biteAccuracy']);
+    rShake[i] = indiv(P['heavy.shakeRate']);
     rCd[i] = rng.next() * (rBiteInt[i] as number);
-    rTimer[i] = rng.next() * C.trexRetarget;
+    rTimer[i] = rng.next() * C.heavyRetarget;
     rAlive[i] = 1;
   }
 
@@ -247,27 +247,27 @@ export function simulateBattle(
     const d = discR * Math.sqrt(rng.next());
     tx[j] = L / 2 + sep / 2 + Math.cos(a) * d;
     ty[j] = L / 2 + Math.sin(a) * d;
-    tMass[j] = indiv(P['tiger.mass']);
+    tMass[j] = indiv(P['pack.mass']);
     tHp[j] = tMaxHp[j] = tMass[j] as number;
-    tSprint[j] = indiv(P['tiger.sprintSpeed']);
-    tCruise[j] = Math.min(tSprint[j] as number, indiv(P['tiger.cruiseSpeed']));
-    tSprintEnd[j] = indiv(P['tiger.sprintEndurance']);
-    tLatchEnd[j] = indiv(P['tiger.latchEndurance']);
-    tRecovery[j] = indiv(P['tiger.recoveryTime']);
-    tLatchChance[j] = indiv(P['tiger.latchChance']);
-    tDps[j] = indiv(P['tiger.dps']);
-    tMorale[j] = indiv(P['tiger.morale']);
-    tMoraleLoss[j] = indiv(P['tiger.moraleLoss']);
+    tSprint[j] = indiv(P['pack.sprintSpeed']);
+    tCruise[j] = Math.min(tSprint[j] as number, indiv(P['pack.cruiseSpeed']));
+    tSprintEnd[j] = indiv(P['pack.sprintEndurance']);
+    tLatchEnd[j] = indiv(P['pack.latchEndurance']);
+    tRecovery[j] = indiv(P['pack.recoveryTime']);
+    tLatchChance[j] = indiv(P['pack.latchChance']);
+    tDps[j] = indiv(P['pack.dps']);
+    tMorale[j] = indiv(P['pack.morale']);
+    tMoraleLoss[j] = indiv(P['pack.moraleLoss']);
     tStamina[j] = 1;
-    tState[j] = TigerState.Approach;
-    tTimer[j] = rng.next() * C.tigerRetarget;
+    tState[j] = PackState.Approach;
+    tTimer[j] = rng.next() * C.packRetarget;
     tSide[j] = rng.next() < 0.5 ? -1 : 1;
   }
 
   const grid = new SpatialGrid(L, M);
-  const trexGrid = new SpatialGrid(L, N);
-  const trexAliveFilter = (i: number): boolean => rAlive[i] === 1;
-  const presentFilter = (j: number): boolean => (tState[j] as number) < TigerState.Dead;
+  const heavyGrid = new SpatialGrid(L, N);
+  const heavyAliveFilter = (i: number): boolean => rAlive[i] === 1;
+  const presentFilter = (j: number): boolean => (tState[j] as number) < PackState.Dead;
   let killed = 0;
 
   // Morale shock around a dead tiger.
@@ -275,7 +275,7 @@ export function simulateBattle(
   let shockY = 0;
   let shockSelf = -1;
   const shockVisit = (k: number): void => {
-    if (k === shockSelf || (tState[k] as number) >= TigerState.Dead) return;
+    if (k === shockSelf || (tState[k] as number) >= PackState.Dead) return;
     const dx = (tx[k] as number) - shockX;
     const dy = (ty[k] as number) - shockY;
     if (dx * dx + dy * dy <= C.moraleRadius * C.moraleRadius) {
@@ -297,8 +297,8 @@ export function simulateBattle(
       : null;
 
   const kill = (j: number, cause: number, by: number): void => {
-    log?.emit(EventType.TigerDeath, cause, j, by);
-    tState[j] = TigerState.Dead;
+    log?.emit(EventType.PackDeath, cause, j, by);
+    tState[j] = PackState.Dead;
     tHp[j] = 0;
     tHost[j] = -1;
     killed++;
@@ -311,7 +311,7 @@ export function simulateBattle(
   };
 
   const toRecover = (j: number, moraleLoss: number, minTime: number): void => {
-    tState[j] = TigerState.Recover;
+    tState[j] = PackState.Recover;
     tHost[j] = -1;
     tRecoverTimer[j] = minTime;
     tMorale[j] = (tMorale[j] as number) - moraleLoss;
@@ -323,23 +323,23 @@ export function simulateBattle(
   let bestScore: number;
   const biteVisit = (j: number): void => {
     const s = tState[j] as number;
-    if (s >= TigerState.Dead) return;
+    if (s >= PackState.Dead) return;
     let px = tx[j] as number;
     let py = ty[j] as number;
-    if (s === TigerState.Latched) {
+    if (s === PackState.Latched) {
       // Latched tigers ride their host; use the host's current pose, not last tick's position.
       const h = tHost[j] as number;
       const a = (rh[h] as number) + (tLatchAng[j] as number);
-      px = (rx[h] as number) + Math.cos(a) * (radius + C.tigerRadius);
-      py = (ry[h] as number) + Math.sin(a) * (radius + C.tigerRadius);
+      px = (rx[h] as number) + Math.cos(a) * (radius + C.packRadius);
+      py = (ry[h] as number) + Math.sin(a) * (radius + C.packRadius);
     }
     const dx = px - (rx[biter] as number);
     const dy = py - (ry[biter] as number);
     const d = len(dx, dy);
-    if (d > (rReach[biter] as number) + C.tigerRadius) return;
+    if (d > (rReach[biter] as number) + C.packRadius) return;
     if (Math.abs(wrap(Math.atan2(dy, dx) - (rh[biter] as number))) > (rArc[biter] as number))
       return;
-    const score = s === TigerState.Latched && tHost[j] === biter ? d - 1000 : d;
+    const score = s === PackState.Latched && tHost[j] === biter ? d - 1000 : d;
     if (score < bestScore) {
       bestScore = score;
       best = j;
@@ -348,15 +348,15 @@ export function simulateBattle(
 
   const freeFilter = (j: number): boolean => {
     const s = tState[j] as number;
-    return s !== TigerState.Latched && s < TigerState.Dead;
+    return s !== PackState.Latched && s < PackState.Dead;
   };
-  const nearestFreeTiger = (i: number): number =>
+  const nearestFreePack = (i: number): number =>
     grid.nearest(rx[i] as number, ry[i] as number, tx, ty, freeFilter);
-  const nearestTrex = (j: number): number =>
-    trexGrid.nearest(tx[j] as number, ty[j] as number, rx, ry, trexAliveFilter);
+  const nearestHeavy = (j: number): number =>
+    heavyGrid.nearest(tx[j] as number, ty[j] as number, rx, ry, heavyAliveFilter);
 
-  const chooseTrex = (j: number): number => {
-    if (config.tigerTactic === 'direct') return nearestTrex(j);
+  const chooseHeavy = (j: number): number => {
+    if (config.packTactic === 'direct') return nearestHeavy(j);
     let bi = -1;
     let bs = Infinity;
     for (let i = 0; i < N; i++) {
@@ -396,7 +396,7 @@ export function simulateBattle(
       ft[j * 3 + 1] = ty[j] as number;
       ft[j * 3 + 2] = tState[j] as number;
     }
-    frames.push({ t, trex: fr, tiger: ft });
+    frames.push({ t, heavy: fr, pack: ft });
   };
 
   let outcome: OutcomeCode = Outcome.Draw;
@@ -409,7 +409,7 @@ export function simulateBattle(
     rCarry.fill(0);
     rLatched.fill(0);
     for (let j = 0; j < M; j++) {
-      if (tState[j] === TigerState.Latched) {
+      if (tState[j] === PackState.Latched) {
         const h = tHost[j] as number;
         rCarry[h] = (rCarry[h] as number) + (tMass[j] as number);
         rLatched[h] = (rLatched[h] as number) + 1;
@@ -421,14 +421,14 @@ export function simulateBattle(
       if (!rAlive[i]) continue;
       rTimer[i] = (rTimer[i] as number) - DT;
       const tgt = rTarget[i] as number;
-      const tgtState = tgt >= 0 ? (tState[tgt] as number) : TigerState.Dead;
+      const tgtState = tgt >= 0 ? (tState[tgt] as number) : PackState.Dead;
       if (
         (rTimer[i] as number) <= 0 ||
-        tgtState === TigerState.Latched ||
-        tgtState >= TigerState.Dead
+        tgtState === PackState.Latched ||
+        tgtState >= PackState.Dead
       ) {
-        rTarget[i] = nearestFreeTiger(i);
-        rTimer[i] = C.trexRetarget;
+        rTarget[i] = nearestFreePack(i);
+        rTimer[i] = C.heavyRetarget;
       }
       const target = rTarget[i] as number;
       if (target >= 0) {
@@ -458,12 +458,12 @@ export function simulateBattle(
         grid.query(
           rx[i] as number,
           ry[i] as number,
-          (rReach[i] as number) + C.tigerRadius,
+          (rReach[i] as number) + C.packRadius,
           biteVisit,
         );
         if (best >= 0) {
           rCd[i] = rBiteInt[i] as number;
-          const latched = tState[best] === TigerState.Latched;
+          const latched = tState[best] === PackState.Latched;
           const acc = latched
             ? Math.min(C.maxAccuracy, (rAcc[i] as number) * C.latchedAccuracyBonus)
             : (rAcc[i] as number);
@@ -481,44 +481,44 @@ export function simulateBattle(
 
       if (bleed > 0) rHp[i] = (rHp[i] as number) - (rWound[i] as number) * bleed * DT;
     }
-    trexGrid.rebuild(N, rx, ry, trexAliveFilter);
+    heavyGrid.rebuild(N, rx, ry, heavyAliveFilter);
 
     // --- Tigers ---
     for (let j = 0; j < M; j++) {
       const s = tState[j] as number;
-      if (s >= TigerState.Dead) continue;
+      if (s >= PackState.Dead) continue;
 
-      if (config.morale && s !== TigerState.Routed && (tMorale[j] as number) < C.routThreshold) {
+      if (config.morale && s !== PackState.Routed && (tMorale[j] as number) < C.routThreshold) {
         log?.emit(
           EventType.Rout,
           0,
           j,
-          s === TigerState.Latched ? (tHost[j] as number) : EVENT_NONE,
+          s === PackState.Latched ? (tHost[j] as number) : EVENT_NONE,
         );
-        tState[j] = TigerState.Routed;
+        tState[j] = PackState.Routed;
         tHost[j] = -1;
       }
 
       switch (tState[j]) {
-        case TigerState.Approach: {
+        case PackState.Approach: {
           tLatchCd[j] = (tLatchCd[j] as number) - DT;
           tTimer[j] = (tTimer[j] as number) - DT;
           let r = tTarget[j] as number;
           if ((tTimer[j] as number) <= 0 || r < 0 || !rAlive[r]) {
-            r = tTarget[j] = chooseTrex(j);
-            tTimer[j] = C.tigerRetarget;
+            r = tTarget[j] = chooseHeavy(j);
+            tTimer[j] = C.packRetarget;
           }
           if (r < 0) break;
           const dx = (rx[r] as number) - (tx[j] as number);
           const dy = (ry[r] as number) - (ty[j] as number);
           const dist = len(dx, dy);
-          const contact = radius + C.tigerRadius + 0.5;
+          const contact = radius + C.packRadius + 0.5;
           const rel = wrap(Math.atan2(-dy, -dx) - (rh[r] as number));
 
           let aimX = rx[r] as number;
           let aimY = ry[r] as number;
           let heading: number;
-          if (config.tigerTactic === 'flank') {
+          if (config.packTactic === 'flank') {
             const back = (rh[r] as number) + Math.PI + (tSide[j] as number) * C.flankOffset;
             aimX += Math.cos(back) * radius;
             aimY += Math.sin(back) * radius;
@@ -544,7 +544,7 @@ export function simulateBattle(
             tStamina[j] = (tStamina[j] as number) - DT / (tSprintEnd[j] as number);
           }
           let stepLen = speed * DT;
-          if (config.tigerTactic === 'direct')
+          if (config.packTactic === 'direct')
             stepLen = Math.min(stepLen, Math.max(0, dist - contact));
           else {
             const aimDist = len(aimX - (tx[j] as number), aimY - (ty[j] as number));
@@ -563,7 +563,7 @@ export function simulateBattle(
           );
           if (nd <= contact && (tLatchCd[j] as number) <= 0) {
             if (rng.next() < (tLatchChance[j] as number)) {
-              tState[j] = TigerState.Latched;
+              tState[j] = PackState.Latched;
               tHost[j] = r;
               tLatchAng[j] = wrap(
                 Math.atan2(
@@ -579,7 +579,7 @@ export function simulateBattle(
           }
           break;
         }
-        case TigerState.Latched: {
+        case PackState.Latched: {
           const h = tHost[j] as number;
           if (h < 0 || !rAlive[h]) {
             log?.emit(EventType.Release, ReleaseCause.HostDied, j, h < 0 ? EVENT_NONE : h);
@@ -587,8 +587,8 @@ export function simulateBattle(
             break;
           }
           const a = (rh[h] as number) + (tLatchAng[j] as number);
-          tx[j] = (rx[h] as number) + Math.cos(a) * (radius + C.tigerRadius);
-          ty[j] = (ry[h] as number) + Math.sin(a) * (radius + C.tigerRadius);
+          tx[j] = (rx[h] as number) + Math.cos(a) * (radius + C.packRadius);
+          ty[j] = (ry[h] as number) + Math.sin(a) * (radius + C.packRadius);
           const dmg = (tDps[j] as number) * DT;
           rHp[h] = (rHp[h] as number) - dmg;
           rWound[h] = (rWound[h] as number) + dmg;
@@ -610,8 +610,8 @@ export function simulateBattle(
           }
           break;
         }
-        case TigerState.Recover: {
-          const r = nearestTrex(j);
+        case PackState.Recover: {
+          const r = nearestHeavy(j);
           tStamina[j] = Math.min(1, (tStamina[j] as number) + DT / (tRecovery[j] as number));
           if (r >= 0) {
             const dx = (tx[j] as number) - (rx[r] as number);
@@ -623,13 +623,13 @@ export function simulateBattle(
           tRecoverTimer[j] = (tRecoverTimer[j] as number) - DT;
           if ((tStamina[j] as number) >= C.resumeStamina && (tRecoverTimer[j] as number) <= 0) {
             log?.emit(EventType.Resume, 0, j, EVENT_NONE);
-            tState[j] = TigerState.Approach;
+            tState[j] = PackState.Approach;
             tTarget[j] = -1;
           }
           break;
         }
-        case TigerState.Routed: {
-          const r = nearestTrex(j);
+        case PackState.Routed: {
+          const r = nearestHeavy(j);
           let away: number;
           if (r >= 0)
             away = Math.atan2(
@@ -647,30 +647,30 @@ export function simulateBattle(
           const y = ty[j] as number;
           if (x < 0 || y < 0 || x > L || y > L) {
             log?.emit(EventType.Exit, 0, j, EVENT_NONE);
-            tState[j] = TigerState.Left;
+            tState[j] = PackState.Left;
           }
           break;
         }
       }
 
-      if ((tState[j] as number) < TigerState.Routed) {
+      if ((tState[j] as number) < PackState.Routed) {
         tx[j] = Math.min(L, Math.max(0, tx[j] as number));
         ty[j] = Math.min(L, Math.max(0, ty[j] as number));
       }
     }
 
     // --- Casualties & termination ---
-    let trexAlive = 0;
+    let heavyAlive = 0;
     for (let i = 0; i < N; i++) {
       if (rAlive[i] && (rHp[i] as number) <= 0) {
-        log?.emit(EventType.TrexDeath, 0, i, EVENT_NONE);
+        log?.emit(EventType.HeavyDeath, 0, i, EVENT_NONE);
         rAlive[i] = 0;
         rHp[i] = 0;
       }
-      if (rAlive[i]) trexAlive++;
+      if (rAlive[i]) heavyAlive++;
     }
     let active = 0;
-    for (let j = 0; j < M; j++) if ((tState[j] as number) < TigerState.Routed) active++;
+    for (let j = 0; j < M; j++) if ((tState[j] as number) < PackState.Routed) active++;
 
     if (trace && (step + 1) % traceEvery === 0) {
       record((step + 1) * DT);
@@ -679,13 +679,13 @@ export function simulateBattle(
         traceEvery *= 2;
       }
     }
-    if (trexAlive === 0) {
-      outcome = Outcome.Tigers;
+    if (heavyAlive === 0) {
+      outcome = Outcome.Pack;
       step++;
       break;
     }
     if (active === 0) {
-      outcome = Outcome.Trex;
+      outcome = Outcome.Heavy;
       step++;
       break;
     }
@@ -695,12 +695,12 @@ export function simulateBattle(
     record(step * DT);
   }
 
-  let trexAlive = 0;
+  let heavyAlive = 0;
   let hpSum = 0;
   let maxHpSum = 0;
   for (let i = 0; i < N; i++) {
     if (rAlive[i]) {
-      trexAlive++;
+      heavyAlive++;
       hpSum += rHp[i] as number;
     }
     maxHpSum += rMaxHp[i] as number;
@@ -709,20 +709,20 @@ export function simulateBattle(
   let active = 0;
   for (let j = 0; j < M; j++) {
     const s = tState[j] as number;
-    if (s === TigerState.Routed || s === TigerState.Left) routed++;
-    else if (s < TigerState.Routed) active++;
+    if (s === PackState.Routed || s === PackState.Left) routed++;
+    else if (s < PackState.Routed) active++;
   }
-  const trexHpFrac = maxHpSum > 0 ? hpSum / maxHpSum : 0;
+  const heavyHpFrac = maxHpSum > 0 ? hpSum / maxHpSum : 0;
   const summary: RunSummary = {
     run,
     outcome,
     duration: step * DT,
-    trexAlive,
-    tigersKilled: killed,
-    tigersRouted: routed,
-    tigersActive: active,
-    trexHpFrac,
-    trexAdvantage: trexHpFrac - active / M,
+    heavyAlive,
+    packKilled: killed,
+    packRouted: routed,
+    packActive: active,
+    heavyHpFrac,
+    heavyAdvantage: heavyHpFrac - active / M,
   };
   if (!trace) return { summary };
   const ev = log ? log.finish(step) : null;
@@ -731,8 +731,8 @@ export function simulateBattle(
     trace: {
       version: TRACE_VERSION,
       arenaSize: L,
-      trexCount: N,
-      tigerCount: M,
+      heavyCount: N,
+      packCount: M,
       frames,
       events: ev ? ev.events : new Uint16Array(0),
       eventsCompleteUntilStep: ev ? ev.completeUntilStep : 0,
@@ -740,7 +740,7 @@ export function simulateBattle(
       meta: {
         dt: DT,
         bodyRadius: radius,
-        tigerRadius: C.tigerRadius,
+        packRadius: C.packRadius,
         reach: Float32Array.from(rReach),
         arc: Float32Array.from(rArc),
       },

@@ -57,15 +57,15 @@ describe('poolSize / ETA', () => {
 
 describe('cost estimate', () => {
   it('does not warn for the default scenario or the presets', () => {
-    expect(costLevel({ trexCount: 10, tigerCount: 100, runs: 500 }, 4)).toBe('ok');
-    expect(costLevel({ trexCount: 10, tigerCount: 1000, runs: 200 }, 4)).toBe('ok');
-    expect(costLevel({ trexCount: 1, tigerCount: 1, runs: 2000 }, 4)).toBe('ok');
+    expect(costLevel({ heavyCount: 10, packCount: 100, runs: 500 }, 4)).toBe('ok');
+    expect(costLevel({ heavyCount: 10, packCount: 1000, runs: 200 }, 4)).toBe('ok');
+    expect(costLevel({ heavyCount: 1, packCount: 1, runs: 2000 }, 4)).toBe('ok');
   });
 
   it('warns for very large scenarios', () => {
-    expect(costLevel({ trexCount: 10, tigerCount: 5000, runs: 2000 }, 8)).not.toBe('ok');
-    expect(costLevel({ trexCount: 500, tigerCount: 5000, runs: 20000 }, 8)).toBe('extreme');
-    expect(estimateTotalMs({ trexCount: 1, tigerCount: 1, runs: 100 }, 2)).toBeGreaterThan(0);
+    expect(costLevel({ heavyCount: 10, packCount: 5000, runs: 2000 }, 8)).not.toBe('ok');
+    expect(costLevel({ heavyCount: 500, packCount: 5000, runs: 20000 }, 8)).toBe('extreme');
+    expect(estimateTotalMs({ heavyCount: 1, packCount: 1, runs: 100 }, 2)).toBeGreaterThan(0);
   });
 });
 

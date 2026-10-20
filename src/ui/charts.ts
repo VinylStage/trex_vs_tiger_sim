@@ -11,8 +11,8 @@ export interface Theme {
   muted: string;
   grid: string;
   surface: string;
-  trex: string;
-  tiger: string;
+  heavy: string;
+  pack: string;
   draw: string;
   neutral: string;
   latched: string;
@@ -29,8 +29,8 @@ export function readTheme(): Theme {
     muted: v('--muted', '#5f5e5a'),
     grid: v('--grid', '#e3e2de'),
     surface: v('--surface', '#ffffff'),
-    trex: v('--c-trex', '#2a78d6'),
-    tiger: v('--c-tiger', '#eb6834'),
+    heavy: v('--c-trex', '#2a78d6'),
+    pack: v('--c-tiger', '#eb6834'),
     draw: v('--c-draw', '#8d8c87'),
     neutral: v('--c-neutral', '#6250d6'),
     latched: v('--c-latched', '#1baf7a'),
@@ -233,8 +233,8 @@ function noData(ctx: CanvasRenderingContext2D, size: Size, theme: Theme): Hit[] 
 export function paintOutcome(agg: AggregateResult): Painter {
   return (ctx, { w, h: hgt }, theme) => {
     const rows = [
-      { name: t('outcome.trex'), iv: agg.pTrex, color: theme.trex },
-      { name: t('outcome.tigers'), iv: agg.pTigers, color: theme.tiger },
+      { name: t('outcome.heavy'), iv: agg.pHeavy, color: theme.heavy },
+      { name: t('outcome.pack'), iv: agg.pPack, color: theme.pack },
       { name: t('outcome.draw'), iv: agg.pDraw, color: theme.draw },
     ];
     ctx.font = font(theme, 13);
@@ -436,9 +436,9 @@ export function paintTornado(
     ctx.font = font(theme, 11);
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
-    ctx.fillText(t('chart.favTigers'), left, headH / 2);
+    ctx.fillText(t('chart.favPack'), left, headH / 2);
     ctx.textAlign = 'right';
-    ctx.fillText(t('chart.favTrex'), right, headH / 2);
+    ctx.fillText(t('chart.favHeavy'), right, headH / 2);
 
     ctx.strokeStyle = theme.grid;
     ctx.lineWidth = 1;
@@ -457,7 +457,7 @@ export function paintTornado(
       ctx.fillText(ellipsize(ctx, name, labelW), labelW, cy);
 
       const len = (Math.abs(r.rho) / scale) * half;
-      ctx.fillStyle = r.rho >= 0 ? theme.trex : theme.tiger;
+      ctx.fillStyle = r.rho >= 0 ? theme.heavy : theme.pack;
       if (r.rho >= 0) bar(ctx, cx, cy - barH / 2, len, barH, 'right');
       else bar(ctx, cx - len, cy - barH / 2, len, barH, 'left');
 

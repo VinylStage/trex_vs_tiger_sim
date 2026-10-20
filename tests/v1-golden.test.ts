@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { simulateBattle, type RunSummary } from '../src/sim/engine';
 import { aggregate, runAll } from '../src/sim/montecarlo';
 import { designRow } from '../src/sim/sampling';
-import { decodeConfig } from '../src/ui/share';
+import { decodeConfig, v1ParamId } from '../src/ui/share';
 
 /**
  * Golden fixtures for v1 share links, captured from origin/main f18a934 before the
@@ -59,12 +59,12 @@ const row = (s: RunSummary): number[] => [
   s.run,
   s.outcome,
   s.duration,
-  s.trexAlive,
-  s.tigersKilled,
-  s.tigersRouted,
-  s.tigersActive,
-  s.trexHpFrac,
-  s.trexAdvantage,
+  s.heavyAlive,
+  s.packKilled,
+  s.packRouted,
+  s.packActive,
+  s.heavyHpFrac,
+  s.heavyAdvantage,
 ];
 
 describe(`v1 share links reproduce bit-identically (golden from ${golden.capturedFrom})`, () => {
@@ -80,26 +80,30 @@ describe(`v1 share links reproduce bit-identically (golden from ${golden.capture
 
     const agg = aggregate(config, design, summaries);
     expect({
-      wins: [agg.trexWins, agg.tigerWins, agg.draws],
+      wins: [agg.heavyWins, agg.packWins, agg.draws],
       p: [
-        agg.pTrex.p,
-        agg.pTrex.lo,
-        agg.pTrex.hi,
-        agg.pTigers.p,
-        agg.pTigers.lo,
-        agg.pTigers.hi,
+        agg.pHeavy.p,
+        agg.pHeavy.lo,
+        agg.pHeavy.hi,
+        agg.pPack.p,
+        agg.pPack.lo,
+        agg.pPack.hi,
         agg.pDraw.p,
         agg.pDraw.lo,
         agg.pDraw.hi,
       ],
       duration: [agg.duration.mean, agg.duration.p5, agg.duration.p50, agg.duration.p95],
-      survivors: [agg.trexSurvivors.mean, agg.trexSurvivors.p50],
-      killed: [agg.tigersKilled.mean, agg.tigersKilled.p50],
-      routed: [agg.tigersRouted.mean, agg.tigersRouted.p50],
+      survivors: [agg.heavySurvivors.mean, agg.heavySurvivors.p50],
+      killed: [agg.packKilled.mean, agg.packKilled.p50],
+      routed: [agg.packRouted.mean, agg.packRouted.p50],
       exchangeRatio: String(agg.exchangeRatio),
       sensitivity: agg.sensitivity.map((s) => [s.id, s.rho]),
       representativeRun: agg.representativeRun,
-    }).toEqual(g.aggregate);
+    }).toEqual({
+      ...g.aggregate,
+      // The fixture names parameters with their v1 ids.
+      sensitivity: g.aggregate.sensitivity.map(([id, rho]) => [v1ParamId(id), rho]),
+    });
 
     const run = g.trace.run;
     const { trace } = simulateBattle(config, designRow(design, run), run, true);
@@ -109,8 +113,8 @@ describe(`v1 share links reproduce bit-identically (golden from ${golden.capture
     for (const f of trace.frames) {
       t[0] = f.t;
       fh = fnv(fh, bytesOf(t));
-      fh = fnv(fh, bytesOf(f.trex));
-      fh = fnv(fh, bytesOf(f.tiger));
+      fh = fnv(fh, bytesOf(f.heavy));
+      fh = fnv(fh, bytesOf(f.pack));
     }
     expect({
       run,
@@ -120,7 +124,7 @@ describe(`v1 share links reproduce bit-identically (golden from ${golden.capture
       eventsCompleteUntilStep: trace.eventsCompleteUntilStep,
       eventStats: trace.eventStats,
       bodyRadius: trace.meta.bodyRadius,
-      packRadius: trace.meta.tigerRadius,
+      packRadius: trace.meta.packRadius,
       reachHash: hashOf(trace.meta.reach),
       arcHash: hashOf(trace.meta.arc),
     }).toEqual(g.trace);

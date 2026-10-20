@@ -1,7 +1,7 @@
 import { defaultConfig, type ScenarioConfig } from '../src/sim/config';
 import {
   DT,
-  TigerState,
+  PackState,
   type BattleTrace,
   type RunSummary,
   type TraceFrame,
@@ -15,11 +15,11 @@ import {
   eventB,
   eventCount,
   eventStep,
-  eventTiger,
+  eventPack,
   eventType,
   eventValue,
   isCosmeticEvent,
-  tigerStateAfter,
+  packStateAfter,
 } from '../src/sim/events';
 import type { Triangular } from '../src/sim/params';
 import { Rng } from '../src/sim/rng';
@@ -34,8 +34,8 @@ const ZERO: Triangular = { min: 0, mode: 0, max: 0 };
 /** Tigers never latch and T-Rex never hit: endless approach / latch-fail / exhaustion churn. */
 export function noAttackParams(): ScenarioConfig['params'] {
   const p = defaultConfig().params;
-  p['tiger.latchChance'] = { ...ZERO };
-  p['trex.biteAccuracy'] = { ...ZERO };
+  p['pack.latchChance'] = { ...ZERO };
+  p['heavy.biteAccuracy'] = { ...ZERO };
   return p;
 }
 
@@ -68,8 +68,8 @@ export function framesHash(frames: readonly TraceFrame[]): string {
   for (const f of frames) {
     t[0] = f.t;
     h = fnv(h, new Uint8Array(t.buffer));
-    h = fnv(h, new Uint8Array(f.trex.buffer, f.trex.byteOffset, f.trex.byteLength));
-    h = fnv(h, new Uint8Array(f.tiger.buffer, f.tiger.byteOffset, f.tiger.byteLength));
+    h = fnv(h, new Uint8Array(f.heavy.buffer, f.heavy.byteOffset, f.heavy.byteLength));
+    h = fnv(h, new Uint8Array(f.pack.buffer, f.pack.byteOffset, f.pack.byteLength));
   }
   return h.toString(16).padStart(8, '0');
 }
@@ -83,8 +83,8 @@ export function framesDiff(a: readonly TraceFrame[], b: readonly TraceFrame[]): 
     const fb = b[k] as TraceFrame;
     if (!Object.is(fa.t, fb.t)) diff++;
     for (const [x, y] of [
-      [fa.trex, fb.trex],
-      [fa.tiger, fb.tiger],
+      [fa.heavy, fb.heavy],
+      [fa.pack, fb.pack],
     ] as const) {
       if (x.length !== y.length) diff++;
       for (let i = 0; i < x.length; i++) if (!Object.is(x[i], y[i])) diff++;
@@ -106,8 +106,8 @@ export interface TraceCheck {
  * Also checks log well-formedness and that the final state agrees with the summary.
  */
 export function checkTrace(trace: BattleTrace, summary: RunSummary): TraceCheck {
-  const N = trace.trexCount;
-  const M = trace.tigerCount;
+  const N = trace.heavyCount;
+  const M = trace.packCount;
   const ev = trace.events;
   const n = eventCount(ev);
   const until = trace.eventsCompleteUntilStep;
@@ -117,11 +117,11 @@ export function checkTrace(trace: BattleTrace, summary: RunSummary): TraceCheck 
     if (problems.length < 20) problems.push(msg);
   };
 
-  const state = new Uint8Array(M).fill(TigerState.Approach);
+  const state = new Uint8Array(M).fill(PackState.Approach);
   const host = new Int32Array(M).fill(-1);
   const latchByte = new Uint8Array(M);
   const latchStep = new Int32Array(M).fill(-1);
-  const trexDeath = new Int32Array(N).fill(-1);
+  const heavyDeath = new Int32Array(N).fill(-1);
   let killed = 0;
   let prevStep = 0;
   let k = 0;
@@ -136,18 +136,19 @@ export function checkTrace(trace: BattleTrace, summary: RunSummary): TraceCheck 
     prevStep = s;
     if (s < 1 || s > until) report(`event ${e}: stamp ${s} outside [1, ${until}]`);
     if (type < EventType.BiteHit || type > EventType.Resume) report(`event ${e}: type ${type}`);
-    const trexOperand = type === EventType.BiteHit || type === EventType.BiteMiss ? a : b;
-    if (type === EventType.TrexDeath) {
+    const heavyOperand = type === EventType.BiteHit || type === EventType.BiteMiss ? a : b;
+    if (type === EventType.HeavyDeath) {
       if (a >= N || b !== EVENT_NONE) report(`event ${e}: TrexDeath operands ${a},${b}`);
-      if (trexDeath[a] !== -1) report(`event ${e}: T-Rex ${a} dies twice`);
-      trexDeath[a] = s;
+      if (heavyDeath[a] !== -1) report(`event ${e}: T-Rex ${a} dies twice`);
+      heavyDeath[a] = s;
       return;
     }
-    const j = eventTiger(type, a, b);
+    const j = eventPack(type, a, b);
     if (j < 0 || j >= M) report(`event ${e}: tiger ${j}`);
-    if (trexOperand !== EVENT_NONE && trexOperand >= N) report(`event ${e}: T-Rex ${trexOperand}`);
-    if ((state[j] as number) >= TigerState.Dead) report(`event ${e}: tiger ${j} already gone`);
-    if (type === EventType.TigerDeath) {
+    if (heavyOperand !== EVENT_NONE && heavyOperand >= N)
+      report(`event ${e}: T-Rex ${heavyOperand}`);
+    if ((state[j] as number) >= PackState.Dead) report(`event ${e}: tiger ${j} already gone`);
+    if (type === EventType.PackDeath) {
       killed++;
       // A death directly follows the bite hit or throw that caused it, in the same tick.
       const bite = v === DeathCause.Bite;
@@ -165,14 +166,14 @@ export function checkTrace(trace: BattleTrace, summary: RunSummary): TraceCheck 
       latchStep[j] = s;
     }
     if (isCosmeticEvent(type)) return;
-    const next = tigerStateAfter(type);
+    const next = packStateAfter(type);
     if (next >= 0) state[j] = next;
-    if (next !== TigerState.Latched) host[j] = -1;
+    if (next !== PackState.Latched) host[j] = -1;
   };
 
   let samples = 0;
   let latchedSamples = 0;
-  const reach = trace.meta.bodyRadius + trace.meta.tigerRadius;
+  const reach = trace.meta.bodyRadius + trace.meta.packRadius;
   // Latch angles are quantised to 1/256 turn; positions are Float32.
   const L = trace.arenaSize;
   const clamp = (v: number): number => Math.min(L, Math.max(0, v));
@@ -184,20 +185,20 @@ export function checkTrace(trace: BattleTrace, summary: RunSummary): TraceCheck 
     while (k < n && eventStep(ev, k) <= fs) apply(k++);
     for (let j = 0; j < M; j++) {
       samples++;
-      const want = f.tiger[j * 3 + 2] as number;
+      const want = f.pack[j * 3 + 2] as number;
       if (state[j] !== want) report(`t=${f.t}: tiger ${j} events say ${state[j]}, frame ${want}`);
-      if (state[j] === TigerState.Latched && (latchStep[j] as number) < fs) {
+      if (state[j] === PackState.Latched && (latchStep[j] as number) < fs) {
         latchedSamples++;
         // Pinned at bodyRadius + tigerRadius and the latch angle in the host frame, then
         // clamped to the arena like every non-routed tiger.
         const h = host[j] as number;
-        const hx = f.trex[h * 4] as number;
-        const hy = f.trex[h * 4 + 1] as number;
-        const ang = (f.trex[h * 4 + 2] as number) + byteAngle(latchByte[j] as number);
+        const hx = f.heavy[h * 4] as number;
+        const hy = f.heavy[h * 4 + 1] as number;
+        const ang = (f.heavy[h * 4 + 2] as number) + byteAngle(latchByte[j] as number);
         const px = hx + Math.cos(ang) * reach;
         const py = hy + Math.sin(ang) * reach;
-        const x = f.tiger[j * 3] as number;
-        const y = f.tiger[j * 3 + 1] as number;
+        const x = f.pack[j * 3] as number;
+        const y = f.pack[j * 3 + 1] as number;
         const clamped = px < 0 || py < 0 || px > L || py > L;
         const err = Math.hypot(clamp(px) - x, clamp(py) - y);
         const off = clamped ? 0 : Math.abs(Math.hypot(x - hx, y - hy) - reach);
@@ -207,9 +208,9 @@ export function checkTrace(trace: BattleTrace, summary: RunSummary): TraceCheck 
     }
     for (let i = 0; i < N; i++) {
       samples++;
-      const alive = trexDeath[i] === -1;
-      if (alive !== (f.trex[i * 4 + 3] as number) > 0)
-        report(`t=${f.t}: T-Rex ${i} events say alive=${alive}, frame hp ${f.trex[i * 4 + 3]}`);
+      const alive = heavyDeath[i] === -1;
+      if (alive !== (f.heavy[i * 4 + 3] as number) > 0)
+        report(`t=${f.t}: T-Rex ${i} events say alive=${alive}, frame hp ${f.heavy[i * 4 + 3]}`);
     }
   }
   while (k < n) apply(k++);
@@ -219,17 +220,17 @@ export function checkTrace(trace: BattleTrace, summary: RunSummary): TraceCheck 
     let active = 0;
     for (let j = 0; j < M; j++) {
       const s = state[j] as number;
-      if (s === TigerState.Routed || s === TigerState.Left) routed++;
-      else if (s < TigerState.Routed) active++;
+      if (s === PackState.Routed || s === PackState.Left) routed++;
+      else if (s < PackState.Routed) active++;
     }
-    let trexAlive = 0;
-    for (let i = 0; i < N; i++) if (trexDeath[i] === -1) trexAlive++;
-    const got = { killed, routed, active, trexAlive };
+    let heavyAlive = 0;
+    for (let i = 0; i < N; i++) if (heavyDeath[i] === -1) heavyAlive++;
+    const got = { killed, routed, active, heavyAlive };
     const want = {
-      killed: summary.tigersKilled,
-      routed: summary.tigersRouted,
-      active: summary.tigersActive,
-      trexAlive: summary.trexAlive,
+      killed: summary.packKilled,
+      routed: summary.packRouted,
+      active: summary.packActive,
+      heavyAlive: summary.heavyAlive,
     };
     if (JSON.stringify(got) !== JSON.stringify(want))
       report(`final state ${JSON.stringify(got)} != summary ${JSON.stringify(want)}`);

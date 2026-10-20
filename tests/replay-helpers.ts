@@ -2,13 +2,13 @@ import type { ScenarioConfig } from '../src/sim/config';
 import {
   DT,
   TRACE_VERSION,
-  TigerState,
+  PackState,
   simulateBattle,
   type BattleTrace,
   type TraceFrame,
   type TraceOptions,
 } from '../src/sim/engine';
-import { EventType, tigerStateAfter, eventTiger } from '../src/sim/events';
+import { EventType, packStateAfter, eventPack } from '../src/sim/events';
 import { buildDesign, designRow } from '../src/sim/sampling';
 import { frameIndex, lastAtMost } from '../src/ui/replay/interp';
 import { NO_STEP, prepare, type Prepared } from '../src/ui/replay/prepare';
@@ -44,16 +44,16 @@ export function synthTrace(opts: {
   L?: number;
   duration: number;
   every?: number;
-  trex: SynthAgent[];
-  tigers: SynthAgent[];
+  heavy: SynthAgent[];
+  pack: SynthAgent[];
   events: [number, number, number, number, number][];
   complete?: number | undefined;
   bodyRadius?: number;
 }): BattleTrace {
   const L = opts.L ?? 100;
   const every = opts.every ?? 0.5;
-  const N = opts.trex.length;
-  const M = opts.tigers.length;
+  const N = opts.heavy.length;
+  const M = opts.pack.length;
   const steps = Math.round(opts.duration / DT);
   // A stopped log holds no event after its last complete stamp; the frames still see them all.
   const logged = opts.events.filter(([s]) => s <= (opts.complete ?? steps));
@@ -65,31 +65,31 @@ export function synthTrace(opts: {
   const everySteps = Math.round(every / DT);
   for (let s = 0; s <= steps; s += everySteps) {
     const t = s * DT;
-    const trex = new Float32Array(N * 4);
-    opts.trex.forEach((ag, i) => {
+    const heavy = new Float32Array(N * 4);
+    opts.heavy.forEach((ag, i) => {
       const [x, y] = ag.pos(t);
-      trex.set([x, y, ag.heading?.(t) ?? 0, ag.hp?.(t) ?? 1], i * 4);
+      heavy.set([x, y, ag.heading?.(t) ?? 0, ag.hp?.(t) ?? 1], i * 4);
     });
-    const state = new Uint8Array(M).fill(TigerState.Approach);
+    const state = new Uint8Array(M).fill(PackState.Approach);
     for (const [es, type, , a, b] of opts.events) {
       if (es > s) break;
-      const j = eventTiger(type, a, b);
-      const next = tigerStateAfter(type);
+      const j = eventPack(type, a, b);
+      const next = packStateAfter(type);
       if (j >= 0 && next >= 0 && type !== EventType.BiteMiss && type !== EventType.LatchFail)
         state[j] = next;
     }
-    const tiger = new Float32Array(M * 3);
-    opts.tigers.forEach((ag, j) => {
+    const pack = new Float32Array(M * 3);
+    opts.pack.forEach((ag, j) => {
       const [x, y] = ag.pos(t);
-      tiger.set([x, y, state[j] as number], j * 3);
+      pack.set([x, y, state[j] as number], j * 3);
     });
-    frames.push({ t, trex, tiger });
+    frames.push({ t, heavy, pack });
   }
   return {
     version: TRACE_VERSION,
     arenaSize: L,
-    trexCount: N,
-    tigerCount: M,
+    heavyCount: N,
+    packCount: M,
     frames,
     events,
     eventsCompleteUntilStep: opts.complete ?? steps,
@@ -97,7 +97,7 @@ export function synthTrace(opts: {
     meta: {
       dt: DT,
       bodyRadius: opts.bodyRadius ?? 2.5,
-      tigerRadius: 0.8,
+      packRadius: 0.8,
       reach: new Float32Array(N).fill(5.5),
       arc: new Float32Array(N).fill(Math.PI / 4),
     },
@@ -149,16 +149,15 @@ export function checkMotion(
       const b = (fr[k + 1] ?? a) as TraceFrame;
       const f = b.t > a.t ? Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t))) : 0;
       for (let j = 0; j < p.M; j++) {
-        const s = a.tiger[j * 3 + 2] as number;
-        const g = b.tiger[j * 3 + 2] === s ? f : 0;
+        const s = a.pack[j * 3 + 2] as number;
+        const g = b.pack[j * 3 + 2] === s ? f : 0;
         w.ts[j] = s;
         w.thost[j] = -1;
         w.tx[j] =
-          (a.tiger[j * 3] as number) +
-          ((b.tiger[j * 3] as number) - (a.tiger[j * 3] as number)) * g;
+          (a.pack[j * 3] as number) + ((b.pack[j * 3] as number) - (a.pack[j * 3] as number)) * g;
         w.ty[j] =
-          (a.tiger[j * 3 + 1] as number) +
-          ((b.tiger[j * 3 + 1] as number) - (a.tiger[j * 3 + 1] as number)) * g;
+          (a.pack[j * 3 + 1] as number) +
+          ((b.pack[j * 3 + 1] as number) - (a.pack[j * 3 + 1] as number)) * g;
       }
     };
   }
@@ -194,15 +193,15 @@ export function checkMotion(
     const t = Math.min(p.duration, k * dts);
     w.update(t);
     for (let a = 0; a < A; a++) {
-      const isTrex = a < N;
+      const isHeavy = a < N;
       const j = a - N;
-      const drawn = isTrex || w.ts[j] !== TigerState.Left;
-      const x = (isTrex ? (w.rx[a] as number) : (w.tx[j] as number)) * scalePx;
-      const y = (isTrex ? (w.ry[a] as number) : (w.ty[j] as number)) * scalePx;
+      const drawn = isHeavy || w.ts[j] !== PackState.Left;
+      const x = (isHeavy ? (w.rx[a] as number) : (w.tx[j] as number)) * scalePx;
+      const y = (isHeavy ? (w.ry[a] as number) : (w.ty[j] as number)) * scalePx;
       if (k > 0 && drawn && prevDrawn[a]) {
         const o = a * (n - 1) + (k - 1);
         disp[o] = Math.hypot(x - (prevX[a] as number), y - (prevY[a] as number));
-        if (!isTrex) {
+        if (!isHeavy) {
           for (const s of throwSteps[j] as number[]) {
             const te = s * p.dt;
             if (te > prevT - 1e-9 && te <= t + 1e-9) exemptFlag[o] = 1;
@@ -216,7 +215,7 @@ export function checkMotion(
     // V5
     const step = Math.floor(t / p.dt + 1e-6);
     for (let j = 0; j < M; j++) {
-      if (w.ts[j] !== TigerState.Latched) continue;
+      if (w.ts[j] !== PackState.Latched) continue;
       const h = w.thost[j] as number;
       if (h < 0) continue;
       report.latchedSamples++;

@@ -1,5 +1,5 @@
-import { TigerState, type TraceFrame } from '../../sim/engine';
-import { EventType, eventTiger, isCosmeticEvent, tigerStateAfter } from '../../sim/events';
+import { PackState, type TraceFrame } from '../../sim/engine';
+import { EventType, eventPack, isCosmeticEvent, packStateAfter } from '../../sim/events';
 import { frameIndex } from './interp';
 import type { Prepared } from './prepare';
 import type { World } from './world';
@@ -38,7 +38,7 @@ export function contactSeekTime(p: Prepared): number | null {
   return Math.min(p.duration, Math.max(0, p.firstContact - CONTACT_LEAD_S));
 }
 
-export type MarkerKind = 'contact' | 'trexDeath' | 'kills' | 'routs';
+export type MarkerKind = 'contact' | 'heavyDeath' | 'kills' | 'routs';
 
 export interface Marker {
   readonly t: number;
@@ -48,7 +48,7 @@ export interface Marker {
 }
 
 /** Count channels per bin: tigers by state (routed and left together), then living T-Rex. */
-export const CH = { approach: 0, latched: 1, recover: 2, out: 3, dead: 4, trex: 5 } as const;
+export const CH = { approach: 0, latched: 1, recover: 2, out: 3, dead: 4, heavy: 5 } as const;
 export const CHANNELS = 6;
 
 export interface TimelineModel {
@@ -89,7 +89,7 @@ export function extractMarkers(p: Prepared): Marker[] {
   if (p.firstContact >= 0) out.push({ t: p.firstContact, kind: 'contact', count: 1 });
   const deaths: number[] = [];
   for (let i = 0; i < p.N; i++) {
-    const td = p.trexDeathTime[i] as number;
+    const td = p.heavyDeathTime[i] as number;
     if (Number.isFinite(td)) deaths.push(td);
   }
   deaths.sort((a, b) => a - b);
@@ -100,7 +100,7 @@ export function extractMarkers(p: Prepared): Marker[] {
       n++;
       k++;
     }
-    out.push({ t, kind: 'trexDeath', count: n });
+    out.push({ t, kind: 'heavyDeath', count: n });
   }
   const kills: number[] = [];
   const routs: number[] = [];
@@ -108,7 +108,7 @@ export function extractMarkers(p: Prepared): Marker[] {
     const step = p.evStep[k] as number;
     if (step > p.completeStep) break;
     const type = p.evType[k] as number;
-    if (type === EventType.TigerDeath) kills.push(step * p.dt);
+    if (type === EventType.PackDeath) kills.push(step * p.dt);
     else if (type === EventType.Rout) routs.push(step * p.dt);
   }
   cluster(kills, 'kills', out);
@@ -156,17 +156,17 @@ export function buildTimeline(p: Prepared, bins = TIMELINE_BINS): TimelineModel 
   const c = new Int32Array(CHANNELS);
   c[CH.approach] = p.M;
   const chOf = (s: number): number =>
-    s === TigerState.Approach
+    s === PackState.Approach
       ? CH.approach
-      : s === TigerState.Latched
+      : s === PackState.Latched
         ? CH.latched
-        : s === TigerState.Recover
+        : s === PackState.Recover
           ? CH.recover
-          : s === TigerState.Dead
+          : s === PackState.Dead
             ? CH.dead
             : CH.out;
   const deaths: number[] = [];
-  for (let i = 0; i < p.N; i++) deaths.push(p.trexDeathTime[i] as number);
+  for (let i = 0; i < p.N; i++) deaths.push(p.heavyDeathTime[i] as number);
   deaths.sort((a, b) => a - b);
   const frames = p.trace.frames;
   let k = 0;
@@ -178,21 +178,21 @@ export function buildTimeline(p: Prepared, bins = TIMELINE_BINS): TimelineModel 
       // After the log stopped: frame-sampled states.
       const fr = frames[frameIndex(p.frameT, t)] as TraceFrame;
       for (let j = 0; j < p.M; j++) {
-        const ch = chOf(fr.tiger[j * 3 + 2] as number) + o;
+        const ch = chOf(fr.pack[j * 3 + 2] as number) + o;
         counts[ch] = (counts[ch] as number) + 1;
       }
       let alive = 0;
-      for (let i = 0; i < p.N; i++) if ((fr.trex[i * 4 + 3] as number) > 0) alive++;
-      counts[o + CH.trex] = alive;
+      for (let i = 0; i < p.N; i++) if ((fr.heavy[i * 4 + 3] as number) > 0) alive++;
+      counts[o + CH.heavy] = alive;
       continue;
     }
     const step = Math.floor(t / p.dt + 1e-6);
     for (; k < p.evCount && (p.evStep[k] as number) <= step; k++) {
       const type = p.evType[k] as number;
       if ((p.evStep[k] as number) > p.completeStep) continue;
-      if (isCosmeticEvent(type) || type === EventType.TrexDeath) continue;
-      const next = tigerStateAfter(type);
-      const j = eventTiger(type, p.evA[k] as number, p.evB[k] as number);
+      if (isCosmeticEvent(type) || type === EventType.HeavyDeath) continue;
+      const next = packStateAfter(type);
+      const j = eventPack(type, p.evA[k] as number, p.evB[k] as number);
       if (next < 0 || j < 0 || j >= p.M) continue;
       const from = chOf(state[j] as number);
       c[from] = (c[from] as number) - 1;
@@ -201,8 +201,8 @@ export function buildTimeline(p: Prepared, bins = TIMELINE_BINS): TimelineModel 
       c[to] = (c[to] as number) + 1;
     }
     while (d < deaths.length && (deaths[d] as number) <= t + 1e-6 * p.dt) d++;
-    for (let ch = 0; ch < CH.trex; ch++) counts[o + ch] = c[ch] as number;
-    counts[o + CH.trex] = p.N - d;
+    for (let ch = 0; ch < CH.heavy; ch++) counts[o + ch] = c[ch] as number;
+    counts[o + CH.heavy] = p.N - d;
   }
   const markers = extractMarkers(p);
   return {
@@ -223,7 +223,7 @@ export interface SceneCounts {
   /** Routed or left the arena. */
   out: number;
   dead: number;
-  trexAlive: number;
+  heavyAlive: number;
 }
 
 export function sceneCounts(w: World, out: SceneCounts): SceneCounts {
@@ -232,16 +232,16 @@ export function sceneCounts(w: World, out: SceneCounts): SceneCounts {
   out.recover = 0;
   out.out = 0;
   out.dead = 0;
-  out.trexAlive = 0;
+  out.heavyAlive = 0;
   for (let j = 0; j < w.p.M; j++) {
     const s = w.ts[j] as number;
-    if (s === TigerState.Approach) out.approach++;
-    else if (s === TigerState.Latched) out.latched++;
-    else if (s === TigerState.Recover) out.recover++;
-    else if (s === TigerState.Dead) out.dead++;
+    if (s === PackState.Approach) out.approach++;
+    else if (s === PackState.Latched) out.latched++;
+    else if (s === PackState.Recover) out.recover++;
+    else if (s === PackState.Dead) out.dead++;
     else out.out++;
   }
-  for (let i = 0; i < w.p.N; i++) out.trexAlive += w.ralive[i] as number;
+  for (let i = 0; i < w.p.N; i++) out.heavyAlive += w.ralive[i] as number;
   return out;
 }
 

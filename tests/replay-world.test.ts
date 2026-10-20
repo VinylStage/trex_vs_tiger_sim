@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { DT, TigerState, type TraceFrame } from '../src/sim/engine';
+import { DT, PackState, type TraceFrame } from '../src/sim/engine';
 import { EventType, byteAngle } from '../src/sim/events';
 import { crEval, crKnots, frameIndex, lastAtMost, lerpAngle } from '../src/ui/replay/interp';
 import { NO_STEP, prepare } from '../src/ui/replay/prepare';
-import { World, trexPose } from '../src/ui/replay/world';
+import { World, heavyPose } from '../src/ui/replay/world';
 import { checkMotion, synthTrace, traceOf } from './replay-helpers';
 import { noAttackParams } from './trace-helpers';
 
@@ -57,7 +57,7 @@ function demo(complete?: number) {
   return synthTrace({
     duration: 5,
     complete,
-    trex: [
+    heavy: [
       { pos: host, hp: (t) => 1 - 0.04 * t },
       {
         pos: (t) => [20, 20 + Math.min(t, 3)],
@@ -65,7 +65,7 @@ function demo(complete?: number) {
         hp: (t) => (t >= 3 ? 0 : 1 - t / 3),
       },
     ],
-    tigers: [
+    pack: [
       {
         pos: (t) => {
           if (t < 0.7) return [60 - 20 * t, 50 + R];
@@ -92,15 +92,15 @@ function demo(complete?: number) {
       [7, EventType.Latch, 64, 0, 0],
       [10, EventType.Rout, 0, 3, 0],
       [12, EventType.BiteHit, 200, 0, 1],
-      [12, EventType.TigerDeath, 0, 1, 0],
+      [12, EventType.PackDeath, 0, 1, 0],
       [15, EventType.Throw, 0, 2, 0],
-      [15, EventType.TigerDeath, 1, 2, 0],
+      [15, EventType.PackDeath, 1, 2, 0],
       [20, EventType.BiteMiss, 0, 0, 0],
       [23, EventType.Throw, 0, 0, 0],
       [30, EventType.Latch, 0, 4, 0],
-      [30, EventType.TrexDeath, 0, 1, 0xffff],
+      [30, EventType.HeavyDeath, 0, 1, 0xffff],
       [31, EventType.BiteHit, 255, 0, 4],
-      [31, EventType.TigerDeath, 0, 4, 0],
+      [31, EventType.PackDeath, 0, 4, 0],
       [40, EventType.Resume, 0, 0, 0xffff],
     ],
   });
@@ -120,25 +120,25 @@ describe('prepare()', () => {
         p.trState[(p.trOff[j] as number) + k] as number,
       ]);
     expect(states(0)).toEqual([
-      [7, TigerState.Latched],
-      [23, TigerState.Recover],
-      [40, TigerState.Approach],
+      [7, PackState.Latched],
+      [23, PackState.Recover],
+      [40, PackState.Approach],
     ]);
     expect(states(1)).toEqual([
-      [12, TigerState.Recover],
-      [12, TigerState.Dead],
+      [12, PackState.Recover],
+      [12, PackState.Dead],
     ]);
     expect(states(2)).toEqual([
-      [3, TigerState.Latched],
-      [15, TigerState.Recover],
-      [15, TigerState.Dead],
+      [3, PackState.Latched],
+      [15, PackState.Recover],
+      [15, PackState.Dead],
     ]);
     expect([...p.stateAtComplete]).toEqual([
-      TigerState.Approach,
-      TigerState.Dead,
-      TigerState.Dead,
-      TigerState.Routed,
-      TigerState.Dead,
+      PackState.Approach,
+      PackState.Dead,
+      PackState.Dead,
+      PackState.Routed,
+      PackState.Dead,
     ]);
   });
 
@@ -184,9 +184,9 @@ describe('prepare()', () => {
     // Killed while riding: stays where it was drawn riding (behind T-Rex 0 at 1.5 s).
     expect(p.goneX[2]).toBeCloseTo(43 - p.attachR, 4);
     expect(p.goneY[2]).toBeCloseTo(50, 4);
-    expect(p.trexDeathTime[0]).toBe(Infinity);
-    expect(p.trexDeathTime[1]).toBeCloseTo(3, 12);
-    expect(p.trace.frames[p.trexDeathFrame[1] as number]?.t).toBeCloseTo(3, 12);
+    expect(p.heavyDeathTime[0]).toBe(Infinity);
+    expect(p.heavyDeathTime[1]).toBeCloseTo(3, 12);
+    expect(p.trace.frames[p.heavyDeathFrame[1] as number]?.t).toBeCloseTo(3, 12);
     expect(p.evType[4]).toBe(EventType.BiteHit);
     expect(p.evGap[4]).toBe(Infinity);
     expect(p.evType[8]).toBe(EventType.BiteMiss);
@@ -203,24 +203,24 @@ describe('World', () => {
 
   it('switches tiger states at the exact event times, not at frames', () => {
     w.update(0.69);
-    expect(w.ts[0]).toBe(TigerState.Approach);
+    expect(w.ts[0]).toBe(PackState.Approach);
     w.update(0.7);
-    expect(w.ts[0]).toBe(TigerState.Latched);
+    expect(w.ts[0]).toBe(PackState.Latched);
     w.update(1.19);
-    expect(w.ts[1]).toBe(TigerState.Approach);
+    expect(w.ts[1]).toBe(PackState.Approach);
     w.update(1.2);
-    expect(w.ts[1]).toBe(TigerState.Dead);
+    expect(w.ts[1]).toBe(PackState.Dead);
     w.update(2.31);
-    expect(w.ts[0]).toBe(TigerState.Recover);
+    expect(w.ts[0]).toBe(PackState.Recover);
     w.update(3.99);
-    expect(w.ts[0]).toBe(TigerState.Recover);
+    expect(w.ts[0]).toBe(PackState.Recover);
     w.update(4.0);
-    expect(w.ts[0]).toBe(TigerState.Approach);
+    expect(w.ts[0]).toBe(PackState.Approach);
   });
 
   it('moves a tiger onto its host during the latch tick, then rides it', () => {
     w.update(0.7);
-    expect(w.ts[0]).toBe(TigerState.Latched);
+    expect(w.ts[0]).toBe(PackState.Latched);
     expect(w.thost[0]).toBe(-1);
     // Frame 0.5 → ride position at 0.8, straight line.
     w.update(0.75);
@@ -232,7 +232,7 @@ describe('World', () => {
   it('rides latched tigers on the host pose at the latch angle (V5)', () => {
     for (const t of [0.8, 0.93, 1.6, 2.2]) {
       w.update(t);
-      expect(w.ts[0]).toBe(TigerState.Latched);
+      expect(w.ts[0]).toBe(PackState.Latched);
       expect(w.thost[0]).toBe(0);
       const d = Math.hypot((w.tx[0] as number) - (w.rx[0] as number), (w.ty[0] as number) - 50);
       expect(d).toBeCloseTo(p.attachR, 9);
@@ -243,7 +243,7 @@ describe('World', () => {
 
   it('anchors a thrown tiger 3 m beyond its latch point at the throw time', () => {
     w.update(2.3);
-    expect(w.ts[0]).toBe(TigerState.Recover);
+    expect(w.ts[0]).toBe(PackState.Recover);
     expect(w.thost[0]).toBe(-1);
     expect(w.tx[0]).toBeCloseTo(44.6, 6);
     expect(w.ty[0]).toBeCloseTo(50 + p.attachR + 3, 6);
@@ -254,18 +254,18 @@ describe('World', () => {
 
   it('lets a routing tiger leave its host one tick before the rout, without a jump', () => {
     w.update(0.89);
-    expect(w.ts[3]).toBe(TigerState.Latched);
+    expect(w.ts[3]).toBe(PackState.Latched);
     expect(w.thost[3]).toBe(0);
     w.update(0.9);
-    expect(w.ts[3]).toBe(TigerState.Latched);
+    expect(w.ts[3]).toBe(PackState.Latched);
     const rideX = w.tx[3] as number;
     expect(rideX).toBeCloseTo(41.8 + p.attachR, 6);
     w.update(0.95);
-    expect(w.ts[3]).toBe(TigerState.Latched);
+    expect(w.ts[3]).toBe(PackState.Latched);
     expect(w.thost[3]).toBe(-1);
     expect(w.tx[3]).toBeCloseTo(rideX + 0.7, 6);
     w.update(1);
-    expect(w.ts[3]).toBe(TigerState.Routed);
+    expect(w.ts[3]).toBe(PackState.Routed);
     expect(w.tx[3]).toBeCloseTo(41.8 + p.attachR + 1.4, 4);
   });
 
@@ -277,19 +277,19 @@ describe('World', () => {
     expect(w.tx[1]).toBeLessThan(x10);
     for (const t of [1.2, 2, 5]) {
       w.update(t);
-      expect(w.ts[1]).toBe(TigerState.Dead);
+      expect(w.ts[1]).toBe(PackState.Dead);
       expect(w.tx[1]).toBeCloseTo(66.4, 4);
     }
     // Killed while riding: no jump from the ride position to the death mark.
     w.update(1.4999);
     const rideX = w.tx[2] as number;
     w.update(1.5);
-    expect(w.ts[2]).toBe(TigerState.Dead);
+    expect(w.ts[2]).toBe(PackState.Dead);
     expect(Math.abs((w.tx[2] as number) - rideX)).toBeLessThan(1e-3);
     // Latched but bitten before it was ever pinned: stays at its contact position.
     for (const t of [3, 3.05, 3.1, 4]) {
       w.update(t);
-      expect(w.ts[4]).toBe(t < 3.1 ? TigerState.Latched : TigerState.Dead);
+      expect(w.ts[4]).toBe(t < 3.1 ? PackState.Latched : PackState.Dead);
       expect(w.thost[4]).toBe(-1);
       expect(w.tx[4]).toBeCloseTo(48, 6);
       expect(w.ty[4]).toBeCloseTo(46, 6);
@@ -310,15 +310,15 @@ describe('World', () => {
   it('passes T-Rex positions through every frame sample', () => {
     const out = new Float64Array(5);
     for (const f of p.trace.frames) {
-      trexPose(p, 0, f.t, out);
-      expect(out[0]).toBeCloseTo(f.trex[0] as number, 5);
-      expect(out[1]).toBeCloseTo(f.trex[1] as number, 5);
+      heavyPose(p, 0, f.t, out);
+      expect(out[0]).toBeCloseTo(f.heavy[0] as number, 5);
+      expect(out[1]).toBeCloseTo(f.heavy[1] as number, 5);
     }
   });
 
   it('gives tigers a heading along their motion', () => {
     w.update(0.25);
-    expect(w.ts[1]).toBe(TigerState.Approach);
+    expect(w.ts[1]).toBe(PackState.Approach);
     expect(w.tdx[1]).toBeCloseTo(-1, 6);
     expect(w.tdy[1]).toBeCloseTo(0, 6);
   });
@@ -340,13 +340,13 @@ describe('fallback after the event log stopped', () => {
     // prepare() only sees the events it is given; drop the ones after the boundary like the
     // engine would have.
     w.update(0.7);
-    expect(w.ts[0]).toBe(TigerState.Latched);
+    expect(w.ts[0]).toBe(PackState.Latched);
     // 1.0 < t < 1.5: frame a (1.0) is the last frame at or before t: still frame/boundary state.
     w.update(1.3);
-    expect(w.ts[1]).toBe(TigerState.Approach);
+    expect(w.ts[1]).toBe(PackState.Approach);
     // From the 1.5 s frame on, the frames say dead.
     w.update(1.5);
-    expect(w.ts[1]).toBe(TigerState.Dead);
+    expect(w.ts[1]).toBe(PackState.Dead);
     w.update(1.6);
     expect(w.tx[1]).toBeCloseTo(66.4, 4);
   });
@@ -355,9 +355,9 @@ describe('fallback after the event log stopped', () => {
 describe('real traces', () => {
   it('match every frame sample: states, T-Rex alive, positions', () => {
     for (const [over, run] of [
-      [{ trexCount: 1, tigerCount: 10, runs: 5 }, 1],
+      [{ heavyCount: 1, packCount: 10, runs: 5 }, 1],
       [{ runs: 20 }, 7],
-      [{ trexCount: 3, tigerCount: 40, runs: 4 }, 2],
+      [{ heavyCount: 3, packCount: 40, runs: 4 }, 2],
     ] as const) {
       const { trace } = traceOf(over, run);
       const p = prepare(trace);
@@ -367,14 +367,14 @@ describe('real traces', () => {
         w.update(f.t);
         const step = Math.round(f.t / DT);
         for (let i = 0; i < p.N; i++) {
-          expect(w.ralive[i] === 1).toBe((f.trex[i * 4 + 3] as number) > 0);
-          expect(w.rx[i]).toBeCloseTo(f.trex[i * 4] as number, 3);
+          expect(w.ralive[i] === 1).toBe((f.heavy[i * 4 + 3] as number) > 0);
+          expect(w.rx[i]).toBeCloseTo(f.heavy[i * 4] as number, 3);
         }
         for (let j = 0; j < p.M; j++) {
-          const s = f.tiger[j * 3 + 2] as number;
+          const s = f.pack[j * 3 + 2] as number;
           expect(w.ts[j], `t=${f.t} tiger ${j}`).toBe(s);
-          const dx = (w.tx[j] as number) - (f.tiger[j * 3] as number);
-          const dy = (w.ty[j] as number) - (f.tiger[j * 3 + 1] as number);
+          const dx = (w.tx[j] as number) - (f.pack[j * 3] as number);
+          const dy = (w.ty[j] as number) - (f.pack[j * 3 + 1] as number);
           const err = Math.hypot(dx, dy);
           const lo = p.liOff[j] as number;
           const li = lastAtMost(p.liStart, lo, p.liOff[j + 1] as number, step);
@@ -382,14 +382,14 @@ describe('real traces', () => {
           // The drawn ride position differs from the engine's by the quantised latch angle
           // (1/256 turn); a thrown tiger lands 3 m farther out on the same bearing.
           const quant = (p.attachR + 3) * (Math.PI / 256) + 1e-3;
-          if (s === TigerState.Latched) {
+          if (s === PackState.Latched) {
             latched++;
             // Exact on the latch tick (the tiger is still where it made contact).
             expect(err).toBeLessThan(p.liStart[li] === step ? 1e-3 : quant);
-          } else if (s === TigerState.Dead) {
+          } else if (s === PackState.Dead) {
             // A tiger killed while riding lies where it was drawn riding (≤ one host tick).
             expect(err).toBeLessThan(rides && p.liEnd[li] === p.goneStep[j] ? 1.5 : 1e-3);
-          } else if (s !== TigerState.Left) {
+          } else if (s !== PackState.Left) {
             // Exact, except where the tiger leaves a host right at this frame.
             const leaves = rides && Math.abs((p.liDetach[li] as number) - f.t) < 1e-6;
             expect(err, `t=${f.t} tiger ${j} state ${s}`).toBeLessThan(leaves ? quant : 1e-3);
@@ -401,11 +401,11 @@ describe('real traces', () => {
   });
 
   it.each([
-    ['1v1', { trexCount: 1, tigerCount: 1, runs: 30 }, [0, 3, 11, 17, 25]],
-    ['1v10', { trexCount: 1, tigerCount: 10, runs: 10 }, [0, 4, 9]],
+    ['1v1', { heavyCount: 1, packCount: 1, runs: 30 }, [0, 3, 11, 17, 25]],
+    ['1v10', { heavyCount: 1, packCount: 10, runs: 10 }, [0, 4, 9]],
     ['10v100 (default)', { runs: 20 }, [0, 7, 13]],
-    ['1v100 direct', { trexCount: 1, tigerCount: 100, runs: 4, tigerTactic: 'direct' }, [1]],
-    ['50v1000, 60 s', { trexCount: 50, tigerCount: 1000, runs: 2, maxTime: 60 }, [0]],
+    ['1v100 direct', { heavyCount: 1, packCount: 100, runs: 4, packTactic: 'direct' }, [1]],
+    ['50v1000, 60 s', { heavyCount: 50, packCount: 1000, runs: 2, maxTime: 60 }, [0]],
   ] as const)('%s: no teleports (V4) and latched tigers ride their host (V5)', (_, over, runs) => {
     let latchedSamples = 0;
     for (const run of runs) {
@@ -429,8 +429,8 @@ describe('real traces', () => {
 
   it('fallback trace: event-exact before the stop, frame states after it', () => {
     const over = {
-      trexCount: 1,
-      tigerCount: 120,
+      heavyCount: 1,
+      packCount: 120,
       runs: 1,
       arenaSize: 200,
       maxTime: 120,
@@ -444,19 +444,19 @@ describe('real traces', () => {
     const w = new World(p);
     for (const f of trace.frames) {
       w.update(f.t);
-      for (let j = 0; j < p.M; j++) expect(w.ts[j]).toBe(f.tiger[j * 3 + 2] as number);
+      for (let j = 0; j < p.M; j++) expect(w.ts[j]).toBe(f.pack[j * 3 + 2] as number);
     }
     // Between frames after the stop, states come from the last frame (or the boundary).
     const k = trace.frames.findIndex((f) => f.t > p.completeTime + 1);
     const a = trace.frames[k] as TraceFrame;
     w.update(a.t + 0.2);
-    for (let j = 0; j < p.M; j++) expect(w.ts[j]).toBe(a.tiger[j * 3 + 2] as number);
+    for (let j = 0; j < p.M; j++) expect(w.ts[j]).toBe(a.pack[j * 3 + 2] as number);
   });
 
   it('fallback trace: open latches stop riding where the frames disagree (V4)', () => {
     // The log stops at 19.3 s with tiger 33 latched to T-Rex 1; in the frames it later detaches
     // and latches again onto another host. Before the fix it rode the stale latch, jumping 18 m.
-    const over = { trexCount: 3, tigerCount: 200, morale: false, seed: 9999, runs: 2 };
+    const over = { heavyCount: 3, packCount: 200, morale: false, seed: 9999, runs: 2 };
     const { trace } = traceOf(over, 1, { eventLimits: { p0Cap: 150 } });
     const p = prepare(trace);
     expect(p.reduced).toBe(true);
@@ -479,14 +479,14 @@ describe('real traces', () => {
       if (f.t <= p.completeTime) continue;
       w.update(f.t);
       for (let j = 0; j < p.M; j++) {
-        if (w.thost[j] !== -1 || w.ts[j] === TigerState.Left) continue;
+        if (w.thost[j] !== -1 || w.ts[j] === PackState.Left) continue;
         const err = Math.hypot(
-          (w.tx[j] as number) - (f.tiger[j * 3] as number),
-          (w.ty[j] as number) - (f.tiger[j * 3 + 1] as number),
+          (w.tx[j] as number) - (f.pack[j * 3] as number),
+          (w.ty[j] as number) - (f.pack[j * 3 + 1] as number),
         );
         // Up to the quantised latch angle where it leaves a host at this frame.
         const quant = (p.attachR + 3) * (Math.PI / 256) + 1e-3;
-        if (w.ts[j] !== TigerState.Dead) expect(err, `t=${f.t} tiger ${j}`).toBeLessThan(quant);
+        if (w.ts[j] !== PackState.Dead) expect(err, `t=${f.t} tiger ${j}`).toBeLessThan(quant);
       }
     }
   });

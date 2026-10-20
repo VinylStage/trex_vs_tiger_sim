@@ -112,7 +112,7 @@ export class TimelineStrip {
     const xAt = (t: number): number => 1 + (t / m.duration) * W;
     const xBin = (b: number): number => 1 + (m.bins > 1 ? b / (m.bins - 1) : 0) * W;
     let total = 0;
-    for (let ch = 0; ch < CH.trex; ch++) total += m.counts[ch] as number;
+    for (let ch = 0; ch < CH.heavy; ch++) total += m.counts[ch] as number;
     total = Math.max(1, total);
 
     // Stacked bands, bottom to top: dead, fled or left, latched, other tigers still fighting.
@@ -136,18 +136,18 @@ export class TimelineStrip {
     };
     band([CH.dead], theme.deadMark);
     band([CH.out], theme.lodRouted);
-    band([CH.latched], theme.tiger);
+    band([CH.latched], theme.pack);
     band([CH.approach, CH.recover], theme.lodRecover);
 
     // Living T-Rex, as a share of the starting count.
-    const n0 = Math.max(1, m.counts[CH.trex] as number);
+    const n0 = Math.max(1, m.counts[CH.heavy] as number);
     g.beginPath();
     for (let b = 0; b < m.bins; b++) {
-      const y = top + 1 + H - 2 - ((m.counts[b * CHANNELS + CH.trex] as number) / n0) * (H - 2);
+      const y = top + 1 + H - 2 - ((m.counts[b * CHANNELS + CH.heavy] as number) / n0) * (H - 2);
       if (b === 0) g.moveTo(xBin(b), y);
       else g.lineTo(xBin(b), y);
     }
-    g.strokeStyle = theme.trex;
+    g.strokeStyle = theme.heavy;
     g.lineWidth = 2;
     g.stroke();
 
@@ -167,7 +167,7 @@ export class TimelineStrip {
       if (mk.kind === 'kills') tick(mk.t, 0, top - 3, 1, theme.dead);
       else if (mk.kind === 'routs') tick(mk.t, 3, top - 1, 1, theme.out);
     }
-    for (const mk of m.markers) if (mk.kind === 'trexDeath') tick(mk.t, 0, cssH, 2, theme.trex);
+    for (const mk of m.markers) if (mk.kind === 'heavyDeath') tick(mk.t, 0, cssH, 2, theme.heavy);
     for (const mk of m.markers) {
       if (mk.kind !== 'contact') continue;
       const x = xAt(mk.t);

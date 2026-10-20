@@ -2,25 +2,25 @@ import { DT } from './engine';
 import { PARAMS, defaultParamRanges, type ParamId, type Triangular } from './params';
 
 export type SamplingMethod = 'lhs' | 'random';
-export type TigerTactic = 'flank' | 'direct';
+export type PackTactic = 'flank' | 'direct';
 
 export interface ScenarioConfig {
-  trexCount: number;
-  tigerCount: number;
+  heavyCount: number;
+  packCount: number;
   runs: number;
   seed: number;
   arenaSize: number;
   maxTime: number;
   sampling: SamplingMethod;
   individualCV: number;
-  tigerTactic: TigerTactic;
+  packTactic: PackTactic;
   morale: boolean;
   params: Record<ParamId, Triangular>;
 }
 
 export const LIMITS = {
-  trexCount: [1, 500],
-  tigerCount: [1, 5000],
+  heavyCount: [1, 500],
+  packCount: [1, 5000],
   runs: [1, 20000],
   seed: [0, 0xffffffff],
   arenaSize: [100, 5000],
@@ -29,19 +29,19 @@ export const LIMITS = {
 } as const satisfies Record<string, readonly [number, number]>;
 
 export const SAMPLING_METHODS: readonly SamplingMethod[] = ['lhs', 'random'];
-export const TIGER_TACTICS: readonly TigerTactic[] = ['flank', 'direct'];
+export const PACK_TACTICS: readonly PackTactic[] = ['flank', 'direct'];
 
 export function defaultConfig(): ScenarioConfig {
   return {
-    trexCount: 10,
-    tigerCount: 100,
+    heavyCount: 10,
+    packCount: 100,
     runs: 500,
     seed: 20261019,
     arenaSize: 600,
     maxTime: 1200,
     sampling: 'lhs',
     individualCV: 0.08,
-    tigerTactic: 'flank',
+    packTactic: 'flank',
     morale: true,
     params: defaultParamRanges(),
   };
@@ -83,16 +83,16 @@ function triangular(v: unknown, fallback: Triangular, bounds: readonly [number, 
 export const MAX_WORK = 5e10;
 
 export function workEstimate(
-  c: Pick<ScenarioConfig, 'runs' | 'maxTime' | 'trexCount' | 'tigerCount'>,
+  c: Pick<ScenarioConfig, 'runs' | 'maxTime' | 'heavyCount' | 'packCount'>,
 ): number {
-  return c.runs * Math.round(c.maxTime / DT) * (c.trexCount + c.tigerCount);
+  return c.runs * Math.round(c.maxTime / DT) * (c.heavyCount + c.packCount);
 }
 
 /** Largest run count that keeps `workEstimate` within MAX_WORK (at least 1). */
 export function maxRunsFor(
-  c: Pick<ScenarioConfig, 'maxTime' | 'trexCount' | 'tigerCount'>,
+  c: Pick<ScenarioConfig, 'maxTime' | 'heavyCount' | 'packCount'>,
 ): number {
-  const perRun = Math.round(c.maxTime / DT) * (c.trexCount + c.tigerCount);
+  const perRun = Math.round(c.maxTime / DT) * (c.heavyCount + c.packCount);
   return Math.max(1, Math.min(LIMITS.runs[1], Math.floor(MAX_WORK / perRun)));
 }
 
@@ -114,23 +114,23 @@ export function sanitizeConfig(input: unknown): ScenarioConfig {
       params[p.id] = triangular(rawParams[p.id], d.params[p.id], p.bounds);
     }
   }
-  const trexCount = num(o['trexCount'], d.trexCount, LIMITS.trexCount, true);
-  const tigerCount = num(o['tigerCount'], d.tigerCount, LIMITS.tigerCount, true);
+  const heavyCount = num(o['heavyCount'], d.heavyCount, LIMITS.heavyCount, true);
+  const packCount = num(o['packCount'], d.packCount, LIMITS.packCount, true);
   const maxTime = Math.round(num(o['maxTime'], d.maxTime, LIMITS.maxTime, false) / DT) * DT;
   const runs = Math.min(
     num(o['runs'], d.runs, LIMITS.runs, true),
-    maxRunsFor({ maxTime, trexCount, tigerCount }),
+    maxRunsFor({ maxTime, heavyCount, packCount }),
   );
   return {
-    trexCount,
-    tigerCount,
+    heavyCount,
+    packCount,
     runs,
     seed: num(o['seed'], d.seed, LIMITS.seed, true) >>> 0,
     arenaSize: num(o['arenaSize'], d.arenaSize, LIMITS.arenaSize, false),
     maxTime,
     sampling: pick(o['sampling'], SAMPLING_METHODS, d.sampling),
     individualCV: num(o['individualCV'], d.individualCV, LIMITS.individualCV, false),
-    tigerTactic: pick(o['tigerTactic'], TIGER_TACTICS, d.tigerTactic),
+    packTactic: pick(o['packTactic'], PACK_TACTICS, d.packTactic),
     morale: typeof o['morale'] === 'boolean' ? o['morale'] : d.morale,
     params,
   };

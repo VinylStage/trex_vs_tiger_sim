@@ -1,13 +1,13 @@
-import { TigerState, type BattleTrace, type TraceFrame } from '../../sim/engine';
+import { PackState, type BattleTrace, type TraceFrame } from '../../sim/engine';
 import {
   EventType,
   ReleaseCause,
   byteAngle,
-  eventTiger,
+  eventPack,
   isCosmeticEvent,
-  tigerStateAfter,
+  packStateAfter,
 } from '../../sim/events';
-import { trexPose } from './world';
+import { heavyPose } from './world';
 
 /** "No stamp" in the Uint16 step arrays below. */
 export const NO_STEP = 0xffff;
@@ -93,22 +93,22 @@ export interface Prepared {
   readonly goneY: Float64Array;
 
   /** T-Rex death time (s), Infinity if it survives or died after `completeTime`. */
-  readonly trexDeathTime: Float64Array;
+  readonly heavyDeathTime: Float64Array;
   /** First frame at or after the death; that frame holds the final pose. −1 if none. */
-  readonly trexDeathFrame: Int32Array;
+  readonly heavyDeathFrame: Int32Array;
 
   /** Time of the first bite or latch attempt (s), −1 if there was none. */
   readonly firstContact: number;
 }
 
-const LATCHED: number = TigerState.Latched;
+const LATCHED: number = PackState.Latched;
 /**
  * A frame confirms a ride when the tiger lies within this distance of its drawn ride position
  * (m). The quantised latch angle alone moves it by attachR × π/256 (a few centimetres).
  */
 const RIDE_FRAME_TOLERANCE = 0.5;
-const DEAD: number = TigerState.Dead;
-const LEFT: number = TigerState.Left;
+const DEAD: number = PackState.Dead;
+const LEFT: number = PackState.Left;
 
 /** Index of the first frame with t ≥ time (frames.length if none). */
 function firstFrameAtOrAfter(frameT: Float64Array, time: number): number {
@@ -124,8 +124,8 @@ function firstFrameAtOrAfter(frameT: Float64Array, time: number): number {
 
 /** Build the replay indexes for one trace. Linear in events + agents (+ one frame scan). */
 export function prepare(trace: BattleTrace): Prepared {
-  const N = trace.trexCount;
-  const M = trace.tigerCount;
+  const N = trace.heavyCount;
+  const M = trace.packCount;
   const dt = trace.meta.dt;
   const frames = trace.frames;
   const F = frames.length;
@@ -165,15 +165,15 @@ export function prepare(trace: BattleTrace): Prepared {
   // --- pass 1: count transitions and latches per tiger ---
   const trCount = new Int32Array(M);
   const liCount = new Int32Array(M);
-  const tigerOf = (k: number): number => {
+  const packOf = (k: number): number => {
     const type = evType[k] as number;
-    if (isCosmeticEvent(type) || type === EventType.TrexDeath) return -1;
+    if (isCosmeticEvent(type) || type === EventType.HeavyDeath) return -1;
     if ((evStep[k] as number) > completeStep) return -1;
-    const j = eventTiger(type, evA[k] as number, evB[k] as number);
-    return j >= 0 && j < M && tigerStateAfter(type) >= 0 ? j : -1;
+    const j = eventPack(type, evA[k] as number, evB[k] as number);
+    return j >= 0 && j < M && packStateAfter(type) >= 0 ? j : -1;
   };
   for (let k = 0; k < evCount; k++) {
-    const j = tigerOf(k);
+    const j = packOf(k);
     if (j < 0) continue;
     trCount[j] = (trCount[j] as number) + 1;
     if (evType[k] === EventType.Latch) liCount[j] = (liCount[j] as number) + 1;
@@ -201,9 +201,9 @@ export function prepare(trace: BattleTrace): Prepared {
   const trCur = trOff.slice(0, M);
   const liCur = liOff.slice(0, M);
   const openLatch = new Int32Array(M).fill(-1);
-  const stateAtComplete = new Uint8Array(M).fill(TigerState.Approach);
+  const stateAtComplete = new Uint8Array(M).fill(PackState.Approach);
   const goneStep = new Uint16Array(M).fill(NO_STEP);
-  const trexDeathTime = new Float64Array(N).fill(Infinity);
+  const heavyDeathTime = new Float64Array(N).fill(Infinity);
   let firstContact = -1;
 
   for (let k = 0; k < evCount; k++) {
@@ -217,15 +217,15 @@ export function prepare(trace: BattleTrace): Prepared {
         type === EventType.LatchFail)
     )
       firstContact = step * dt;
-    if (type === EventType.TrexDeath) {
+    if (type === EventType.HeavyDeath) {
       const i = evA[k] as number;
-      if (i < N && step <= completeStep && !Number.isFinite(trexDeathTime[i] as number))
-        trexDeathTime[i] = step * dt;
+      if (i < N && step <= completeStep && !Number.isFinite(heavyDeathTime[i] as number))
+        heavyDeathTime[i] = step * dt;
       continue;
     }
-    const j = tigerOf(k);
+    const j = packOf(k);
     if (j < 0) continue;
-    const next = tigerStateAfter(type) as number;
+    const next = packStateAfter(type) as number;
     const c = trCur[j] as number;
     trStep[c] = step;
     trState[c] = next;
@@ -255,13 +255,13 @@ export function prepare(trace: BattleTrace): Prepared {
     if ((next === DEAD || next === LEFT) && goneStep[j] === NO_STEP) goneStep[j] = step;
   }
 
-  const trexDeathFrame = new Int32Array(N).fill(-1);
+  const heavyDeathFrame = new Int32Array(N).fill(-1);
   for (let i = 0; i < N; i++) {
-    const td = trexDeathTime[i] as number;
+    const td = heavyDeathTime[i] as number;
     if (!Number.isFinite(td)) continue;
     const f = firstFrameAtOrAfter(frameT, td);
-    if (f < F) trexDeathFrame[i] = f;
-    else trexDeathTime[i] = Infinity;
+    if (f < F) heavyDeathFrame[i] = f;
+    else heavyDeathTime[i] = Infinity;
   }
 
   const goneX = new Float64Array(M).fill(NaN);
@@ -274,7 +274,7 @@ export function prepare(trace: BattleTrace): Prepared {
     dt,
     duration,
     frameT,
-    attachR: trace.meta.bodyRadius + trace.meta.tigerRadius,
+    attachR: trace.meta.bodyRadius + trace.meta.packRadius,
     evCount,
     evStep,
     evType,
@@ -301,8 +301,8 @@ export function prepare(trace: BattleTrace): Prepared {
     goneStep,
     goneX,
     goneY,
-    trexDeathTime,
-    trexDeathFrame,
+    heavyDeathTime,
+    heavyDeathFrame,
     firstContact,
   };
 
@@ -321,15 +321,15 @@ export function prepare(trace: BattleTrace): Prepared {
     for (; f < F; f++) {
       const fr = frames[f] as TraceFrame;
       const t = frameT[f] as number;
-      if (fr.tiger[j * 3 + 2] !== LATCHED) break;
+      if (fr.pack[j * 3 + 2] !== LATCHED) break;
       if (t >= rideFrom - 1e-9) {
-        trexPose(prepared, host, t, pose);
+        heavyPose(prepared, host, t, pose);
         const a = (pose[2] as number) + (liAng[l] as number);
         const ex = Math.min(L, Math.max(0, (pose[0] as number) + Math.cos(a) * prepared.attachR));
         const ey = Math.min(L, Math.max(0, (pose[1] as number) + Math.sin(a) * prepared.attachR));
         const err = Math.hypot(
-          (fr.tiger[j * 3] as number) - ex,
-          (fr.tiger[j * 3 + 1] as number) - ey,
+          (fr.pack[j * 3] as number) - ex,
+          (fr.pack[j * 3 + 1] as number) - ey,
         );
         if (err > RIDE_FRAME_TOLERANCE) break;
       }
@@ -351,7 +351,7 @@ export function prepare(trace: BattleTrace): Prepared {
       Number.isFinite(liRide[li] as number) &&
       trState[(trOff[j + 1] as number) - 1] === DEAD;
     if (killedRiding) {
-      trexPose(prepared, liHost[li] as number, liDetach[li] as number, pose);
+      heavyPose(prepared, liHost[li] as number, liDetach[li] as number, pose);
       const a = (pose[2] as number) + (liAng[li] as number);
       goneX[j] = Math.min(L, Math.max(0, (pose[0] as number) + Math.cos(a) * prepared.attachR));
       goneY[j] = Math.min(L, Math.max(0, (pose[1] as number) + Math.sin(a) * prepared.attachR));
@@ -363,8 +363,8 @@ export function prepare(trace: BattleTrace): Prepared {
       continue;
     }
     const fr = frames[f] as TraceFrame;
-    goneX[j] = fr.tiger[j * 3] as number;
-    goneY[j] = fr.tiger[j * 3 + 1] as number;
+    goneX[j] = fr.pack[j * 3] as number;
+    goneY[j] = fr.pack[j * 3 + 1] as number;
   }
   return prepared;
 }

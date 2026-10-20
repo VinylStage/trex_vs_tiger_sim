@@ -17,20 +17,20 @@ export interface PathSink {
 /** Sizes, in CSS px or as multiples of the on-screen tiger radius r. */
 export const GLYPH = {
   /** r = max(minTigerPx, tigerRadius × scale). */
-  minTigerPx: 2.2,
+  minPackPx: 2.2,
   /** Below this r, tigers are drawn as LOD squares (shape detail would not be legible). */
   lodBelowPx: 3,
   /** T-Rex length = max(minTrexPx, trexLengthM × scale). */
-  trexLengthM: 7,
-  minTrexPx: 11,
+  heavyLengthM: 7,
+  minHeavyPx: 11,
   /** Triangle: nose 0.6·len ahead of the centre, tail 0.4·len behind, base 0.64·len. */
-  trexNose: 0.6,
-  trexTail: 0.4,
-  trexHalfBase: 0.32,
+  heavyNose: 0.6,
+  heavyTail: 0.4,
+  heavyHalfBase: 0.32,
   /** The HP gauge replaces the solid fill below this HP fraction. */
   gaugeBelow: 0.995,
   /** Surface-coloured outline between overlapping triangles (few T-Rex or large glyphs). */
-  haloMaxTrex: 50,
+  haloMaxHeavy: 50,
   haloMinLen: 18,
   /** Approach: dot of radius 0.8r plus a heading tick from r to 2.3r. */
   dot: 0.8,
@@ -61,15 +61,15 @@ export const GLYPH = {
 const TAU = Math.PI * 2;
 
 /** Tiger glyph radius on screen. */
-export const tigerRadiusPx = (tigerRadiusM: number, scale: number): number =>
-  Math.max(GLYPH.minTigerPx, tigerRadiusM * scale);
+export const packRadiusPx = (packRadiusM: number, scale: number): number =>
+  Math.max(GLYPH.minPackPx, packRadiusM * scale);
 
 /** T-Rex glyph length on screen. */
-export const trexLengthPx = (scale: number): number =>
-  Math.max(GLYPH.minTrexPx, GLYPH.trexLengthM * scale);
+export const heavyLengthPx = (scale: number): number =>
+  Math.max(GLYPH.minHeavyPx, GLYPH.heavyLengthM * scale);
 
 /** Isosceles triangle with its nose along the heading (cos, sin). */
-export function trexTriangle(
+export function heavyTriangle(
   s: PathSink,
   x: number,
   y: number,
@@ -77,9 +77,9 @@ export function trexTriangle(
   sin: number,
   len: number,
 ): void {
-  const nose = len * GLYPH.trexNose;
-  const tail = len * GLYPH.trexTail;
-  const half = len * GLYPH.trexHalfBase;
+  const nose = len * GLYPH.heavyNose;
+  const tail = len * GLYPH.heavyTail;
+  const half = len * GLYPH.heavyHalfBase;
   s.moveTo(x + cos * nose, y + sin * nose);
   s.lineTo(x - cos * tail - sin * half, y - sin * tail + cos * half);
   s.lineTo(x - cos * tail + sin * half, y - sin * tail - cos * half);
@@ -93,7 +93,7 @@ export function trexTriangle(
 export const gaugeHeight = (hp: number): number => 1 - Math.sqrt(1 - Math.min(1, Math.max(0, hp)));
 
 /** The filled part of the HP gauge: from the tail toward the nose, area = hp. */
-export function trexGauge(
+export function heavyGauge(
   s: PathSink,
   x: number,
   y: number,
@@ -104,9 +104,9 @@ export function trexGauge(
 ): void {
   const h = gaugeHeight(hp);
   if (h <= 0) return;
-  const nose = len * GLYPH.trexNose;
-  const tail = len * GLYPH.trexTail;
-  const half = len * GLYPH.trexHalfBase;
+  const nose = len * GLYPH.heavyNose;
+  const tail = len * GLYPH.heavyTail;
+  const half = len * GLYPH.heavyHalfBase;
   const nx = x + cos * nose;
   const ny = y + sin * nose;
   const ax = x - cos * tail - sin * half;
@@ -245,44 +245,44 @@ export interface Paint {
 /** Paints of every glyph bucket, in drawing order within the bucket. */
 export const PAINTS = {
   deadCross: [{ mode: 'stroke', color: 'deadMark', width: 1.2 }],
-  deadTrex: [{ mode: 'stroke', color: 'deadTrex', width: 1.5 }],
+  deadHeavy: [{ mode: 'stroke', color: 'deadHeavy', width: 1.5 }],
   tether: [{ mode: 'stroke', color: 'tether', width: 1.25 }],
   routed: [{ mode: 'fill', color: 'out' }],
-  recover: [{ mode: 'stroke', color: 'tiger', width: 1.4 }],
-  approach: [{ mode: 'fill', color: 'tiger' }],
-  approachTick: [{ mode: 'stroke', color: 'tiger', width: 1.2 }],
+  recover: [{ mode: 'stroke', color: 'pack', width: 1.4 }],
+  approach: [{ mode: 'fill', color: 'pack' }],
+  approachTick: [{ mode: 'stroke', color: 'pack', width: 1.2 }],
   // The halo goes first, so it only widens the diamond's edge against the T-Rex underneath.
   latched: [
     { mode: 'stroke', color: 'surface', width: 2.4 },
-    { mode: 'fill', color: 'tiger' },
+    { mode: 'fill', color: 'pack' },
   ],
-  trex: [{ mode: 'fill', color: 'trex' }],
-  trexHalo: [
-    { mode: 'fill', color: 'trex' },
+  heavy: [{ mode: 'fill', color: 'heavy' }],
+  heavyHalo: [
+    { mode: 'fill', color: 'heavy' },
     { mode: 'stroke', color: 'surface', width: 1.25 },
   ],
-  trexHollow: [{ mode: 'fill', color: 'trexTint' }],
-  trexGauge: [{ mode: 'fill', color: 'trex' }],
-  trexOutline: [{ mode: 'stroke', color: 'trex', width: 1.5 }],
+  heavyHollow: [{ mode: 'fill', color: 'heavyTint' }],
+  heavyGauge: [{ mode: 'fill', color: 'heavy' }],
+  heavyOutline: [{ mode: 'stroke', color: 'heavy', width: 1.5 }],
   biteHit: [
-    { mode: 'fill', color: 'trex', alpha: 0.2 },
+    { mode: 'fill', color: 'heavy', alpha: 0.2 },
     { mode: 'stroke', color: 'biteLine', width: 1 },
   ],
   biteMiss: [{ mode: 'stroke', color: 'biteLine', width: 1 }],
   // Trails: pre-blended opaque tones, oldest segment bucket (2) drawn first.
-  trailTrex2: [{ mode: 'stroke', color: 'trailTrex2', width: 2 }],
-  trailTrex1: [{ mode: 'stroke', color: 'trailTrex1', width: 2 }],
-  trailTrex0: [{ mode: 'stroke', color: 'trailTrex0', width: 2 }],
-  trailTiger2: [{ mode: 'stroke', color: 'trailTiger2', width: 1 }],
-  trailTiger1: [{ mode: 'stroke', color: 'trailTiger1', width: 1 }],
-  trailTiger0: [{ mode: 'stroke', color: 'trailTiger0', width: 1 }],
+  trailHeavy2: [{ mode: 'stroke', color: 'trailHeavy2', width: 2 }],
+  trailHeavy1: [{ mode: 'stroke', color: 'trailHeavy1', width: 2 }],
+  trailHeavy0: [{ mode: 'stroke', color: 'trailHeavy0', width: 2 }],
+  trailPack2: [{ mode: 'stroke', color: 'trailPack2', width: 1 }],
+  trailPack1: [{ mode: 'stroke', color: 'trailPack1', width: 1 }],
+  trailPack0: [{ mode: 'stroke', color: 'trailPack0', width: 1 }],
   // Event effects: outlines only, alpha quantised to three steps (fresh → old).
-  fxTrex0: [{ mode: 'stroke', color: 'trex', width: 1.5, alpha: 0.9 }],
-  fxTrex1: [{ mode: 'stroke', color: 'trex', width: 1.5, alpha: 0.6 }],
-  fxTrex2: [{ mode: 'stroke', color: 'trex', width: 1.5, alpha: 0.3 }],
-  fxTiger0: [{ mode: 'stroke', color: 'tiger', width: 1.5, alpha: 0.9 }],
-  fxTiger1: [{ mode: 'stroke', color: 'tiger', width: 1.5, alpha: 0.6 }],
-  fxTiger2: [{ mode: 'stroke', color: 'tiger', width: 1.5, alpha: 0.3 }],
+  fxHeavy0: [{ mode: 'stroke', color: 'heavy', width: 1.5, alpha: 0.9 }],
+  fxHeavy1: [{ mode: 'stroke', color: 'heavy', width: 1.5, alpha: 0.6 }],
+  fxHeavy2: [{ mode: 'stroke', color: 'heavy', width: 1.5, alpha: 0.3 }],
+  fxPack0: [{ mode: 'stroke', color: 'pack', width: 1.5, alpha: 0.9 }],
+  fxPack1: [{ mode: 'stroke', color: 'pack', width: 1.5, alpha: 0.6 }],
+  fxPack2: [{ mode: 'stroke', color: 'pack', width: 1.5, alpha: 0.3 }],
   fxOut0: [{ mode: 'stroke', color: 'out', width: 1.5, alpha: 0.9 }],
   fxOut1: [{ mode: 'stroke', color: 'out', width: 1.5, alpha: 0.6 }],
   fxOut2: [{ mode: 'stroke', color: 'out', width: 1.5, alpha: 0.3 }],
@@ -290,10 +290,10 @@ export const PAINTS = {
   fxDead1: [{ mode: 'stroke', color: 'dead', width: 1.5, alpha: 0.6 }],
   fxDead2: [{ mode: 'stroke', color: 'dead', width: 1.5, alpha: 0.3 }],
   // Reduced-motion overview (drawn once): whole-battle paths and where latches and kills happened.
-  ovTiger: [{ mode: 'stroke', color: 'ovTiger', width: 1 }],
-  ovTrex: [{ mode: 'stroke', color: 'trex', width: 2 }],
-  ovTrexThin: [{ mode: 'stroke', color: 'trailTrex0', width: 1 }],
-  ovLatch: [{ mode: 'fill', color: 'tiger' }],
+  ovPack: [{ mode: 'stroke', color: 'ovPack', width: 1 }],
+  ovHeavy: [{ mode: 'stroke', color: 'heavy', width: 2 }],
+  ovHeavyThin: [{ mode: 'stroke', color: 'trailHeavy0', width: 1 }],
+  ovLatch: [{ mode: 'fill', color: 'pack' }],
 } as const satisfies Record<string, readonly Paint[]>;
 
 export type Bucket = keyof typeof PAINTS;
@@ -302,7 +302,7 @@ export type Bucket = keyof typeof PAINTS;
  * A tiger glyph by state: which builders feed which bucket. Used by the stage, the legend and the
  * V1 shape-separability test. (dx, dy) is the unit heading; (hx, hy) the host centre if latched.
  */
-export function tigerGlyph(
+export function packGlyph(
   state: 'approach' | 'latched' | 'recover' | 'routed' | 'dead',
   sink: (bucket: Bucket) => PathSink,
   x: number,
@@ -336,51 +336,51 @@ export function tigerGlyph(
 
 /** Effect buckets by colour, each with three alpha steps. */
 export const FX_BUCKETS = {
-  trex: ['fxTrex0', 'fxTrex1', 'fxTrex2'],
-  tiger: ['fxTiger0', 'fxTiger1', 'fxTiger2'],
+  heavy: ['fxHeavy0', 'fxHeavy1', 'fxHeavy2'],
+  pack: ['fxPack0', 'fxPack1', 'fxPack2'],
   out: ['fxOut0', 'fxOut1', 'fxOut2'],
   dead: ['fxDead0', 'fxDead1', 'fxDead2'],
 } as const satisfies Record<string, readonly [Bucket, Bucket, Bucket]>;
 
 /** Trail buckets by side, indexed by age step (0 = newest). */
 export const TRAIL_BUCKETS = {
-  trex: ['trailTrex0', 'trailTrex1', 'trailTrex2'],
-  tiger: ['trailTiger0', 'trailTiger1', 'trailTiger2'],
+  heavy: ['trailHeavy0', 'trailHeavy1', 'trailHeavy2'],
+  pack: ['trailPack0', 'trailPack1', 'trailPack2'],
 } as const satisfies Record<string, readonly [Bucket, Bucket, Bucket]>;
 
 /** Bucket drawing order (layers 2–8 of docs/REPLAY.md §6). */
 export const BUCKET_ORDER: readonly Bucket[] = [
   'deadCross',
-  'deadTrex',
-  'trailTrex2',
-  'trailTiger2',
-  'trailTrex1',
-  'trailTiger1',
-  'trailTrex0',
-  'trailTiger0',
+  'deadHeavy',
+  'trailHeavy2',
+  'trailPack2',
+  'trailHeavy1',
+  'trailPack1',
+  'trailHeavy0',
+  'trailPack0',
   'tether',
   'routed',
   'recover',
   'approach',
   'approachTick',
-  'trexHollow',
-  'trexGauge',
-  'trexOutline',
-  'trex',
-  'trexHalo',
+  'heavyHollow',
+  'heavyGauge',
+  'heavyOutline',
+  'heavy',
+  'heavyHalo',
   'latched',
   'biteHit',
   'biteMiss',
   'fxDead2',
   'fxOut2',
-  'fxTiger2',
-  'fxTrex2',
+  'fxPack2',
+  'fxHeavy2',
   'fxDead1',
   'fxOut1',
-  'fxTiger1',
-  'fxTrex1',
+  'fxPack1',
+  'fxHeavy1',
   'fxDead0',
   'fxOut0',
-  'fxTiger0',
-  'fxTrex0',
+  'fxPack0',
+  'fxHeavy0',
 ];

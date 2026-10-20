@@ -1,13 +1,13 @@
-import { TigerState, type TraceFrame } from '../../sim/engine';
+import { PackState, type TraceFrame } from '../../sim/engine';
 import { EventType } from '../../sim/events';
 import { clamp, crEval, crKnots, frameIndex, lastAtMost, lerp, lerpAngle } from './interp';
 import { NO_STEP, type Prepared } from './prepare';
 
-const APPROACH: number = TigerState.Approach;
-const LATCHED: number = TigerState.Latched;
-const ROUTED: number = TigerState.Routed;
-const DEAD: number = TigerState.Dead;
-const LEFT: number = TigerState.Left;
+const APPROACH: number = PackState.Approach;
+const LATCHED: number = PackState.Latched;
+const ROUTED: number = PackState.Routed;
+const DEAD: number = PackState.Dead;
+const LEFT: number = PackState.Left;
 /** A thrown tiger lands this far beyond its latch point (CONSTANTS.throwDistance). */
 const THROW_DISTANCE = 3;
 /** Parameter step for the finite-difference heading along a spline segment. */
@@ -21,11 +21,11 @@ const kn = new Float64Array(3);
  * recorded heading, shortest-arc interpolated. A T-Rex that dies inside a frame interval moves
  * straight to its final pose at the exact death time and stays there.
  */
-export function trexPose(p: Prepared, i: number, time: number, out: Float64Array): void {
-  trexPoseAt(p, i, time, frameIndex(p.frameT, time), out);
+export function heavyPose(p: Prepared, i: number, time: number, out: Float64Array): void {
+  heavyPoseAt(p, i, time, frameIndex(p.frameT, time), out);
 }
 
-function trexPoseAt(p: Prepared, i: number, time: number, k: number, out: Float64Array): void {
+function heavyPoseAt(p: Prepared, i: number, time: number, k: number, out: Float64Array): void {
   const fr = p.trace.frames;
   const F = fr.length;
   const kb = Math.min(k + 1, F - 1);
@@ -34,25 +34,25 @@ function trexPoseAt(p: Prepared, i: number, time: number, k: number, out: Float6
   const ta = p.frameT[k] as number;
   const tb = p.frameT[kb] as number;
   const o = i * 4;
-  const td = p.trexDeathTime[i] as number;
+  const td = p.heavyDeathTime[i] as number;
   // Same float tolerance as the stamp lookup in World.update.
   const dead = time + 1e-6 * p.dt >= td;
   if (dead || (td > ta && td <= tb)) {
-    const d = fr[p.trexDeathFrame[i] as number] as TraceFrame;
+    const d = fr[p.heavyDeathFrame[i] as number] as TraceFrame;
     const g = dead ? 1 : clamp((time - ta) / (td - ta), 0, 1);
-    out[0] = lerp(a.trex[o] as number, d.trex[o] as number, g);
-    out[1] = lerp(a.trex[o + 1] as number, d.trex[o + 1] as number, g);
-    out[2] = lerpAngle(a.trex[o + 2] as number, d.trex[o + 2] as number, g);
-    out[3] = dead ? 0 : lerp(Math.max(0, a.trex[o + 3] as number), 0, g);
+    out[0] = lerp(a.heavy[o] as number, d.heavy[o] as number, g);
+    out[1] = lerp(a.heavy[o + 1] as number, d.heavy[o + 1] as number, g);
+    out[2] = lerpAngle(a.heavy[o + 2] as number, d.heavy[o + 2] as number, g);
+    out[3] = dead ? 0 : lerp(Math.max(0, a.heavy[o + 3] as number), 0, g);
     out[4] = dead ? 0 : 1;
     return;
   }
-  const hpA = a.trex[o + 3] as number;
+  const hpA = a.heavy[o + 3] as number;
   if (hpA <= 0) {
     // Died after the event log stopped: frames only (dead T-Rex do not move).
-    out[0] = a.trex[o] as number;
-    out[1] = a.trex[o + 1] as number;
-    out[2] = a.trex[o + 2] as number;
+    out[0] = a.heavy[o] as number;
+    out[1] = a.heavy[o + 1] as number;
+    out[2] = a.heavy[o + 2] as number;
     out[3] = 0;
     out[4] = 0;
     return;
@@ -60,21 +60,21 @@ function trexPoseAt(p: Prepared, i: number, time: number, k: number, out: Float6
   const f = tb > ta ? clamp((time - ta) / (tb - ta), 0, 1) : 0;
   const z = fr[Math.max(k - 1, 0)] as TraceFrame;
   const c = fr[Math.min(k + 2, F - 1)] as TraceFrame;
-  const ax = a.trex[o] as number;
-  const ay = a.trex[o + 1] as number;
-  const bx = b.trex[o] as number;
-  const by = b.trex[o + 1] as number;
+  const ax = a.heavy[o] as number;
+  const ay = a.heavy[o + 1] as number;
+  const bx = b.heavy[o] as number;
+  const by = b.heavy[o + 1] as number;
   // At the ends of the trace, mirror the neighbour instead of repeating the end point, so the
   // curve keeps its speed instead of easing in and out.
-  const zx = k > 0 ? (z.trex[o] as number) : 2 * ax - bx;
-  const zy = k > 0 ? (z.trex[o + 1] as number) : 2 * ay - by;
-  const cx = k + 2 < F ? (c.trex[o] as number) : 2 * bx - ax;
-  const cy = k + 2 < F ? (c.trex[o + 1] as number) : 2 * by - ay;
+  const zx = k > 0 ? (z.heavy[o] as number) : 2 * ax - bx;
+  const zy = k > 0 ? (z.heavy[o + 1] as number) : 2 * ay - by;
+  const cx = k + 2 < F ? (c.heavy[o] as number) : 2 * bx - ax;
+  const cy = k + 2 < F ? (c.heavy[o + 1] as number) : 2 * by - ay;
   crKnots(zx, zy, ax, ay, bx, by, cx, cy, kn);
   out[0] = clamp(crEval(zx, ax, bx, cx, kn, f), 0, p.L);
   out[1] = clamp(crEval(zy, ay, by, cy, kn, f), 0, p.L);
-  out[2] = lerpAngle(a.trex[o + 2] as number, b.trex[o + 2] as number, f);
-  out[3] = Math.max(0, lerp(hpA, Math.max(0, b.trex[o + 3] as number), f));
+  out[2] = lerpAngle(a.heavy[o + 2] as number, b.heavy[o + 2] as number, f);
+  out[3] = Math.max(0, lerp(hpA, Math.max(0, b.heavy[o + 3] as number), f));
   out[4] = 1;
 }
 
@@ -125,7 +125,7 @@ export class World {
   /** Position of a tiger latched to `host` at angle `ang` (host frame) at `time`, clamped. */
   private ridePosition(host: number, ang: number, time: number, extra: number): void {
     const p = this.p;
-    trexPose(p, host, time, this.pose);
+    heavyPose(p, host, time, this.pose);
     const a = (this.pose[2] as number) + ang;
     const d = p.attachR + extra;
     this.anchor[0] = clamp((this.pose[0] as number) + Math.cos(a) * d, 0, p.L);
@@ -157,7 +157,7 @@ export class World {
 
     const pose = this.pose;
     for (let i = 0; i < p.N; i++) {
-      trexPoseAt(p, i, time, k, pose);
+      heavyPoseAt(p, i, time, k, pose);
       this.rx[i] = pose[0] as number;
       this.ry[i] = pose[1] as number;
       this.rh[i] = pose[2] as number;
@@ -173,7 +173,7 @@ export class World {
     const fromFrameA = ta >= p.completeTime - 1e-9;
     for (let j = 0; j < p.M; j++) {
       const o = j * 3;
-      const sa = a.tiger[o + 2] as number;
+      const sa = a.pack[o + 2] as number;
       const trLo = p.trOff[j] as number;
       const trHi = p.trOff[j + 1] as number;
       let e = trLo - 1;
@@ -190,8 +190,8 @@ export class World {
       if (s === DEAD || s === LEFT) {
         const gx = p.goneX[j] as number;
         const known = !Number.isNaN(gx) && (p.goneStep[j] as number) <= step;
-        this.tx[j] = known ? gx : (a.tiger[o] as number);
-        this.ty[j] = known ? (p.goneY[j] as number) : (a.tiger[o + 1] as number);
+        this.tx[j] = known ? gx : (a.pack[o] as number);
+        this.ty[j] = known ? (p.goneY[j] as number) : (a.pack[o + 1] as number);
         continue;
       }
 
@@ -221,10 +221,10 @@ export class World {
       // Free motion between anchors: frame samples, plus exact anchors where the tiger leaves a
       // host (its detach time; a thrown tiger lands 3 m out), starts riding one (the tick after
       // its latch), or stops for good (death or exit).
-      const ax = a.tiger[o] as number;
-      const ay = a.tiger[o + 1] as number;
-      const bx = b.tiger[o] as number;
-      const by = b.tiger[o + 1] as number;
+      const ax = a.pack[o] as number;
+      const ay = a.pack[o + 1] as number;
+      const bx = b.pack[o] as number;
+      const by = b.pack[o + 1] as number;
       let lt = ta;
       let lx = ax;
       let ly = ay;
@@ -287,9 +287,9 @@ export class World {
 
       let smooth =
         !anchored &&
-        (b.tiger[o + 2] as number) === sa &&
-        (z.tiger[o + 2] as number) === sa &&
-        (c.tiger[o + 2] as number) === sa;
+        (b.pack[o + 2] as number) === sa &&
+        (z.pack[o + 2] as number) === sa &&
+        (c.pack[o + 2] as number) === sa;
       if (smooth && exact) {
         // No state change anywhere in the four-frame window (frames can miss short ones).
         const prevOk = e < trLo || (p.trStep[e] as number) * dt <= tz;
@@ -303,10 +303,10 @@ export class World {
       let hy: number;
       if (smooth) {
         // Mirrored end points at the ends of the trace, as for the T-Rex.
-        const zx = k > 0 ? (z.tiger[o] as number) : 2 * ax - bx;
-        const zy = k > 0 ? (z.tiger[o + 1] as number) : 2 * ay - by;
-        const cx = k + 2 < F ? (c.tiger[o] as number) : 2 * bx - ax;
-        const cy = k + 2 < F ? (c.tiger[o + 1] as number) : 2 * by - ay;
+        const zx = k > 0 ? (z.pack[o] as number) : 2 * ax - bx;
+        const zy = k > 0 ? (z.pack[o + 1] as number) : 2 * ay - by;
+        const cx = k + 2 < F ? (c.pack[o] as number) : 2 * bx - ax;
+        const cy = k + 2 < F ? (c.pack[o + 1] as number) : 2 * by - ay;
         crKnots(zx, zy, ax, ay, bx, by, cx, cy, kn);
         x = crEval(zx, ax, bx, cx, kn, f);
         y = crEval(zy, ay, by, cy, kn, f);

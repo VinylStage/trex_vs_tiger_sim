@@ -5,8 +5,8 @@
  */
 
 export interface QualityTier {
-  readonly trexTrails: boolean;
-  readonly tigerTrails: boolean;
+  readonly heavyTrails: boolean;
+  readonly packTrails: boolean;
   /** Bite cones may be filled (otherwise every effect is an outline). */
   readonly fills: boolean;
   /** Backing-store density cap. */
@@ -17,10 +17,10 @@ export interface QualityTier {
 
 /** T0 full · T1 no tiger trails · T2 + outline-only effects, DPR ≤ 2 · T3 + LOD squares, no trails. */
 export const TIERS: readonly QualityTier[] = [
-  { trexTrails: true, tigerTrails: true, fills: true, dprCap: 3, forceLod: false },
-  { trexTrails: true, tigerTrails: false, fills: true, dprCap: 3, forceLod: false },
-  { trexTrails: true, tigerTrails: false, fills: false, dprCap: 2, forceLod: false },
-  { trexTrails: false, tigerTrails: false, fills: false, dprCap: 2, forceLod: true },
+  { heavyTrails: true, packTrails: true, fills: true, dprCap: 3, forceLod: false },
+  { heavyTrails: true, packTrails: false, fills: true, dprCap: 3, forceLod: false },
+  { heavyTrails: true, packTrails: false, fills: false, dprCap: 2, forceLod: false },
+  { heavyTrails: false, packTrails: false, fills: false, dprCap: 2, forceLod: true },
 ];
 
 export const QUALITY = {

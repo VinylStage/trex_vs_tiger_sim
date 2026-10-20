@@ -17,22 +17,22 @@ describe('sanitizeConfig', () => {
 
   it('clamps numbers, rounds integers and rejects invalid enums', () => {
     const c = sanitizeConfig({
-      trexCount: 1e9,
-      tigerCount: -3,
+      heavyCount: 1e9,
+      packCount: -3,
       runs: 12.7,
       seed: -1,
       arenaSize: 'abc',
       sampling: 'sobol',
-      tigerTactic: 'direct',
+      packTactic: 'direct',
       morale: 'yes',
     });
-    expect(c.trexCount).toBe(LIMITS.trexCount[1]);
-    expect(c.tigerCount).toBe(LIMITS.tigerCount[0]);
+    expect(c.heavyCount).toBe(LIMITS.heavyCount[1]);
+    expect(c.packCount).toBe(LIMITS.packCount[0]);
     expect(c.runs).toBe(13);
     expect(c.seed).toBe(0);
     expect(c.arenaSize).toBe(defaultConfig().arenaSize);
     expect(c.sampling).toBe('lhs');
-    expect(c.tigerTactic).toBe('direct');
+    expect(c.packTactic).toBe('direct');
     expect(c.morale).toBe(true);
   });
 
@@ -44,33 +44,33 @@ describe('sanitizeConfig', () => {
 
   it('orders and clamps triangular ranges to parameter bounds', () => {
     const c = sanitizeConfig({
-      params: { 'trex.mass': { min: 9000, mode: 1e9, max: 2000 } },
+      params: { 'heavy.mass': { min: 9000, mode: 1e9, max: 2000 } },
     });
-    const [, hi] = paramDef('trex.mass').bounds;
-    expect(c.params['trex.mass']).toEqual({ min: 2000, mode: 9000, max: hi });
+    const [, hi] = paramDef('heavy.mass').bounds;
+    expect(c.params['heavy.mass']).toEqual({ min: 2000, mode: 9000, max: hi });
   });
 });
 
 describe('sanitizeConfig hardening', () => {
   it('accepts only JSON numbers, not numeric strings', () => {
     const d = defaultConfig();
-    const c = sanitizeConfig({ seed: '', individualCV: '  ', runs: '0x10', trexCount: '7' });
+    const c = sanitizeConfig({ seed: '', individualCV: '  ', runs: '0x10', heavyCount: '7' });
     expect(c.seed).toBe(d.seed);
     expect(c.individualCV).toBe(d.individualCV);
     expect(c.runs).toBe(d.runs);
-    expect(c.trexCount).toBe(d.trexCount);
+    expect(c.heavyCount).toBe(d.heavyCount);
   });
 
   it('rejects partial triangular ranges as a whole', () => {
     const d = defaultConfig();
-    expect(sanitizeConfig({ params: { 'tiger.dps': { min: 20 } } }).params['tiger.dps']).toEqual(
-      d.params['tiger.dps'],
+    expect(sanitizeConfig({ params: { 'pack.dps': { min: 20 } } }).params['pack.dps']).toEqual(
+      d.params['pack.dps'],
     );
     expect(
-      sanitizeConfig({ params: { 'trex.mass': { min: 1, mode: 2, max: 'x' } } }).params[
-        'trex.mass'
+      sanitizeConfig({ params: { 'heavy.mass': { min: 1, mode: 2, max: 'x' } } }).params[
+        'heavy.mass'
       ],
-    ).toEqual(d.params['trex.mass']);
+    ).toEqual(d.params['heavy.mass']);
   });
 
   it('snaps maxTime to the 0.1 s time step', () => {
@@ -79,7 +79,7 @@ describe('sanitizeConfig hardening', () => {
   });
 
   it('caps runs so the combined work stays within MAX_WORK', () => {
-    const c = sanitizeConfig({ trexCount: 500, tigerCount: 5000, runs: 20000, maxTime: 3600 });
+    const c = sanitizeConfig({ heavyCount: 500, packCount: 5000, runs: 20000, maxTime: 3600 });
     expect(c.runs).toBe(maxRunsFor(c));
     expect(c.runs).toBeLessThan(20000);
     expect(workEstimate(c)).toBeLessThanOrEqual(MAX_WORK);

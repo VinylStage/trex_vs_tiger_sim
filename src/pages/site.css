@@ -597,11 +597,11 @@ tbody tr:last-child > * {
   text-decoration: none;
 }
 
-.species-trex {
+.role-heavy {
   border-left: 4px solid var(--c-trex);
 }
 
-.species-tiger {
+.role-pack {
   border-left: 4px solid var(--c-tiger);
 }
 

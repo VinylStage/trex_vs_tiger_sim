@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TigerState, type TraceFrame } from '../src/sim/engine';
+import { PackState, type TraceFrame } from '../src/sim/engine';
 import { EventType } from '../src/sim/events';
 import { frameIndex } from '../src/ui/replay/interp';
 import { OVERVIEW, buildOverview, overviewCamera } from '../src/ui/replay/overview';
@@ -34,7 +34,7 @@ const scene = (): SceneCounts => ({
   recover: 0,
   out: 0,
   dead: 0,
-  trexAlive: 0,
+  heavyAlive: 0,
 });
 
 describe('playback speeds', () => {
@@ -97,7 +97,7 @@ describe('event stops', () => {
       [
         { t: 0.5, kind: 'contact', count: 1 },
         { t: 3, kind: 'kills', count: 2 },
-        { t: 3.01, kind: 'trexDeath', count: 1 },
+        { t: 3.01, kind: 'heavyDeath', count: 1 },
         { t: 10, kind: 'routs', count: 1 },
       ],
       20,
@@ -109,8 +109,8 @@ describe('event stops', () => {
 describe('real traces', () => {
   const cases = [
     ['10v100', { runs: 20 }, 7],
-    ['1v10', { trexCount: 1, tigerCount: 10, runs: 10 }, 4],
-    ['50v1000, 60 s', { trexCount: 50, tigerCount: 1000, runs: 2, maxTime: 60 }, 0],
+    ['1v10', { heavyCount: 1, packCount: 10, runs: 10 }, 4],
+    ['50v1000, 60 s', { heavyCount: 50, packCount: 1000, runs: 2, maxTime: 60 }, 0],
   ] as const;
 
   it.each(cases)(
@@ -138,14 +138,14 @@ describe('real traces', () => {
     let kills = 0;
     let routs = 0;
     for (let k = 0; k < p.evCount; k++) {
-      if (p.evType[k] === EventType.TigerDeath) kills++;
+      if (p.evType[k] === EventType.PackDeath) kills++;
       if (p.evType[k] === EventType.Rout) routs++;
     }
     const sum = (kind: string): number =>
       m.filter((x) => x.kind === kind).reduce((a, x) => a + x.count, 0);
     expect(sum('kills')).toBe(kills);
     expect(sum('routs')).toBe(routs);
-    expect(sum('trexDeath')).toBe([...p.trexDeathTime].filter((x) => Number.isFinite(x)).length);
+    expect(sum('heavyDeath')).toBe([...p.heavyDeathTime].filter((x) => Number.isFinite(x)).length);
     expect(m.filter((x) => x.kind === 'contact')).toEqual([
       { t: p.firstContact, kind: 'contact', count: 1 },
     ]);
@@ -175,8 +175,8 @@ describe('real traces', () => {
           tl.counts[o + CH.recover],
           tl.counts[o + CH.out],
           tl.counts[o + CH.dead],
-          tl.counts[o + CH.trex],
-        ]).toEqual([s.approach, s.latched, s.recover, s.out, s.dead, s.trexAlive]);
+          tl.counts[o + CH.heavy],
+        ]).toEqual([s.approach, s.latched, s.recover, s.out, s.dead, s.heavyAlive]);
       }
       expect(tl.reducedFrom).toBe(Infinity);
     },
@@ -194,7 +194,7 @@ describe('real traces', () => {
       if (t <= p.completeTime + 1e-9) continue;
       const fr = trace.frames[frameIndex(p.frameT, t)] as TraceFrame;
       let dead = 0;
-      for (let j = 0; j < p.M; j++) if (fr.tiger[j * 3 + 2] === TigerState.Dead) dead++;
+      for (let j = 0; j < p.M; j++) if (fr.pack[j * 3 + 2] === PackState.Dead) dead++;
       expect(tl.counts[b * CHANNELS + CH.dead]).toBe(dead);
       checked++;
     }
@@ -205,14 +205,14 @@ describe('real traces', () => {
     // 13 tigers die one second apart (1 s … 13 s): markers at 1, 7 and 13 s.
     const trace = synthTrace({
       duration: 15,
-      trex: [{ pos: () => [10, 10] }],
-      tigers: Array.from({ length: 13 }, (_, j) => ({
+      heavy: [{ pos: () => [10, 10] }],
+      pack: Array.from({ length: 13 }, (_, j) => ({
         pos: () => [20 + j, 20] as [number, number],
       })),
       events: Array.from(
         { length: 13 },
         (_, j) =>
-          [(j + 1) * 10, EventType.TigerDeath, 0, j, 0] as [number, number, number, number, number],
+          [(j + 1) * 10, EventType.PackDeath, 0, j, 0] as [number, number, number, number, number],
       ),
     });
     const kills = extractMarkers(prepare(trace)).filter((x) => x.kind === 'kills');
@@ -227,8 +227,8 @@ describe('real traces', () => {
   it('a battle without contact has no contact stop', () => {
     const trace = synthTrace({
       duration: 3,
-      trex: [{ pos: () => [10, 10] }],
-      tigers: [{ pos: (t) => [50 + t, 50] }],
+      heavy: [{ pos: () => [10, 10] }],
+      pack: [{ pos: (t) => [50 + t, 50] }],
       events: [],
     });
     const p = prepare(trace);
@@ -239,13 +239,15 @@ describe('real traces', () => {
 
 describe('reduced-motion overview', () => {
   it('frames every T-Rex position and stays within its vertex budget', () => {
-    const { trace } = traceOf({ trexCount: 50, tigerCount: 1000, runs: 2, maxTime: 60 }, 0);
+    const { trace } = traceOf({ heavyCount: 50, packCount: 1000, runs: 2, maxTime: 60 }, 0);
     const p = prepare(trace);
     const cam = overviewCamera(p);
     for (const fr of trace.frames) {
       for (let i = 0; i < p.N; i++) {
-        expect(Math.abs((fr.trex[i * 4] as number) - cam.cx)).toBeLessThanOrEqual(cam.view / 2);
-        expect(Math.abs((fr.trex[i * 4 + 1] as number) - cam.cy)).toBeLessThanOrEqual(cam.view / 2);
+        expect(Math.abs((fr.heavy[i * 4] as number) - cam.cx)).toBeLessThanOrEqual(cam.view / 2);
+        expect(Math.abs((fr.heavy[i * 4 + 1] as number) - cam.cy)).toBeLessThanOrEqual(
+          cam.view / 2,
+        );
       }
     }
     const counts = new Map<Bucket, number>();

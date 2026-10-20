@@ -1,14 +1,14 @@
 import {
   LIMITS,
   SAMPLING_METHODS,
-  TIGER_TACTICS,
+  PACK_TACTICS,
   defaultConfig,
   maxRunsFor,
   type SamplingMethod,
   type ScenarioConfig,
-  type TigerTactic,
+  type PackTactic,
 } from '../sim/config';
-import { PARAMS, type ParamDef, type ParamId, type Species, type Triangular } from '../sim/params';
+import { PARAMS, type ParamDef, type ParamId, type Role, type Triangular } from '../sim/params';
 import { costLevel, estimateTotalMs } from './cost';
 import { clear, h, uniqueId } from './dom';
 import { formatDuration } from './format';
@@ -16,18 +16,18 @@ import { paramHelp, paramLabel, t, type MsgKey } from './i18n';
 
 export interface Preset {
   key: MsgKey;
-  trexCount: number;
-  tigerCount: number;
+  heavyCount: number;
+  packCount: number;
   runs: number;
 }
 
 /** Presets change head counts and the run count only; everything else is kept. */
 export const PRESETS: readonly Preset[] = [
-  { key: 'preset.default', trexCount: 10, tigerCount: 100, runs: 500 },
-  { key: 'preset.1v100', trexCount: 1, tigerCount: 100, runs: 500 },
-  { key: 'preset.1v10', trexCount: 1, tigerCount: 10, runs: 1000 },
-  { key: 'preset.10v1000', trexCount: 10, tigerCount: 1000, runs: 200 },
-  { key: 'preset.1v1', trexCount: 1, tigerCount: 1, runs: 2000 },
+  { key: 'preset.default', heavyCount: 10, packCount: 100, runs: 500 },
+  { key: 'preset.1v100', heavyCount: 1, packCount: 100, runs: 500 },
+  { key: 'preset.1v10', heavyCount: 1, packCount: 10, runs: 1000 },
+  { key: 'preset.10v1000', heavyCount: 10, packCount: 1000, runs: 200 },
+  { key: 'preset.1v1', heavyCount: 1, packCount: 1, runs: 2000 },
 ];
 
 type NumKey = keyof typeof LIMITS;
@@ -39,8 +39,8 @@ interface NumField {
 }
 
 const NUM_FIELDS: Readonly<Record<NumKey, NumField>> = {
-  trexCount: { key: 'trexCount', step: 1, int: true },
-  tigerCount: { key: 'tigerCount', step: 1, int: true },
+  heavyCount: { key: 'heavyCount', step: 1, int: true },
+  packCount: { key: 'packCount', step: 1, int: true },
   runs: { key: 'runs', step: 1, int: true },
   seed: { key: 'seed', step: 1, int: true },
   arenaSize: { key: 'arenaSize', step: 50, int: false },
@@ -59,14 +59,14 @@ export function unitLabel(unit: string): string {
   return UNIT_DISPLAY[unit] ?? unit;
 }
 
-export function speciesLabel(s: Species): string {
-  return t(s === 'trex' ? 'species.trex' : 'species.tiger');
+export function speciesLabel(s: Role): string {
+  return t(s === 'heavy' ? 'species.trex' : 'species.tiger');
 }
 
 /** Parameter name including the species, e.g. "Tiger · Sprint speed". */
 export function qualifiedParamLabel(id: ParamId): string {
-  const species: Species = id.startsWith('trex.') ? 'trex' : 'tiger';
-  return `${species === 'trex' ? 'T-Rex' : t('species.tiger')} · ${paramLabel(id)}`;
+  const species: Role = id.startsWith('heavy.') ? 'heavy' : 'pack';
+  return `${species === 'heavy' ? 'T-Rex' : t('species.tiger')} · ${paramLabel(id)}`;
 }
 
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -167,7 +167,7 @@ export function createConfigForm(
   function syncInputs(): void {
     for (const [key, input] of numInputs) input.value = String(cfg[key]);
     if (samplingSel) samplingSel.value = cfg.sampling;
-    if (tacticSel) tacticSel.value = cfg.tigerTactic;
+    if (tacticSel) tacticSel.value = cfg.packTactic;
     if (moraleBox) moraleBox.checked = cfg.morale;
     for (const [id, inputs] of paramInputs) {
       const r = cfg.params[id];
@@ -260,8 +260,8 @@ export function createConfigForm(
       if (tour) el.dataset.tour = tour;
       grid.append(el);
     };
-    add('trexCount', 'field.trexCount', 'help.trexCount', 'counts');
-    add('tigerCount', 'field.tigerCount', 'help.tigerCount', 'counts');
+    add('heavyCount', 'field.heavyCount', 'help.heavyCount', 'counts');
+    add('packCount', 'field.packCount', 'help.packCount', 'counts');
     add('runs', 'field.runs', 'help.runs', 'runs');
     add('maxTime', 'field.maxTime', 'help.maxTime');
     add('arenaSize', 'field.arenaSize', 'help.arenaSize');
@@ -279,17 +279,17 @@ export function createConfigForm(
     samplingSel = sampling.el;
     grid.append(field('field.sampling', 'help.sampling', sampling.el, sampling.id));
 
-    const tactic = select<TigerTactic>(
-      TIGER_TACTICS,
+    const tactic = select<PackTactic>(
+      PACK_TACTICS,
       (v) => (v === 'flank' ? 'tactic.flank' : 'tactic.direct'),
-      cfg.tigerTactic,
+      cfg.packTactic,
       (v) => {
-        cfg = { ...cfg, tigerTactic: v };
+        cfg = { ...cfg, packTactic: v };
         emit();
       },
     );
     tacticSel = tactic.el;
-    grid.append(field('field.tigerTactic', 'help.tigerTactic', tactic.el, tactic.id));
+    grid.append(field('field.packTactic', 'help.packTactic', tactic.el, tactic.id));
 
     const seed = numberField('seed');
     const randomBtn = h('button', {
@@ -345,7 +345,7 @@ export function createConfigForm(
     for (const p of PRESETS) {
       const btn = h('button', { class: 'btn btn-chip', text: t(p.key), attrs: { type: 'button' } });
       btn.addEventListener('click', () => {
-        cfg = { ...cfg, trexCount: p.trexCount, tigerCount: p.tigerCount, runs: p.runs };
+        cfg = { ...cfg, heavyCount: p.heavyCount, packCount: p.packCount, runs: p.runs };
         syncInputs();
         emit();
       });
@@ -361,7 +361,7 @@ export function createConfigForm(
   }
 
   function paramRow(p: ParamDef): HTMLTableRowElement {
-    const name = `${speciesLabel(p.species)} ${paramLabel(p.id)}`;
+    const name = `${speciesLabel(p.role)} ${paramLabel(p.id)}`;
     const helpId = uniqueId('ph');
     const inputs = {} as Record<keyof Triangular, HTMLInputElement>;
     const cells: HTMLTableCellElement[] = [];
@@ -449,7 +449,7 @@ export function createConfigForm(
       ),
     );
     const table = h('table', { class: 'param-table' }, head);
-    for (const species of ['trex', 'tiger'] as const) {
+    for (const species of ['heavy', 'pack'] as const) {
       const body = h(
         'tbody',
         {},
@@ -459,7 +459,7 @@ export function createConfigForm(
           h('th', { attrs: { scope: 'colgroup', colspan: '6' }, text: speciesLabel(species) }),
         ),
       );
-      for (const p of PARAMS) if (p.species === species) body.append(paramRow(p));
+      for (const p of PARAMS) if (p.role === species) body.append(paramRow(p));
       table.append(body);
     }
     const resetAll = h('button', {

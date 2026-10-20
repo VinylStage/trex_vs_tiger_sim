@@ -48,7 +48,7 @@ describe('replay colour tokens (V2)', () => {
 
   it.each([false, true])('gives every agent colour ≥ 3:1 against the arena (dark: %s)', (dark) => {
     const pal = palette(dark);
-    for (const role of ['trex', 'tiger', 'out', 'dead'] as const) {
+    for (const role of ['heavy', 'pack', 'out', 'dead'] as const) {
       const ratio = contrast(pal[role], pal.arena);
       expect(
         ratio,
@@ -61,7 +61,7 @@ describe('replay colour tokens (V2)', () => {
     // Under achromatopsia only lightness is left. Shape carries the state, but the two sides
     // should still not collapse into one grey.
     const pal = palette(dark);
-    expect(contrast(pal.trex, pal.tiger)).toBeGreaterThanOrEqual(1.3);
+    expect(contrast(pal.heavy, pal.pack)).toBeGreaterThanOrEqual(1.3);
   });
 
   it('uses the light tokens as the built-in fallback', () => {
@@ -92,11 +92,13 @@ describe('colour helpers', () => {
 
   it('pre-blends every translucent paint into an opaque colour', () => {
     const theme = deriveTheme(FALLBACK_COLORS, 'sans-serif');
-    expect(theme.trexTint).toBe(blend(FALLBACK_COLORS.trex, FALLBACK_COLORS.arena, BLEND.trexTint));
+    expect(theme.heavyTint).toBe(
+      blend(FALLBACK_COLORS.heavy, FALLBACK_COLORS.arena, BLEND.heavyTint),
+    );
     for (const key of [
-      'trexTint',
+      'heavyTint',
       'deadMark',
-      'deadTrex',
+      'deadHeavy',
       'tether',
       'biteLine',
       'lodRecover',

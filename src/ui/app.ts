@@ -58,10 +58,10 @@ const nextFrame = (): Promise<void> =>
   new Promise((resolve) => requestAnimationFrame(() => resolve()));
 
 function outcomeKey(o: number): MsgKey {
-  return o === Outcome.Trex
-    ? 'outcome.trex'
-    : o === Outcome.Tigers
-      ? 'outcome.tigers'
+  return o === Outcome.Heavy
+    ? 'outcome.heavy'
+    : o === Outcome.Pack
+      ? 'outcome.pack'
       : 'outcome.draw';
 }
 
@@ -482,14 +482,14 @@ export function startApp(root: HTMLElement): void {
     });
 
     const best = [
-      { key: 'verdict.trex' as const, iv: agg.pTrex },
-      { key: 'verdict.tigers' as const, iv: agg.pTigers },
+      { key: 'verdict.heavy' as const, iv: agg.pHeavy },
+      { key: 'verdict.pack' as const, iv: agg.pPack },
       { key: 'verdict.draw' as const, iv: agg.pDraw },
     ].reduce((a, b) => (b.iv.p > a.iv.p ? b : a));
     verdictEl.textContent = t(best.key, { p: formatPct(best.iv.p), ...ivText(best.iv) });
     basisEl.textContent = t('verdict.basis', {
-      trex: formatInt(cfg.trexCount),
-      tigers: formatInt(cfg.tigerCount),
+      heavy: formatInt(cfg.heavyCount),
+      pack: formatInt(cfg.packCount),
       n: formatInt(agg.n),
       seed: String(cfg.seed),
       elapsed: formatDuration(result.elapsedMs / 1000),
@@ -497,13 +497,13 @@ export function startApp(root: HTMLElement): void {
 
     clear(cardsEl);
     cardsEl.append(
-      card(t('outcome.trex'), formatPct(agg.pTrex.p), t('stat.ci', ivText(agg.pTrex)), 'mk-trex'),
       card(
-        t('outcome.tigers'),
-        formatPct(agg.pTigers.p),
-        t('stat.ci', ivText(agg.pTigers)),
-        'mk-tiger',
+        t('outcome.heavy'),
+        formatPct(agg.pHeavy.p),
+        t('stat.ci', ivText(agg.pHeavy)),
+        'mk-trex',
       ),
+      card(t('outcome.pack'), formatPct(agg.pPack.p), t('stat.ci', ivText(agg.pPack)), 'mk-tiger'),
       card(t('outcome.draw'), formatPct(agg.pDraw.p), t('stat.ci', ivText(agg.pDraw)), 'mk-draw'),
       card(
         t('stat.duration'),
@@ -515,18 +515,18 @@ export function startApp(root: HTMLElement): void {
       ),
       card(
         t('stat.survivors'),
-        formatNum(agg.trexSurvivors.mean, 2),
-        t('stat.ofN', { n: formatInt(cfg.trexCount) }),
+        formatNum(agg.heavySurvivors.mean, 2),
+        t('stat.ofN', { n: formatInt(cfg.heavyCount) }),
       ),
       card(
         t('stat.killed'),
-        formatNum(agg.tigersKilled.mean, 1),
-        t('stat.ofN', { n: formatInt(cfg.tigerCount) }),
+        formatNum(agg.packKilled.mean, 1),
+        t('stat.ofN', { n: formatInt(cfg.packCount) }),
       ),
       card(
         t('stat.routed'),
-        formatNum(agg.tigersRouted.mean, 1),
-        t('stat.ofN', { n: formatInt(cfg.tigerCount) }),
+        formatNum(agg.packRouted.mean, 1),
+        t('stat.ofN', { n: formatInt(cfg.packCount) }),
       ),
       card(
         t('stat.exchange'),
@@ -546,8 +546,8 @@ export function startApp(root: HTMLElement): void {
     outcomeChart.set(
       paintOutcome(agg),
       [
-        `${t('outcome.trex')} ${formatPct(agg.pTrex.p)}`,
-        `${t('outcome.tigers')} ${formatPct(agg.pTigers.p)}`,
+        `${t('outcome.heavy')} ${formatPct(agg.pHeavy.p)}`,
+        `${t('outcome.pack')} ${formatPct(agg.pPack.p)}`,
         `${t('outcome.draw')} ${formatPct(agg.pDraw.p)}`,
       ].join(', '),
     );
@@ -568,14 +568,14 @@ export function startApp(root: HTMLElement): void {
       `${t('chart.duration')}: ${t('stat.duration')} ${formatDuration(agg.duration.p50)}`,
     );
     survivorsChart.set(
-      paintHistogram(agg.trexSurvivors.hist, {
-        color: (th) => th.trex,
+      paintHistogram(agg.heavySurvivors.hist, {
+        color: (th) => th.heavy,
         discrete: true,
-        axisTitle: t('chart.trexAlive'),
+        axisTitle: t('chart.heavyAlive'),
         tickLabel: (v) => formatInt(v),
-        binLabel: (lo) => `${t('chart.trexAlive')} ${formatInt(lo + 0.5)}`,
+        binLabel: (lo) => `${t('chart.heavyAlive')} ${formatInt(lo + 0.5)}`,
       }),
-      `${t('chart.survivors')}: ${t('stat.survivors')} ${formatNum(agg.trexSurvivors.mean, 2)}`,
+      `${t('chart.survivors')}: ${t('stat.survivors')} ${formatNum(agg.heavySurvivors.mean, 2)}`,
     );
     const top = agg.sensitivity.slice(0, 10);
     tornadoChart.set(

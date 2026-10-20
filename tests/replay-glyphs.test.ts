@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   GLYPH,
   gaugeHeight,
-  tigerGlyph,
-  trexGauge,
-  trexTriangle,
+  packGlyph,
+  heavyGauge,
+  heavyTriangle,
   type PathSink,
 } from '../src/ui/replay/glyphs';
 import { iou, rasterize, record, RecordingPath } from './glyph-raster';
@@ -14,7 +14,7 @@ const STATES = ['approach', 'latched', 'recover', 'routed', 'dead'] as const;
 function mask(state: (typeof STATES)[number], r: number, heading: number): Uint8Array {
   const dx = Math.cos(heading);
   const dy = Math.sin(heading);
-  return rasterize(record((sink) => tigerGlyph(state, sink, 16, 16, r, dx, dy)));
+  return rasterize(record((sink) => packGlyph(state, sink, 16, 16, r, dx, dy)));
 }
 
 const area = (m: Uint8Array): number => m.reduce((s, v) => s + v, 0);
@@ -65,11 +65,11 @@ describe('T-Rex HP gauge', () => {
       return Math.abs(s) / 2;
     };
     const tri = new RecordingPath();
-    trexTriangle(tri, 50, 40, Math.cos(0.7), Math.sin(0.7), 30);
+    heavyTriangle(tri, 50, 40, Math.cos(0.7), Math.sin(0.7), 30);
     const full = polyArea(tri);
     for (const hp of [0.2, 0.5, 0.9]) {
       const g = new RecordingPath();
-      trexGauge(g, 50, 40, Math.cos(0.7), Math.sin(0.7), 30, hp);
+      heavyGauge(g, 50, 40, Math.cos(0.7), Math.sin(0.7), 30, hp);
       expect(polyArea(g) / full).toBeCloseTo(hp, 9);
     }
   });
@@ -82,7 +82,7 @@ describe('T-Rex HP gauge', () => {
       arc: () => calls.push('a'),
       closePath: () => calls.push('z'),
     };
-    trexGauge(sink, 0, 0, 1, 0, 20, 0);
+    heavyGauge(sink, 0, 0, 1, 0, 20, 0);
     expect(calls).toEqual([]);
   });
 });

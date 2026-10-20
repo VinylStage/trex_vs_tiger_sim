@@ -1,14 +1,14 @@
-import { TigerState } from '../../sim/engine';
+import { PackState } from '../../sim/engine';
 import { TRAIL, collectEffects, collectTrails, newFxCounters, type FxCounters } from './effects';
 import {
   BUCKET_ORDER,
   GLYPH,
   PAINTS,
-  tigerGlyph,
-  tigerRadiusPx,
-  trexGauge,
-  trexLengthPx,
-  trexTriangle,
+  packGlyph,
+  packRadiusPx,
+  heavyGauge,
+  heavyLengthPx,
+  heavyTriangle,
   type Bucket,
   type Paint,
   type PathSink,
@@ -49,7 +49,7 @@ const GRID_MIN_PX = 48;
 /** Scale-bar lengths: 1, 2 or 5 × a power of ten. */
 const SCALE_STEPS = [2, 5, 10] as const;
 
-const TIGER_STATE_NAME = ['approach', 'latched', 'recover', 'routed'] as const;
+const PACK_STATE_NAME = ['approach', 'latched', 'recover', 'routed'] as const;
 const LAST_BUCKET = BUCKET_ORDER[BUCKET_ORDER.length - 1] as Bucket;
 
 /** Apply one bucket's paints to a path. */
@@ -78,8 +78,8 @@ export interface FrameInfo {
   /** Tigers were drawn as LOD squares. */
   lod: boolean;
   /** Agents inside the view. */
-  tigers: number;
-  trex: number;
+  pack: number;
+  heavy: number;
   /** Effects, bite cones, fills and trails (see effects.ts). */
   fx: FxCounters;
 }
@@ -89,10 +89,10 @@ export interface DrawOptions {
   speed: number;
   effects: boolean;
   fills: boolean;
-  trexTrails: boolean;
-  tigerTrails: boolean;
+  heavyTrails: boolean;
+  packTrails: boolean;
   forceLod: boolean;
-  onFill?: ((event: number, trex: number) => void) | undefined;
+  onFill?: ((event: number, heavy: number) => void) | undefined;
 }
 
 /**
@@ -101,7 +101,7 @@ export interface DrawOptions {
  * bucket per frame, colours precomputed per theme, no typed-array allocation.
  */
 export class StagePainter {
-  readonly info: FrameInfo = { lod: false, tigers: 0, trex: 0, fx: newFxCounters() };
+  readonly info: FrameInfo = { lod: false, pack: 0, heavy: 0, fx: newFxCounters() };
   private readonly paths = new Map<Bucket, Path2D>();
   private readonly sink = (b: Bucket): PathSink => {
     let path = this.paths.get(b);
@@ -130,13 +130,13 @@ export class StagePainter {
     ctx.fillRect(0, 0, cssW, cssH);
     this.drawArena(ctx, vp, theme);
 
-    const r = tigerRadiusPx(p.trace.meta.tigerRadius, scale);
+    const r = packRadiusPx(p.trace.meta.packRadius, scale);
     const lod = opt.forceLod || r < GLYPH.lodBelowPx;
-    const len = trexLengthPx(scale);
+    const len = heavyLengthPx(scale);
     const info = this.info;
     info.lod = lod;
-    info.tigers = 0;
-    info.trex = 0;
+    info.pack = 0;
+    info.heavy = 0;
     const mT = lod ? 3 : 3 * r + 2;
     const mR = len;
 
@@ -144,14 +144,14 @@ export class StagePainter {
     if (!lod) {
       for (let j = 0; j < p.M; j++) {
         const s = w.ts[j] as number;
-        if (s === TigerState.Left) continue;
+        if (s === PackState.Left) continue;
         const x = ox + (w.tx[j] as number) * scale;
         const y = oy + (w.ty[j] as number) * scale;
         if (x < -mT || y < -mT || x > cssW + mT || y > cssH + mT) continue;
-        info.tigers++;
+        info.pack++;
         const h = w.thost[j] as number;
-        tigerGlyph(
-          s === TigerState.Dead ? 'dead' : (TIGER_STATE_NAME[s] ?? 'approach'),
+        packGlyph(
+          s === PackState.Dead ? 'dead' : (PACK_STATE_NAME[s] ?? 'approach'),
           this.sink,
           x,
           y,
@@ -165,26 +165,26 @@ export class StagePainter {
     }
 
     // T-Rex: solid triangle at full HP, otherwise a tinted hollow with an area-true HP gauge.
-    const halo = p.N <= GLYPH.haloMaxTrex || len >= GLYPH.haloMinLen;
+    const halo = p.N <= GLYPH.haloMaxHeavy || len >= GLYPH.haloMinLen;
     for (let i = 0; i < p.N; i++) {
       const x = ox + (w.rx[i] as number) * scale;
       const y = oy + (w.ry[i] as number) * scale;
       if (x < -mR || y < -mR || x > cssW + mR || y > cssH + mR) continue;
-      info.trex++;
+      info.heavy++;
       const hd = w.rh[i] as number;
       const cos = Math.cos(hd);
       const sin = Math.sin(hd);
       if (!w.ralive[i]) {
-        trexTriangle(this.sink('deadTrex'), x, y, cos, sin, len);
+        heavyTriangle(this.sink('deadHeavy'), x, y, cos, sin, len);
         continue;
       }
       const hp = Math.min(1, w.rhp[i] as number);
       if (hp < GLYPH.gaugeBelow) {
-        trexTriangle(this.sink('trexHollow'), x, y, cos, sin, len);
-        trexTriangle(this.sink('trexOutline'), x, y, cos, sin, len);
-        trexGauge(this.sink('trexGauge'), x, y, cos, sin, len, hp);
+        heavyTriangle(this.sink('heavyHollow'), x, y, cos, sin, len);
+        heavyTriangle(this.sink('heavyOutline'), x, y, cos, sin, len);
+        heavyGauge(this.sink('heavyGauge'), x, y, cos, sin, len, hp);
       } else {
-        trexTriangle(this.sink(halo ? 'trexHalo' : 'trex'), x, y, cos, sin, len);
+        heavyTriangle(this.sink(halo ? 'heavyHalo' : 'heavy'), x, y, cos, sin, len);
       }
     }
 
@@ -194,11 +194,11 @@ export class StagePainter {
     fx.wedges = 0;
     fx.fills = 0;
     fx.flashArea = 0;
-    fx.trexTrails = 0;
-    fx.tigerTrails = 0;
-    const tigerTrails = opt.tigerTrails && !lod && r >= TRAIL.minTigerPx;
-    if (opt.trexTrails || tigerTrails)
-      collectTrails(p, w, vp, { trex: opt.trexTrails, tigers: tigerTrails }, this.sink, fx);
+    fx.heavyTrails = 0;
+    fx.packTrails = 0;
+    const packTrails = opt.packTrails && !lod && r >= TRAIL.minPackPx;
+    if (opt.heavyTrails || packTrails)
+      collectTrails(p, w, vp, { heavy: opt.heavyTrails, pack: packTrails }, this.sink, fx);
     if (opt.effects)
       collectEffects(
         p,
@@ -221,13 +221,13 @@ export class StagePainter {
     };
     if (lod) {
       const side = Math.max(GLYPH.lodMinDevicePx, Math.round(r * GLYPH.lodSide * dpr)) / dpr;
-      this.squares(ctx, w, vp, TigerState.Dead, theme.deadMark, GLYPH.lodMinDevicePx / dpr);
+      this.squares(ctx, w, vp, PackState.Dead, theme.deadMark, GLYPH.lodMinDevicePx / dpr);
       paint('deadCross', 'approachTick');
-      this.squares(ctx, w, vp, TigerState.Routed, theme.lodRouted, side * GLYPH.lodRouted);
-      this.squares(ctx, w, vp, TigerState.Recover, theme.lodRecover, side);
-      this.squares(ctx, w, vp, TigerState.Approach, theme.tiger, side);
-      paint('trexHollow', 'trexHalo');
-      this.squares(ctx, w, vp, TigerState.Latched, theme.tiger, side * GLYPH.lodLatched);
+      this.squares(ctx, w, vp, PackState.Routed, theme.lodRouted, side * GLYPH.lodRouted);
+      this.squares(ctx, w, vp, PackState.Recover, theme.lodRecover, side);
+      this.squares(ctx, w, vp, PackState.Approach, theme.pack, side);
+      paint('heavyHollow', 'heavyHalo');
+      this.squares(ctx, w, vp, PackState.Latched, theme.pack, side * GLYPH.lodLatched);
       paint('latched', LAST_BUCKET);
     } else {
       paint('deadCross', LAST_BUCKET);
@@ -299,7 +299,7 @@ export class StagePainter {
       const x = ox + (w.tx[j] as number) * scale;
       const y = oy + (w.ty[j] as number) * scale;
       if (x < -side || y < -side || x > cssW + side || y > cssH + side) continue;
-      this.info.tigers++;
+      this.info.pack++;
       ctx.fillRect(Math.round((x - half) * dpr) / dpr, Math.round((y - half) * dpr) / dpr, s, s);
     }
   }

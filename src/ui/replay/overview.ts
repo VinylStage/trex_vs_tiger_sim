@@ -1,18 +1,18 @@
-import { TigerState, type TraceFrame } from '../../sim/engine';
+import { PackState, type TraceFrame } from '../../sim/engine';
 import { EventType } from '../../sim/events';
 import type { Camera } from './camera';
 import type { Viewport } from './draw';
 import {
   deadCross,
   latchedDiamond,
-  tigerRadiusPx,
-  trexLengthPx,
-  trexTriangle,
+  packRadiusPx,
+  heavyLengthPx,
+  heavyTriangle,
   type Bucket,
   type PathSink,
 } from './glyphs';
 import type { Prepared } from './prepare';
-import { trexPose } from './world';
+import { heavyPose } from './world';
 
 /**
  * Static overview of the whole battle (docs/REPLAY.md §11), shown instead of an animation when
@@ -22,12 +22,12 @@ import { trexPose } from './world';
  */
 export const OVERVIEW = {
   /** At most this many tiger paths (evenly strided). */
-  maxTigers: 600,
+  maxPack: 600,
   /** At most this many path vertices in total; frames are strided to fit. */
   maxPoints: 150_000,
   /** At most this many T-Rex paths; above thinTrexOver T-Rex they are drawn thin and lighter. */
-  maxTrex: 100,
-  thinTrexOver: 50,
+  maxHeavy: 100,
+  thinHeavyOver: 50,
   /** At most this many latch marks (evenly strided). */
   maxLatches: 2000,
   /** Framing: margin around every T-Rex position (m) and the smallest view. */
@@ -39,13 +39,13 @@ export const OVERVIEW = {
 
 /** Paint order of the overview's buckets. */
 export const OVERVIEW_ORDER: readonly Bucket[] = [
-  'ovTiger',
-  'ovTrex',
-  'ovTrexThin',
+  'ovPack',
+  'ovHeavy',
+  'ovHeavyThin',
   'ovLatch',
   'deadCross',
-  'deadTrex',
-  'trexHalo',
+  'deadHeavy',
+  'heavyHalo',
 ];
 
 /** The camera framing every recorded T-Rex position (pure). */
@@ -57,8 +57,8 @@ export function overviewCamera(p: Prepared): Camera {
   let y1 = -Infinity;
   for (const fr of p.trace.frames) {
     for (let i = 0; i < p.N; i++) {
-      const x = fr.trex[i * 4] as number;
-      const y = fr.trex[i * 4 + 1] as number;
+      const x = fr.heavy[i * 4] as number;
+      const y = fr.heavy[i * 4 + 1] as number;
       if (x < x0) x0 = x;
       if (x > x1) x1 = x;
       if (y < y0) y0 = y;
@@ -84,40 +84,40 @@ export function buildOverview(p: Prepared, vp: Viewport, sink: (b: Bucket) => Pa
   const { scale, ox, oy } = vp;
   const X = (x: number): number => ox + x * scale;
   const Y = (y: number): number => oy + y * scale;
-  const tStride = Math.max(1, Math.ceil(p.M / OVERVIEW.maxTigers));
-  const rStride = Math.max(1, Math.ceil(p.N / OVERVIEW.maxTrex));
+  const tStride = Math.max(1, Math.ceil(p.M / OVERVIEW.maxPack));
+  const rStride = Math.max(1, Math.ceil(p.N / OVERVIEW.maxHeavy));
   const paths = Math.ceil(p.N / rStride) + Math.ceil(p.M / tStride);
   const fStride = Math.max(1, Math.ceil((paths * F) / OVERVIEW.maxPoints));
   let points = 0;
 
-  const tp = sink('ovTiger');
+  const tp = sink('ovPack');
   for (let j = 0; j < p.M; j += tStride) {
     for (let k = 0; k < F; k += fStride) {
       const fr = frames[k] as TraceFrame;
-      const s = fr.tiger[j * 3 + 2] as number;
-      const x = X(fr.tiger[j * 3] as number);
-      const y = Y(fr.tiger[j * 3 + 1] as number);
+      const s = fr.pack[j * 3 + 2] as number;
+      const x = X(fr.pack[j * 3] as number);
+      const y = Y(fr.pack[j * 3 + 1] as number);
       if (k === 0) tp.moveTo(x, y);
       else tp.lineTo(x, y);
       points++;
-      if (s >= TigerState.Dead) break;
+      if (s >= PackState.Dead) break;
     }
   }
 
-  const rp = sink(p.N > OVERVIEW.thinTrexOver ? 'ovTrexThin' : 'ovTrex');
+  const rp = sink(p.N > OVERVIEW.thinHeavyOver ? 'ovHeavyThin' : 'ovHeavy');
   for (let i = 0; i < p.N; i += rStride) {
     for (let k = 0; k < F; k += fStride) {
       const fr = frames[k] as TraceFrame;
-      const x = X(fr.trex[i * 4] as number);
-      const y = Y(fr.trex[i * 4 + 1] as number);
+      const x = X(fr.heavy[i * 4] as number);
+      const y = Y(fr.heavy[i * 4 + 1] as number);
       if (k === 0) rp.moveTo(x, y);
       else rp.lineTo(x, y);
       points++;
-      if ((fr.trex[i * 4 + 3] as number) <= 0) break;
+      if ((fr.heavy[i * 4 + 3] as number) <= 0) break;
     }
   }
 
-  const r = tigerRadiusPx(p.trace.meta.tigerRadius, scale);
+  const r = packRadiusPx(p.trace.meta.packRadius, scale);
   // Latch marks: where each latch put the tiger on its host (ride position at the latch time).
   let latches = 0;
   for (let k = 0; k < p.evCount; k++) {
@@ -132,7 +132,7 @@ export function buildOverview(p: Prepared, vp: Viewport, sink: (b: Bucket) => Pa
       if (seen++ % lStride !== 0) continue;
       const host = p.liHost[l] as number;
       if (host >= p.N) continue;
-      trexPose(p, host, (p.liStart[l] as number) * p.dt, pose);
+      heavyPose(p, host, (p.liStart[l] as number) * p.dt, pose);
       const a = (pose[2] as number) + (p.liAng[l] as number);
       const x = X((pose[0] as number) + Math.cos(a) * p.attachR);
       const y = Y((pose[1] as number) + Math.sin(a) * p.attachR);
@@ -144,27 +144,27 @@ export function buildOverview(p: Prepared, vp: Viewport, sink: (b: Bucket) => Pa
   const last = frames[F - 1] as TraceFrame;
   const kp = sink('deadCross');
   for (let j = 0; j < p.M; j++) {
-    if (last.tiger[j * 3 + 2] !== TigerState.Dead) continue;
+    if (last.pack[j * 3 + 2] !== PackState.Dead) continue;
     const gx = p.goneX[j] as number;
     const known = !Number.isNaN(gx);
     deadCross(
       kp,
-      X(known ? gx : (last.tiger[j * 3] as number)),
-      Y(known ? (p.goneY[j] as number) : (last.tiger[j * 3 + 1] as number)),
+      X(known ? gx : (last.pack[j * 3] as number)),
+      Y(known ? (p.goneY[j] as number) : (last.pack[j * 3 + 1] as number)),
       r,
     );
   }
 
   // Final T-Rex poses.
-  const len = trexLengthPx(scale);
+  const len = heavyLengthPx(scale);
   for (let i = 0; i < p.N; i++) {
     const o = i * 4;
-    const dead = (last.trex[o + 3] as number) <= 0;
-    const hd = last.trex[o + 2] as number;
-    trexTriangle(
-      sink(dead ? 'deadTrex' : 'trexHalo'),
-      X(last.trex[o] as number),
-      Y(last.trex[o + 1] as number),
+    const dead = (last.heavy[o + 3] as number) <= 0;
+    const hd = last.heavy[o + 2] as number;
+    heavyTriangle(
+      sink(dead ? 'deadHeavy' : 'heavyHalo'),
+      X(last.heavy[o] as number),
+      Y(last.heavy[o + 1] as number),
       Math.cos(hd),
       Math.sin(hd),
       len,

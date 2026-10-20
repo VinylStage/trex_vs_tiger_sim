@@ -6,7 +6,7 @@ import {
   LIMITS,
   MAX_WORK,
   SAMPLING_METHODS,
-  TIGER_TACTICS,
+  PACK_TACTICS,
   defaultConfig,
   type ScenarioConfig,
 } from '../src/sim/config';
@@ -794,7 +794,7 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
     );
     expect(s.attrs['id']).toBe(`param-${p.id}`);
     expect(s.attrs['data-unit']).toBe(p.unit);
-    expect(s.attrs['class']).toContain(`species-${p.species}`);
+    expect(s.attrs['class']).toContain(`role-${p.role}`);
     expect(textOf(one(elements(s.inner, 'h3'), 'h3').inner)).toContain(
       DICTIONARIES[lang][`param.${p.id}`],
     );
@@ -813,7 +813,7 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
   const keys = (Object.keys(d) as (keyof ScenarioConfig)[]).filter((k) => k !== 'params');
   const choices: Partial<Record<keyof ScenarioConfig, readonly string[]>> = {
     sampling: SAMPLING_METHODS,
-    tigerTactic: TIGER_TACTICS,
+    packTactic: PACK_TACTICS,
     morale: ['true', 'false'],
   };
 

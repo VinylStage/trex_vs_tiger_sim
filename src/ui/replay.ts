@@ -86,8 +86,8 @@ interface DebugStats {
   /** Most fill flashes one T-Rex started within any 1 s of real time, since the last reset. */
   maxFillsPerSecond: number;
   fillStarts: number;
-  trexTrails: number;
-  tigerTrails: number;
+  heavyTrails: number;
+  packTrails: number;
   /** Duration of the last seek: world update + draw, synchronous (ms). */
   seekMs: number;
   maxSeekMs: number;
@@ -130,7 +130,7 @@ export class ReplayView {
     recover: 0,
     out: 0,
     dead: 0,
-    trexAlive: 0,
+    heavyAlive: 0,
   };
   private time = 0;
   private playing = false;
@@ -158,8 +158,8 @@ export class ReplayView {
     speed: DEFAULT_SPEED,
     effects: true,
     fills: true,
-    trexTrails: true,
-    tigerTrails: true,
+    heavyTrails: true,
+    packTrails: true,
     forceLod: false,
   };
   private readonly debug: DebugStats | null;
@@ -210,8 +210,8 @@ export class ReplayView {
           maxFlashArea: 0,
           maxFillsPerSecond: 0,
           fillStarts: 0,
-          trexTrails: 0,
-          tigerTrails: 0,
+          heavyTrails: 0,
+          packTrails: 0,
           seekMs: 0,
           maxSeekMs: 0,
         }
@@ -685,7 +685,7 @@ export class ReplayView {
     const s = sceneCounts(w, this.scene);
     return t('replay.scene', {
       time: formatDuration(this.time),
-      alive: formatInt(s.trexAlive),
+      alive: formatInt(s.heavyAlive),
       total: formatInt(prep.N),
       approach: formatInt(s.approach),
       latched: formatInt(s.latched),
@@ -785,8 +785,8 @@ export class ReplayView {
     const motion = !this.reducedMotion;
     o.effects = motion;
     o.fills = motion && (tier?.fills ?? true);
-    o.trexTrails = motion && (tier?.trexTrails ?? true);
-    o.tigerTrails = motion && (tier?.tigerTrails ?? true);
+    o.heavyTrails = motion && (tier?.heavyTrails ?? true);
+    o.packTrails = motion && (tier?.packTrails ?? true);
     o.forceLod = tier?.forceLod ?? false;
     o.onFill = this.debug ? this.onFill : undefined;
     painter.draw(
@@ -805,13 +805,13 @@ export class ReplayView {
   // ---------- debug (?debug=fps) ----------
 
   /** Record fill-flash starts per T-Rex (real time) to check ≤ 3 per second. */
-  private readonly onFill = (event: number, trex: number): void => {
+  private readonly onFill = (event: number, heavy: number): void => {
     const d = this.debug;
-    if (!d || this.lastFillEvent[trex] === event) return;
-    this.lastFillEvent[trex] = event;
+    if (!d || this.lastFillEvent[heavy] === event) return;
+    this.lastFillEvent[heavy] = event;
     d.fillStarts++;
     const now = performance.now();
-    const o = trex * 4;
+    const o = heavy * 4;
     const ft = this.fillTimes;
     ft.copyWithin(o, o + 1, o + 4);
     ft[o + 3] = now;
@@ -836,8 +836,8 @@ export class ReplayView {
     d.fills = info.fx.fills;
     d.flashArea = Math.round(info.fx.flashArea);
     d.maxFlashArea = Math.max(d.maxFlashArea, d.flashArea);
-    d.trexTrails = info.fx.trexTrails;
-    d.tigerTrails = info.fx.tigerTrails;
+    d.heavyTrails = info.fx.heavyTrails;
+    d.packTrails = info.fx.packTrails;
     if (ts - this.debugAt < DEBUG_EVERY_MS) return;
     if (this.debugAt > 0) d.fps = (this.debugFrames * 1000) / (ts - this.debugAt);
     this.debugAt = ts;
