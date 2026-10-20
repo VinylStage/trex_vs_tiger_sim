@@ -4,6 +4,7 @@ import type { FreeConfig } from '../sim/free/config';
 import type { FreeRunSummary } from '../sim/free/engine';
 import { packSummaries, type AggregateResult } from '../sim/montecarlo';
 import type { WorkerRequest, WorkerResponse } from '../workers/protocol';
+import workerUrl from '../workers/sim.worker.ts?worker&url';
 import { estimateRemainingMs, poolSize, splitRuns, type RunRange } from './chunks';
 
 export interface PoolProgress {
@@ -23,8 +24,41 @@ export class CancelledError extends Error {
 
 const PROGRESS_THROTTLE_MS = 100;
 
+/** The subset of the Trusted Types API used here (not in TypeScript's DOM lib yet). */
+interface TrustedTypesLike {
+  createPolicy(
+    name: string,
+    rules: { createScriptURL(input: string): string },
+  ): { createScriptURL(input: string): unknown };
+}
+
+/**
+ * The CSP's only Trusted Types policy (`trusted-types sim-worker`, docs/DEPLOYMENT.md). The Worker
+ * constructor is a TrustedScriptURL sink, so under `require-trusted-types-for 'script'` it needs a
+ * policy-made value. The policy accepts nothing but the bundled worker URL.
+ */
+export const WORKER_POLICY = 'sim-worker';
+
+/** `url` as the Worker constructor accepts it under Trusted Types; the plain URL elsewhere. */
+export function trustedWorkerUrl(url: string, tt: TrustedTypesLike | undefined): string {
+  if (!tt) return url;
+  const policy = tt.createPolicy(WORKER_POLICY, {
+    createScriptURL(input) {
+      if (input !== url) throw new TypeError(`${WORKER_POLICY}: unexpected URL`);
+      return input;
+    },
+  });
+  return policy.createScriptURL(url) as string;
+}
+
+let workerScript: string | undefined;
+
 function spawnWorker(): Worker {
-  return new Worker(new URL('../workers/sim.worker.ts', import.meta.url), { type: 'module' });
+  workerScript ??= trustedWorkerUrl(
+    workerUrl,
+    (globalThis as { trustedTypes?: TrustedTypesLike }).trustedTypes,
+  );
+  return new Worker(workerScript, { type: 'module' });
 }
 
 interface Chunk {

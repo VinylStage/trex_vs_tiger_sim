@@ -1235,6 +1235,33 @@ function headersFor(src: string, path: string): Record<string, string[]> {
   return out;
 }
 
+describe('English pages mark Korean words (WCAG 3.1.2 language of parts, #71)', () => {
+  it.each(SHELL_PAGES.filter((p) => p.lang === 'en').map((p) => [p.file, p.html] as const))(
+    '%s',
+    (_file, html) => {
+      const body = (/<body[\s\S]*<\/body>/.exec(html)?.[0] ?? '').replace(
+        /<script[\s\S]*?<\/script>/g,
+        '',
+      );
+      // Drop every element marked lang="ko" (none of them nest another element of the same tag).
+      const unmarked = body.replace(/<(\w+)[^>]*\blang="ko"[^>]*>[\s\S]*?<\/\1>/g, '');
+      const text = unmarked.replace(/<[^>]*>/g, ' ');
+      expect(text.match(/[가-힣]+/g) ?? []).toEqual([]);
+    },
+  );
+});
+
+describe('public/site.webmanifest', () => {
+  it('writes name, short name and description in its declared language (#71)', () => {
+    const m = JSON.parse(read('public/site.webmanifest')) as Record<string, string>;
+    expect(m['lang']).toBe('ko');
+    for (const k of ['name', 'short_name', 'description']) {
+      expect(m[k], k).toMatch(/[가-힣]/);
+      expect(m[k], k).not.toMatch(/\b(the|and|on|in|your)\b/i);
+    }
+  });
+});
+
 describe('public/_headers', () => {
   const src = read('public/_headers');
   const htmlPaths = ALL_PAGES.map((p) => pagePath(p.page, p.lang));
@@ -1251,6 +1278,20 @@ describe('public/_headers', () => {
     expect(h['cache-control']?.join(', ')).toBe('no-cache, no-transform, no-store');
     expect(h['clear-site-data']).toEqual(['"cache", "storage"']);
     expect(headersFor(src, '/version.json')['cache-control']).toEqual(['no-store']);
+  });
+
+  it('sends HSTS once everywhere, scoped to this host (no includeSubDomains, no preload)', () => {
+    for (const path of ['/', '/en/', '/reset/', '/version.json', '/assets/a.js', '/nope']) {
+      expect(headersFor(src, path)['strict-transport-security'], path).toEqual([
+        'max-age=31536000',
+      ]);
+    }
+  });
+
+  it('enforces Trusted Types with only the worker policy', () => {
+    const [csp] = headersFor(src, '/')['content-security-policy'] ?? [];
+    expect(csp).toContain("require-trusted-types-for 'script'");
+    expect(csp).toMatch(/trusted-types sim-worker(;|$)/);
   });
 
   it('sends the CSP on unknown paths, where the 404 pages are served', () => {
