@@ -2,6 +2,8 @@ import type { ScenarioConfig } from '../sim/config';
 import type { BattleTrace, RunSummary } from '../sim/engine';
 import type { FreeConfig } from '../sim/free/config';
 import type { FreeRunSummary } from '../sim/free/engine';
+import type { FreeAggregate } from '../sim/free/aggregate';
+import { packFreeSummaries } from '../sim/free/montecarlo';
 import { packSummaries, type AggregateResult } from '../sim/montecarlo';
 import type { WorkerRequest, WorkerResponse } from '../workers/protocol';
 import workerUrl from '../workers/sim.worker.ts?worker&url';
@@ -82,7 +84,7 @@ interface RunJob {
 
 interface AggregateJob {
   jobId: number;
-  resolve: (a: AggregateResult) => void;
+  resolve: (a: AggregateResult | FreeAggregate) => void;
   reject: (e: Error) => void;
 }
 
@@ -166,8 +168,30 @@ export class SimPool {
     const jobId = this.nextJobId++;
     const packed = packSummaries(summaries);
     return new Promise<AggregateResult>((resolve, reject) => {
-      this.aggJob = { jobId, resolve, reject };
+      this.aggJob = {
+        jobId,
+        resolve: resolve as (a: AggregateResult | FreeAggregate) => void,
+        reject,
+      };
       const msg: WorkerRequest = { type: 'aggregate', jobId, config, summaries: packed };
+      worker.postMessage(msg, [packed.buffer]);
+    });
+  }
+
+  /** `aggregate` for a free-model batch (src/sim/free/aggregate.ts), also in a worker. */
+  aggregateFree(config: FreeConfig, summaries: readonly FreeRunSummary[]): Promise<FreeAggregate> {
+    this.cancel();
+    const worker = this.workers[0] ?? this.createRunWorker();
+    if (this.workers.length === 0) this.workers.push(worker);
+    const jobId = this.nextJobId++;
+    const packed = packFreeSummaries(summaries);
+    return new Promise<FreeAggregate>((resolve, reject) => {
+      this.aggJob = {
+        jobId,
+        resolve: resolve as (a: AggregateResult | FreeAggregate) => void,
+        reject,
+      };
+      const msg: WorkerRequest = { type: 'aggregate-free', jobId, config, summaries: packed };
       worker.postMessage(msg, [packed.buffer]);
     });
   }
@@ -264,7 +288,7 @@ export class SimPool {
   private onRunMessage(worker: Worker, msg: WorkerResponse): void {
     const agg = this.aggJob;
     if (agg && msg.jobId === agg.jobId) {
-      if (msg.type === 'aggregate') {
+      if (msg.type === 'aggregate' || msg.type === 'aggregate-free') {
         this.aggJob = null;
         agg.resolve(msg.agg);
       } else if (msg.type === 'error') {
@@ -294,6 +318,7 @@ export class SimPool {
         break;
       case 'replay':
       case 'aggregate':
+      case 'aggregate-free':
         break;
     }
   }

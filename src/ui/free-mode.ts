@@ -1,5 +1,5 @@
 import { LIMITS, SAMPLING_METHODS } from '../sim/config';
-import { aggregateFree, type FreeAggregate } from '../sim/free/aggregate';
+import type { FreeAggregate } from '../sim/free/aggregate';
 import { FREE_LIMITS, sanitizeFreeConfig, type FreeConfig } from '../sim/free/config';
 import { FREE_SPECIES, FREE_SPECIES_IDS, type FreeSpeciesId } from '../sim/free/species';
 import type { Interval } from '../sim/stats';
@@ -431,7 +431,9 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
         lastProgress = p;
         renderProgress();
       });
-      const agg = aggregateFree(runCfg, summaries);
+      setStatus({ key: 'run.aggregating' });
+      // In a worker, like the classic aggregate: no long task on the main thread (#24).
+      const agg = await pool.aggregateFree(runCfg, summaries);
       result = { config: runCfg, agg, elapsedMs: performance.now() - t0 };
       setStatus(null);
       renderResults();

@@ -4,8 +4,56 @@ import { simulateFreeBattle, type FreeRunSummary } from './engine';
 
 /**
  * Monte Carlo batch for the free model. Same structure as the legacy `runChunk`/`runAll`
- * (src/sim/montecarlo.ts); the worker, per-side aggregate and share wiring follow in P5.
+ * (src/sim/montecarlo.ts).
  */
+
+/** Numeric fields of a FreeRunSummary in the order `packFreeSummaries` stores them. */
+export const FREE_SUMMARY_FIELDS = [
+  'run',
+  'outcome',
+  'duration',
+  'aAlive',
+  'aKilled',
+  'aRouted',
+  'aActive',
+  'bAlive',
+  'bKilled',
+  'bRouted',
+  'bActive',
+  'aHpFrac',
+  'bHpFrac',
+  'advantage',
+] as const satisfies readonly (keyof FreeRunSummary)[];
+
+export const FREE_SUMMARY_STRIDE = FREE_SUMMARY_FIELDS.length;
+
+/**
+ * Free summaries as one Float64Array, so they cross to a worker as a single transferable buffer
+ * (as `packSummaries` does for the legacy engine). Every field is a double or a small integer,
+ * so `unpackFreeSummaries` returns exactly the same values.
+ */
+export function packFreeSummaries(summaries: readonly FreeRunSummary[]): Float64Array<ArrayBuffer> {
+  const out = new Float64Array(summaries.length * FREE_SUMMARY_STRIDE);
+  summaries.forEach((s, i) => {
+    FREE_SUMMARY_FIELDS.forEach((f, k) => {
+      out[i * FREE_SUMMARY_STRIDE + k] = s[f];
+    });
+  });
+  return out;
+}
+
+export function unpackFreeSummaries(packed: Float64Array): FreeRunSummary[] {
+  const n = Math.floor(packed.length / FREE_SUMMARY_STRIDE);
+  const out: FreeRunSummary[] = [];
+  for (let i = 0; i < n; i++) {
+    const s: Record<string, number> = {};
+    FREE_SUMMARY_FIELDS.forEach((f, k) => {
+      s[f] = packed[i * FREE_SUMMARY_STRIDE + k] as number;
+    });
+    out.push(s as unknown as FreeRunSummary);
+  }
+  return out;
+}
 
 export function runFreeChunk(
   config: FreeConfig,
