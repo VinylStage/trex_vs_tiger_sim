@@ -166,6 +166,17 @@ describe('matchup presets and species changes', () => {
     const documented = PRESETS.filter((p) => matchupInfo(p).kind === 'documented');
     expect(documented.length).toBeGreaterThanOrEqual(4);
     expect(matchupInfo(PRESETS[0] ?? defaultConfig()).kind).toBe('neverMet');
+    initLang('en');
+    expect(matchupInfo({ heavySpecies: 'homoErectus', packSpecies: 'lion' }).text).toBe(
+      'No recorded overlap',
+    );
+    expect(matchupInfo({ heavySpecies: 'elephant', packSpecies: 'wolf' }).text).toBe(
+      'No recorded encounters',
+    );
+    initLang('ko');
+    expect(matchupInfo({ heavySpecies: 'homoErectus', packSpecies: 'lion' }).text).toBe(
+      '기록된 조우 없음',
+    );
     expect(matchupInfo({ heavySpecies: 'elephant', packSpecies: 'lion' }).href).toBe(
       '/model/#matchup-elephants-and-lions',
     );

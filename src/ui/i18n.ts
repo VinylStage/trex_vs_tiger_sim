@@ -566,7 +566,7 @@ const en: Dictionary = {
   'matchup.documented': 'Documented in the wild',
   'matchup.neverMet': 'These species never met',
   'matchup.undocumented': 'No recorded encounters',
-  'matchup.unrecorded': 'No recorded encounters',
+  'matchup.unrecorded': 'No recorded overlap',
   'matchup.sources': 'Sources',
   'matchup.thoughtExperiment':
     'A thought experiment comparing physical capability only (no clothing, tools, weapons, fire or training). It does not depict or endorse real violence.',
