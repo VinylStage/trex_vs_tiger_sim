@@ -97,8 +97,9 @@ export interface HeavySpecies extends SpeciesBase<HeavyKey> {
     /** Multiplier on pack damage taken (thick skin, fat, fur). 1 = none. */
     readonly hide: number;
     /**
-     * Multiplier on the morale a pack animal loses when this heavy's attack hits it
-     * (`woundMoraleLoss`). 1 for every species that shipped before #47 (an exact identity);
+     * Multiplier on the morale a pack animal loses when this heavy hits it (`woundMoraleLoss`) or
+     * throws it off (`throwMoraleLoss`), and on the minimum recovery after a hit (not after a
+     * throw; `heavyMoraleEffects`). 1 for every species that shipped before #47 (an exact identity);
      * below 1 for a heavy whose hits do little harm and so frighten a predator less.
      */
     readonly intimidation: number;
