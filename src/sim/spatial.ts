@@ -11,6 +11,11 @@ export class SpatialGrid {
   private readonly cellCount: Int32Array;
   private items: Int32Array;
   private cellOf: Int32Array;
+  /** Bounding box (in cells) of the occupied cells after the last rebuild; empty when min > max. */
+  private minCol = 0;
+  private maxCol = -1;
+  private minRow = 0;
+  private maxRow = -1;
 
   constructor(arenaSize: number, capacity: number, maxCols = 128) {
     const byArea = Math.ceil(arenaSize / 10);
@@ -32,15 +37,29 @@ export class SpatialGrid {
   /** Index points `i` where `include(i)` is true. */
   rebuild(n: number, xs: Float64Array, ys: Float64Array, include: (i: number) => boolean): void {
     this.cellCount.fill(0);
+    let minCol = this.cols;
+    let maxCol = -1;
+    let minRow = this.cols;
+    let maxRow = -1;
     for (let i = 0; i < n; i++) {
       if (!include(i)) {
         this.cellOf[i] = -1;
         continue;
       }
-      const c = this.col(ys[i] as number) * this.cols + this.col(xs[i] as number);
+      const row = this.col(ys[i] as number);
+      const col = this.col(xs[i] as number);
+      if (col < minCol) minCol = col;
+      if (col > maxCol) maxCol = col;
+      if (row < minRow) minRow = row;
+      if (row > maxRow) maxRow = row;
+      const c = row * this.cols + col;
       this.cellOf[i] = c;
       this.cellCount[c] = (this.cellCount[c] as number) + 1;
     }
+    this.minCol = minCol;
+    this.maxCol = maxCol;
+    this.minRow = minRow;
+    this.maxRow = maxRow;
     let acc = 0;
     for (let c = 0; c < this.cellCount.length; c++) {
       this.cellStart[c] = acc;
@@ -75,6 +94,11 @@ export class SpatialGrid {
    * Nearest indexed point to (x, y) among those `accept`ed, searching rings of cells outward
    * and stopping once no unvisited ring can hold a closer point. Returns -1 if none.
    * Distances use the points' true coordinates `xs`/`ys`.
+   *
+   * Only cells inside the bounding box of the occupied cells are read, and the search ends once
+   * a ring covers that box. Cells outside the box are empty, so the points are visited in exactly
+   * the same order as by a full ring search and ties resolve the same way (bit-identical runs;
+   * docs/PERFORMANCE.md).
    */
   nearest(
     x: number,
@@ -83,11 +107,15 @@ export class SpatialGrid {
     ys: Float64Array,
     accept: (i: number) => boolean,
   ): number {
+    const { minCol, maxCol, minRow, maxRow } = this;
+    if (maxCol < minCol) return -1;
     const cx = this.col(x);
     const cy = this.col(y);
+    // Rings needed to cover the occupied box from (cx, cy).
+    const lastRing = Math.max(cx - minCol, maxCol - cx, cy - minRow, maxRow - cy);
     let best = -1;
     let bestD = Infinity;
-    for (let ring = 0; ring < this.cols; ring++) {
+    for (let ring = 0; ring <= lastRing; ring++) {
       if (best >= 0) {
         const gap = (ring - 1) * this.cellSize;
         if (gap > 0 && gap * gap > bestD) break;
@@ -96,27 +124,69 @@ export class SpatialGrid {
       const r1 = cy + ring;
       const c0 = cx - ring;
       const c1 = cx + ring;
-      for (let row = r0; row <= r1; row++) {
-        if (row < 0 || row >= this.cols) continue;
-        const step = row === r0 || row === r1 ? 1 : Math.max(1, c1 - c0);
-        for (let col = c0; col <= c1; col += step) {
-          if (col < 0 || col >= this.cols) continue;
-          const c = row * this.cols + col;
-          const end = this.cellStart[c + 1] as number;
-          for (let k = this.cellStart[c] as number; k < end; k++) {
-            const i = this.items[k] as number;
-            if (!accept(i)) continue;
-            const dx = (xs[i] as number) - x;
-            const dy = (ys[i] as number) - y;
-            const d = dx * dx + dy * dy;
-            if (d < bestD) {
-              bestD = d;
-              best = i;
+      const rowFrom = r0 > minRow ? r0 : minRow;
+      const rowTo = r1 < maxRow ? r1 : maxRow;
+      for (let row = rowFrom; row <= rowTo; row++) {
+        if (row === r0 || row === r1) {
+          // Top or bottom edge of the ring: every column, clipped to the box.
+          const colFrom = c0 > minCol ? c0 : minCol;
+          const colTo = c1 < maxCol ? c1 : maxCol;
+          for (let col = colFrom; col <= colTo; col++) {
+            const k = this.scan(row * this.cols + col, x, y, xs, ys, accept, bestD);
+            if (k >= 0) {
+              best = k;
+              bestD = this.lastD;
+            }
+          }
+        } else {
+          // Side rows: only the two edge columns (one when ring = 0), left before right.
+          if (c0 >= minCol && c0 <= maxCol) {
+            const k = this.scan(row * this.cols + c0, x, y, xs, ys, accept, bestD);
+            if (k >= 0) {
+              best = k;
+              bestD = this.lastD;
+            }
+          }
+          if (c1 !== c0 && c1 >= minCol && c1 <= maxCol) {
+            const k = this.scan(row * this.cols + c1, x, y, xs, ys, accept, bestD);
+            if (k >= 0) {
+              best = k;
+              bestD = this.lastD;
             }
           }
         }
       }
     }
+    return best;
+  }
+
+  /** Squared distance of the point `scan` last returned. */
+  private lastD = Infinity;
+
+  /** The closest accepted point of cell `c` strictly closer than `bestD` (first on ties), or -1. */
+  private scan(
+    c: number,
+    x: number,
+    y: number,
+    xs: Float64Array,
+    ys: Float64Array,
+    accept: (i: number) => boolean,
+    bestD: number,
+  ): number {
+    let best = -1;
+    const end = this.cellStart[c + 1] as number;
+    for (let k = this.cellStart[c] as number; k < end; k++) {
+      const i = this.items[k] as number;
+      if (!accept(i)) continue;
+      const dx = (xs[i] as number) - x;
+      const dy = (ys[i] as number) - y;
+      const d = dx * dx + dy * dy;
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    if (best >= 0) this.lastD = bestD;
     return best;
   }
 }
