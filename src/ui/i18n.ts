@@ -186,12 +186,16 @@ const ko = {
   'run.cancelled': '취소했습니다.',
   'run.error': '오류: {msg}',
   'run.aggregating': '집계 중…',
+  'run.costCapped': '작업량 한도로 {n}회만 실행합니다.',
+  'run.costHeavy': '오래 걸립니다 (약 {eta}).',
+  'run.costExtreme': '매우 오래 걸립니다 (약 {eta}).',
   'progress.label': '진행률',
   'progress.text': '{done} / {total}회 ({pct})',
   'progress.eta': '남은 시간 약 {eta}',
   'progress.etaPending': '남은 시간 계산 중…',
   'progress.workers': '워커 {n}개',
   'progress.done': '완료 · {elapsed}',
+  'progress.cancelled': '취소됨',
 
   'results.title': '결과',
   'results.empty':
@@ -669,12 +673,16 @@ const en: Dictionary = {
   'run.cancelled': 'Cancelled.',
   'run.error': 'Error: {msg}',
   'run.aggregating': 'Aggregating…',
+  'run.costCapped': 'Only {n} runs fit the work budget.',
+  'run.costHeavy': 'Long run: about {eta}.',
+  'run.costExtreme': 'Very long run: about {eta}.',
   'progress.label': 'Progress',
   'progress.text': '{done} / {total} runs ({pct})',
   'progress.eta': 'about {eta} left',
   'progress.etaPending': 'estimating time left…',
   'progress.workers': '{n} workers',
   'progress.done': 'done in {elapsed}',
+  'progress.cancelled': 'cancelled',
 
   'results.title': 'Results',
   'results.empty':

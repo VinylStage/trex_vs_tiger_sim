@@ -16,6 +16,7 @@ import {
   type HistogramOptions,
 } from './charts';
 import { clear, h } from './dom';
+import { costSummary, isCostOk } from './cost';
 import { createConfigForm, matchupBadge, qualifiedParamLabel } from './form';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import {
@@ -105,6 +106,8 @@ export function startApp(root: HTMLElement): void {
   let replayToken = 0;
   let lastSrDecile = -1;
   let running = false;
+  /** The last run was cancelled (its progress bar stays at the point it stopped). */
+  let lastCancelled = false;
   let placeholder: Placeholder | null = null;
   let lastProgress: PoolProgress | null = null;
   /** Wall time of the last finished run; null while running or after a cancel or error. */
@@ -187,6 +190,7 @@ export function startApp(root: HTMLElement): void {
     writeUrl();
     updateStale();
     syncNames();
+    renderCostNote();
   });
 
   /**
@@ -240,12 +244,18 @@ export function startApp(root: HTMLElement): void {
     attrs: { role: 'status', 'aria-live': 'polite' },
   });
 
+  // A short cost note next to Run (the form's full warning may be scrolled away). Not a live
+  // region: the form's warning already announces the same change.
+  const costNoteEl = h('p', { class: 'run-status run-cost' });
+  costNoteEl.hidden = true;
+
   const runBar = h(
     'div',
     { class: 'run-bar', attrs: { 'data-tour': 'run' } },
     h('div', { class: 'run-buttons' }, runBtn, cancelBtn),
     progress,
     statusEl,
+    costNoteEl,
     srProgress,
   );
   const configPanel = h(
@@ -380,6 +390,7 @@ export function startApp(root: HTMLElement): void {
 
   clear(root);
   root.append(header, h('main', { class: 'layout', id: 'main' }, configPanel, resultsPanel), toast);
+  renderCostNote();
 
   // ---------- behaviour ----------
   function writeUrl(): void {
@@ -400,6 +411,25 @@ export function startApp(root: HTMLElement): void {
   function renderStatus(): void {
     statusEl.textContent = status ? t(status.key, status.vars) : '';
     statusEl.classList.toggle('is-error', status?.error === true);
+    renderCostNote();
+  }
+
+  /** Shown only while idle with no other status, so it never competes with run messages. */
+  function renderCostNote(): void {
+    const cost = costSummary(config, pool.size);
+    const show = !running && status === null && !isCostOk(cost);
+    costNoteEl.hidden = !show;
+    if (!show) {
+      costNoteEl.textContent = '';
+      return;
+    }
+    const parts: string[] = [];
+    if (cost.cap !== null) parts.push(t('run.costCapped', { n: formatInt(cost.cap) }));
+    if (cost.level !== 'ok') {
+      const eta = formatDuration(cost.etaMs / 1000, 0);
+      parts.push(t(cost.level === 'heavy' ? 'run.costHeavy' : 'run.costExtreme', { eta }));
+    }
+    costNoteEl.textContent = parts.join(' ');
   }
 
   function onProgress(p: PoolProgress): void {
@@ -428,9 +458,11 @@ export function startApp(root: HTMLElement): void {
       total: formatInt(p.total),
       pct: formatPct(frac, 0),
     });
+    progress.classList.toggle('is-cancelled', !running && lastCancelled);
     if (!running) {
-      progressEta.textContent =
-        lastElapsedMs === null
+      progressEta.textContent = lastCancelled
+        ? t('progress.cancelled')
+        : lastElapsedMs === null
           ? ''
           : t('progress.done', { elapsed: formatDuration(lastElapsedMs / 1000) });
     } else {
@@ -474,6 +506,7 @@ export function startApp(root: HTMLElement): void {
     }
     const moveFocus = focusFollowsRun();
     running = true;
+    lastCancelled = false;
     lastElapsedMs = null;
     progress.hidden = false;
     // Focus moves to the progress bar before Run is disabled, so it never drops to <body>.
@@ -504,6 +537,7 @@ export function startApp(root: HTMLElement): void {
       ok = true;
       return true;
     } catch (err) {
+      lastCancelled = err instanceof CancelledError;
       if (err instanceof CancelledError) setStatus({ key: 'run.cancelled' });
       else {
         setStatus({
@@ -531,6 +565,7 @@ export function startApp(root: HTMLElement): void {
         resultsPanel.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto', block: 'start' });
       }
       renderProgress();
+      renderCostNote();
       // An open tour leaves its results preview once results exist (also for runs it did not start).
       tour.refresh();
     }

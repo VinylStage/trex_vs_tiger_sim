@@ -2,7 +2,6 @@ import {
   LIMITS,
   SAMPLING_METHODS,
   PACK_TACTICS,
-  maxRunsFor,
   type SamplingMethod,
   type ScenarioConfig,
   type PackTactic,
@@ -25,7 +24,7 @@ import {
   type PackSpeciesId,
 } from '../sim/species';
 import { pagePath } from '../pages/routes';
-import { costLevel, estimateTotalMs } from './cost';
+import { costSummary, isCostOk } from './cost';
 import { clear, h, uniqueId } from './dom';
 import { formatDuration, formatNum } from './format';
 import {
@@ -298,17 +297,14 @@ export function createConfigForm(
 
   function updateDerived(): void {
     if (costEl) {
-      const cap = maxRunsFor(cfg);
-      const capped = cfg.runs > cap;
-      const effective = capped ? { ...cfg, runs: cap } : cfg;
-      const level = costLevel(effective, workers);
-      costEl.hidden = level === 'ok' && !capped;
-      costEl.className = `cost-warning cost-${level === 'ok' ? 'heavy' : level}`;
+      const cost = costSummary(cfg, workers);
+      costEl.hidden = isCostOk(cost);
+      costEl.className = `cost-warning cost-${cost.level === 'ok' ? 'heavy' : cost.level}`;
       const parts: string[] = [];
-      if (capped) parts.push(t('cost.capped', { n: cap.toLocaleString() }));
-      if (level !== 'ok') {
-        const eta = formatDuration(estimateTotalMs(effective, workers) / 1000, 0);
-        parts.push(t(level === 'heavy' ? 'cost.heavy' : 'cost.extreme', { eta }));
+      if (cost.cap !== null) parts.push(t('cost.capped', { n: cost.cap.toLocaleString() }));
+      if (cost.level !== 'ok') {
+        const eta = formatDuration(cost.etaMs / 1000, 0);
+        parts.push(t(cost.level === 'heavy' ? 'cost.heavy' : 'cost.extreme', { eta }));
       }
       costEl.textContent = parts.join(' ');
     }
