@@ -92,6 +92,22 @@ Limits: the measurements use the fonts installed in the test VM (Liberation Sans
 
 Together these cut the longest start-up task from 441 to 235 ms and the start-up total from 849 to 542 ms at 4x CPU, and the language switch by 20–25%. The switch still rebuilds the form; updating the labels in place (research recommendation 2) would remove most of the remaining 190 ms at 4x CPU.
 
+## Free engine (#50)
+
+The free (symmetric) engine of [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50) (`src/sim/free/engine.ts`, [design §7](design/FREE-MATCHUPS.md#7-performance)) shares the work budget with the legacy engine: `freeWorkEstimate` counts agent-steps exactly like `workEstimate`, and `MAX_WORK` is unchanged. That is only safe if a free agent-step costs no more than a legacy one. The design target is **at most 1.5×** the legacy cost per agent-step.
+
+**Measure.** Wall time per simulated agent-step: Σ over runs of (ticks the battle lasted × agents). The two engines run the same matchup, _T. rex_ vs tigers at the same counts, `maxTime` 300 s, default ranges, alternately, best of three rounds each. Battles differ in length (in the free model the tigers fight on instead of routing after the first deaths, because only social species feel allies' deaths), so per-run times are not comparable but per-agent-step times are. Node v22.22.0 on the 4 vCPU machine above; `BENCH=1 npx vitest run tests/free-perf.test.ts --silent=false`.
+
+| Size                     | Runs | Legacy (ns/agent-step) | Free, individual layer (ns/agent-step) | Free / legacy |
+| ------------------------ | ---: | ---------------------: | -------------------------------------: | ------------: |
+| 10 _T. rex_ v 100 tigers |   40 |                    205 |                                    144 |          0.70 |
+| 50 v 1,000               |    8 |                    349 |                                    244 |          0.70 |
+| 500 v 5,000              |    2 |                    951 |                                    439 |          0.46 |
+
+The free engine is cheaper per agent-step at every size. The largest difference is at 500 v 5,000, where the legacy flank tactic scans every heavy linearly once per pack animal per second (`chooseHeavy`); the free individual layer has no flank targeting and uses the grid for every neighbour query. These numbers cover the individual layer (P3). The pack buff (P4) adds capped cohesion queries for social sides and must be re-measured against the same 1.5× gate (design §7).
+
+**Regression test.** `tests/free-perf.test.ts` runs the 10 v 100 comparison in every `npm test` and fails if the free engine costs more than 1.5× the legacy engine per agent-step. Both engines run in the same process, alternately, so machine load affects both alike.
+
 ## Not changed
 
 - No `SharedArrayBuffer`: it needs cross-origin isolation, which conflicts with third-party ad iframes ([research §3](research/PERFORMANCE.md)). Transfers are already zero-copy.

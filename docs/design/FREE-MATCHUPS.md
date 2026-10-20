@@ -271,6 +271,18 @@ Randomness comes from two streams, `deriveSeed(seed, run, SALT_A)` and `deriveSe
 | Mirror (same species)    | Identical presets, independent individual variation. Over many runs P(A) ≈ P(B) (tested, §8 P3).                                                   |
 | Many small vs one large  | Small `canLatch` attackers with ρ ≥ 3 latch and ride; the large animal strikes riders and shakes them off. This is the legacy dynamic, re-derived. |
 
+### 4.8 Implementation notes (P3)
+
+Details fixed while implementing the individual layer in `src/sim/free/engine.ts`, where this section was silent:
+
+- **Stamina** drains only while an agent actually moves at sprint speed; an agent holding position at strike range neither tires nor recovers. Without this, two large animals facing each other would exhaust, back off 40 m and re-engage in a loop.
+- **Targets** are active enemies only (not Routed, Dead or Left); a strike may still hit any present enemy in the cone, routed ones included, as in legacy.
+- **No latch chains**: an agent cannot latch onto an agent that is itself latched.
+- **Spawn**: each side in a disc of radius `min(0.2 L, max(3 m, 3 × bodyRadius) × √count)` around `(L/2 ∓ sep/2, L/2)`, facing the other side; side B's disc is mirrored. Per agent, the side's stream draws the individual factors (traits in `TRAITS` order, latch traits only for species that can latch), then position, strike cooldown and retarget timer.
+- **Throws** keep the legacy full 5 s minimum recovery; hit knock-backs use `recoverMinTime × intimidation`.
+- **Outcome**: a side wins when the other has no active agent; both at once, or the time cap, is a draw.
+- **Golden**: `tests/fixtures/free-v3-golden.json` holds six non-social matchups captured at P3; never regenerate it.
+
 ## 5. Pack buff rules
 
 The pack buff is a separate layer on top of the individual model. It is evaluated **per agent**: within one side some members can be buffed while a straggler is not.
