@@ -136,7 +136,7 @@ export function startApp(root: HTMLElement): void {
       { class: 'brand' },
       h('img', {
         class: 'logo',
-        attrs: { src: '/favicon.svg', alt: '', width: '40', height: '40' },
+        attrs: { src: '/header-logo.svg', alt: '', width: '40', height: '40' },
       }),
       h(
         'div',
