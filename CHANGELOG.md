@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.2...trex-vs-tiger-sim-v0.2.3) (2026-10-20)
+
+
+### Features
+
+* **share:** config export/import, result links, result card ([#56](https://github.com/VinylStage/trex_vs_tiger_sim/issues/56)) ([740997b](https://github.com/VinylStage/trex_vs_tiger_sim/commit/740997b9275197f8381e05150cfc501c71ed59ff))
+
 ## [0.2.2](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.1...trex-vs-tiger-sim-v0.2.2) (2026-10-20)
 
 
