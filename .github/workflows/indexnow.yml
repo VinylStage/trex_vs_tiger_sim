@@ -1,0 +1,96 @@
+name: IndexNow
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Release version to wait for on production (e.g. 0.2.0). Leave empty to submit the live sitemap at once.
+        required: false
+        type: string
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: indexnow
+  cancel-in-progress: false
+
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SITE: https://trex-vs-tiger.vinylims.com
+      HOST: trex-vs-tiger.vinylims.com
+      INDEXNOW_KEY: 8111615caa0a39ec8beafbcc8c5c960a
+      INDEXNOW_ENDPOINT: https://api.indexnow.org/indexnow
+      REQUESTED_VERSION: ${{ inputs.version || github.event.release.tag_name || '' }}
+    steps:
+      - name: Wait until production serves the release
+        run: |
+          set -euo pipefail
+          want="$(printf '%s' "$REQUESTED_VERSION" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$' || true)"
+          if [ -z "$want" ]; then
+            echo "No version given: submitting the sitemap production serves now."
+            exit 0
+          fi
+          deadline=$(( $(date +%s) + 900 ))
+          while :; do
+            live="$(curl -fsS --max-time 20 "$SITE/version.json?t=$(date +%s)" | sed -n 's/.*"version":"\([^"]*\)".*/\1/p' || true)"
+            if [ "$live" = "$want" ]; then
+              echo "Production serves $live."
+              break
+            fi
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::Production still serves '${live:-unknown}' after 15 minutes; expected $want."
+              exit 1
+            fi
+            echo "Production serves '${live:-unknown}', waiting for $want."
+            sleep 30
+          done
+
+      - name: Check the hosted key file
+        run: |
+          set -euo pipefail
+          body="$(curl -fsS --max-time 20 "$SITE/$INDEXNOW_KEY.txt" | tr -d '[:space:]')"
+          if [ "$body" != "$INDEXNOW_KEY" ]; then
+            echo "::error::$SITE/$INDEXNOW_KEY.txt does not contain the key."
+            exit 1
+          fi
+
+      - name: Submit the sitemap URLs
+        run: |
+          set -euo pipefail
+          curl -fsS --max-time 30 "$SITE/sitemap.xml" -o sitemap.xml
+          grep -oE '<loc>[^<]+</loc>' sitemap.xml | sed -E 's#</?loc>##g' > urls.txt
+          count="$(wc -l < urls.txt | tr -d ' ')"
+          if [ "$count" -eq 0 ]; then
+            echo "::error::The live sitemap lists no URLs."
+            exit 1
+          fi
+          if grep -vqE "^${SITE}/[A-Za-z0-9/._~-]*$" urls.txt; then
+            echo "::error::The sitemap lists a URL outside https://$HOST/ or with unexpected characters."
+            exit 1
+          fi
+          list="$(sed 's/.*/"&"/' urls.txt | paste -sd, -)"
+          printf '{"host":"%s","key":"%s","keyLocation":"%s/%s.txt","urlList":[%s]}' \
+            "$HOST" "$INDEXNOW_KEY" "$SITE" "$INDEXNOW_KEY" "$list" > payload.json
+          status="$(curl -sS --max-time 30 -o response.txt -w '%{http_code}' -X POST \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            --data-binary @payload.json "$INDEXNOW_ENDPOINT")"
+          echo "IndexNow answered HTTP $status for $count URLs."
+          cat response.txt || true
+          case "$status" in
+            200 | 202) ;;
+            *)
+              echo "::error::IndexNow returned HTTP $status."
+              exit 1
+              ;;
+          esac

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   MIN_CHECK_GAP_MS,
   STATUS_LABELS,
+  appReturnPath,
   bottomInset,
   compareBuilds,
   compareSemver,
@@ -13,6 +14,7 @@ import {
   reduceStatus,
   reloadUrl,
   resetUrl,
+  returnPathFromSearch,
   sameCommit,
   shortSha,
   shouldCheck,
@@ -322,9 +324,30 @@ describe('reset URLs', () => {
     expect(resetUrl('0.1.0', 'not-a-hash')).toBe('/reset/?from=0.1.0');
   });
 
+  it('names the English app as the place to return to', () => {
+    expect(resetUrl('0.1.0', '#s=abc', '/')).toBe('/reset/?from=0.1.0#s=abc');
+    expect(resetUrl('0.1.0', '#s=abc', '/en/')).toBe('/reset/?from=0.1.0&to=%2Fen%2F#s=abc');
+    expect(resetUrl('0.1.0', '', '/guide/')).toBe('/reset/?from=0.1.0');
+  });
+
   it('builds the cache-busting reload URL', () => {
     expect(reloadUrl(1234, '')).toBe('/?_r=1234');
     expect(reloadUrl(1234, '#s=abc')).toBe('/?_r=1234#s=abc');
+    expect(reloadUrl(1234, '#s=abc', '/en/')).toBe('/en/?_r=1234#s=abc');
+  });
+
+  it('returns only to one of the two app paths', () => {
+    expect(returnPathFromSearch('?from=0.1.0&to=%2Fen%2F')).toBe('/en/');
+    expect(returnPathFromSearch('?from=0.1.0')).toBe('/');
+    for (const to of ['//evil.example/', 'https://evil.example/', '/en', '/guide/', '/en/../x']) {
+      expect(returnPathFromSearch(`?to=${encodeURIComponent(to)}`), to).toBe('/');
+      expect(appReturnPath(to), to).toBe('/');
+    }
+    expect(appReturnPath(null)).toBe('/');
+    const back = resetUrl('0.1.0', '#s=x', '/en/');
+    expect(
+      reloadUrl(1, '#s=x', returnPathFromSearch(back.slice(back.indexOf('?'), back.indexOf('#')))),
+    ).toBe('/en/?_r=1#s=x');
   });
 
   it('strips only the reload marker from the query string', () => {

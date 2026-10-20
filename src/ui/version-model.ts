@@ -16,7 +16,7 @@ export const UNKNOWN_SHA = 'dev';
 export const VERSION_JSON_PATH = '/version.json';
 export const RESET_PATH = '/reset/';
 export const RELOAD_PARAM = '_r';
-export const RELEASES_URL = 'https://github.com/VinylStage/trex_vs_tiger_sim/releases';
+export { RELEASES_URL } from '../pages/routes';
 /** Background re-checks (tab shown again, timer) are at least this far apart. */
 export const MIN_CHECK_GAP_MS = 10 * 60 * 1000;
 /** Timer period for re-checks while the tab is visible. */
@@ -254,13 +254,34 @@ export function expiringCookies(names: readonly string[], host: string, secure: 
 /** Only keep a URL fragment (`#…`) so the scenario survives the reset round-trip. */
 const fragment = (hash: string): string => (hash.startsWith('#') ? hash : '');
 
-export function resetUrl(fromVersion: string, hash: string): string {
-  return `${RESET_PATH}?from=${encodeURIComponent(fromVersion)}${fragment(hash)}`;
+/** Query parameter of `/reset/` that names the app page to return to (`/` or `/en/`). */
+export const RETURN_PARAM = 'to';
+
+/**
+ * The app path to come back to after the reset: `/en/` for the English app, `/` for everything
+ * else. Only these two values are accepted, so the reset page never redirects off-site.
+ */
+export function appReturnPath(path: string | null): string {
+  return path === '/en/' ? '/en/' : '/';
 }
 
-/** Where the reset page sends the visitor: a never-cached URL of the app, fragment preserved. */
-export function reloadUrl(now: number, hash: string): string {
-  return `/?${RELOAD_PARAM}=${now}${fragment(hash)}`;
+export function resetUrl(fromVersion: string, hash: string, appPath = '/'): string {
+  const back = appReturnPath(appPath);
+  const to = back === '/' ? '' : `&${RETURN_PARAM}=${encodeURIComponent(back)}`;
+  return `${RESET_PATH}?from=${encodeURIComponent(fromVersion)}${to}${fragment(hash)}`;
+}
+
+/**
+ * Where the reset page sends the visitor: a never-cached URL of the app in the language it came
+ * from (`returnPath`, see `appReturnPath`), fragment preserved.
+ */
+export function reloadUrl(now: number, hash: string, returnPath: string | null = null): string {
+  return `${appReturnPath(returnPath)}?${RELOAD_PARAM}=${now}${fragment(hash)}`;
+}
+
+/** The validated return path named by the `/reset/` query string. */
+export function returnPathFromSearch(search: string): string {
+  return appReturnPath(new URLSearchParams(search).get(RETURN_PARAM));
 }
 
 /** `search` without the reload marker, or null when the marker is absent. */

@@ -1,15 +1,14 @@
-import type { ParamId } from '../sim/params';
+import type { ParamId } from '../sim/params.ts';
 
 export type Lang = 'ko' | 'en';
 export const LANGS: readonly Lang[] = ['ko', 'en'];
 export const DEFAULT_LANG: Lang = 'ko';
-/** localStorage key of the language preference (also written by the static content pages). */
-export const STORAGE_KEY = 'trexsim.lang';
 
 const ko = {
-  'app.title': '티라노사우루스 vs 호랑이 시뮬레이터',
-  'app.shortTitle': 'T-Rex vs 호랑이',
-  'app.tagline': '몬테카를로 에이전트 기반 전투 시뮬레이션 — 모든 계산은 브라우저에서',
+  'app.title': '티렉스 대 호랑이 시뮬레이터',
+  'app.shortTitle': '티렉스 대 호랑이',
+  'app.tagline': '티라노사우루스 vs 호랑이 · 몬테카를로 방법으로 배우는 교육용 시뮬레이션',
+  'app.documentTitle': '티렉스 대 호랑이 시뮬레이터 – 티라노사우루스 vs 호랑이, 누가 이길까?',
   'lang.switch': 'English',
   'lang.switchAria': 'Switch the interface to English',
   'share.copy': '링크 복사',
@@ -18,12 +17,14 @@ const ko = {
   'share.failed': '복사하지 못했습니다. 주소창의 URL을 직접 복사하세요.',
 
   'nav.label': '사이트 메뉴',
+  'breadcrumb.label': '이동 경로',
   'nav.simulator': '시뮬레이터',
   'nav.guide': '사용 방법',
   'nav.model': '모델 설명',
   'nav.parameters': '파라미터',
   'nav.about': '소개',
   'nav.privacy': '개인정보처리방침',
+  'nav.license': '라이선스',
   'version.badgeTitle': '버전 정보와 업데이트 확인',
   'version.status.checking': '확인 중',
   'version.status.latest': '최신',
@@ -49,7 +50,7 @@ const ko = {
   'version.reload': '최신 버전 불러오기 (캐시·저장소 초기화)',
   'version.confirmTitle': '캐시와 저장소를 초기화할까요?',
   'version.confirmBody':
-    '이 사이트가 브라우저에 저장한 캐시와 데이터를 지운 뒤 최신 버전을 다시 불러옵니다. 언어 설정과 튜토리얼 진행 상태가 초기화됩니다. 지금 시나리오 설정은 주소(URL)에 담겨 있어 그대로 유지됩니다.',
+    '이 사이트가 브라우저에 저장한 캐시와 데이터를 지운 뒤 최신 버전을 다시 불러옵니다. 튜토리얼 안내를 닫았거나 마친 기록이 초기화됩니다. 지금 시나리오 설정과 언어는 주소(URL)에 담겨 있어 그대로 유지됩니다.',
   'version.confirm': '초기화하고 불러오기',
   'version.cancel': '취소',
   'version.resetting': '초기화하는 중…',
@@ -205,10 +206,49 @@ const ko = {
   'time.hourMin': '{h}시간 {m}분',
 
   'footer.disclaimer':
-    'T. rex와 호랑이는 같은 시대에 산 적이 없고, 모든 상호작용 규칙은 가정입니다. 결과는 불확실한 입력에 따라 승패가 어떻게 달라지는지 보여주는 교육용 장난감 모델이며 실제 싸움의 예측이 아닙니다.',
-  'footer.model': '모델 설명 (MODEL.md)',
-  'footer.source': '소스 코드',
-  'footer.privacy': '서버 전송 · 추적 없음',
+    'T. rex와 호랑이는 같은 시대에 산 적이 없고, 모든 상호작용 규칙은 가정입니다. 결과는 불확실한 입력에 따라 승패가 어떻게 달라지는지 보여 주는 교육용 모델일 뿐 실제 싸움의 예측이 아니며, 이 사이트는 실제 동물 싸움을 조장하거나 지지하지 않습니다.',
+  'footer.linksLabel': '사이트 정보와 링크',
+  'footer.about': '소개 · 문의',
+  'footer.privacy': '개인정보처리방침',
+  'footer.license': '라이선스',
+  'footer.source': '소스 코드 (GitHub)',
+  'footer.blog': '블로그 (Vinyl’s Log)',
+  'footer.linktree': 'Linktree',
+  'footer.local': '시뮬레이션은 모두 브라우저에서 실행됩니다.',
+  'footer.copyright': '© 2026 VinylStage · MIT 라이선스 오픈 소스',
+
+  'intro.title': '티렉스 대 호랑이 시뮬레이터란?',
+  'intro.lead':
+    '티라노사우루스 N마리와 호랑이 M마리가 탁 트인 평지에서 맞붙으면 어떻게 될까요? 이 시뮬레이터는 이 질문을 출발점으로 몬테카를로 방법을 직접 체험해 보는 무료 교육용 도구입니다. 한 판의 승패 대신, 문헌에 근거한 불확실한 능력치로 전투를 수백 번 반복해 승률과 그 불확실성을 함께 보여 줍니다.',
+  'intro.howTitle': '어떻게 작동하나요?',
+  'intro.how1': '마릿수, 전술, 실행 횟수를 정하고, 원하면 22개 능력치의 범위도 바꿉니다.',
+  'intro.how2': '전투마다 체중, 무는 힘, 속도 같은 능력치를 범위 안에서 새로 뽑습니다.',
+  'intro.how3':
+    '개체마다 단순한 규칙으로 움직이는 에이전트 기반 전투를 브라우저가 여러 번 계산합니다.',
+  'intro.how4':
+    '결과를 승률과 95% 신뢰구간, 전투 시간 분포, 민감도 차트, 전투 재생으로 정리합니다.',
+  'intro.learnTitle': '무엇을 배울 수 있나요?',
+  'intro.learn1': '몬테카를로 시뮬레이션: 무작위 실험을 반복해 답을 근사하는 방법',
+  'intro.learn2': '신뢰구간: 실행 횟수에 따라 추정이 얼마나 정밀해지는지',
+  'intro.learn3': '민감도 분석: 결과가 어떤 가정에 가장 크게 좌우되는지',
+  'intro.moreTitle': '더 알아보기',
+  'intro.link.guide': '사용 방법과 결과 읽는 법',
+  'intro.link.model': '모델 설명과 기본 가정의 예비 결과',
+  'intro.link.parameters': '파라미터 범위와 출처',
+  'intro.link.tour': '1분 튜토리얼 시작',
+  'faq.title': '자주 묻는 질문',
+  'faq.q1': '티라노사우루스와 호랑이가 실제로 만난 적이 있나요?',
+  'faq.a1':
+    '없습니다. 티라노사우루스는 약 6,800만–6,600만 년 전 백악기 말에 살았고, 호랑이는 그보다 훨씬 뒤에 나타났습니다. 이 대결은 방법을 배우기 위한 가상의 시나리오입니다.',
+  'faq.q2': '그래서 누가 이기나요?',
+  'faq.a2':
+    '정해진 답은 없습니다. 승률은 마릿수, 사기, 전술, 능력치 범위 같은 가정에 따라 크게 달라집니다. 기본 가정에서의 예비 결과와 그 해석은 모델 설명 페이지에 있고, 위의 시뮬레이터로 직접 확인할 수도 있습니다.',
+  'faq.q3': '몬테카를로 시뮬레이션이란 무엇인가요?',
+  'faq.a3':
+    '불확실한 값을 무작위로 뽑아 같은 실험을 여러 번 반복하고, 결과의 분포로 답을 추정하는 방법입니다. 실행 횟수가 많을수록 승률의 신뢰구간이 좁아집니다.',
+  'faq.q4': '결과를 공유하거나 다시 재현할 수 있나요?',
+  'faq.a4':
+    '네. 링크 복사를 누르면 마릿수, 파라미터 범위, 시드가 담긴 주소가 만들어집니다. 같은 링크를 열고 실행하면 같은 결과가 나옵니다.',
 
   'tour.start': '튜토리얼',
   'tour.counter': '{n} / {total}',
@@ -325,8 +365,10 @@ export type Dictionary = Record<MsgKey, string>;
 
 const en: Dictionary = {
   'app.title': 'T-Rex vs Tiger Simulator',
-  'app.shortTitle': 'T-Rex vs Tigers',
-  'app.tagline': 'Monte Carlo agent-based battle simulation — runs entirely in your browser',
+  'app.shortTitle': 'T-Rex vs Tiger',
+  'app.tagline':
+    'Tyrannosaurus rex vs tigers · learn the Monte Carlo method with an educational simulation',
+  'app.documentTitle': 'T-Rex vs Tiger Simulator – who wins, T. rex or tigers?',
   'lang.switch': '한국어',
   'lang.switchAria': '인터페이스를 한국어로 바꾸기',
   'share.copy': 'Copy link',
@@ -335,12 +377,14 @@ const en: Dictionary = {
   'share.failed': 'Could not copy. Copy the URL from the address bar instead.',
 
   'nav.label': 'Site',
+  'breadcrumb.label': 'Breadcrumb',
   'nav.simulator': 'Simulator',
   'nav.guide': 'Guide',
   'nav.model': 'Model',
   'nav.parameters': 'Parameters',
   'nav.about': 'About',
   'nav.privacy': 'Privacy',
+  'nav.license': 'License',
   'version.badgeTitle': 'Version info and update check',
   'version.status.checking': 'Checking',
   'version.status.latest': 'Latest',
@@ -368,7 +412,7 @@ const en: Dictionary = {
   'version.reload': 'Load the latest version (clear cache & storage)',
   'version.confirmTitle': 'Clear cache and storage?',
   'version.confirmBody':
-    'This clears the cache and data this site keeps in your browser, then loads the latest version. Your language and tutorial preferences are reset. The current scenario lives in the URL, so it is kept.',
+    'This clears the cache and data this site keeps in your browser, then loads the latest version. The record that you dismissed or finished the tutorial is reset. The current scenario and language live in the URL, so they are kept.',
   'version.confirm': 'Clear and reload',
   'version.cancel': 'Cancel',
   'version.resetting': 'Clearing…',
@@ -524,10 +568,51 @@ const en: Dictionary = {
   'time.hourMin': '{h} h {m} min',
 
   'footer.disclaimer':
-    'T. rex and tigers never coexisted, and every interaction rule is an assumption. This educational toy model shows how the outcome depends on uncertain inputs; it does not predict a real fight.',
-  'footer.model': 'Model description (MODEL.md)',
-  'footer.source': 'Source code',
-  'footer.privacy': 'No server, no tracking',
+    'T. rex and tigers never coexisted, and every interaction rule is an assumption. This educational model shows how the outcome depends on uncertain inputs; it does not predict a real fight, and this site does not promote or endorse real animal fighting.',
+  'footer.linksLabel': 'Site information and links',
+  'footer.about': 'About & contact',
+  'footer.privacy': 'Privacy',
+  'footer.license': 'License',
+  'footer.source': 'Source code (GitHub)',
+  'footer.blog': 'Blog (Vinyl’s Log)',
+  'footer.linktree': 'Linktree',
+  'footer.local': 'Simulations run in your browser.',
+  'footer.copyright': '© 2026 VinylStage · Open source under the MIT License',
+
+  'intro.title': 'What is the T-Rex vs Tiger Simulator?',
+  'intro.lead':
+    'What happens if N Tyrannosaurus rex meet M tigers on an open field? This free educational tool uses that question to let you try the Monte Carlo method yourself. Instead of a single fight, it repeats the battle hundreds of times with uncertain, literature-based traits and shows the win probabilities together with their uncertainty.',
+  'intro.howTitle': 'How does it work?',
+  'intro.how1':
+    'Choose the head counts, the tiger tactic and the number of runs, and optionally edit the ranges of the 22 traits.',
+  'intro.how2':
+    'Every battle draws fresh traits, such as body mass, bite force and speed, from those ranges.',
+  'intro.how3':
+    'Your browser computes many agent-based battles, in which each animal follows simple rules.',
+  'intro.how4':
+    'The results show win probabilities with 95% confidence intervals, battle durations, a sensitivity chart and a replay.',
+  'intro.learnTitle': 'What can you learn?',
+  'intro.learn1': 'Monte Carlo simulation: approximating an answer by repeating random experiments',
+  'intro.learn2': 'Confidence intervals: how the estimate sharpens as the number of runs grows',
+  'intro.learn3': 'Sensitivity analysis: which assumptions the outcome depends on most',
+  'intro.moreTitle': 'Learn more',
+  'intro.link.guide': 'How to use it and read the results',
+  'intro.link.model': 'The model and its preliminary results',
+  'intro.link.parameters': 'Parameter ranges and sources',
+  'intro.link.tour': 'Take the one-minute tour',
+  'faq.title': 'Frequently asked questions',
+  'faq.q1': 'Did Tyrannosaurus rex and tigers ever meet?',
+  'faq.a1':
+    'No. Tyrannosaurus rex lived at the end of the Cretaceous, about 68 to 66 million years ago, and tigers appeared much later. The match-up is a hypothetical scenario for learning the method.',
+  'faq.q2': 'So who wins?',
+  'faq.a2':
+    'There is no fixed answer. The win probability depends strongly on assumptions such as head counts, morale, tactics and trait ranges. Preliminary results for the default assumptions, and how to read them, are on the model page, and you can check them yourself with the simulator above.',
+  'faq.q3': 'What is a Monte Carlo simulation?',
+  'faq.a3':
+    'It repeats the same experiment many times with uncertain values drawn at random and estimates the answer from the spread of the results. The more runs, the narrower the confidence interval of the win probability.',
+  'faq.q4': 'Can I share or reproduce a result?',
+  'faq.a4':
+    'Yes. Copy link creates an address that holds the head counts, parameter ranges and seed. Opening that link and running it gives the same result.',
 
   'tour.start': 'Tutorial',
   'tour.counter': '{n} / {total}',
@@ -679,22 +764,16 @@ export function locale(): string {
   return current === 'ko' ? 'ko-KR' : 'en-US';
 }
 
-function readStoredLang(): Lang | null {
-  try {
-    const v = globalThis.localStorage?.getItem(STORAGE_KEY);
-    return isLang(v) ? v : null;
-  } catch {
-    return null;
-  }
-}
-
 function syncDocumentLang(): void {
   if (typeof document !== 'undefined') document.documentElement.lang = current;
 }
 
-/** Load the persisted language (default Korean) and apply it to `<html lang>`. */
-export function initLang(): Lang {
-  current = readStoredLang() ?? DEFAULT_LANG;
+/**
+ * Set the starting language and apply it to `<html lang>`. The app passes the language of its
+ * URL (`/` Korean, `/en/` English; see `pageLang` in src/pages/routes.ts). Nothing is stored.
+ */
+export function initLang(lang: Lang = DEFAULT_LANG): Lang {
+  current = lang;
   syncDocumentLang();
   return current;
 }
@@ -702,11 +781,6 @@ export function initLang(): Lang {
 export function setLang(lang: Lang): void {
   if (lang === current) return;
   current = lang;
-  try {
-    globalThis.localStorage?.setItem(STORAGE_KEY, lang);
-  } catch {
-    // Storage may be unavailable (private mode, blocked cookies); the choice just won't persist.
-  }
   syncDocumentLang();
   for (const fn of listeners) fn(lang);
 }

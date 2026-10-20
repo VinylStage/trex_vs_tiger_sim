@@ -3,35 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Privacy policy | T-Rex vs Tiger Simulator</title>
+    <title>Privacy policy – T-Rex vs Tiger</title>
     <meta
       name="description"
-      content="Privacy policy of the T-Rex vs Tiger Simulator: no cookies of its own, only the language preference stored in your browser, all computation on your device, strictly necessary Cloudflare cookies and request logs, no analytics or ads, and how to contact us."
+      content="Privacy policy of the T-Rex vs Tiger Simulator: no cookies of its own, one tutorial flag in your browser, computation on your device, Cloudflare cookies and logs."
     />
-    <link rel="canonical" href="https://trex-vs-tiger.vinylims.com/en/privacy/" />
-    <link rel="alternate" hreflang="ko" href="https://trex-vs-tiger.vinylims.com/privacy/" />
-    <link rel="alternate" hreflang="en" href="https://trex-vs-tiger.vinylims.com/en/privacy/" />
-    <link rel="alternate" hreflang="x-default" href="https://trex-vs-tiger.vinylims.com/privacy/" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
-    <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="T-Rex vs Tiger Simulator" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:locale:alternate" content="ko_KR" />
-    <meta property="og:title" content="Privacy policy | T-Rex vs Tiger Simulator" />
-    <meta
-      property="og:description"
-      content="Privacy policy of the T-Rex vs Tiger Simulator: no cookies of its own, only the language preference stored in your browser, all computation on your device, strictly necessary Cloudflare cookies and request logs, no analytics or ads, and how to contact us."
-    />
-    <meta property="og:url" content="https://trex-vs-tiger.vinylims.com/en/privacy/" />
-    <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="Privacy policy | T-Rex vs Tiger Simulator" />
-    <meta
-      name="twitter:description"
-      content="Privacy policy of the T-Rex vs Tiger Simulator: no cookies of its own, only the language preference stored in your browser, all computation on your device, strictly necessary Cloudflare cookies and request logs, no analytics or ads, and how to contact us."
-    />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="/src/pages/site.css" />
     <script type="module" src="/src/pages/site.ts"></script>
   </head>
@@ -39,13 +21,13 @@
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="site-header-inner">
-        <a class="site-brand" href="/">
+        <a class="site-brand" href="/en/">
           <img src="/favicon.svg" alt="" width="32" height="32" />
-          <span>T-Rex vs Tigers</span>
+          <span>T-Rex vs Tiger</span>
         </a>
         <nav class="site-nav" aria-label="Site">
           <ul class="site-nav-list">
-            <li><a class="site-nav-link" href="/" data-page="simulator">Simulator</a></li>
+            <li><a class="site-nav-link" href="/en/" data-page="simulator">Simulator</a></li>
             <li><a class="site-nav-link" href="/en/guide/" data-page="guide">Guide</a></li>
             <li><a class="site-nav-link" href="/en/model/" data-page="model">Model</a></li>
             <li>
@@ -60,13 +42,18 @@
     <main id="main" class="site-main">
       <article class="page">
         <header class="page-head">
-          <p class="eyebrow">Privacy</p>
+          <nav class="eyebrow breadcrumb" aria-label="Breadcrumb" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/en/">T-Rex vs Tiger</a></li>
+              <li aria-current="page">Privacy</li>
+            </ol>
+          </nav>
           <h1>Privacy policy</h1>
           <p class="lead">
             This site was built from the start not to collect personal data. Below is a complete
             account of what information is processed, where, and why.
           </p>
-          <p class="page-meta">Effective <time datetime="2026-10-19">19 October 2026</time></p>
+          <p class="page-meta">Effective <time datetime="2026-10-20">20 October 2026</time></p>
         </header>
 
         <nav class="toc" aria-labelledby="toc-title">
@@ -97,7 +84,8 @@
               </li>
               <li>The site sets no cookies of its own.</li>
               <li>
-                The only thing it stores in your browser is your language choice (localStorage).
+                The only thing it stores in your browser is a flag that stops the tutorial offer
+                from reappearing (localStorage).
               </li>
               <li>
                 Every simulation runs on your device; settings and results are never sent to a
@@ -152,13 +140,13 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <th scope="row"><code>trexsim.lang</code></th>
+                    <th scope="row"><code>trexsim.tour</code></th>
                     <td>localStorage</td>
                     <td>
-                      Your interface language (<code>ko</code> or <code>en</code>), so the next
-                      visit opens in the same language. It is saved when you switch language in the
-                      simulator, or when you follow a link to the simulator from one of these help
-                      pages.
+                      Whether you dismissed the tutorial offer (<code>dismissed</code>) or finished
+                      the tutorial (<code>completed</code>), so the first-visit offer does not
+                      appear again when you reopen the simulator. It is saved when you close the
+                      offer or start or finish the tutorial.
                     </td>
                     <td>Until you delete it</td>
                   </tr>
@@ -166,6 +154,13 @@
               </table>
             </div>
             <ul>
+              <li>
+                Your interface language is not stored. The address sets it (<code>/</code> for
+                Korean, <code>/en/</code> for English), so switching language only changes the
+                address and leaves nothing in your browser. Version 0.1.0 remembered the language as
+                <code>trexsim.lang</code>; that value is no longer used and is deleted when you open
+                the site.
+              </li>
               <li>
                 Values in localStorage stay inside your browser and are never sent to a server. They
                 cannot be used to identify you.
@@ -284,10 +279,10 @@
           <section id="external">
             <h2>External links</h2>
             <p>
-              The site links to external sites such as the GitHub repository and research papers
-              (DOI links). Their own privacy policies apply there. When you follow such a link, the
-              site is configured to send only its origin (domain), never the full path or your
-              shared settings.
+              The site links to external sites such as the GitHub repository, research papers (DOI
+              links) and the operator's blog and Linktree. Their own privacy policies apply there.
+              When you follow such a link, the site is configured to send only its origin (domain),
+              never the full path or your shared settings.
             </p>
           </section>
 
@@ -304,12 +299,11 @@
             <ul>
               <li>
                 You can delete this site's data (localStorage) and cookies at any time in your
-                browser settings. The only effect is that the language returns to the default
-                (Korean).
+                browser settings. The only effect is that the tutorial offer appears again.
               </li>
               <li>
-                If you block localStorage the site still works; it just does not remember your
-                language.
+                If you block localStorage the site still works; dismissing the tutorial offer then
+                only lasts while the page is open.
               </li>
               <li>
                 Because we hold no personal data about visitors, there is nothing for us to give
@@ -343,19 +337,53 @@
     </main>
     <footer class="site-footer">
       <div class="site-footer-inner">
-        <p>
-          T. rex and tigers never lived at the same time, and every interaction rule on this site is
-          an assumption. The results show how an educational model responds to its assumptions; they
-          do not predict a real fight.
+        <p class="footer-disclaimer" data-i18n="footer.disclaimer">
+          T. rex and tigers never coexisted, and every interaction rule is an assumption. This
+          educational model shows how the outcome depends on uncertain inputs; it does not predict a
+          real fight, and this site does not promote or endorse real animal fighting.
         </p>
-        <ul class="footer-links">
-          <li><a href="/en/privacy/">Privacy</a></li>
-          <li><a href="/en/about/">About & contact</a></li>
+        <ul
+          class="footer-links"
+          aria-label="Site information and links"
+          data-i18n-aria="footer.linksLabel"
+        >
+          <li><a href="/en/about/" data-footer="about">About &amp; contact</a></li>
+          <li><a href="/en/privacy/" data-footer="privacy">Privacy</a></li>
+          <li><a href="/en/license/" data-footer="license">License</a></li>
           <li>
-            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+            <a
+              href="https://github.com/VinylStage/trex_vs_tiger_sim"
+              rel="noopener"
+              data-footer="source"
+              >Source code (GitHub)</a
+            >
+          </li>
+          <li>
+            <a href="https://vinylims.com" rel="me noopener" data-footer="blog"
+              >Blog (Vinyl’s Log)</a
+            >
+          </li>
+          <li>
+            <a href="https://link.vinylims.com" rel="me noopener" data-footer="linktree"
+              >Linktree</a
+            >
           </li>
         </ul>
-        <p>© 2026 VinylStage · Open source under the MIT License</p>
+        <p class="footer-meta">
+          <span data-i18n="footer.local">Simulations run in your browser.</span>
+          <span data-i18n="footer.copyright"
+            >© 2026 VinylStage · Open source under the MIT License</span
+          >
+          <a
+            class="version-footer"
+            href="https://github.com/VinylStage/trex_vs_tiger_sim/releases"
+            rel="noopener"
+            title="View release notes"
+            data-i18n-title="version.footerTitle"
+            ><span data-i18n="version.footer">Version</span>
+            <span class="version-footer-num" data-app-version></span
+          ></a>
+        </p>
       </div>
     </footer>
   </body>

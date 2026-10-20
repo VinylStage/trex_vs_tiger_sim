@@ -3,41 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>소개 · 문의: 오픈 소스 교육용 시뮬레이터 | T-Rex vs 호랑이 시뮬레이터</title>
+    <title>소개 · 문의: 오픈 소스 교육용 시뮬레이터 – 티렉스 대 호랑이</title>
     <meta
       name="description"
-      content="T-Rex vs 호랑이 시뮬레이터를 만든 목적, 교육용 모델이라는 점과 면책, 기술 구성, MIT 라이선스 오픈 소스 저장소, GitHub 이슈를 통한 문의 방법을 안내합니다."
+      content="티렉스 대 호랑이 시뮬레이터를 만든 목적, 교육용 모델이라는 점과 면책, 기술 구성, MIT 라이선스 오픈 소스 저장소, GitHub 이슈를 통한 문의 방법을 안내합니다."
     />
-    <link rel="canonical" href="https://trex-vs-tiger.vinylims.com/about/" />
-    <link rel="alternate" hreflang="ko" href="https://trex-vs-tiger.vinylims.com/about/" />
-    <link rel="alternate" hreflang="en" href="https://trex-vs-tiger.vinylims.com/en/about/" />
-    <link rel="alternate" hreflang="x-default" href="https://trex-vs-tiger.vinylims.com/about/" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
-    <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="T-Rex vs 호랑이 시뮬레이터" />
-    <meta property="og:locale" content="ko_KR" />
-    <meta property="og:locale:alternate" content="en_US" />
-    <meta
-      property="og:title"
-      content="소개 · 문의: 오픈 소스 교육용 시뮬레이터 | T-Rex vs 호랑이 시뮬레이터"
-    />
-    <meta
-      property="og:description"
-      content="T-Rex vs 호랑이 시뮬레이터를 만든 목적, 교육용 모델이라는 점과 면책, 기술 구성, MIT 라이선스 오픈 소스 저장소, GitHub 이슈를 통한 문의 방법을 안내합니다."
-    />
-    <meta property="og:url" content="https://trex-vs-tiger.vinylims.com/about/" />
-    <meta name="twitter:card" content="summary" />
-    <meta
-      name="twitter:title"
-      content="소개 · 문의: 오픈 소스 교육용 시뮬레이터 | T-Rex vs 호랑이 시뮬레이터"
-    />
-    <meta
-      name="twitter:description"
-      content="T-Rex vs 호랑이 시뮬레이터를 만든 목적, 교육용 모델이라는 점과 면책, 기술 구성, MIT 라이선스 오픈 소스 저장소, GitHub 이슈를 통한 문의 방법을 안내합니다."
-    />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="/src/pages/site.css" />
     <script type="module" src="/src/pages/site.ts"></script>
   </head>
@@ -47,7 +23,7 @@
       <div class="site-header-inner">
         <a class="site-brand" href="/">
           <img src="/favicon.svg" alt="" width="32" height="32" />
-          <span>T-Rex vs 호랑이</span>
+          <span>티렉스 대 호랑이</span>
         </a>
         <nav class="site-nav" aria-label="사이트 메뉴">
           <ul class="site-nav-list">
@@ -68,13 +44,18 @@
     <main id="main" class="site-main">
       <article class="page">
         <header class="page-head">
-          <p class="eyebrow">소개 · 문의</p>
-          <h1>T-Rex vs 호랑이 시뮬레이터 소개</h1>
+          <nav class="eyebrow breadcrumb" aria-label="이동 경로" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/">티렉스 대 호랑이</a></li>
+              <li aria-current="page">소개</li>
+            </ol>
+          </nav>
+          <h1>티렉스 대 호랑이 시뮬레이터 소개</h1>
           <p class="lead">
             “티라노사우루스와 호랑이 무리가 싸우면 누가 이길까?”라는 재미있는 질문을 출발점으로,
             불확실성 아래에서 추론하는 방법을 직접 체험해 보는 오픈 소스 교육용 시뮬레이터입니다.
           </p>
-          <p class="page-meta">최종 수정 <time datetime="2026-10-19">2026년 10월 19일</time></p>
+          <p class="page-meta">최종 수정 <time datetime="2026-10-20">2026년 10월 20일</time></p>
         </header>
 
         <nav class="toc" aria-labelledby="toc-title">
@@ -93,7 +74,7 @@
           <section id="what">
             <h2>이 사이트는</h2>
             <p>
-              T-Rex vs 호랑이 시뮬레이터는 성체 티라노사우루스 N마리와 성체 호랑이 M마리가 탁 트인
+              티렉스 대 호랑이 시뮬레이터는 성체 티라노사우루스 N마리와 성체 호랑이 M마리가 탁 트인
               평지에서 맞붙는 상황을 컴퓨터로 수백에서 수천 번 재현해 보는 웹 도구입니다. 한 판의
               결과를 보여 주는 대신, 문헌에서 가져온 값과 명시적인 가정을 바탕으로 능력치를 매번
               다르게 뽑아 전투를 반복하고, 그 결과를 승률, 신뢰구간, 분포, 민감도로 정리합니다.
@@ -164,7 +145,8 @@
             <ul>
               <li>
                 <strong>정적 웹사이트</strong>: 서버 프로그램 없이 HTML, CSS, JavaScript 파일만
-                Cloudflare Pages에서 제공합니다. 계정, 데이터베이스, 분석 도구가 없습니다.
+                Cloudflare Pages에서 제공합니다. 계정과 데이터베이스가 없고, 현재 분석 도구도 쓰지
+                않습니다.
               </li>
               <li>
                 <strong>브라우저 안의 계산</strong>: 전투 계산은 Web Worker에서 여러 CPU 코어로 나눠
@@ -172,7 +154,8 @@
               </li>
               <li>
                 <strong>외부 라이브러리 없음</strong>: 시뮬레이션 엔진, 차트, 재생 화면을 모두
-                TypeScript로 직접 구현해, 실행 시점에 다른 회사의 스크립트를 불러오지 않습니다.
+                TypeScript로 직접 구현해, 시뮬레이터 자체는 다른 회사의 스크립트에 의존하지
+                않습니다.
               </li>
               <li>
                 <strong>엄격한 보안 정책</strong>: 콘텐츠 보안 정책(CSP)으로 이 사이트의 파일만
@@ -191,8 +174,8 @@
               전체 소스 코드와 문서는 GitHub 저장소
               <a href="https://github.com/VinylStage/trex_vs_tiger_sim"
                 >VinylStage/trex_vs_tiger_sim</a
-              >에 MIT 라이선스로 공개되어 있습니다. 코드를 읽고, 내 컴퓨터에서 실행하고, 수정해 다른
-              용도로 쓸 수 있습니다.
+              >에 <a href="/license/">MIT 라이선스</a>로 공개되어 있습니다. 코드를 읽고, 내
+              컴퓨터에서 실행하고, 수정해 다른 용도로 쓸 수 있습니다.
             </p>
             <ul>
               <li>
@@ -254,19 +237,47 @@
     </main>
     <footer class="site-footer">
       <div class="site-footer-inner">
-        <p>
-          T. rex와 호랑이는 같은 시대에 산 적이 없고, 이 사이트의 모든 상호작용 규칙은 가정입니다.
-          결과는 교육용 모델이 가정에 따라 어떻게 반응하는지 보여 줄 뿐, 실제 싸움을 예측하지
-          않습니다.
+        <p class="footer-disclaimer" data-i18n="footer.disclaimer">
+          T. rex와 호랑이는 같은 시대에 산 적이 없고, 모든 상호작용 규칙은 가정입니다. 결과는
+          불확실한 입력에 따라 승패가 어떻게 달라지는지 보여 주는 교육용 모델일 뿐 실제 싸움의
+          예측이 아니며, 이 사이트는 실제 동물 싸움을 조장하거나 지지하지 않습니다.
         </p>
-        <ul class="footer-links">
-          <li><a href="/privacy/">개인정보처리방침</a></li>
-          <li><a href="/about/">소개 · 문의</a></li>
+        <ul class="footer-links" aria-label="사이트 정보와 링크" data-i18n-aria="footer.linksLabel">
+          <li><a href="/about/" data-footer="about">소개 · 문의</a></li>
+          <li><a href="/privacy/" data-footer="privacy">개인정보처리방침</a></li>
+          <li><a href="/license/" data-footer="license">라이선스</a></li>
           <li>
-            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+            <a
+              href="https://github.com/VinylStage/trex_vs_tiger_sim"
+              rel="noopener"
+              data-footer="source"
+              >소스 코드 (GitHub)</a
+            >
+          </li>
+          <li>
+            <a href="https://vinylims.com" rel="me noopener" data-footer="blog"
+              >블로그 (Vinyl’s Log)</a
+            >
+          </li>
+          <li>
+            <a href="https://link.vinylims.com" rel="me noopener" data-footer="linktree"
+              >Linktree</a
+            >
           </li>
         </ul>
-        <p>© 2026 VinylStage · MIT 라이선스 오픈 소스</p>
+        <p class="footer-meta">
+          <span data-i18n="footer.local">시뮬레이션은 모두 브라우저에서 실행됩니다.</span>
+          <span data-i18n="footer.copyright">© 2026 VinylStage · MIT 라이선스 오픈 소스</span>
+          <a
+            class="version-footer"
+            href="https://github.com/VinylStage/trex_vs_tiger_sim/releases"
+            rel="noopener"
+            title="릴리스 노트 보기"
+            data-i18n-title="version.footerTitle"
+            ><span data-i18n="version.footer">버전</span>
+            <span class="version-footer-num" data-app-version></span
+          ></a>
+        </p>
       </div>
     </footer>
   </body>

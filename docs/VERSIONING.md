@@ -2,17 +2,18 @@
 
 > **한국어 요약**
 >
-> - 헤더의 배지가 지금 실행 중인 릴리스 버전(`v0.1.0`)과 상태(**확인 중 / 최신 / 새 버전 / 새 빌드 / 변경됨 / 확인 불가**)를 보여 줍니다. 상태 문구는 고정된 짧은 목록이라 배지 폭이 바뀌지 않고(레이아웃 이동 없음), 배포된 버전 번호는 배너·대화상자와 스크린 리더용 텍스트에 나옵니다. 푸터에도 `버전 v0.1.0 (커밋 7자리)`가 표시되고 릴리스 노트로 연결됩니다.
+> - 헤더의 배지가 지금 실행 중인 릴리스 버전(`v0.1.0`)과 상태(**확인 중 / 최신 / 새 버전 / 새 빌드 / 변경됨 / 확인 불가**)를 보여 줍니다. 상태 문구는 고정된 짧은 목록이라 배지 폭이 바뀌지 않고(레이아웃 이동 없음), 배포된 버전 번호는 배너·대화상자와 스크린 리더용 텍스트에 나옵니다. 모든 페이지의 정적 푸터에 릴리스 노트 링크가 있고, 앱은 그 자리에 `버전 v0.1.0 (커밋 7자리)`를, 안내 페이지는 `버전 v0.1.0`을 채웁니다.
 > - 버전은 빌드 시점에 `package.json`의 `version`(release-please가 올림)과 커밋 SHA(`CF_PAGES_COMMIT_SHA`, 없으면 `git rev-parse HEAD`)에서 가져와 번들에 넣고, 같은 내용을 `dist/version.json`으로도 내보냅니다.
 > - 페이지는 로드 직후, 탭이 다시 보일 때(10분 간격 제한), 보이는 동안 30분마다 `/version.json`을 `no-store`로 받아 자기 버전과 비교합니다. 버전이 더 높거나, 버전이 같아도 커밋이 다르면 새 배포로 봅니다.
-> - 새 배포가 있으면 화면 아래쪽에 고정 배너가 뜹니다(넓은 화면은 오른쪽 아래, 좁은 화면은 실행 버튼 막대 바로 위). 레이아웃을 밀지 않고, 헤더를 가리지 않으며, 배너가 떠 있는 동안 포커스된 요소는 배너 위로 스크롤되고, Esc로 닫을 수 있습니다. 배지를 누르면 버전 정보 대화상자가 열립니다. **최신 버전 불러오기 (캐시·저장소 초기화)** 를 확인하면 Cache Storage, 서비스 워커, localStorage, sessionStorage, 이 호스트의 JS 쿠키를 지운 뒤 `/reset/`으로 이동합니다. `/reset/` 응답의 `Clear-Site-Data: "cache", "storage"` 헤더가 브라우저 캐시와 저장소를 한 번 더 비우고, 페이지는 `/?_r=<시각>`으로 새로 불러옵니다. 시나리오(URL `#s=`)는 유지됩니다.
-> - 언어 설정과 튜토리얼 진행 상태는 초기화됩니다(확인 문구에 안내).
+> - 새 배포가 있으면 화면 아래쪽에 고정 배너가 뜹니다(넓은 화면은 오른쪽 아래, 좁은 화면은 실행 버튼 막대 바로 위). 레이아웃을 밀지 않고, 헤더를 가리지 않으며, 배너가 떠 있는 동안 포커스된 요소는 배너 위로 스크롤되고, Esc로 닫을 수 있습니다. 배지를 누르면 버전 정보 대화상자가 열립니다. **최신 버전 불러오기 (캐시·저장소 초기화)** 를 확인하면 Cache Storage, 서비스 워커, localStorage, sessionStorage, 이 호스트의 JS 쿠키를 지운 뒤 `/reset/`으로 이동합니다. `/reset/` 응답의 `Clear-Site-Data: "cache", "storage"` 헤더가 브라우저 캐시와 저장소를 한 번 더 비우고, 페이지는 `/?_r=<시각>`(영어판에서 시작했다면 `/en/?_r=<시각>`)으로 새로 불러옵니다. 시나리오(URL `#s=`)와 언어(URL 경로)는 유지됩니다.
+> - 튜토리얼 안내 기록(`trexsim.tour`)은 초기화됩니다(확인 문구에 안내). 언어는 저장하지 않고 URL로 정하므로 그대로입니다.
 > - `Clear-Site-Data`에 `"cookies"`는 **넣지 않습니다.** 명세와 MDN에 따르면 이 지시어는 응답 출처의 **등록 도메인 전체**(`vinylims.com`과 모든 `*.vinylims.com` 하위 도메인)의 쿠키를 지우므로, 소유자의 다른 사이트 로그인까지 끊을 수 있습니다. 대신 JS로 이 호스트의 쿠키만 만료시킵니다(HttpOnly 쿠키는 JS로 지울 수 없음).
 
 ## Contents
 
 - [What the visitor sees](#what-the-visitor-sees)
 - [Data flow](#data-flow)
+- [Footer version](#footer-version)
 - [Build-time version info](#build-time-version-info)
 - [How a release-please version reaches the page](#how-a-release-please-version-reaches-the-page)
 - [Update detection](#update-detection)
@@ -33,7 +34,7 @@
 | Version dialog    | Opens from the badge (modal `<dialog>`) | Current version + short SHA, build time, latest deployed version, last check time, link to the [release notes](https://github.com/VinylStage/trex_vs_tiger_sim/releases), **다시 확인 / Check again**, **최신 버전 불러오기 (캐시·저장소 초기화)**                                                      |
 | Update banner     | Fixed to the bottom edge (see below)    | "새 버전이 배포되었습니다: v0.2.0" with **업데이트** (opens the dialog at the confirmation step) and **나중에** (hides it for this deployment); Esc also hides it                                                                                                                                       |
 | Post-reset notice | Same place as the banner, 6 s           | "최신 버전을 불러왔습니다 (v0.2.0)." with **닫기**                                                                                                                                                                                                                                                      |
-| Footer            | After "서버 전송 · 추적 없음"           | `버전 v0.1.0 (21c02f5)`, linked to the release notes                                                                                                                                                                                                                                                    |
+| Footer            | Static footer of every page             | `버전 v0.1.0 (21c02f5)` in the app, `버전 v0.1.0` on the content pages; a static link to the release notes whose number is filled in by script (see [below](#footer-version))                                                                                                                           |
 | `/reset/` page    | Shown for about half a second           | "업데이트 중… / Updating…" with a spinner, then the app reloads                                                                                                                                                                                                                                         |
 
 Design notes:
@@ -71,6 +72,19 @@ flowchart LR
     e1@{ animate: true }
 ```
 
+## Footer version
+
+Every page (`index.html`, `en/index.html`, the content and license pages) has the same static footer ([PAGES.md](PAGES.md#footer)). Its last line holds
+
+```html
+<a class="version-footer" href="https://github.com/VinylStage/trex_vs_tiger_sim/releases" …>
+  <span data-i18n="version.footer">버전</span>
+  <span class="version-footer-num" data-app-version></span>
+</a>
+```
+
+The link exists without JavaScript, so crawlers and no-JS visitors can reach the release notes. The number is filled in at run time from the same build `define`: the app calls `fillVersionFooter()` (`src/ui/version.ts`, `v<version> (<short sha>)`), the content pages run `src/pages/site.ts` (`v${__APP_VERSION__}`). `.version-footer-num` reserves `5ch` so filling it in does not reflow the line.
+
 ## Build-time version info
 
 `vite.config.ts` computes one `BuildInfo` per build and uses it twice. The config file carries no comments (project rule), so it is explained here.
@@ -85,7 +99,7 @@ flowchart LR
 - The constants are Vite `define` replacements; their TypeScript declarations are in `src/env.d.ts`.
 - `npm run dev` serves the same JSON at `/version.json` from a dev-server middleware, so the badge reads "최신" in development as well.
 - `vite.config.ts` uses `node:child_process`, `node:fs`, `node:process` and `node:url`, so `@types/node` is a dev dependency, pinned to `~24.x` to match `.node-version`. It is a type package only; the runtime bundle still has zero dependencies ([ADR-0004](adr/0004-no-runtime-dependencies.md)).
-- `reset/index.html` is a second HTML entry. Vite 8 names the option `build.rolldownOptions.input` (`build.rollupOptions` is its deprecated alias). The entry keys are `index` and `reset`, so the main bundle keeps its `assets/index-<hash>.js` name. Code shared by both entries (`version-model.ts`, `site-data.ts`) lands in a small common chunk.
+- `reset/index.html` is a second HTML entry. Vite 8 names the option `build.rolldownOptions.input` (`build.rollupOptions` is its deprecated alias). The entry keys are `index`, `en` (the English app, same `src/main.ts`), `reset` and the content pages. Because `index` and `en` share the app module, the bundler emits it as a shared chunk named after `src/main.ts` (`assets/main-<hash>.js` / `.css`); the name may change. Code shared by both entries (`version-model.ts`, `site-data.ts`) lands in a small common chunk.
 
 ## How a release-please version reaches the page
 
@@ -93,6 +107,7 @@ flowchart LR
 2. release-please keeps a release PR open that bumps `package.json` `version`, `.release-please-manifest.json` and `CHANGELOG.md`.
 3. Merging the release PR deploys a build whose `__APP_VERSION__` and `version.json` carry the new version. Open tabs see "새 버전 v0.2.0". The GitHub Release and tag (`trex-vs-tiger-sim-v0.2.0`) are created by the same workflow.
 4. Nothing else needs to change: the version is never hard-coded in the source.
+5. When release-please reports `release_created`, its `indexnow` job calls `.github/workflows/indexnow.yml`, which waits until `version.json` on production reports the new version and then submits the sitemap URLs to IndexNow ([SEO.md](SEO.md#indexnow)). The build also writes the version into the simulator's JSON-LD (`WebApplication.softwareVersion`).
 
 Preview deployments work the same way: the branch alias `https://<branch>.trex-vs-tiger-sim.pages.dev` moves with every push, so an open preview tab notices the next push.
 
@@ -140,20 +155,21 @@ sequenceDiagram
     Page->>Page: unregister service workers
     Page->>Page: localStorage.clear(), sessionStorage.clear()
     Page->>Page: expire this host's JS-visible cookies
-    Page->>CDN: location.replace("/reset/?from=0.1.0#s=…")
+    Page->>CDN: location.replace("/reset/?from=0.1.0[&to=/en/]#s=…")
     CDN-->>Reset: HTML + Clear-Site-Data: "cache", "storage"
     Note over Reset: the browser clears the origin's HTTP cache and storage<br/>before the page runs (where supported)
     Reset->>Reset: repeat the JS clean-up, show "업데이트 중…" ≥ 0.4 s
-    Reset->>CDN: location.replace("/?_r=<ms>#s=…")
+    Reset->>CDN: location.replace("/?_r=<ms>#s=…" or "/en/?_r=<ms>#s=…")
     CDN-->>Page: fresh index.html → new hashed assets
     Page->>Page: drop _r from the URL, show "최신 버전을 불러왔습니다"
 ```
 
-- **Confirmation.** The action asks first, inside the dialog, and says that the language and tutorial preferences (both in `localStorage`) are reset. The scenario is kept because it lives in the URL fragment (`#s=…`), which both redirects carry along.
+- **Confirmation.** The action asks first, inside the dialog, and says that the tutorial record (`trexsim.tour` in `localStorage`, the only key the site writes; the v0.1.0 key `trexsim.lang` is deleted on every load, `src/pages/legacy-storage.ts`) is reset. The scenario and the language are kept: the scenario lives in the URL fragment (`#s=…`), which both redirects carry along, and the language is the URL path.
+- **Language round-trip.** The app passes its own path to `resetUrl()`; from the English app the reset URL gets `&to=%2Fen%2F`. `src/reset.ts` reads it with `returnPathFromSearch()`, which accepts only `/` and `/en/` (anything else falls back to `/`, so the parameter cannot redirect off-site), and `reloadUrl()` sends the visitor back to `/en/?_r=…#s=…`.
 - **`location.replace`** is used for both hops, so Back does not return to the old page or to `/reset/`.
 - **`?_r=<timestamp>`** gives `index.html` a URL that no cache has seen. `index.html` is already `no-cache`, and assets are content-hashed, so this is a belt-and-braces measure for intermediaries and for Chrome's partial `"cache"` support (see below). The app removes `_r` with `history.replaceState` right away, so shared links stay clean; other query parameters are kept.
 - **Opening `/reset/` directly** works too: it is a support link that fixes a stuck client (`https://trex-vs-tiger.vinylims.com/reset/`). The page repeats the JavaScript clean-up for browsers without `Clear-Site-Data`.
-- **Fallback link.** If the hand-off has not happened after 3 s (also without JavaScript), the reset page shows a "Continue" link. It is revealed with a CSS animation of `visibility`, not `opacity`, so it stays out of the tab order while it is invisible. `src/reset.ts` points it at the same `/?_r=<ms>#s=…` URL as the automatic hand-off, so it keeps the scenario too; without JavaScript it is a plain `/`, since HTML alone cannot carry the current fragment. Its colour (`--link` in `src/reset.css`, `#1f62b8` light) is 5.56:1 on the light background and 5.07:1 on the dark one.
+- **Fallback link.** If the hand-off has not happened after 3 s (also without JavaScript), the reset page shows a "Continue" link. It is revealed with a CSS animation of `visibility`, not `opacity`, so it stays out of the tab order while it is invisible. `src/reset.ts` points it at the same `/?_r=<ms>#s=…` (or `/en/…`) URL as the automatic hand-off, so it keeps the scenario too; without JavaScript it is a plain `/`, since HTML alone cannot carry the current fragment. Its colour (`--link` in `src/reset.css`, `#1f62b8` light) is 5.56:1 on the light background and 5.07:1 on the dark one.
 - Every async step has a 5 s ceiling, so an unresponsive browser API cannot strand the visitor.
 
 ## Response headers
@@ -215,7 +231,7 @@ Chrome caveats for `"cache"` (from the same data): some requests may still be se
 | `vite.config.ts`                                    | `define` constants, `version.json` plugin and dev middleware, second HTML entry                                                         |
 | `src/env.d.ts`                                      | Type declarations for the three constants                                                                                               |
 | `src/ui/version-model.ts`                           | Pure logic: semver, `version.json` validation, comparison, status reducer, throttle, badge labels, banner placement, cookie names, URLs |
-| `src/ui/version.ts` / `src/ui/version.css`          | Badge, dialog, banner, footer label                                                                                                     |
+| `src/ui/version.ts` / `src/ui/version.css`          | Badge, dialog, banner, `fillVersionFooter()` for the static footer                                                                      |
 | `src/ui/site-data.ts`                               | JavaScript clean-up shared by the dialog and `/reset/`                                                                                  |
 | `reset/index.html`, `src/reset.ts`, `src/reset.css` | The `/reset/` page                                                                                                                      |
 | `public/_headers`                                   | `/version.json` and `/reset/*` rules                                                                                                    |

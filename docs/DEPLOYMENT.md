@@ -42,15 +42,17 @@ The deployed site is static. Cloudflare Pages only serves the files Vite writes 
 
 | File                                                                                 | Origin                                                                                                                                                                                                                                                    |
 | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `index.html`                                                                         | Vite entry, rewritten to reference hashed assets                                                                                                                                                                                                          |
-| `assets/index-<hash>.js`                                                             | Main-thread bundle (UI)                                                                                                                                                                                                                                   |
-| `assets/index-<hash>.css`                                                            | Extracted stylesheet (emitted as a file, never inlined)                                                                                                                                                                                                   |
+| `index.html`, `en/index.html`                                                        | The simulator in Korean (`/`) and English (`/en/`): two Vite entries that load the same `src/main.ts`, each with its own static head, intro, FAQ and footer                                                                                               |
+| `assets/main-<hash>.js`                                                              | Main-thread bundle (UI), shared by both app entries (the bundler names the shared chunk after `src/main.ts`)                                                                                                                                              |
+| `assets/main-<hash>.css`                                                             | Extracted stylesheet (emitted as a file, never inlined)                                                                                                                                                                                                   |
 | `assets/*-<hash>.js`                                                                 | Module Web Worker bundle(s), same origin, loaded with `{ type: 'module' }`                                                                                                                                                                                |
 | `_headers`                                                                           | Copied verbatim from `public/_headers`                                                                                                                                                                                                                    |
-| `<page>/index.html`, `en/<page>/index.html`                                          | Static content pages (guide, model, parameters, about, privacy), see [PAGES.md](PAGES.md)                                                                                                                                                                 |
+| `<page>/index.html`, `en/<page>/index.html`                                          | Static content pages (guide, model, parameters, about, privacy, license), see [PAGES.md](PAGES.md)                                                                                                                                                        |
 | `assets/site-<hash>.js`, `assets/site-<hash>.css`                                    | Shared script and stylesheet of the content pages                                                                                                                                                                                                         |
 | `assets/routes-<hash>.{js,css}`, `assets/PretendardVariable.subset.<n>-<hash>.woff2` | Shared chunk of the app and the content pages: the route table and the self-hosted Pretendard `@font-face` stylesheet ([ADR-0005](adr/0005-self-hosted-pretendard.md)), plus the subset font files. The chunk name comes from the bundler and may change. |
-| `robots.txt`, `sitemap.xml`                                                          | Copied verbatim from `public/`; crawler rules and the page list with hreflang alternates                                                                                                                                                                  |
+| `robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`                             | Generated at build time by `vite.seo.ts` from the route registry and the pages ([SEO.md](SEO.md)): crawler rules, the URL list with hreflang alternates and `lastmod`, and the llms.txt index and full text                                               |
+| `404.html`, `en/404.html`                                                            | Not-found pages; Pages serves the nearest one with status 404 for every unknown URL ([SEO.md](SEO.md#404-pages)). Their asset URLs are root-absolute                                                                                                      |
+| `<32 hex>.txt`                                                                       | IndexNow key file, copied from `public/` ([SEO.md](SEO.md#indexnow))                                                                                                                                                                                      |
 | `version.json`                                                                       | Deployed version and commit, polled by open tabs (see [VERSIONING.md](VERSIONING.md))                                                                                                                                                                     |
 | `reset/index.html`                                                                   | Cache and storage reset page (see [VERSIONING.md](VERSIONING.md))                                                                                                                                                                                         |
 
@@ -182,7 +184,7 @@ Pages also adds `Access-Control-Allow-Origin: *` by default. It is harmless here
 | `no-cache`     | The HTML entry point must always be revalidated (`ETag` → `304`) so visitors pick up a new deployment immediately. Pages already defaults to `public, max-age=0, must-revalidate`, which behaves the same; the explicit rule documents the intent.                                                                                                                              |
 | `no-transform` | Tells Cloudflare not to modify the HTML body. On the custom domain this stops Bot Fight Mode from injecting its inline JavaScript Detections script, which the strict CSP would block. See [Bot Fight Mode and JavaScript Detections](#bot-fight-mode-and-javascript-detections). It also stops other edge rewrites of the HTML, which do not matter for a file of under 1 KiB. |
 
-Pages redirects `/index.html` to `/`, so the `/` rule is the one that applies in practice. The `/index.html` rule is a guard.
+Pages redirects `/index.html` to `/`, so the `/` rule is the one that applies in practice. The `/index.html` rule is a guard. The English app `/en/` is covered by the `/*/` rule below.
 
 ### Rule `/*/` (content pages)
 
@@ -199,7 +201,9 @@ Pages redirects `/index.html` to `/`, so the `/` rule is the one that applies in
 
 Details, browser support and the cookie decision are in [VERSIONING.md](VERSIONING.md#response-headers).
 
-All other paths keep the Pages default `public, max-age=0, must-revalidate`. That includes future files in `public/` such as a `favicon.svg`. It also includes the single-page-app fallback: there is no `404.html`, so Pages serves `index.html` for unknown paths.
+All other paths keep the Pages default `public, max-age=0, must-revalidate`. That includes the files in `public/` (icons, OG images, the manifest) and the generated `robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, which Pages already serves as `text/plain; charset=utf-8` and `application/xml` (checked on the branch preview), so no `Content-Type` rule is needed.
+
+Unknown paths: the build has a top-level `404.html`, so Pages no longer falls back to `index.html`. It serves the nearest `404.html` (`/en/…` → `en/404.html`) with status 404 and its own `Cache-Control: no-store`. Such a path matches only `/*` (or `/*/` when it ends in a slash), so a slash-less 404 response has no `no-transform`. On the custom domain Bot Fight Mode then injects its inline JavaScript Detections script and the CSP blocks it: one console error on a noindex page, nothing else breaks. A blanket `/*` `no-transform` is deliberately not added, because it would also switch off Cloudflare compression for every asset. Measurements and options: [SEO.md](SEO.md#404-pages).
 
 ```mermaid
 ---
@@ -215,12 +219,14 @@ flowchart LR
     q -- "/ or /index.html or /*/" --> nc@{ shape: rect, label: "Cache-Control: no-cache, no-transform" }
     q -- "/version.json" --> vj@{ shape: rect, label: "Cache-Control: no-store" }
     q -- "/reset/* (also matches /*/)" --> rs@{ shape: rect, label: "Cache-Control: no-cache, no-transform, no-store<br/>Clear-Site-Data: cache, storage" }
-    q -- "anything else" --> def@{ shape: rect, label: "Pages default:<br/>public, max-age=0, must-revalidate" }
+    q -- "other existing file" --> def@{ shape: rect, label: "Pages default:<br/>public, max-age=0, must-revalidate" }
+    q -- "unknown path" --> nf@{ shape: rect, label: "nearest 404.html, status 404<br/>Pages sets Cache-Control: no-store" }
     imm e1@--> resp@{ shape: dbl-circ, label: "response" }
     nc --> resp
     vj --> resp
     rs --> resp
     def --> resp
+    nf --> resp
     e1@{ animate: true }
 ```
 
@@ -229,7 +235,7 @@ flowchart LR
 - `_headers` is only applied by Cloudflare Pages. `npm run dev` and `npm run preview` do not apply it.
 - In **dev mode** Vite injects CSS through `<style>` tags created by its HMR client. This would violate `style-src 'self'`, but it is harmless because the dev server never sends this CSP.
 - The **production build** must not depend on inline code. Vite extracts CSS to `assets/*.css`, bundles its module-preload helper into the entry chunk, and emits workers as separate files. Contributors must keep it that way:
-  - no inline `<script>` or `<style>` in `index.html`;
+  - no inline `<script>` or `<style>` in `index.html`. The one exception is the JSON-LD data block `<script type="application/ld+json">` that `vite.seo.ts` adds at build time: browsers never execute a data block, so `script-src 'self'` does not apply to it ([SEO.md](SEO.md#structured-data-json-ld)). `tests/seo.test.ts` allows no other inline script;
   - no `style="…"` in HTML strings and no `setAttribute('style', …)`. Use classes, or CSSOM properties such as `el.style.setProperty(…)`;
   - no `eval`, `new Function` or string `setTimeout`;
   - no `?worker&inline` or `blob:` workers;
@@ -276,7 +282,7 @@ Limits are from the Cloudflare Pages and Workers limits pages (see [Sources](#so
 | Builds                       | 500 / month                                                    | ~100–150 in a busy month (see the estimate below)                                                               | ≥ 3×         |
 | Concurrent builds            | 1                                                              | Builds queue. Pages skips a queued build that a newer push to the same branch supersedes (changelog 2026-08-11) | n/a          |
 | Build timeout                | 20 min                                                         | Install + `tsc` + `vite build`, typically 1–2 min                                                               | ~10×         |
-| Files per site               | 20,000                                                         | < 40 (11 HTML pages, `_headers`, `robots.txt`, `sitemap.xml`, a handful of hashed JS/CSS files)                 | ~1,000×      |
+| Files per site               | 20,000                                                         | < 150 (17 HTML pages, `_headers`, generated text files, icons, OG images, hashed JS/CSS and font subsets)       | ~100×        |
 | Max file size                | 25 MiB                                                         | Largest file is the JS bundle, tens to hundreds of KiB                                                          | ≫ 100×       |
 | Custom domains               | 100 / project                                                  | 1 (`trex-vs-tiger.vinylims.com`)                                                                                | n/a          |
 | Preview deployments          | Unlimited                                                      | One per branch push                                                                                             | n/a          |
@@ -316,7 +322,14 @@ curl -sI "https://trex-vs-tiger.vinylims.com/$asset" | grep -i cache-control
 # No JavaScript Detections injection (each must print 0)
 curl -s https://trex-vs-tiger.vinylims.com/ | grep -c challenge-platform
 curl -s https://trex-vs-tiger.vinylims.com/en/model/ | grep -c challenge-platform
+
+# Real 404s, text files as text (status and content type)
+for p in /nope /en/nope /robots.txt /sitemap.xml /llms.txt; do
+  curl -s -o /dev/null -w "$p %{http_code} %{content_type}\n" "https://trex-vs-tiger.vinylims.com$p"
+done
 ```
+
+The SEO checks (sitemap, JSON-LD, hreflang, IndexNow) are in [SEO.md](SEO.md#validation-checklist).
 
 Expected results:
 

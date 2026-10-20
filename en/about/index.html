@@ -3,43 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      About and contact: an open-source educational simulator | T-Rex vs Tiger Simulator
-    </title>
+    <title>About and contact – T-Rex vs Tiger</title>
     <meta
       name="description"
-      content="Why the T-Rex vs Tiger Simulator exists, what it can teach, its educational disclaimer, how it is built, the MIT-licensed open-source repository and how to get in touch through GitHub issues."
+      content="Why the T-Rex vs Tiger Simulator exists, what it teaches, its educational disclaimer, how it is built, its MIT-licensed source code and how to get in touch."
     />
-    <link rel="canonical" href="https://trex-vs-tiger.vinylims.com/en/about/" />
-    <link rel="alternate" hreflang="ko" href="https://trex-vs-tiger.vinylims.com/about/" />
-    <link rel="alternate" hreflang="en" href="https://trex-vs-tiger.vinylims.com/en/about/" />
-    <link rel="alternate" hreflang="x-default" href="https://trex-vs-tiger.vinylims.com/about/" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
-    <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="T-Rex vs Tiger Simulator" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:locale:alternate" content="ko_KR" />
-    <meta
-      property="og:title"
-      content="About and contact: an open-source educational simulator | T-Rex vs Tiger Simulator"
-    />
-    <meta
-      property="og:description"
-      content="Why the T-Rex vs Tiger Simulator exists, what it can teach, its educational disclaimer, how it is built, the MIT-licensed open-source repository and how to get in touch through GitHub issues."
-    />
-    <meta property="og:url" content="https://trex-vs-tiger.vinylims.com/en/about/" />
-    <meta name="twitter:card" content="summary" />
-    <meta
-      name="twitter:title"
-      content="About and contact: an open-source educational simulator | T-Rex vs Tiger Simulator"
-    />
-    <meta
-      name="twitter:description"
-      content="Why the T-Rex vs Tiger Simulator exists, what it can teach, its educational disclaimer, how it is built, the MIT-licensed open-source repository and how to get in touch through GitHub issues."
-    />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <link rel="stylesheet" href="/src/pages/site.css" />
     <script type="module" src="/src/pages/site.ts"></script>
   </head>
@@ -47,13 +21,13 @@
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="site-header-inner">
-        <a class="site-brand" href="/">
+        <a class="site-brand" href="/en/">
           <img src="/favicon.svg" alt="" width="32" height="32" />
-          <span>T-Rex vs Tigers</span>
+          <span>T-Rex vs Tiger</span>
         </a>
         <nav class="site-nav" aria-label="Site">
           <ul class="site-nav-list">
-            <li><a class="site-nav-link" href="/" data-page="simulator">Simulator</a></li>
+            <li><a class="site-nav-link" href="/en/" data-page="simulator">Simulator</a></li>
             <li><a class="site-nav-link" href="/en/guide/" data-page="guide">Guide</a></li>
             <li><a class="site-nav-link" href="/en/model/" data-page="model">Model</a></li>
             <li>
@@ -68,13 +42,18 @@
     <main id="main" class="site-main">
       <article class="page">
         <header class="page-head">
-          <p class="eyebrow">About &amp; contact</p>
+          <nav class="eyebrow breadcrumb" aria-label="Breadcrumb" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/en/">T-Rex vs Tiger</a></li>
+              <li aria-current="page">About</li>
+            </ol>
+          </nav>
           <h1>About the T-Rex vs Tiger Simulator</h1>
           <p class="lead">
             An open-source educational simulator that starts from a fun question, “who would win, a
             T-Rex or a pack of tigers?”, and uses it to show how to reason under uncertainty.
           </p>
-          <p class="page-meta">Last updated <time datetime="2026-10-19">19 October 2026</time></p>
+          <p class="page-meta">Last updated <time datetime="2026-10-20">20 October 2026</time></p>
         </header>
 
         <nav class="toc" aria-labelledby="toc-title">
@@ -165,8 +144,8 @@
             <ul>
               <li>
                 <strong>A static website</strong>: no server-side program, just HTML, CSS and
-                JavaScript files served by Cloudflare Pages. There are no accounts, no database and
-                no analytics.
+                JavaScript files served by Cloudflare Pages. There are no accounts and no database,
+                and the site currently uses no analytics.
               </li>
               <li>
                 <strong>Computation in your browser</strong>: battles run in Web Workers spread over
@@ -175,8 +154,8 @@
               </li>
               <li>
                 <strong>No external libraries</strong>: the simulation engine, charts and replay are
-                written from scratch in TypeScript, so no third-party scripts are loaded at run
-                time.
+                written from scratch in TypeScript, so the simulator itself does not depend on any
+                third-party script.
               </li>
               <li>
                 <strong>A strict security policy</strong>: a Content Security Policy only allows
@@ -197,8 +176,8 @@
               <a href="https://github.com/VinylStage/trex_vs_tiger_sim"
                 >VinylStage/trex_vs_tiger_sim</a
               >
-              under the MIT License. You are welcome to read the code, run it on your own computer
-              and adapt it.
+              under the <a href="/en/license/">MIT License</a>. You are welcome to read the code,
+              run it on your own computer and adapt it.
             </p>
             <ul>
               <li>
@@ -253,26 +232,60 @@
 
           <aside class="cta">
             <p><strong>Run an experiment now.</strong> The default scenario computes in seconds.</p>
-            <a class="button" href="/">Open the simulator</a>
+            <a class="button" href="/en/">Open the simulator</a>
           </aside>
         </div>
       </article>
     </main>
     <footer class="site-footer">
       <div class="site-footer-inner">
-        <p>
-          T. rex and tigers never lived at the same time, and every interaction rule on this site is
-          an assumption. The results show how an educational model responds to its assumptions; they
-          do not predict a real fight.
+        <p class="footer-disclaimer" data-i18n="footer.disclaimer">
+          T. rex and tigers never coexisted, and every interaction rule is an assumption. This
+          educational model shows how the outcome depends on uncertain inputs; it does not predict a
+          real fight, and this site does not promote or endorse real animal fighting.
         </p>
-        <ul class="footer-links">
-          <li><a href="/en/privacy/">Privacy</a></li>
-          <li><a href="/en/about/">About & contact</a></li>
+        <ul
+          class="footer-links"
+          aria-label="Site information and links"
+          data-i18n-aria="footer.linksLabel"
+        >
+          <li><a href="/en/about/" data-footer="about">About &amp; contact</a></li>
+          <li><a href="/en/privacy/" data-footer="privacy">Privacy</a></li>
+          <li><a href="/en/license/" data-footer="license">License</a></li>
           <li>
-            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+            <a
+              href="https://github.com/VinylStage/trex_vs_tiger_sim"
+              rel="noopener"
+              data-footer="source"
+              >Source code (GitHub)</a
+            >
+          </li>
+          <li>
+            <a href="https://vinylims.com" rel="me noopener" data-footer="blog"
+              >Blog (Vinyl’s Log)</a
+            >
+          </li>
+          <li>
+            <a href="https://link.vinylims.com" rel="me noopener" data-footer="linktree"
+              >Linktree</a
+            >
           </li>
         </ul>
-        <p>© 2026 VinylStage · Open source under the MIT License</p>
+        <p class="footer-meta">
+          <span data-i18n="footer.local">Simulations run in your browser.</span>
+          <span data-i18n="footer.copyright"
+            >© 2026 VinylStage · Open source under the MIT License</span
+          >
+          <a
+            class="version-footer"
+            href="https://github.com/VinylStage/trex_vs_tiger_sim/releases"
+            rel="noopener"
+            title="View release notes"
+            data-i18n-title="version.footerTitle"
+            ><span data-i18n="version.footer">Version</span>
+            <span class="version-footer-num" data-app-version></span
+          ></a>
+        </p>
       </div>
     </footer>
   </body>

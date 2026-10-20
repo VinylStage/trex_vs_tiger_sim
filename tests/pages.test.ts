@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -14,14 +14,15 @@ import { CONSTANTS, DT } from '../src/sim/engine';
 import { PARAMS } from '../src/sim/params';
 import {
   CONTENT_PAGES,
-  SITE_ORIGIN,
-  canonicalUrl,
+  NAV_LABEL_KEYS,
+  RELEASES_URL,
   pagePath,
   parsePagePath,
   type ContentPage,
+  type PageId,
 } from '../src/pages/routes';
 import { DICTIONARIES, LANGS, type Lang, type MsgKey } from '../src/ui/i18n';
-import { siteNavItems } from '../src/ui/site-nav';
+import { footerItems, siteNavItems } from '../src/ui/site-nav';
 import { findHtmlEntries } from '../vite.pages';
 
 /*
@@ -44,6 +45,40 @@ const PAGES = LANGS.flatMap((lang) =>
     html: read(sourceOf(page, lang)),
   })),
 );
+
+/** The simulator's two static entries: `index.html` (ko, `/`) and `en/index.html` (en, `/en/`). */
+const appSourceOf = (lang: Lang): string => (lang === 'ko' ? 'index.html' : 'en/index.html');
+const APP_PAGES = LANGS.map((lang) => ({
+  page: 'simulator' as const,
+  lang,
+  file: appSourceOf(lang),
+  html: read(appSourceOf(lang)),
+}));
+
+/** Every page with the shared site shell (static footer, i18n-bound text). */
+const ALL_PAGES: readonly { page: PageId; lang: Lang; file: string; html: string }[] = [
+  ...APP_PAGES,
+  ...PAGES,
+];
+
+/** The not-found pages Cloudflare Pages serves for unknown URLs (`/…` and `/en/…`). */
+const notFoundSourceOf = (lang: Lang): string => (lang === 'ko' ? '404.html' : 'en/404.html');
+const NOT_FOUND_PAGES = LANGS.map((lang) => ({
+  page: '404' as const,
+  lang,
+  file: notFoundSourceOf(lang),
+  html: read(notFoundSourceOf(lang)),
+}));
+
+/** Every page with the shared shell: header or app header, static footer, i18n-bound text. */
+const SHELL_PAGES: readonly { page: PageId | '404'; lang: Lang; file: string; html: string }[] = [
+  ...ALL_PAGES,
+  ...NOT_FOUND_PAGES,
+];
+
+/** Search-result limits used in docs/SEO.md: titles up to 60 characters, descriptions ~160. */
+const MAX_TITLE = 60;
+const MAX_DESCRIPTION = 165;
 
 // ---------- tiny HTML helpers (the pages are well-formed, Prettier-formatted HTML) ----------
 
@@ -99,6 +134,68 @@ function elements(html: string, name: string): { attrs: Record<string, string>; 
   });
 }
 
+const VOID = new Set([
+  'area',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'source',
+]);
+const TOKEN_RE = /<\/([a-zA-Z][\w:-]*)\s*>|<([a-zA-Z][\w:-]*)\b[^>]*>|<!--[\s\S]*?-->|([^<]+)/g;
+
+/**
+ * The first element whose start tag matches, with nesting of its own tag name counted, so it is
+ * exact for elements that contain others of their kind (`<div id="app">`, sections).
+ */
+function outerElement(
+  html: string,
+  match: (t: Tag) => boolean,
+): { attrs: Record<string, string>; inner: string; outer: string; end: number } {
+  const start = tags(html).find(match);
+  expect(start, 'element').toBeDefined();
+  const t = start as Tag;
+  const open = html.lastIndexOf('<', t.end - 1);
+  let depth = 1;
+  const re = new RegExp(`<(/?)${t.name}\\b[^>]*>`, 'gi');
+  re.lastIndex = t.end;
+  for (let m = re.exec(html); m; m = re.exec(html)) {
+    depth += m[1] ? -1 : 1;
+    if (depth === 0) {
+      return {
+        attrs: t.attrs,
+        inner: html.slice(t.end, m.index),
+        outer: html.slice(open, m.index + m[0].length),
+        end: m.index + m[0].length,
+      };
+    }
+  }
+  throw new Error(`unclosed <${t.name}>`);
+}
+
+/** Every non-blank text node of a fragment with the elements that enclose it (outermost first). */
+function textNodes(html: string): { text: string; ancestors: Tag[] }[] {
+  const out: { text: string; ancestors: Tag[] }[] = [];
+  const stack: Tag[] = [];
+  for (const m of html.matchAll(TOKEN_RE)) {
+    if (m[1]) {
+      const name = m[1].toLowerCase();
+      const i = stack.map((s) => s.name).lastIndexOf(name);
+      if (i >= 0) stack.length = i;
+    } else if (m[2]) {
+      const tag = tags(m[0])[0];
+      if (tag && !VOID.has(tag.name) && !m[0].endsWith('/>')) stack.push(tag);
+    } else if (m[3] && m[3].trim() !== '') {
+      out.push({ text: textOf(m[3]), ancestors: [...stack] });
+    }
+  }
+  return out;
+}
+
 const one = <T>(xs: readonly T[], what: string): T => {
   expect(xs, what).toHaveLength(1);
   return xs[0] as T;
@@ -127,9 +224,11 @@ const shownNumber = (s: string): number => Number(textOf(s).replace(/[,\s]/g, ''
 describe('every HTML page is CSP-safe', () => {
   const files = Object.values(findHtmlEntries(ROOT)).map((f) => relative(ROOT, f));
 
-  it('includes the app and all content pages', () => {
+  it('includes the app, all content pages and both 404 pages', () => {
     expect(files).toContain('index.html');
+    expect(files).toContain('en/index.html');
     for (const p of PAGES) expect(files).toContain(p.file);
+    for (const p of NOT_FOUND_PAGES) expect(files).toContain(p.file);
   });
 
   it.each(files)('%s has no inline script, style block, style attribute or handler', (file) => {
@@ -156,48 +255,13 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
     expect(one(tags(html, 'html'), '<html>').attrs['lang']).toBe(lang);
   });
 
-  it('has a title, description, canonical URL and hreflang alternates', () => {
+  it('has a title and description of search-result length', () => {
     const title = one(elements(html, 'title'), '<title>').inner.trim();
     expect(title.length).toBeGreaterThan(10);
+    expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
     const description = one(meta(html, 'name', 'description'), 'meta description');
     expect(description.length).toBeGreaterThanOrEqual(50);
-    expect(description.length).toBeLessThanOrEqual(320);
-
-    const links = tags(html, 'link');
-    const canonical = one(
-      links.filter((l) => l.attrs['rel'] === 'canonical'),
-      'canonical',
-    );
-    expect(canonical.attrs['href']).toBe(canonicalUrl(page, lang));
-    const alternates = Object.fromEntries(
-      links
-        .filter((l) => l.attrs['rel'] === 'alternate')
-        .map((l) => [l.attrs['hreflang'], l.attrs['href']]),
-    );
-    expect(alternates).toEqual({
-      ko: canonicalUrl(page, 'ko'),
-      en: canonicalUrl(page, 'en'),
-      'x-default': canonicalUrl(page, 'ko'),
-    });
-  });
-
-  it('has Open Graph, Twitter, theme-colour, viewport and favicon tags', () => {
-    expect(one(meta(html, 'property', 'og:url'), 'og:url')).toBe(canonicalUrl(page, lang));
-    expect(one(meta(html, 'property', 'og:title'), 'og:title')).toBe(
-      decode(one(elements(html, 'title'), '<title>').inner.trim()),
-    );
-    expect(one(meta(html, 'property', 'og:description'), 'og:description')).toBe(
-      one(meta(html, 'name', 'description'), 'description'),
-    );
-    expect(one(meta(html, 'property', 'og:locale'), 'og:locale')).toBe(
-      lang === 'ko' ? 'ko_KR' : 'en_US',
-    );
-    expect(one(meta(html, 'name', 'twitter:card'), 'twitter:card')).toBe('summary');
-    expect(meta(html, 'name', 'twitter:title')).toHaveLength(1);
-    expect(meta(html, 'name', 'twitter:description')).toHaveLength(1);
-    expect(meta(html, 'name', 'theme-color')).toHaveLength(2);
-    expect(meta(html, 'name', 'viewport')).toHaveLength(1);
-    expect(tags(html, 'link').some((l) => l.attrs['rel'] === 'icon')).toBe(true);
+    expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION);
   });
 
   it('loads the shared stylesheet and script', () => {
@@ -242,6 +306,24 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
     );
   });
 
+  it('shows a breadcrumb from the app to this page, named like the navigation', () => {
+    const d = DICTIONARIES[lang];
+    const nav = one(
+      elements(html, 'nav').filter((n) =>
+        (n.attrs['class'] ?? '').split(/\s+/).includes('breadcrumb'),
+      ),
+      'breadcrumb',
+    );
+    expect(nav.attrs['aria-label']).toBe(d['breadcrumb.label']);
+    const items = tags(nav.inner, 'li');
+    expect(elements(nav.inner, 'li').map((li) => textOf(li.inner))).toEqual([
+      d['app.shortTitle'],
+      d[NAV_LABEL_KEYS[page]],
+    ]);
+    expect(tags(nav.inner, 'a').map((a) => a.attrs['href'])).toEqual([pagePath('simulator', lang)]);
+    expect(items.map((li) => li.attrs['aria-current'] ?? null)).toEqual([null, 'page']);
+  });
+
   it('links its counterpart in the other language', () => {
     const sw = one(
       tags(html, 'a').filter((a) => 'data-lang-switch' in a.attrs),
@@ -271,42 +353,406 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
   });
 
   it('only links to pages and anchors that exist', () => {
-    const own = new Set(ids(html));
-    for (const a of tags(html, 'a')) {
-      const href = a.attrs['href'] ?? '';
-      if (href.startsWith('#')) {
-        expect(own.has(href.slice(1)), `${href} on this page`).toBe(true);
-      } else if (href.startsWith('/')) {
-        const [pathAndQuery = '', frag] = href.split('#');
-        const [path = '', query] = pathAndQuery.split('?');
-        const target = parsePagePath(path);
-        expect(target, href).not.toBeNull();
-        if (!target || target.page === 'simulator') {
-          expect(path, href).toBe('/');
-          expect(frag, href).toBeUndefined();
-          if (query !== undefined) expect(query, `${href}: only the tour deep link`).toBe('tour=1');
-          continue;
-        }
-        expect(query, `${href}: content pages take no query`).toBeUndefined();
-        expect(path, `${href}: canonical form`).toBe(pagePath(target.page, target.lang ?? 'ko'));
-        const expected = 'data-lang-switch' in a.attrs ? other(lang) : lang;
-        expect(target.lang, `${href}: link language`).toBe(expected);
-        if (frag !== undefined) {
-          expect(ids(read(sourceOf(target.page, lang))), href).toContain(frag);
-        }
-      } else {
-        expect(href, 'external links use https').toMatch(/^https:\/\//);
+    checkLinks(html, lang);
+  });
+});
+
+/**
+ * Every link of a page in `lang` goes to an existing page in the same language (the language
+ * switch to the other one), in canonical form, to an existing `#anchor`, or to an https URL.
+ */
+function checkLinks(html: string, lang: Lang): void {
+  const own = new Set(ids(html));
+  for (const a of tags(html, 'a')) {
+    const href = a.attrs['href'] ?? '';
+    if (href.startsWith('#')) {
+      expect(own.has(href.slice(1)), `${href} on this page`).toBe(true);
+    } else if (href.startsWith('/')) {
+      const [pathAndQuery = '', frag] = href.split('#');
+      const [path = '', query] = pathAndQuery.split('?');
+      const target = parsePagePath(path);
+      expect(target, href).not.toBeNull();
+      if (!target) continue;
+      const expected = a.attrs['hreflang'] ?? ('data-lang-switch' in a.attrs ? other(lang) : lang);
+      expect(target.lang, `${href}: link language`).toBe(expected);
+      expect(path, `${href}: canonical form`).toBe(pagePath(target.page, target.lang));
+      if (target.page === 'simulator') {
+        expect(frag, href).toBeUndefined();
+        if (query !== undefined) expect(query, `${href}: only the tour deep link`).toBe('tour=1');
+        continue;
+      }
+      expect(query, `${href}: content pages take no query`).toBeUndefined();
+      if (frag !== undefined) {
+        expect(ids(read(sourceOf(target.page, lang))), href).toContain(frag);
+      }
+    } else {
+      expect(href, 'external links use https').toMatch(/^https:\/\//);
+    }
+  }
+}
+
+describe('all pages as a set', () => {
+  it('have unique titles and descriptions, the simulator included', () => {
+    const titles = ALL_PAGES.map((p) => one(elements(p.html, 'title'), 'title').inner.trim());
+    const descriptions = ALL_PAGES.map((p) =>
+      one(meta(p.html, 'name', 'description'), 'description'),
+    );
+    expect(new Set(titles).size).toBe(ALL_PAGES.length);
+    expect(new Set(descriptions).size).toBe(ALL_PAGES.length);
+  });
+});
+
+// ---------- the simulator's static entries (/ and /en/) ----------
+
+describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
+  const d = DICTIONARIES[lang];
+
+  it('declares its language statically', () => {
+    expect(one(tags(html, 'html'), '<html>').attrs['lang']).toBe(lang);
+  });
+
+  it('has the static title the app sets as document.title', () => {
+    const title = decode(one(elements(html, 'title'), '<title>').inner.trim());
+    expect(title).toBe(d['app.documentTitle']);
+    expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
+  });
+
+  it('has a description of search-result length', () => {
+    const description = one(meta(html, 'name', 'description'), 'description');
+    expect(description.length).toBeGreaterThanOrEqual(50);
+    expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION);
+  });
+
+  it('loads the app script; #app holds only the static header the app replaces', () => {
+    const script = one(tags(html, 'script'), '<script>');
+    expect(script.attrs).toMatchObject({ type: 'module', src: '/src/main.ts' });
+    const app = outerElement(html, (t) => t.name === 'div' && t.attrs['id'] === 'app');
+    const head = outerElement(app.inner, (t) => t.name === 'header');
+    expect(head.attrs['class']).toBe('app-header app-static-head');
+    expect(app.inner.replace(head.outer, '').trim()).toBe('');
+  });
+
+  it('has exactly one static <h1>, the app title, before any other heading', () => {
+    const h1 = one(elements(html, 'h1'), '<h1>');
+    expect(h1.attrs['data-i18n']).toBe('app.title');
+    expect(textOf(h1.inner)).toBe(d['app.title']);
+    expect(html.search(/<h1[\s>]/)).toBeLessThan(html.search(/<h[2-6][\s>]/));
+    const head = outerElement(html, (t) => t.name === 'header');
+    expect(head.inner).toContain('<h1');
+  });
+
+  it('links the other language statically, for crawlers that do not run JavaScript', () => {
+    const sw = one(
+      tags(html, 'a').filter((a) => 'data-lang-switch' in a.attrs),
+      'language link',
+    );
+    expect(sw.attrs).toMatchObject({
+      href: pagePath('simulator', other(lang)),
+      hreflang: other(lang),
+      lang: other(lang),
+      'data-i18n': 'lang.switch',
+    });
+  });
+
+  it('binds every piece of static text to a message key, so the in-place switch translates it', () => {
+    const regions = [
+      outerElement(html, (t) => t.attrs['class'] === 'app-header app-static-head'),
+      outerElement(html, (t) => t.attrs['id'] === 'intro'),
+      outerElement(html, (t) => t.attrs['id'] === 'faq'),
+      outerElement(html, (t) => t.name === 'footer'),
+    ];
+    for (const r of regions) {
+      for (const { text, ancestors } of textNodes(r.outer)) {
+        // Footer links are rebuilt from FOOTER_LINKS (checked against footerItems below).
+        const bound = ancestors.some((a) => 'data-i18n' in a.attrs || 'data-footer' in a.attrs);
+        expect(bound, `unbound text “${text}”`).toBe(true);
+      }
+    }
+  });
+
+  it('uses the same message keys in the same order as the other language’s page', () => {
+    const keysOf = (src: string): string[] =>
+      tags(src).flatMap((t) =>
+        (['data-i18n', 'data-i18n-aria', 'data-i18n-title'] as const)
+          .filter((a) => a in t.attrs)
+          .map((a) => `${a}=${t.attrs[a] ?? ''}`),
+      );
+    expect(keysOf(html)).toEqual(keysOf(read(appSourceOf(other(lang)))));
+  });
+
+  it('shows every intro and FAQ message exactly once', () => {
+    const used = tags(html)
+      .map((t) => t.attrs['data-i18n'])
+      .filter((k): k is string => k !== undefined && /^(intro|faq)\./.test(k));
+    const defined = Object.keys(d).filter((k) => /^(intro|faq)\./.test(k));
+    expect([...used].sort()).toEqual([...defined].sort());
+  });
+
+  it('puts the intro, the FAQ and the footer after #app, outside it', () => {
+    const at = (needle: string): number => {
+      const i = html.indexOf(needle);
+      expect(i, needle).toBeGreaterThan(0);
+      return i;
+    };
+    const app = outerElement(html, (t) => t.name === 'div' && t.attrs['id'] === 'app').end;
+    const intro = at('id="intro"');
+    const faq = at('id="faq"');
+    const footer = at('<footer class="site-footer"');
+    expect(app).toBeLessThan(intro);
+    expect(intro).toBeLessThan(faq);
+    expect(faq).toBeLessThan(footer);
+    expect(tags(html, 'footer')).toHaveLength(1);
+    const all = ids(html);
+    expect(new Set(all).size, 'duplicate ids').toBe(all.length);
+  });
+
+  it('answers what, how and what you learn, links the docs and the tour, and has a short FAQ', () => {
+    const keys = tags(html)
+      .map((t) => t.attrs['data-i18n'])
+      .filter((k): k is string => k !== undefined);
+    for (const k of [
+      'intro.title',
+      'intro.lead',
+      'intro.howTitle',
+      'intro.learnTitle',
+      'faq.title',
+    ]) {
+      expect(keys).toContain(k);
+    }
+    expect(keys.filter((k) => /^intro\.how\d$/.test(k)).length).toBeGreaterThanOrEqual(3);
+    expect(keys.filter((k) => /^intro\.how\d$/.test(k)).length).toBeLessThanOrEqual(4);
+    const questions = keys.filter((k) => /^faq\.q\d$/.test(k));
+    expect(questions.length).toBeGreaterThanOrEqual(3);
+    expect(questions.length).toBeLessThanOrEqual(5);
+    expect(keys.filter((k) => /^faq\.a\d$/.test(k))).toHaveLength(questions.length);
+
+    const intro = tags(html, 'a').filter((a) => a.attrs['data-page'] !== undefined);
+    expect(intro.map((a) => [a.attrs['data-page'], a.attrs['href']])).toEqual([
+      ['guide', pagePath('guide', lang)],
+      ['model', `${pagePath('model', lang)}#results`],
+      ['parameters', pagePath('parameters', lang)],
+      ['simulator', `${pagePath('simulator', lang)}?tour=1`],
+    ]);
+    for (const a of intro) {
+      const suffix = a.attrs['data-href-suffix'] ?? '';
+      expect(a.attrs['href'], 'href = page path + data-href-suffix').toBe(
+        `${pagePath(a.attrs['data-page'] as PageId, lang)}${suffix}`,
+      );
+    }
+    expect(intro.filter((a) => 'data-tour-start' in a.attrs)).toHaveLength(1);
+    checkLinks(html, lang);
+  });
+
+  it('states only facts the code pins (the number of parameters)', () => {
+    expect(d['intro.how1']).toContain(String(PARAMS.length));
+  });
+});
+
+// ---------- 404 pages ----------
+
+describe.each(NOT_FOUND_PAGES)('$file (not found)', ({ lang, html }) => {
+  it('is a noindex page in its language with a unique short title and no canonical', () => {
+    expect(one(tags(html, 'html'), '<html>').attrs['lang']).toBe(lang);
+    expect(one(meta(html, 'name', 'robots'), 'robots')).toBe('noindex');
+    const title = one(elements(html, 'title'), '<title>').inner.trim();
+    expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
+    const titles = ALL_PAGES.map((p) => one(elements(p.html, 'title'), 'title').inner.trim());
+    expect(titles).not.toContain(title);
+    expect(tags(html, 'link').filter((l) => l.attrs['rel'] === 'canonical')).toHaveLength(0);
+  });
+
+  it('has the site navigation, a link to the other language and links to the main pages', () => {
+    const nav = one(
+      elements(html, 'nav').filter((n) => n.attrs['class'] === 'site-nav'),
+      'site nav',
+    );
+    expect(elements(nav.inner, 'a').map((a) => a.attrs['href'])).toEqual(
+      siteNavItems(lang).map((i) => i.href),
+    );
+    const sw = one(
+      tags(html, 'a').filter((a) => 'data-lang-switch' in a.attrs),
+      'language link',
+    );
+    expect(sw.attrs['href']).toBe(pagePath('simulator', other(lang)));
+    const main = one(elements(html, 'main'), '<main>').inner;
+    const hrefs = tags(main, 'a').map((a) => a.attrs['href']);
+    for (const p of ['simulator', 'guide', 'model', 'parameters', 'about'] as const) {
+      expect(hrefs).toContain(pagePath(p, lang));
+    }
+    expect(hrefs).toContain(pagePath('simulator', other(lang)));
+    checkLinks(html, lang);
+  });
+
+  it('loads the shared stylesheet and script with root-absolute URLs', () => {
+    expect(one(tags(html, 'script'), '<script>').attrs['src']).toBe('/src/pages/site.ts');
+    for (const t of tags(html)) {
+      for (const attr of ['src', 'href']) {
+        const v = t.attrs[attr];
+        if (v !== undefined) expect(v, `${t.name} ${attr}`).toMatch(/^(\/|#|https:\/\/)/);
       }
     }
   });
 });
 
-describe('content pages as a set', () => {
-  it('have unique titles and descriptions', () => {
-    const titles = PAGES.map((p) => one(elements(p.html, 'title'), 'title').inner.trim());
-    const descriptions = PAGES.map((p) => one(meta(p.html, 'name', 'description'), 'description'));
-    expect(new Set(titles).size).toBe(PAGES.length);
-    expect(new Set(descriptions).size).toBe(PAGES.length);
+// ---------- shared shell on every page: i18n-bound text, footer, brand ----------
+
+/** Text of every element bound to a message key, with the binding attribute. */
+function boundTexts(
+  html: string,
+): { key: string; kind: 'text' | 'aria' | 'title'; text: string }[] {
+  const out: { key: string; kind: 'text' | 'aria' | 'title'; text: string }[] = [];
+  for (const t of tags(html)) {
+    const text = t.attrs['data-i18n'];
+    if (text !== undefined) {
+      const close = html.indexOf(`</${t.name}`, t.end);
+      out.push({ key: text, kind: 'text', text: textOf(html.slice(t.end, close)) });
+    }
+    const aria = t.attrs['data-i18n-aria'];
+    if (aria !== undefined)
+      out.push({ key: aria, kind: 'aria', text: t.attrs['aria-label'] ?? '' });
+    const title = t.attrs['data-i18n-title'];
+    if (title !== undefined) out.push({ key: title, kind: 'title', text: t.attrs['title'] ?? '' });
+  }
+  return out;
+}
+
+const norm = (s: string): string => s.replace(/\s+/g, ' ').trim();
+
+describe.each(SHELL_PAGES)('$file shell', ({ page, lang, file, html }) => {
+  const d: Readonly<Record<string, string>> = DICTIONARIES[lang];
+
+  it('repeats the dictionary text exactly wherever text is bound to a message key', () => {
+    const bound = boundTexts(html);
+    expect(bound.length).toBeGreaterThan(5);
+    for (const b of bound) {
+      expect(Object.hasOwn(d, b.key), `unknown key ${b.key}`).toBe(true);
+      expect(b.text, `${b.kind} ${b.key}`).toBe(norm(d[b.key] ?? ''));
+    }
+  });
+
+  it('has the shared footer: disclaimer, links, version and notes', () => {
+    const footer = one(elements(html, 'footer'), '<footer>');
+    expect(one(tags(html, 'footer'), 'footer').attrs['class']).toBe('site-footer');
+    const list = one(
+      elements(footer.inner, 'ul').filter((u) => u.attrs['class'] === 'footer-links'),
+      'ul.footer-links',
+    );
+    const links = elements(list.inner, 'a').map((a) => ({
+      id: a.attrs['data-footer'],
+      href: a.attrs['href'],
+      label: textOf(a.inner),
+      rel: a.attrs['rel'] ?? null,
+    }));
+    expect(links).toEqual(
+      footerItems(lang).map(({ id, href, label, rel }) => ({ id, href, label, rel })),
+    );
+    const keys = boundTexts(footer.inner).map((b) => b.key);
+    for (const k of ['footer.disclaimer', 'footer.local', 'footer.copyright', 'version.footer']) {
+      expect(keys).toContain(k);
+    }
+    const version = one(
+      tags(footer.inner, 'a').filter((a) => a.attrs['class'] === 'version-footer'),
+      'a.version-footer',
+    );
+    expect(version.attrs['href']).toBe(RELEASES_URL);
+    expect(tags(footer.inner, 'span').filter((x) => 'data-app-version' in x.attrs)).toHaveLength(1);
+    expect(textOf(footer.inner)).not.toMatch(/추적 없음|no tracking/i);
+  });
+
+  it('has the static head every page shares; the generated SEO tags are not hand-written', () => {
+    expect(meta(html, 'name', 'viewport')).toHaveLength(1);
+    expect(meta(html, 'name', 'theme-color')).toHaveLength(2);
+    const links = tags(html, 'link');
+    const rels = (rel: string): Tag[] => links.filter((l) => l.attrs['rel'] === rel);
+    expect(one(rels('icon'), 'icon').attrs['href']).toBe('/favicon.svg');
+    expect(one(rels('apple-touch-icon'), 'apple-touch-icon').attrs['href']).toBe(
+      '/apple-touch-icon.png',
+    );
+    expect(one(rels('manifest'), 'manifest').attrs['href']).toBe('/site.webmanifest');
+    // canonical, hreflang, og:*, twitter:* and JSON-LD are generated (vite.seo.ts, tests/seo.test.ts)
+    expect(rels('canonical')).toHaveLength(0);
+    expect(rels('alternate')).toHaveLength(0);
+    for (const t of tags(html, 'meta')) {
+      expect(t.attrs['property'] ?? '', file).not.toMatch(/^og:/);
+      expect(t.attrs['name'] ?? '', file).not.toMatch(/^twitter:/);
+    }
+  });
+
+  it('names the site consistently', () => {
+    if (page !== 'simulator') {
+      const brand = one(
+        elements(html, 'a').filter((a) => a.attrs['class'] === 'site-brand'),
+        'brand',
+      );
+      expect(brand.attrs['href']).toBe(pagePath('simulator', lang));
+      expect(textOf(brand.inner)).toBe(d['app.shortTitle']);
+    }
+  });
+});
+
+// ---------- license pages ----------
+
+describe.each(LANGS)('license page (%s)', (lang) => {
+  const html = read(sourceOf('license', lang));
+  // The HTML parser drops one newline right after <pre> (Prettier puts the text on its own line).
+  const pre = (id: string): string =>
+    decode(
+      one(
+        elements(html, 'pre').filter((p) => p.attrs['id'] === id),
+        id,
+      ).inner.replace(/^\n/, ''),
+    );
+  const file = (rel: string): string => read(rel).replace(/\r\n/g, '\n').trimEnd();
+
+  it('quotes the MIT License exactly as in LICENSE', () => {
+    expect(pre('mit-text')).toBe(file('LICENSE'));
+  });
+
+  it('quotes the Pretendard license exactly as shipped with the font', () => {
+    expect(pre('ofl-text')).toBe(file('src/assets/fonts/pretendard/LICENSE.txt'));
+    expect(textOf(html)).toContain('SIL Open Font License');
+    expect(textOf(html)).toContain(
+      "Copyright (c) 2021, Kil Hyung-jin, with Reserved Font Name 'Pretendard'.",
+    );
+  });
+
+  it('ships no runtime dependency that would need a notice', () => {
+    const pkg = JSON.parse(read('package.json')) as Record<string, unknown>;
+    expect(pkg['dependencies'] ?? {}).toEqual({});
+  });
+});
+
+// ---------- privacy pages: every stored key is disclosed ----------
+
+/** Every `'trexsim.*'` string literal in src/: the site's localStorage/sessionStorage keys. */
+function storageKeys(): string[] {
+  const keys = new Set<string>();
+  const walk = (dir: string): void => {
+    for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(rel);
+      else if (/\.ts$/.test(e.name)) {
+        for (const m of read(rel).matchAll(/['"`](trexsim\.[\w.-]+)['"`]/g)) keys.add(m[1] ?? '');
+      }
+    }
+  };
+  walk('src');
+  return [...keys].sort();
+}
+
+describe('privacy pages list the real storage keys', () => {
+  const keys = storageKeys();
+
+  it('finds the storage keys in the code', () => {
+    // trexsim.lang is only deleted (src/pages/legacy-storage.ts); the privacy pages say so.
+    expect(keys).toEqual(['trexsim.lang', 'trexsim.tour']);
+  });
+
+  it.each(LANGS)('%s: names every key and no other', (lang) => {
+    const html = read(sourceOf('privacy', lang));
+    for (const k of keys) expect(html, k).toContain(`<code>${k}</code>`);
+    const named = [...html.matchAll(/<code>(trexsim\.[\w.-]+)<\/code>/g)].map((m) => m[1]);
+    expect([...new Set(named)].sort()).toEqual(keys);
   });
 });
 
@@ -543,7 +989,7 @@ function headersFor(src: string, path: string): Record<string, string[]> {
 
 describe('public/_headers', () => {
   const src = read('public/_headers');
-  const htmlPaths = ['/', ...PAGES.map((p) => pagePath(p.page, p.lang))];
+  const htmlPaths = ALL_PAGES.map((p) => pagePath(p.page, p.lang));
 
   it.each(htmlPaths)('%s gets the CSP and exactly one no-cache, no-transform', (path) => {
     const h = headersFor(src, path);
@@ -559,39 +1005,15 @@ describe('public/_headers', () => {
     expect(headersFor(src, '/version.json')['cache-control']).toEqual(['no-store']);
   });
 
+  it('sends the CSP on unknown paths, where the 404 pages are served', () => {
+    for (const path of ['/nope', '/en/nope', '/a/b/c', '/404.html']) {
+      expect(headersFor(src, path)['content-security-policy'], path).toHaveLength(1);
+    }
+  });
+
   it('keeps long-lived caching on hashed assets', () => {
     expect(headersFor(src, '/assets/site-abc123.js')['cache-control']).toEqual([
       'public, max-age=31536000, immutable',
     ]);
-  });
-});
-
-describe('robots.txt and sitemap.xml', () => {
-  it('allows crawling and points at the sitemap', () => {
-    const robots = read('public/robots.txt');
-    expect(robots).toMatch(/^User-agent: \*$/m);
-    expect(robots).not.toMatch(/^Disallow: \/\s*$/m);
-    expect(robots).toContain(`Sitemap: ${SITE_ORIGIN}/sitemap.xml`);
-  });
-
-  it('lists the app and every page with hreflang alternates', () => {
-    const xml = read('public/sitemap.xml');
-    const urls = elements(xml, 'url').map((u) => ({
-      loc: textOf(one(elements(u.inner, 'loc'), 'loc').inner),
-      alternates: Object.fromEntries(
-        tags(u.inner, 'xhtml:link').map((l) => [l.attrs['hreflang'], l.attrs['href']]),
-      ),
-    }));
-    expect(urls.map((u) => u.loc).sort()).toEqual(
-      [`${SITE_ORIGIN}/`, ...PAGES.map((p) => canonicalUrl(p.page, p.lang))].sort(),
-    );
-    for (const p of PAGES) {
-      const entry = urls.find((u) => u.loc === canonicalUrl(p.page, p.lang));
-      expect(entry?.alternates).toEqual({
-        ko: canonicalUrl(p.page, 'ko'),
-        en: canonicalUrl(p.page, 'en'),
-        'x-default': canonicalUrl(p.page, 'ko'),
-      });
-    }
   });
 });
