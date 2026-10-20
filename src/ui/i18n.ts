@@ -519,7 +519,7 @@ const ko = {
   'free.badge.latch': '큰 상대에 매달리기 가능',
   'free.badge.strike': '정면 공격만',
   'free.badge.note':
-    '무리 버프 규칙은 곧 추가됩니다. 지금은 모든 개체가 자기 종의 특성만으로 싸웁니다. 매달리기는 상대가 3배 이상 무거울 때만 가능합니다.',
+    '모든 개체는 자기 종의 특성으로 싸웁니다. 매달리기는 상대가 3배 이상 무거울 때만 가능합니다.',
   'free.sameSpecies': '같은 종 대결',
   'free.settings': '공통 설정',
   'free.moraleHelp': '끄면 양쪽 모두 사기가 떨어져도 도주하지 않습니다.',
@@ -535,6 +535,34 @@ const ko = {
   'free.replayLater': '자유 대결의 리플레이는 곧 추가됩니다.',
   'free.copyCode': '설정 코드 복사',
   'free.copied': '설정 코드를 복사했습니다.',
+  'free.buff.title': '무리 버프',
+  'free.buff.help':
+    '사회성 종이 한 진영에 2마리 이상일 때만 적용됩니다. 효과마다 따로 끌 수 있습니다.',
+  'free.buff.coordinate': '협동 접근·포위',
+  'free.buff.focus': '공동 목표',
+  'free.buff.groupLatch': '집단 매달리기',
+  'free.buff.morale': '사기 지원·전염',
+  'free.buff.relief': '교대',
+  'free.badge.buffActive': '무리 버프 적용',
+  'free.badge.buffOff': '무리 버프 꺼짐',
+  'free.badge.alone': '개체 단독 행동',
+  'free.rules.summary': '무리 버프 규칙',
+  'free.rules.activation':
+    '켜짐: 사회성 종이고, 효과가 하나 이상 켜져 있고, 도주 중이 아니며, 결속 반경(약 {r} m) 안에 살아 있는 동료가 있을 때. 개체마다 따로 판단합니다.',
+  'free.rules.coordinate':
+    '협동 접근·포위: 자기보다 훨씬 무거운 상대를 뒤쪽에서 나눠 둘러싸고, 상대의 정면 공격 범위를 피합니다. 이때는 서로 방해하지 않습니다.',
+  'free.rules.focus': '공동 목표: 이미 동료가 붙어 싸우는 상대를 우선 노립니다.',
+  'free.rules.groupLatch':
+    '집단 매달리기: 동료가 매달려 있을수록 매달릴 확률이 오르고(최대 2배), 매달린 상대는 방향을 늦게 바꿉니다.',
+  'free.rules.morale':
+    '사기: 주변에 동료가 적보다 많으면 용기가 오르고 적으면 내립니다(최대 ±0.1). 가까운 동료가 쓰러지거나 도주하면 사기가 떨어집니다(한 번에 잃는 양에 상한).',
+  'free.rules.relief': '교대: 매달린 개체가 지치면 기운 있는 동료에게 상대를 넘기고 물러납니다.',
+  'free.rules.deactivation':
+    '꺼짐: 결속 반경 안에 동료가 약 {grace}초 넘게 없거나, 도주하거나 쓰러질 때. 마지막 생존자는 자기 특성만으로 싸웁니다.',
+  'free.rules.loners':
+    '비사회성 종(호랑이, 불곰, 티라노 등)은 수가 많아도 이 효과가 없고, 같은 상대에게 몰리면 서로 방해합니다.',
+  'free.stat.buff': '{side} 무리 버프 활성 (평균)',
+  'free.stat.buffSub': '버프 받은 개체가 있던 시간 (중앙값) {t}',
 } as const;
 
 export type MsgKey = keyof typeof ko;
@@ -1054,7 +1082,7 @@ const en: Dictionary = {
   'free.badge.latch': 'Can latch onto large targets',
   'free.badge.strike': 'Frontal strikes only',
   'free.badge.note':
-    'Pack-buff rules are coming soon; for now every animal fights with its own species’ traits only. Latching needs a target at least 3× heavier.',
+    'Every animal fights with its own species’ traits. Latching needs a target at least 3× heavier.',
   'free.sameSpecies': 'Same-species match-up',
   'free.settings': 'Shared settings',
   'free.moraleHelp': 'When off, neither side flees, however low its morale.',
@@ -1070,6 +1098,35 @@ const en: Dictionary = {
   'free.replayLater': 'Replays for free matchups are coming soon.',
   'free.copyCode': 'Copy settings code',
   'free.copied': 'Settings code copied.',
+  'free.buff.title': 'Pack buff',
+  'free.buff.help':
+    'Applies only to social species with 2 or more on a side. Each effect can be switched off.',
+  'free.buff.coordinate': 'Coordinated approach',
+  'free.buff.focus': 'Shared target',
+  'free.buff.groupLatch': 'Group latching',
+  'free.buff.morale': 'Morale support & contagion',
+  'free.buff.relief': 'Relief',
+  'free.badge.buffActive': 'Pack buff active',
+  'free.badge.buffOff': 'Pack buff off',
+  'free.badge.alone': 'Individuals act alone',
+  'free.rules.summary': 'Pack-buff rules',
+  'free.rules.activation':
+    'On: a social species, at least one effect on, not fleeing, and a living ally within the cohesion radius (about {r} m). Decided for each animal separately.',
+  'free.rules.coordinate':
+    'Coordinated approach: against a much heavier target they spread around its rear and step out of its frontal strike zone, without getting in each other’s way.',
+  'free.rules.focus': 'Shared target: they prefer an opponent their allies are already fighting.',
+  'free.rules.groupLatch':
+    'Group latching: each ally already holding on raises the chance to latch (up to 2×), and a held target turns more slowly.',
+  'free.rules.morale':
+    'Morale: outnumbering the enemy nearby raises courage, being outnumbered lowers it (at most ±0.1). Nearby allies falling or fleeing cost morale (capped per moment).',
+  'free.rules.relief':
+    'Relief: a tired animal holding on hands the target to a fresh ally and pulls back.',
+  'free.rules.deactivation':
+    'Off: no ally within the cohesion radius for more than about {grace} s, or when it flees or falls. A last survivor fights with its own traits only.',
+  'free.rules.loners':
+    'Non-social species (tiger, brown bear, T. rex and others) never get these effects, however many there are, and get in each other’s way at the same target.',
+  'free.stat.buff': '{side} pack buff active (mean)',
+  'free.stat.buffSub': 'Median time with a buffed member: {t}',
 };
 
 export const DICTIONARIES: Readonly<Record<Lang, Dictionary>> = { ko, en };

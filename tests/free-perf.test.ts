@@ -92,15 +92,21 @@ function compare(
 }
 
 describe('free engine cost per agent-step', () => {
-  it('stays within 1.5× the legacy engine at 10 v 100', () => {
+  // Retried: a timing gate, so only a sustained slowdown under full-suite load fails it.
+  it('stays within 1.5× the legacy engine at 10 v 100', { timeout: 120_000, retry: 2 }, () => {
     const r = compare('tiger', 10, 100, 6, 300, 5);
     expect(r.ratio).toBeLessThanOrEqual(1.5);
-  }, 120_000);
+  });
 
-  it('stays within 1.5× per weighted agent-step with the pack buff on (10 T. rex v 100 wolves)', () => {
-    const r = compare('wolf', 10, 100, 6, 300, 5);
-    expect(r.ratio).toBeLessThanOrEqual(1.5);
-  }, 120_000);
+  // Retried: a timing gate, so only a sustained slowdown under full-suite load fails it.
+  it(
+    'stays within 1.5× per weighted agent-step with the pack buff on (10 T. rex v 100 wolves)',
+    { timeout: 120_000, retry: 2 },
+    () => {
+      const r = compare('wolf', 10, 100, 6, 300, 5);
+      expect(r.ratio).toBeLessThanOrEqual(1.5);
+    },
+  );
 
   it.runIf(process.env['BENCH'])(
     'prints the PERFORMANCE.md table',

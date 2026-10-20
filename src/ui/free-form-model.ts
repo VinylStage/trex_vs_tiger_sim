@@ -2,6 +2,7 @@ import {
   defaultSide,
   sanitizeFreeConfig,
   type FreeConfig,
+  type PackBuffEffect,
   type SideConfig,
 } from '../sim/free/config';
 import { FREE_SPECIES_IDS, type FreeSpeciesId } from '../sim/free/species';
@@ -45,4 +46,18 @@ export function withSampling(c: FreeConfig, sampling: string): FreeConfig {
 
 export function withMorale(c: FreeConfig, morale: boolean): FreeConfig {
   return sanitizeFreeConfig({ ...c, morale });
+}
+
+/** Switch one pack-buff effect on or off (design §5.5). */
+export function withBuffSwitch(c: FreeConfig, effect: PackBuffEffect, on: boolean): FreeConfig {
+  return sanitizeFreeConfig({ ...c, packBuff: { ...c.packBuff, [effect]: on } });
+}
+
+/** What the badge of a side says about the pack buff (design §6). */
+export type SideBuffState = 'active' | 'off' | 'alone' | 'single';
+
+export function sideBuffState(c: FreeConfig, i: FreeSideIndex, social: boolean): SideBuffState {
+  if (c.sides[i].count < 2) return 'single';
+  if (!social) return 'alone';
+  return Object.values(c.packBuff).some(Boolean) ? 'active' : 'off';
 }

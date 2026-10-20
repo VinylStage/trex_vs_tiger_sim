@@ -16,12 +16,64 @@ import {
 } from '../src/ui/share-free';
 import type { WorkerRequest, WorkerResponse } from '../src/workers/protocol';
 import {
+  sideBuffState,
+  withBuffSwitch,
   withMorale,
   withNumber,
   withSampling,
   withSideCount,
   withSideSpecies,
 } from '../src/ui/free-form-model';
+
+describe('pack buff in the free form (design §5.5, §6)', () => {
+  const wolvesVsBear = (): FreeConfig =>
+    sanitizeFreeConfig({
+      runs: 12,
+      sides: [
+        { species: 'wolf', count: 6 },
+        { species: 'brownBear', count: 1 },
+      ],
+    });
+
+  it('switches each effect and keeps it through a v3 link', () => {
+    let c = wolvesVsBear();
+    c = withBuffSwitch(c, 'relief', false);
+    c = withBuffSwitch(c, 'focus', false);
+    expect(c.packBuff).toEqual({
+      coordinate: true,
+      focus: false,
+      groupLatch: true,
+      morale: true,
+      relief: false,
+    });
+    expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
+  });
+
+  it('labels each side: buff active, buff off, individuals alone, or a single animal', () => {
+    const c = wolvesVsBear();
+    expect(sideBuffState(c, 0, true)).toBe('active');
+    expect(sideBuffState(c, 1, false)).toBe('single');
+    let off = c;
+    for (const e of ['coordinate', 'focus', 'groupLatch', 'morale', 'relief'] as const) {
+      off = withBuffSwitch(off, e, false);
+    }
+    expect(sideBuffState(off, 0, true)).toBe('off');
+    const tigers = withSideCount(withSideSpecies(c, 0, 'tiger'), 0, 5);
+    expect(sideBuffState(tigers, 0, false)).toBe('alone');
+  });
+
+  it('aggregates buff-active time per side, zero for a non-social side', () => {
+    const c = wolvesVsBear();
+    const { summaries } = runAllFree(c);
+    const agg = aggregateFree(c, summaries);
+    const mean = summaries.reduce((a, s) => a + s.buffA.activeFrac, 0) / summaries.length;
+    expect(agg.buffA.mean.activeFrac).toBeCloseTo(mean, 12);
+    expect(agg.buffA.mean.activeFrac).toBeGreaterThan(0);
+    expect(agg.buffA.anyTimeMedian).toBeGreaterThan(0);
+    expect(agg.buffB.mean.activeFrac).toBe(0);
+    expect(agg.buffB.anyTimeMedian).toBe(0);
+  });
+});
 
 /** Free mode plumbing for the UI: v3 links, TVT3 codes, worker dispatch, aggregation (#50). */
 

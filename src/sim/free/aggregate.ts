@@ -1,6 +1,6 @@
 import { mean, quantileSorted, wilson, type Interval } from '../stats';
 import type { FreeConfig } from './config';
-import { FreeOutcome, type FreeRunSummary } from './engine';
+import { FreeOutcome, emptyBuffStats, type BuffStats, type FreeRunSummary } from './engine';
 
 /**
  * Aggregate of a free-model batch (docs/design/FREE-MATCHUPS.md §6): win shares per side with
@@ -19,6 +19,14 @@ export interface FreeSideStats {
   active: number;
 }
 
+/** Pack-buff activity of one side over a batch (design §6): per-run means and a median. */
+export interface FreeBuffAggregate {
+  /** Mean over runs of each BuffStats field (activeFrac is the mean buffed share of time). */
+  mean: BuffStats;
+  /** Median over runs of the seconds with at least one buffed member. */
+  anyTimeMedian: number;
+}
+
 export interface FreeAggregate {
   n: number;
   aWins: number;
@@ -30,6 +38,8 @@ export interface FreeAggregate {
   duration: { mean: number; p5: number; p50: number; p95: number };
   a: FreeSideStats;
   b: FreeSideStats;
+  buffA: FreeBuffAggregate;
+  buffB: FreeBuffAggregate;
   /** Run whose outcome is the most common one and whose duration is closest to that outcome's median. */
   representativeRun: number;
 }
@@ -75,6 +85,16 @@ export function aggregateFree(
       representativeRun = s.run;
     }
   }
+  const buff = (pick: (s: FreeRunSummary) => BuffStats): FreeBuffAggregate => {
+    const m = emptyBuffStats();
+    for (const s of summaries) {
+      const b = pick(s);
+      for (const k of Object.keys(m) as (keyof BuffStats)[]) m[k] += b[k];
+    }
+    if (n > 0) for (const k of Object.keys(m) as (keyof BuffStats)[]) m[k] /= n;
+    const any = Float64Array.from(summaries, (s) => pick(s).anyTime).sort();
+    return { mean: m, anyTimeMedian: n > 0 ? quantileSorted(any, 0.5) : 0 };
+  };
   return {
     n,
     aWins,
@@ -91,6 +111,8 @@ export function aggregateFree(
     },
     a: side((s) => [s.aAlive, s.aKilled, s.aRouted, s.aActive]),
     b: side((s) => [s.bAlive, s.bKilled, s.bRouted, s.bActive]),
+    buffA: buff((s) => s.buffA),
+    buffB: buff((s) => s.buffB),
     representativeRun,
   };
 }

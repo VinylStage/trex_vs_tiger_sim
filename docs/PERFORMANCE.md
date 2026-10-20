@@ -126,7 +126,7 @@ Even so, with an active buff a free agent-step costs more than a legacy one: per
 
 The non-social rows (tigers) re-measured on the same run: 0.93, 0.61 and 0.44.
 
-**Regression test.** `tests/free-perf.test.ts` runs the 10 v 100 comparison in every `npm test`, once with tigers and once with wolves and the buff on, and fails if the free engine costs more than 1.5× the legacy engine per (weighted) agent-step. Both engines run in the same process, alternately, so machine load affects both alike.
+**Regression test.** `tests/free-perf.test.ts` runs the 10 v 100 comparison in every `npm test`, once with tigers and once with wolves and the buff on, and fails if the free engine costs more than 1.5× the legacy engine per (weighted) agent-step (retried twice, so only a sustained slowdown under full-suite load fails it). Both engines run in the same process, alternately, so machine load affects both alike.
 
 ## Not changed
 
