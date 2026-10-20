@@ -377,7 +377,7 @@ const ko = {
     '체중, 무는 힘, 속도 같은 능력치는 값 하나가 아니라 최소 · 최빈 · 최대로 정한 삼각분포에서 실행마다 새로 뽑습니다. 범위를 바꿔 가정이 결과를 어떻게 움직이는지 확인해 보세요. 바꾼 줄에는 점(•)이 붙고 ↺로 되돌릴 수 있습니다.',
   'tour.run.title': '실행',
   'tour.run.body':
-    '“시뮬레이션 실행”을 누르면 CPU 코어마다 워커 하나씩 일을 나눠 계산합니다. 진행률과 남은 시간이 표시되고 언제든 취소할 수 있습니다.',
+    '“시뮬레이션 실행”을 누르면 여러 워커가 일을 나눠 계산합니다. CPU 코어 하나는 비워 두므로 계산 중에도 화면이 끊기지 않습니다. 진행률과 남은 시간이 표시되고 언제든 취소할 수 있습니다.',
   'tour.results.title': '결과',
   'tour.results.body':
     '실행이 끝나면 이곳에 판정, 요약 카드, 차트(승패 확률, 전투 시간, 생존 수, 민감도)와 전투 재생이 나타납니다. 투어를 마친 뒤 실행해 보세요.',
@@ -834,7 +834,7 @@ const en: Dictionary = {
     'Traits such as body mass, bite force and speed are not single numbers: every run draws them from a triangular distribution set by min · mode · max. Change a range to see how an assumption moves the result. Changed rows get a dot (•), and ↺ resets them.',
   'tour.run.title': 'Run',
   'tour.run.body':
-    'Run simulation splits the work across one Web Worker per CPU core. Progress and the time left are shown, and you can cancel at any time.',
+    'Run simulation splits the work across several Web Workers. One CPU core stays free, so the page stays responsive while it computes. Progress and the time left are shown, and you can cancel at any time.',
   'tour.results.title': 'Results',
   'tour.results.body':
     'When a run finishes, this panel shows the verdict, summary cards, charts (outcome, battle duration, survivors, sensitivity) and an animated battle replay. Run a simulation after the tour to see them.',
