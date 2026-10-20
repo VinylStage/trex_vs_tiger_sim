@@ -32,8 +32,11 @@ Epic: #20.
 | AdSense readiness plan and content framing rules                      | #27      | Done (#36)  |
 | Header logo restored to the original icon                             | —        | Done (#41)  |
 | Rout (flee) rate in the results                                       | #42      | Planned     |
+| Config export/import, result share links, result card                 | #51      | In review   |
 
 ## Later (candidates, not committed)
+
+- Sharing P2 (#51): per-bucket pre-generated OG images (species pair × outcome tier; needs a build-time PNG rasterizer, an owner decision on a dev dependency), QR codes, Kakao SDK, compressed links, challenge links
 
 - Terrain / obstacles (currently pure open field)
 - Species calibration follow-ups (buffalo vs hyenas, first-heavy-death metric M3)

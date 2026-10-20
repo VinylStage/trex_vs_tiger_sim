@@ -20,10 +20,12 @@ A Monte Carlo, agent-based battle simulator: N _Tyrannosaurus rex_ vs M tigers o
   - Spearman sensitivity (tornado chart) of each parameter
 - Animated replay of a single battle with abstract glyphs, an event timeline, skip-to-contact, speeds 0.25×–16× and a reduced-motion overview
 - Share any scenario as a URL; the seed is included, so results reproduce exactly in the same browser engine (and statistically across engines)
+- Export and import settings as a `TVT2-…` code or a `.json` file (previewed before applying)
+- Share a finished result: a `/r/` result page with a snapshot and "run it yourself" check, a story or square result card image, and a Wordle-style emoji text; link previews show the result through a tiny `/r/`-only Pages Function
 - Korean (`/`) and English (`/en/`) UI, plus static guide, model, parameter, about, privacy and license pages in both languages; generated sitemap, robots.txt, llms.txt and structured data
 - Interactive guided tour (header **튜토리얼 / Tutorial** button or `?tour=1`)
 - Release version badge that detects newer deployments and can reload the latest version after clearing this site's cache and storage
-- No backend: every simulation runs in your browser
+- No backend: every simulation runs in your browser (the only server code rewrites link-preview text on `/r/`, [ADR-0006](docs/adr/0006-pages-function-share-previews.md))
 
 ## Quick start
 
@@ -50,6 +52,7 @@ Node: see `.node-version` (24).
 | [docs/SEO.md](docs/SEO.md)                         | URL languages, head tags, sitemap/robots/llms, IndexNow, owner actions    |
 | [docs/PAGES.md](docs/PAGES.md)                     | Static content pages, URL scheme, drift guard                             |
 | [docs/TUTORIAL.md](docs/TUTORIAL.md)               | Guided tour steps, accessibility, deep link                               |
+| [docs/SHARING.md](docs/SHARING.md)                 | Settings codes, result links and page, result card, text share, previews  |
 | [docs/VERSIONING.md](docs/VERSIONING.md)           | Version badge, update detection, cache/storage reset                      |
 | [docs/BRANDING.md](docs/BRANDING.md)               | Title, OG cards, icon set and how to re-render them                       |
 | [docs/ADSENSE.md](docs/ADSENSE.md)                 | AdSense readiness gates, owner actions, checklist                         |

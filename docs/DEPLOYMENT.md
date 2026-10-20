@@ -143,7 +143,7 @@ sequenceDiagram
 
 `public/_headers` is copied to `dist/_headers`, and Pages applies it to every response. Project rule: config files carry no comments, so the explanation lives here.
 
-Syntax: a path pattern starts at column 0, followed by indented `Name: value` lines. A `*` splat matches any characters. When several rules match a request, all of them apply. If the same header is set by two matching rules, the values are joined with a comma. `! Name` removes a header. Limits: 100 rules, 2,000 characters per line. This file uses 7 rules, and its longest line is about 260 characters.
+Syntax: a path pattern starts at column 0, followed by indented `Name: value` lines. A `*` splat matches any characters. When several rules match a request, all of them apply. If the same header is set by two matching rules, the values are joined with a comma. `! Name` removes a header. Limits: 100 rules, 2,000 characters per line. This file uses 9 rules, and its longest line is about 260 characters.
 
 ### Rule `/*` (every response)
 
@@ -201,6 +201,14 @@ Pages redirects `/index.html` to `/`, so the `/` rule is the one that applies in
 
 Details, browser support and the cookie decision are in [VERSIONING.md](VERSIONING.md#response-headers).
 
+### Rules `/r/*` and `/en/r/*` (shared-result pages)
+
+| Header                  | Why                                                                                                                                                                                                                                                             |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `X-Robots-Tag: noindex` | Result pages are per-link snapshots and must not be indexed (the HTML also carries `<meta name="robots" content="noindex">`, and they are not in the sitemap). `/r/` and `/en/r/` also match `/*/`, so they get `no-cache, no-transform` like every other page. |
+
+These paths run the result-preview Pages Function ([below](#pages-function-r-previews)). Because Cloudflare does not promise to apply `_headers` to responses that pass through a Function, the Function sets the same headers itself (`RESULT_HEADERS` in `src/share/result-function.ts`); `tests/result-share.test.ts` fails when the two drift apart.
+
 All other paths keep the Pages default `public, max-age=0, must-revalidate`. That includes the files in `public/` (icons, OG images, the manifest) and the generated `robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, which Pages already serves as `text/plain; charset=utf-8` and `application/xml` (checked on the branch preview), so no `Content-Type` rule is needed.
 
 Unknown paths: the build has a top-level `404.html`, so Pages no longer falls back to `index.html`. It serves the nearest `404.html` (`/en/…` → `en/404.html`) with status 404 and its own `Cache-Control: no-store`. Such a path matches only `/*` (or `/*/` when it ends in a slash), so a slash-less 404 response has no `no-transform`. On the custom domain Bot Fight Mode then injects its inline JavaScript Detections script and the CSP blocks it: one console error on a noindex page, nothing else breaks. A blanket `/*` `no-transform` is deliberately not added, because it would also switch off Cloudflare compression for every asset. Measurements and options: [SEO.md](SEO.md#404-pages).
@@ -217,6 +225,7 @@ flowchart LR
     all --> q{"path?"}
     q -- "/assets/*" --> imm@{ shape: rect, label: "Cache-Control: public, max-age=31536000, immutable" }
     q -- "/ or /index.html or /*/" --> nc@{ shape: rect, label: "Cache-Control: no-cache, no-transform" }
+    q -- "/r/* or /en/r/* (also /*/)" --> rp@{ shape: rect, label: "no-cache, no-transform + X-Robots-Tag: noindex<br/>(Pages Function sets them too)" }
     q -- "/version.json" --> vj@{ shape: rect, label: "Cache-Control: no-store" }
     q -- "/reset/* (also matches /*/)" --> rs@{ shape: rect, label: "Cache-Control: no-cache, no-transform, no-store<br/>Clear-Site-Data: cache, storage" }
     q -- "other existing file" --> def@{ shape: rect, label: "Pages default:<br/>public, max-age=0, must-revalidate" }
@@ -224,11 +233,22 @@ flowchart LR
     imm e1@--> resp@{ shape: dbl-circ, label: "response" }
     nc --> resp
     vj --> resp
+    rp --> resp
     rs --> resp
     def --> resp
     nf --> resp
     e1@{ animate: true }
 ```
+
+## Pages Function (`/r/` previews)
+
+One Pages Function rewrites the link-preview meta tags of shared-result links ([ADR-0006](adr/0006-pages-function-share-previews.md), [SHARING.md](SHARING.md)).
+
+- Source: `functions/r/[[path]].ts` and `functions/en/r/[[path]].ts`, two one-line files that re-export `onResultRequest` from `src/share/result-function.ts`. Pages finds `functions/` in the project root directory and bundles it (relative imports into `src/` included) during the Cloudflare build; the build command (`npm run build`) and output directory (`dist`) stay the same. Keep the Pages **root directory** at the repository root, otherwise `functions/` is not found.
+- `public/_routes.json` (copied to `dist/_routes.json`) limits invocation to `/r`, `/r/*`, `/en/r` and `/en/r/*`. Every other request is a free static-asset request. When `dist/_routes.json` exists Pages uses it instead of generating one.
+- Owner action: in the Pages project, **Settings → Runtime → Fail open / closed** must be **Fail open**, so that if the 100,000 requests/day free quota ever runs out, `/r/` is served as a plain static page instead of error 1027.
+- Local runs: `npm run preview` serves `/r/` without the Function (the page itself works; previews keep the static title). The rewrite logic is unit-tested in Node with a fake `HTMLRewriter`; Wrangler is not needed.
+- Verify after deploy: `curl -s 'https://<host>/r/?r=<link>' | grep og:title` shows the result title; an invalid `r` shows the static title.
 
 ## CSP and the Vite dev server
 
@@ -277,17 +297,17 @@ curl -s https://trex-vs-tiger.vinylims.com/guide/ | grep -c challenge-platform
 
 Limits are from the Cloudflare Pages and Workers limits pages (see [Sources](#sources)) as of 2026-10.
 
-| Resource                     | Free limit                                                     | This project                                                                                                    | Headroom     |
-| ---------------------------- | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| Builds                       | 500 / month                                                    | ~100–150 in a busy month (see the estimate below)                                                               | ≥ 3×         |
-| Concurrent builds            | 1                                                              | Builds queue. Pages skips a queued build that a newer push to the same branch supersedes (changelog 2026-08-11) | n/a          |
-| Build timeout                | 20 min                                                         | Install + `tsc` + `vite build`, typically 1–2 min                                                               | ~10×         |
-| Files per site               | 20,000                                                         | < 150 (17 HTML pages, `_headers`, generated text files, icons, OG images, hashed JS/CSS and font subsets)       | ~100×        |
-| Max file size                | 25 MiB                                                         | Largest file is the JS bundle, tens to hundreds of KiB                                                          | ≫ 100×       |
-| Custom domains               | 100 / project                                                  | 1 (`trex-vs-tiger.vinylims.com`)                                                                                | n/a          |
-| Preview deployments          | Unlimited                                                      | One per branch push                                                                                             | n/a          |
-| Static requests & bandwidth  | Free, unlimited                                                | All traffic                                                                                                     | n/a          |
-| Workers requests (Functions) | 100,000 / day, 10 ms CPU per request (only if Functions exist) | **0**: no `functions/`, no `_worker.js`                                                                         | Not consumed |
+| Resource                     | Free limit                                                     | This project                                                                                                              | Headroom                                        |
+| ---------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Builds                       | 500 / month                                                    | ~100–150 in a busy month (see the estimate below)                                                                         | ≥ 3×                                            |
+| Concurrent builds            | 1                                                              | Builds queue. Pages skips a queued build that a newer push to the same branch supersedes (changelog 2026-08-11)           | n/a                                             |
+| Build timeout                | 20 min                                                         | Install + `tsc` + `vite build`, typically 1–2 min                                                                         | ~10×                                            |
+| Files per site               | 20,000                                                         | < 150 (19 HTML pages, `_headers`, `_routes.json`, generated text files, icons, OG images, hashed JS/CSS and font subsets) | ~100×                                           |
+| Max file size                | 25 MiB                                                         | Largest file is the JS bundle, tens to hundreds of KiB                                                                    | ≫ 100×                                          |
+| Custom domains               | 100 / project                                                  | 1 (`trex-vs-tiger.vinylims.com`)                                                                                          | n/a                                             |
+| Preview deployments          | Unlimited                                                      | One per branch push                                                                                                       | n/a                                             |
+| Static requests & bandwidth  | Free, unlimited                                                | All traffic                                                                                                               | n/a                                             |
+| Workers requests (Functions) | 100,000 / day, 10 ms CPU per request (only if Functions exist) | Only `/r/` and `/en/r/` page views and crawler fetches (`_routes.json`); text work under 1 ms each                        | Shared with any Worker; fail open on exhaustion |
 
 **Build estimate for a busy month.** Every push to any branch triggers a build.
 
