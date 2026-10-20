@@ -31,6 +31,9 @@ import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
 import { heavyLengthForRadius } from './replay/glyphs';
 import { configFromHash, hashFromConfig } from './share';
+import { copyText } from '../share/share-ui';
+import { createConfigTransfer } from './config-transfer';
+import { createReproduceCheck, createResultShare } from './result-share';
 import { pageLang, switchedAppUrl } from '../pages/routes';
 import { logoAttrs } from '../pages/site-header';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
@@ -77,6 +80,9 @@ export function startApp(root: HTMLElement): void {
   document.title = t('app.documentTitle');
   const pool = new SimPool();
   let config: ScenarioConfig = configFromHash(location.hash) ?? defaultConfig();
+  // "Run it yourself" links carry a result snapshot (`&chk=`); read it before the URL is rewritten.
+  const repro = createReproduceCheck(location.hash, config);
+  const resultShare = createResultShare();
   let result: RunResult | null = null;
   let status: Message | null = null;
   let replayState: ReplayState | null = null;
@@ -120,10 +126,8 @@ export function startApp(root: HTMLElement): void {
   shareBtn.addEventListener('click', () => {
     writeUrl();
     const url = location.href;
-    const done = (): void => showToast(t('share.copied'));
-    const fail = (): void => showToast(t('share.failed'));
-    if (navigator.clipboard?.writeText) navigator.clipboard.writeText(url).then(done, fail);
-    else fail();
+    // Without clipboard access the link is shown in a selected field instead (src/share/share-ui.ts).
+    void copyText(url, getLang()).then((ok) => ok && showToast(t('share.copied')));
   });
 
   // index.html and en/index.html ship a static header inside #app with the page's only <h1> and
@@ -223,8 +227,19 @@ export function startApp(root: HTMLElement): void {
       h('div', { class: 'run-buttons' }, runBtn, cancelBtn),
       progress,
       statusEl,
+      repro.el,
       srProgress,
     ),
+    createConfigTransfer({
+      getConfig: () => config,
+      applyConfig: (c) => {
+        config = c;
+        form.setConfig(c);
+        writeUrl();
+        updateStale();
+        syncNames();
+      },
+    }),
   );
 
   // ---------- results panel ----------
@@ -278,6 +293,7 @@ export function startApp(root: HTMLElement): void {
       verdictEl,
       basisEl,
       badgeSlot,
+      resultShare.el,
     ),
     cardsEl,
     h(
@@ -392,6 +408,7 @@ export function startApp(root: HTMLElement): void {
       result = { config: cfg, agg, summaries, elapsedMs: performance.now() - t0 };
       setStatus(null);
       renderResults();
+      repro.afterRun(cfg, agg);
       void loadReplay(agg.representativeRun, 'representative');
       // Single-column layout: bring the freshly computed results into view.
       if (matchMedia('(max-width: 999px)').matches) {
@@ -494,6 +511,7 @@ export function startApp(root: HTMLElement): void {
     emptyEl.hidden = result !== null;
     resultsBody.hidden = result === null;
     updateStale();
+    resultShare.update(result);
     if (!result) return;
     const { agg, config: cfg } = result;
     syncNames();
