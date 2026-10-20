@@ -1,6 +1,6 @@
-import type { ScenarioConfig } from './config';
+import type { SamplingMethod, ScenarioConfig } from './config';
 import { triangularInv } from './distributions';
-import { PARAMS } from './params';
+import { PARAMS, type Triangular } from './params';
 import { Rng, deriveSeed } from './rng';
 
 const DESIGN_SALT = 1;
@@ -15,15 +15,26 @@ export interface Design {
   values: Float64Array;
 }
 
-export function buildDesign(config: ScenarioConfig): Design {
-  const n = config.runs;
-  const dims = PARAMS.length;
+/**
+ * Design over any ordered list of ranges: one column per range, generated column by column from
+ * one stream seeded with `deriveSeed(seed, 0, 1)`. `buildDesign` (legacy) and the free model's
+ * design (`src/sim/free/config.ts`) both use it; the loop and the order of random draws are
+ * exactly those of the original `buildDesign`, so legacy design matrices are unchanged.
+ */
+export function buildDesignFrom(
+  ranges: readonly Triangular[],
+  runs: number,
+  seed: number,
+  sampling: SamplingMethod,
+): Design {
+  const n = runs;
+  const dims = ranges.length;
   const values = new Float64Array(n * dims);
-  const rng = new Rng(deriveSeed(config.seed, 0, DESIGN_SALT));
+  const rng = new Rng(deriveSeed(seed, 0, DESIGN_SALT));
   const perm = new Int32Array(n);
   for (let j = 0; j < dims; j++) {
-    const range = config.params[(PARAMS[j] as (typeof PARAMS)[number]).id];
-    if (config.sampling === 'lhs') {
+    const range = ranges[j] as Triangular;
+    if (sampling === 'lhs') {
       for (let i = 0; i < n; i++) perm[i] = i;
       for (let i = n - 1; i > 0; i--) {
         const k = rng.int(i + 1);
@@ -40,6 +51,16 @@ export function buildDesign(config: ScenarioConfig): Design {
     }
   }
   return { runs: n, dims, values };
+}
+
+/** Legacy design: the 22 role parameters in PARAMS order. */
+export function buildDesign(config: ScenarioConfig): Design {
+  return buildDesignFrom(
+    PARAMS.map((p) => config.params[p.id]),
+    config.runs,
+    config.seed,
+    config.sampling,
+  );
 }
 
 export function designRow(design: Design, run: number): Float64Array {
