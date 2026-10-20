@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.1...trex-vs-tiger-sim-v0.2.2) (2026-10-20)
+
+
+### Features
+
+* **species:** add Homo erectus and woolly mammoth ([#54](https://github.com/VinylStage/trex_vs_tiger_sim/issues/54)) ([f7cca58](https://github.com/VinylStage/trex_vs_tiger_sim/commit/f7cca5834ce5919ab4ec5dc0e7eac8f69b1020ed))
+
 ## [0.2.1](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.0...trex-vs-tiger-sim-v0.2.1) (2026-10-20)
 
 
