@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.4...trex-vs-tiger-sim-v0.2.5) (2026-10-20)
+
+
+### Features
+
+* **sim:** free config, sanitizer and design matrix ([#77](https://github.com/VinylStage/trex_vs_tiger_sim/issues/77)) ([9ef0d23](https://github.com/VinylStage/trex_vs_tiger_sim/commit/9ef0d238797388aa9e2ae41f84b51f6680344ac9))
+
 ## [0.2.4](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.3...trex-vs-tiger-sim-v0.2.4) (2026-10-20)
 
 
