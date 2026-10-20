@@ -11,7 +11,7 @@ A Monte Carlo, agent-based battle simulator: N _Tyrannosaurus rex_ vs M tigers o
 
 ## Features
 
-- Pick the species on each side (T. rex, elephant, buffalo, brown bear vs tiger, lion, wolf, hyena) or a matchup preset, then set the counts, the number of Monte Carlo runs, the seed, the arena size, the time limit and the pack tactic and morale options yourself
+- Pick the species on each side (heavy: T. rex, elephant, buffalo, brown bear, woolly mammoth, Homo erectus; pack: tiger, lion, wolf, hyena, Homo erectus) or a matchup preset, then set the counts, the number of Monte Carlo runs, the seed, the arena size, the time limit and the pack tactic and morale options yourself
 - Edit every model parameter's `(min, mode, max)` range
 - Latin Hypercube or plain random sampling, plus per-individual variation
 - Results:

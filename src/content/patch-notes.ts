@@ -59,6 +59,41 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.10',
+    date: '2026-10-20',
+    title: {
+      ko: '무대 뒤 점검 주간 🔍',
+      en: 'Backstage maintenance week 🔍',
+    },
+    prs: [91, 92],
+    items: [
+      {
+        cat: 'fixed',
+        refs: [66],
+        ko: '컴퓨터가 바쁠 때 시간 초과로 가끔 실패하던 테스트를 진정시켰습니다. 무거운 시뮬레이션 테스트도 이제 느긋하게 30초까지 기다려 줘요.',
+        en: 'Calmed down the tests that sometimes timed out when the machine was busy. Heavy simulation tests now get a relaxed 30 seconds.',
+      },
+      {
+        cat: 'improved',
+        refs: [66],
+        ko: '모델 설명의 불곰 · 늑대 메모를 ‘부상 없이’로 순하게 다듬고, 과격한 단어 감시를 모든 페이지와 앱 · 공유 문구까지 넓혔습니다.',
+        en: 'Softened the brown bear and wolf note on the model page to “without injury”, and widened the graphic-word guard to every page plus the app and sharing texts.',
+      },
+      {
+        cat: 'improved',
+        refs: [60],
+        ko: 'README, 아키텍처, 로드맵 문서를 실제 코드에 맞춰 다시 맞췄고, 앞으로 어긋나면 테스트가 바로 알려 줍니다.',
+        en: 'README, architecture and roadmap docs are back in sync with the code, and a new test speaks up the moment they drift again.',
+      },
+      {
+        cat: 'improved',
+        refs: [61],
+        ko: '시간 표시, 캐시 · 저장소 초기화, 워커 작업 분배에 테스트를 더 붙였습니다. 눈에 띄진 않지만 든든해요.',
+        en: 'More tests for duration formatting, the cache and storage reset, and how the worker hands out jobs. Invisible, but reassuring.',
+      },
+    ],
+  },
+  {
     version: '0.2.9',
     date: '2026-10-20',
     title: {

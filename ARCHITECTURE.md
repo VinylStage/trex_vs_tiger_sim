@@ -90,7 +90,7 @@ flowchart LR
     subgraph SIM["src/sim (pure, DOM-free)"]
         config@{ shape: doc, label: "config.ts<br/>schema + clamp" }
         params@{ shape: doc, label: "params.ts<br/>heavy.* / pack.* table" }
-        species@{ shape: doc, label: "species.ts<br/>8-species registry" }
+        species@{ shape: doc, label: "species.ts<br/>roster: 6 heavy, 5 pack" }
         events@{ shape: rect, label: "events.ts<br/>replay event log" }
         rng@{ shape: rect, label: "rng.ts<br/>sfc32 + splitmix" }
         sampling@{ shape: rect, label: "sampling.ts<br/>LHS / MC design" }
@@ -109,7 +109,7 @@ flowchart LR
     app --> helpers
     pool & worker --> protocol
     worker --> mc
-    app --> mc
+    pool --> mc
     mc --> sampling & engine & stats
     sampling --> rng & params
     engine --> spatial & rng & events
@@ -164,10 +164,14 @@ sequenceDiagram
     end
     Worker-->>Pool: progress + RunSummary[]
     Pool-->>UI: progress (%, ETA)
-    Pool-->>UI: all RunSummary[]
-    UI->>UI: aggregate (win prob + Wilson CI, histograms, Spearman)
-    UI->>Worker: replay(run k, trace=true)
-    Worker-->>UI: frames
+    Pool->>Worker: aggregate(config, packed RunSummary[] as a transferred Float64Array)
+    Worker->>Worker: aggregate (win prob + Wilson CI, histograms, Spearman)
+    Worker-->>Pool: AggregateResult
+    Pool-->>UI: AggregateResult
+    UI->>Pool: replay(run k)
+    Pool->>Worker: replay(run k, trace=true) on a dedicated replay worker
+    Worker-->>Pool: trace + event log (transferred buffers)
+    Pool-->>UI: trace
     UI-->>User: charts + animated replay
 ```
 
@@ -189,11 +193,13 @@ Two-level uncertainty:
 
 Fixed time step `dt = 0.1 s`; open square arena; battle ends when one side is eliminated (dead or routed) or at `maxTime` (draw).
 
-### Tiger behaviour state machine
+### Pack animal behaviour state machine
+
+Applies to every pack species (tiger, lion, wolf, hyena, Homo erectus); the per-species numbers come from `species.ts`.
 
 ```mermaid
 ---
-title: Tiger states
+title: Pack animal states
 ---
 stateDiagram-v2
     [*] --> Approach
@@ -212,7 +218,9 @@ stateDiagram-v2
     Dead --> [*]
 ```
 
-### T-Rex behaviour
+### Heavy animal behaviour
+
+Applies to every heavy species (T. rex, elephant, buffalo, brown bear, woolly mammoth, Homo erectus). "Tiger" below stands for any pack animal.
 
 ```mermaid
 flowchart TD
