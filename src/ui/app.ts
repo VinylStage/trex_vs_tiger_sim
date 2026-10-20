@@ -780,9 +780,9 @@ export function startApp(root: HTMLElement): void {
     form.refresh();
     renderStatus();
     renderProgress();
-    renderResults();
+    // Charts repaint once, after the new text is on screen (not twice in the same task).
+    renderResults({ deferCharts: true });
     replayView.refresh();
-    redrawAllCharts();
   });
 
   window.addEventListener('hashchange', () => {
