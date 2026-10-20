@@ -8,6 +8,7 @@
 > - 모든 기본값에 근거 수준(L 문헌, D 유도, S 추정, U 미검증)을 달았고, 시뮬레이터의 파라미터 표에도 표시합니다. 행동에 관한 값은 모든 종에서 추정입니다.
 > - 종 상수 두 개: `hide`(무리에게 받는 피해 배율, 코끼리 0.3, 물소 · 불곰 0.5, 티라노사우루스 1)와 `radius`(무리 동물 몸 반경, 호랑이 · 사자 0.8 m, 하이에나 0.6 m, 늑대 0.5 m). 난수를 쓰지 않고, 티라노사우루스 · 호랑이에서는 정확히 항등이라 예전 공유 링크(v1)가 비트 단위로 같은 결과를 냅니다.
 > - 야생에서 관찰된 대결(코끼리–사자, 물소–사자, 물소–하이에나, 불곰–늑대, 불곰–호랑이)에는 배지가 붙고, 티라노사우루스와의 대결은 “서로 만난 적 없는 종”으로 표시됩니다.
+> - 자유 대결 모델(#50)용으로 모든 종이 같은 개체 특성 20개와, 사회성 종(사자 · 늑대 · 하이에나 · 호모 에렉투스)만 쓰는 무리 버프 특성 6개를 갖습니다(§11). 기존 역할에 있던 값은 기존 등록부에서 그대로 읽고, 새 값에는 근거 수준과 범위를 달았습니다. 기존 엔진과 v1/v2 결과는 바뀌지 않습니다.
 
 Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#species`, `/en/parameters/#species`) repeat the presets and are checked against the registry by `tests/pages.test.ts`. The research behind this document, including the phase-2 and deferred species and the change plan, is in [research/SPECIES.md](research/SPECIES.md).
 
@@ -23,6 +24,7 @@ Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#specie
 8. [What the engine cannot express](#8-what-the-engine-cannot-express)
 9. [Content rules](#9-content-rules)
 10. [References](#10-references)
+11. [Free-model traits (#50)](#11-free-model-traits-50)
 
 ## 1. Roles and parameters
 
@@ -528,3 +530,69 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 **Policy**
 
 - **[Google Publisher Policies]** <https://support.google.com/publisherpolicies/answer/10502938> [Abs]
+
+## 11. Free-model traits (#50)
+
+The free model ([design](design/FREE-MATCHUPS.md), [ADR-0007](adr/0007-symmetric-sides.md)) lets any species stand on either side, so every species needs one full set of individual traits. Source of truth: `src/sim/free/species.ts` and `src/sim/free/traits.ts`. Nothing in this section changes the legacy registry or any v1/v2 result: the legacy engine never reads these modules (`tests/free-species.test.ts`).
+
+### 11.1 Mapping and flags
+
+- **Mapped traits are read, not copied.** Every trait a legacy role already had comes from that role's preset at run time: heavy `mass`, `bodyRadius`, `turnRate`, `speed` → `sprintSpeed`, `bite*` → `strike*`, `shakeRate`; pack `mass`, `sprintSpeed`, `cruiseSpeed`, `sprintEndurance`, `recoveryTime`, `latchChance`, `latchEndurance`, `dps` → `latchDps`, `bleed`, `morale`, `moraleLoss`, and the constant `radius` → a fixed `bodyRadius` triangle. Their evidence tags carry over. The constants `hide` and `intimidation` carry over for former heavies and are 1 for former pack species.
+- **_Homo erectus_** merges its two presets: body (`bodyRadius`), `turnRate`, strike and shake-off from the heavy row; running, stamina, grip (latch), bleed and morale from the pack row. Mass is identical in both. `sprintSpeed` uses the pack row (6–9 m/s, a sprint with stamina) rather than the heavy `speed` (a speed held over a whole fight).
+- **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_. Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
+- **`canLatch`** (design §4.2): tiger, lion, wolf, hyena, _Homo erectus_. The others fight with strikes only.
+- **Inactive traits** (latch traits of a species that cannot latch, pack-buff traits of a non-social species) hold neutral values (0, or 1 s for `latchEndurance`) with no evidence tag. They only keep the design matrix layout independent of the species.
+- **Bounds** are shared by all species in the free model (`TRAIT_BOUNDS`): the union of the legacy heavy and pack bounds, with strike reach widened down to 0.3 m. The legacy per-species bounds stay as they are for the legacy engine.
+
+### 11.2 New traits of former heavies
+
+Former heavies never ran out of stamina, never fled and caused no bleeding. All new values are **S** except where marked.
+
+| Species        | `cruiseSpeed` (m/s)     | `sprintEndurance` (s) | `recoveryTime` (s) | `bleed` (1/s)         | `morale`          | `moraleLoss`      |
+| -------------- | ----------------------- | --------------------- | ------------------ | --------------------- | ----------------- | ----------------- |
+| _T. rex_       | 0.8 / 1.28 / 1.64 **L** | 20 / 60 / 180         | 60 / 120 / 300     | 0.002 / 0.004 / 0.008 | 0.7 / 0.85 / 0.95 | 0.02 / 0.05 / 0.1 |
+| Elephant       | 1 / 1.3 / 2             | 20 / 60 / 180         | 60 / 120 / 300     | 0 / 0.001 / 0.003     | 0.65 / 0.8 / 0.95 | 0.02 / 0.05 / 0.1 |
+| Buffalo        | 0.8 / 1.2 / 2           | 30 / 60 / 180         | 45 / 90 / 180      | 0.001 / 0.002 / 0.005 | 0.6 / 0.75 / 0.9  | 0.02 / 0.05 / 0.1 |
+| Brown bear     | 0.6 / 1.2 / 1.8         | 20 / 45 / 120         | 45 / 90 / 180      | 0.001 / 0.003 / 0.006 | 0.55 / 0.75 / 0.9 | 0.02 / 0.05 / 0.1 |
+| Woolly mammoth | 1 / 1.3 / 2 **D**       | 20 / 60 / 180         | 60 / 120 / 300     | 0 / 0.001 / 0.003     | 0.65 / 0.8 / 0.95 | 0.02 / 0.05 / 0.1 |
+
+Rationale:
+
+- **`cruiseSpeed`.** _T. rex_: preferred walking speed 1.28 m/s, range 0.80–1.64 m/s, from tail natural frequency [van Bijlert 2021, MODEL] (**L**). Elephant: a generic elephant preferred walking speed of about 1.26 m/s and a change to a bouncier gait in African elephants at about 2.0 m/s (Ren & Hutchinson, quoted by a 2025 paper; not read) bracket the range; Hutchinson 2006 recorded walking from 0.40 m/s [Abs] (**S**). Mammoth: elephant analogue, as its `speed` row (**D**). Brown bear: collared Yellowstone grizzlies travel at about 0.6 m/s on average, and the energetically optimal speed measured on a treadmill is about 1.17 m/s (4.2 km/h) (Washington State University study, press summaries; not read) (**S**). Buffalo: no measurement; ordinary bovid walking speeds (**S**).
+- **`sprintEndurance`, `recoveryTime`.** No data for a sustained fight; large animals tire and recover more slowly than the carnivores (8–150 s, 30–180 s). Wide ranges on purpose.
+- **`bleed`.** The coefficient for wounds **this species inflicts** (design §4.3). Deep bites (_T. rex_) at the top of the legacy pack range (0–0.008); claws (bear) as the wolf; horn punctures (buffalo) as the tiger; blunt tusk and trample blows (elephant, mammoth) lowest.
+- **`morale`.** High, so large animals flee mainly when badly wounded (owner decision D5). Adult elephants mob lions and are "considered invulnerable to predation" [WP: African bush elephant]; buffalo drive off or kill lions [WP: African buffalo]; bears dominate wolves at carcasses [WP: Brown bear]. No measurement exists; **S**.
+- **`moraleLoss`.** Used only by social species (pack-buff contagion, design §5.2); none of these species is social, so the value is a placeholder kept for completeness.
+
+### 11.3 New traits of former pack species
+
+Former pack animals had no heading, no strike and could not be ridden. All values are **S** except strike force.
+
+| Species       | `turnRate` (deg/s) | `strikeForce` (kN)      | `strikeLethality` (HP/kN) | `strikeInterval` (s) | `strikeReach` (m) | `strikeArc` (deg) | `strikeAccuracy`  | `shakeRate` (1/s) |
+| ------------- | ------------------ | ----------------------- | ------------------------- | -------------------- | ----------------- | ----------------- | ----------------- | ----------------- |
+| Tiger         | 90 / 180 / 300     | 1.2 / 1.35 / 1.5 **D**  | 4 / 8 / 12                | 1 / 1.5 / 2.5        | 1.1 / 1.4 / 1.7   | 30 / 45 / 70      | 0.3 / 0.45 / 0.6  | 0.1 / 0.25 / 0.5  |
+| Lion          | 90 / 180 / 300     | 1.2 / 1.6 / 1.8 **D**   | 4 / 8 / 12                | 1 / 1.5 / 2.5        | 1.1 / 1.4 / 1.7   | 30 / 45 / 70      | 0.3 / 0.45 / 0.6  | 0.1 / 0.25 / 0.5  |
+| Gray wolf     | 120 / 240 / 360    | 0.4 / 0.55 / 0.75 **D** | 4 / 8 / 12                | 1 / 1.5 / 2.5        | 0.7 / 0.9 / 1.1   | 25 / 40 / 60      | 0.25 / 0.4 / 0.55 | 0.15 / 0.3 / 0.6  |
+| Spotted hyena | 120 / 240 / 360    | 0.57 / 0.9 / 1.5 **D**  | 4 / 8 / 12                | 1 / 1.5 / 2.5        | 0.8 / 1 / 1.2     | 25 / 40 / 60      | 0.25 / 0.4 / 0.55 | 0.15 / 0.3 / 0.6  |
+
+Rationale:
+
+- **`strikeForce`** is the bite force that each species' `pack.dps` row is already built on (§3.2 items 3–4; **D**): tiger 1.2–1.5 kN [MODEL]; lion 1.2–1.8 kN, lioness measured 1,594 N [van der Meijden 2023]; wolf 0.4–0.75 kN from BFQ 136 (§3.2 item 3); hyena 566 N canine and 986 N carnassial estimated for 63 kg [Christiansen & Wroe 2007], with the upper end below the 4,500 N captive maximum [Erickson 2012].
+- **`strikeLethality`, `strikeInterval`** reuse the assumptions behind `pack.dps` (§3.2 item 4): 4–12 HP/kN per bite, one bite or claw strike every 1–2 s, with the upper tail widened to 2.5 s for a fight without a hold. At the modes a lion's strike costs another 150 kg lion about 13 HP (9 %), so a hold (`latchDps` 7 HP/s) remains the stronger attack, as intended.
+- **`strikeReach`** is measured from the attacker's centre, like the heavy bite: body radius plus head and forelimb (0.5–0.9 m beyond the 0.5–0.8 m radius). **`strikeArc`** is a frontal lunge, narrower than a bear's or a hominin's two-armed sweep (45–100°).
+- **`turnRate`.** Quadruped carnivores pivot within about a second; canids and hyenas turn tighter than the big cats. No measurement in a fight.
+- **`strikeAccuracy`.** Against a moving, fighting animal; between the bear (0.3–0.65) and _T. rex_ (0.3–0.7) at the top and _H. erectus_ (0.15–0.4) at the bottom.
+- **`shakeRate`.** Throwing off a rider of similar or smaller size: big cats as the brown bear (0.1–0.5), the smaller, lighter canids and hyenas slightly higher. Only matters when a much smaller latcher rides them (`R_latch`, design §4.2).
+
+### 11.4 Pack-buff traits
+
+The values of design §5.3, all **S**, sampled per run and never per animal. Non-social species carry neutral values.
+
+| Species        | `cohesionRadius` (m) | `groupLatchGain` (×/rider) | `focusBonus` (m) | `moraleSupport` (`k_c`) | `routShock`    | `reliefStamina` |
+| -------------- | -------------------- | -------------------------- | ---------------- | ----------------------- | -------------- | --------------- |
+| Lion           | 30 / 60 / 100        | 0.1 / 0.25 / 0.4           | 0 / 20 / 40      | 0 / 0.05 / 0.1          | 0 / 0.05 / 0.1 | 0.2 / 0.3 / 0.5 |
+| Gray wolf      | 30 / 60 / 120        | 0.1 / 0.3 / 0.5            | 0 / 20 / 40      | 0 / 0.05 / 0.1          | 0 / 0.05 / 0.1 | 0.2 / 0.3 / 0.5 |
+| Spotted hyena  | 30 / 60 / 120        | 0.1 / 0.3 / 0.5            | 0 / 20 / 40      | 0 / 0.06 / 0.1          | 0 / 0.05 / 0.1 | 0.2 / 0.3 / 0.5 |
+| _Homo erectus_ | 15 / 30 / 60         | 0 / 0.15 / 0.3             | 0 / 15 / 30      | 0 / 0.04 / 0.08         | 0 / 0.05 / 0.1 | 0.2 / 0.3 / 0.5 |
+
+Sources and the calibration guard are in design §2.3 and §5: [Stander 1992], [Packer 1990], [McComb 1994], [MacNulty 2012], [MacNulty 2014], [Cassidy 2015], [Benson-Amram 2011], [Lehmann 2017], [Hatala 2016]. The full citations are in the design's §10.
