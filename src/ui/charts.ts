@@ -64,6 +64,25 @@ function watchColorScheme(): void {
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     for (const c of live) c.redraw();
   });
+  watchDpr();
+}
+
+/**
+ * Redraw every chart when devicePixelRatio changes without a width change (window moved to a
+ * monitor with another scale, browser zoom), so the canvas backing store matches again (#81).
+ * A `(resolution: Xdppx)` query fires once when the ratio leaves X, so it re-arms for the new one,
+ * like the replay's watcher.
+ */
+function watchDpr(): void {
+  const dpr = globalThis.devicePixelRatio || 1;
+  matchMedia(`(resolution: ${dpr}dppx)`).addEventListener(
+    'change',
+    () => {
+      redrawAllCharts();
+      watchDpr();
+    },
+    { once: true },
+  );
 }
 
 /** Redraw every live chart (e.g. after a language change). */
