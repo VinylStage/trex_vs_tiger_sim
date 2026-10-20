@@ -76,6 +76,13 @@ export function parsePagePath(pathname: string): { page: PageId; lang: Lang } | 
   return null;
 }
 
+/** Language of a not-found page source: `/en/404.html` → 'en', `/404.html` → 'ko', else null. */
+export function notFoundLang(path: string): Lang | null {
+  if (/^\/?404\.html$/.test(path)) return 'ko';
+  if (/^\/?en\/404\.html$/.test(path)) return 'en';
+  return null;
+}
+
 /** The same page in the other language (app or content page), or null for an unknown path. */
 export function counterpartPath(pathname: string): string | null {
   const here = parsePagePath(pathname);

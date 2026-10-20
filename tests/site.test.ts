@@ -22,7 +22,17 @@ import {
 } from '../src/pages/routes';
 import { DICTIONARIES, LANGS } from '../src/ui/i18n';
 import { NAV_LABEL_KEYS, footerItems, relocalizeLinks, siteNavItems } from '../src/ui/site-nav';
-import { findHtmlEntries } from '../vite.pages';
+import {
+  APP_LOGO_PLACEHOLDER,
+  SITE_HEADER_PLACEHOLDER,
+  SITE_LOGO,
+  expandSiteHeader,
+  headerRouteOf,
+  logoAttrs,
+  renderAppLogo,
+  renderSiteHeader,
+} from '../src/pages/site-header';
+import { findHtmlEntries, siteHeader } from '../vite.pages';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 
@@ -308,5 +318,76 @@ describe('legacy storage cleanup', () => {
         },
       }),
     ).not.toThrow();
+  });
+});
+
+describe('shared site header (src/pages/site-header.ts)', () => {
+  it('uses the owner-chosen header logo, at the app and page sizes', () => {
+    expect(SITE_LOGO.src).toBe('/header-logo.svg');
+    expect(logoAttrs('app')).toEqual({ src: SITE_LOGO.src, alt: '', width: '40', height: '40' });
+    expect(logoAttrs('page')).toEqual({ src: SITE_LOGO.src, alt: '', width: '32', height: '32' });
+    expect(renderAppLogo()).toBe(
+      '<img class="logo" src="/header-logo.svg" alt="" width="40" height="40" />',
+    );
+  });
+
+  it('renders logo, brand, nav and the counterpart language link', () => {
+    const html = renderSiteHeader('en', 'guide');
+    expect(html).toMatch(/^<header class="site-header">[\s\S]*<\/header>$/);
+    expect(html).toContain('<a class="site-brand" href="/en/">');
+    expect(html).toContain('<img src="/header-logo.svg" alt="" width="32" height="32" />');
+    expect(html).toContain(`<span>${DICTIONARIES.en['app.shortTitle']}</span>`);
+    expect(html).toContain(
+      '<a class="site-nav-link" href="/en/guide/" data-page="guide" aria-current="page">Guide</a>',
+    );
+    expect(html).toContain(
+      '<a class="lang-switch" href="/guide/" hreflang="ko" lang="ko" data-lang-switch>한국어</a>',
+    );
+    for (const item of siteNavItems('en', 'guide')) expect(html).toContain(`href="${item.href}"`);
+  });
+
+  it('marks nothing current on a 404 and links the other language’s simulator', () => {
+    const html = renderSiteHeader('ko', null);
+    expect(html).not.toContain('aria-current');
+    expect(html).toContain('<a class="lang-switch" href="/en/" hreflang="en" lang="en"');
+  });
+
+  it('resolves the route of every page source Vite reports', () => {
+    expect(headerRouteOf('/guide/index.html')).toEqual({ page: 'guide', lang: 'ko' });
+    expect(headerRouteOf('/en/license/index.html')).toEqual({ page: 'license', lang: 'en' });
+    expect(headerRouteOf('/index.html')).toEqual({ page: 'simulator', lang: 'ko' });
+    expect(headerRouteOf('/en/index.html')).toEqual({ page: 'simulator', lang: 'en' });
+    expect(headerRouteOf('/en/')).toEqual({ page: 'simulator', lang: 'en' });
+    expect(headerRouteOf('/404.html')).toEqual({ page: null, lang: 'ko' });
+    expect(headerRouteOf('/en/404.html')).toEqual({ page: null, lang: 'en' });
+    expect(headerRouteOf('/reset/index.html')).toBeNull();
+  });
+
+  it('fills the placeholders and refuses ones that do not fit the page', () => {
+    const page = `<body>${SITE_HEADER_PLACEHOLDER}<main></main></body>`;
+    expect(expandSiteHeader(page, { page: 'about', lang: 'ko' }, 'x')).toBe(
+      `<body>${renderSiteHeader('ko', 'about')}<main></main></body>`,
+    );
+    const app = `<div class="brand">${APP_LOGO_PLACEHOLDER}<h1>t</h1></div>`;
+    expect(expandSiteHeader(app, { page: 'simulator', lang: 'en' }, 'x')).toContain(
+      renderAppLogo(),
+    );
+    expect(expandSiteHeader('<p>reset</p>', null, 'x')).toBe('<p>reset</p>');
+    expect(() => expandSiteHeader(page, null, 'x')).toThrow(/no known route/);
+    expect(() => expandSiteHeader(page, { page: 'simulator', lang: 'ko' }, 'x')).toThrow();
+    expect(() => expandSiteHeader(app, { page: 'guide', lang: 'ko' }, 'x')).toThrow();
+  });
+
+  it('is applied by the Vite plugin before Vite’s own HTML processing, in dev too', () => {
+    const plugin = siteHeader();
+    expect(plugin.apply).toBeUndefined();
+    const hook = plugin.transformIndexHtml as {
+      order: string;
+      handler: (html: string, ctx: { path: string }) => string;
+    };
+    expect(hook.order).toBe('pre');
+    expect(hook.handler(`<body>${SITE_HEADER_PLACEHOLDER}</body>`, { path: '/en/404.html' })).toBe(
+      `<body>${renderSiteHeader('en', null)}</body>`,
+    );
   });
 });

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import type { Plugin } from 'vite';
-import { parsePagePath, type PageId } from './src/pages/routes.ts';
+import { notFoundLang, parsePagePath, type PageId } from './src/pages/routes.ts';
 import { extractPageFacts } from './src/seo/extract.ts';
 import { injectHead } from './src/seo/head.ts';
 import { llmsFullTxt, llmsTxt, type LlmsPage } from './src/seo/llms.ts';
@@ -89,12 +89,7 @@ export function gitLastmod(root: string, history: GitHistory, file: string): str
   return date || null;
 }
 
-/** `/en/404.html` → 'en', `/404.html` → 'ko', anything else → null. */
-export function notFoundLang(path: string): Lang | null {
-  if (/^\/?404\.html$/.test(path)) return 'ko';
-  if (/^\/?en\/404\.html$/.test(path)) return 'en';
-  return null;
-}
+export { notFoundLang };
 
 /**
  * 404 pages are served at any unknown path (`/a/b/c`), so the relative URLs Vite writes for
