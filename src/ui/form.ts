@@ -686,14 +686,33 @@ export function createConfigForm(
     return row;
   }
 
+  /**
+   * The advanced parameter table (22 rows, 66 inputs) is built when the section is first opened,
+   * not with the rest of the form: most visits never open it, and building it was the largest part
+   * of the start-up and language-switch work (docs/PERFORMANCE.md).
+   */
   function buildAdvanced(): HTMLDetailsElement {
     const details = h('details', { class: 'advanced', attrs: { 'data-tour': 'advanced' } });
-    details.open = detailsOpen;
-    details.addEventListener('toggle', () => {
-      detailsOpen = details.open;
-    });
     modifiedEl = h('span', { class: 'badge' });
     const summary = h('summary', {}, h('span', { text: t('advanced.title') }), ' ', modifiedEl);
+    details.append(summary);
+    let filled = false;
+    const fill = (): void => {
+      if (filled) return;
+      filled = true;
+      details.append(...advancedBody());
+      updateDerived();
+    };
+    details.open = detailsOpen;
+    if (detailsOpen) fill();
+    details.addEventListener('toggle', () => {
+      detailsOpen = details.open;
+      if (details.open) fill();
+    });
+    return details;
+  }
+
+  function advancedBody(): HTMLElement[] {
     const head = h(
       'thead',
       {},
@@ -735,13 +754,11 @@ export function createConfigForm(
       syncInputs();
       emit();
     });
-    details.append(
-      summary,
+    return [
       h('p', { class: 'hint', text: t('advanced.intro') }),
       h('div', { class: 'table-wrap' }, table),
       h('div', { class: 'advanced-actions' }, resetAll),
-    );
-    return details;
+    ];
   }
 
   function build(): void {
