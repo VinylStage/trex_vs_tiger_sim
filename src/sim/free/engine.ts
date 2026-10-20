@@ -400,37 +400,74 @@ export function simulateFreeBattle(
   // Scratch doubles shared with the search callbacks. Kept in a typed array, not in closure
   // variables, so assigning a new double value does not allocate a boxed number (GC, §7).
   const scratch = new Float64Array(6);
-  const SHOCK_R = 0;
-  const SHOCK_LOSS = 1;
   const FOCUS_SCORE = 2;
   const FOCUS_BONUS = 3;
   const ENEMY_R = 4;
   const BEST_SCORE = 5;
-  // E4b contagion: morale loss for buffed allies near a fallen or routed agent.
-  let shockFrom = -1;
-  let shockOff = 0;
-  const shockVisit = (k: number): void => {
-    const j = shockOff + k;
-    if (j === shockFrom || !buffed[j] || (state[j] as number) >= FreeState.Dead) return;
-    if (nstate[j] === FreeState.Dead) return;
-    const dx = (x[j] as number) - (x[shockFrom] as number);
-    const dy = (y[j] as number) - (y[shockFrom] as number);
-    if (dx * dx + dy * dy > (scratch[SHOCK_R] as number) * (scratch[SHOCK_R] as number)) return;
-    morale[j] =
-      (morale[j] as number) -
-      ((scratch[SHOCK_LOSS] as number) > 0
-        ? (scratch[SHOCK_LOSS] as number)
-        : (moraleLoss[j] as number));
-    (stats[side[j] as 0 | 1] as BuffStats).contagion += 1;
+  // E4b contagion: morale loss for buffed allies near a fallen or routed agent. Sources are
+  // counted into a coarse grid of cell size R per side; an ally sums the 3×3 cells around its
+  // own, which holds every source within R (and some up to about 2R). O(n) per tick with
+  // sources, instead of one neighbourhood query per source (design §7).
+  const fieldCols = (r: number): number =>
+    Math.max(1, Math.min(256, Math.ceil(L / Math.max(r, 1))));
+  const makeField = (r: number) => {
+    const cols = fieldCols(r);
+    return { cols, size: L / cols, counts: new Int32Array(cols * cols) };
   };
-  const shock = (i: number, r: number, fixedLoss: number): void => {
-    const s = side[i] as number;
-    shockFrom = i;
-    scratch[SHOCK_R] = r;
-    scratch[SHOCK_LOSS] = fixedLoss;
-    shockOff = offOf(s);
-    (grids[s] as SpatialGrid).query(x[i] as number, y[i] as number, r + C.shockPad, shockVisit);
+  const deathFields = [makeField(C.moraleRadius), makeField(C.moraleRadius)];
+  const routFields = [makeField(cohesion[0] as number), makeField(cohesion[1] as number)];
+  const cellOf = (v: number, f: { cols: number; size: number }): number => {
+    const c = Math.floor(v / f.size);
+    return c < 0 ? 0 : c >= f.cols ? f.cols - 1 : c;
   };
+  /**
+   * Apply one kind of contagion for side `s`: `isSource(i)` marks this tick's fallen or routed
+   * agents; each present buffed ally loses `loss(j)` per source in its neighbourhood.
+   */
+  const contagion = (
+    s: number,
+    f: { cols: number; size: number; counts: Int32Array },
+    isSource: (i: number) => boolean,
+    loss: (j: number) => number,
+  ): void => {
+    const off = offOf(s);
+    const cnt = cntOf(s);
+    let any = false;
+    for (let k = 0; k < cnt; k++) {
+      const i = off + k;
+      if (!isSource(i)) continue;
+      if (!any) {
+        f.counts.fill(0);
+        any = true;
+      }
+      const c = cellOf(y[i] as number, f) * f.cols + cellOf(x[i] as number, f);
+      f.counts[c] = (f.counts[c] as number) + 1;
+    }
+    if (!any) return;
+    const st = stats[s as 0 | 1] as BuffStats;
+    for (let k = 0; k < cnt; k++) {
+      const j = off + k;
+      if (!buffed[j] || (state[j] as number) >= FreeState.Dead || nstate[j] === FreeState.Dead) {
+        continue;
+      }
+      const cx = cellOf(x[j] as number, f);
+      const cy = cellOf(y[j] as number, f);
+      let m = 0;
+      for (let row = Math.max(0, cy - 1); row <= Math.min(f.cols - 1, cy + 1); row++) {
+        for (let col = Math.max(0, cx - 1); col <= Math.min(f.cols - 1, cx + 1); col++) {
+          m += f.counts[row * f.cols + col] as number;
+        }
+      }
+      if (isSource(j)) m -= 1;
+      if (m <= 0) continue;
+      morale[j] = (morale[j] as number) - loss(j) * m;
+      st.contagion += m;
+    }
+  };
+  const newlyDead = (i: number): boolean =>
+    nstate[i] === FreeState.Dead && state[i] !== FreeState.Dead;
+  const isRoutedNow = (i: number): boolean => routedNow[i] === 1;
+  const ownLoss = (j: number): number => moraleLoss[j] as number;
   const countAllies = (i: number, r: number, cap: number, onlyBuffed: boolean): number => {
     const s = side[i] as number;
     self = i;
@@ -939,14 +976,8 @@ export function simulateFreeBattle(
       killed[ks] = (killed[ks] as number) + 1;
     }
     if (buffLayer && moraleBuff) {
-      for (let i = 0; i < n; i++) {
-        if (
-          nstate[i] === FreeState.Dead &&
-          state[i] !== FreeState.Dead &&
-          social[side[i] as number]
-        ) {
-          shock(i, C.moraleRadius, 0);
-        }
+      for (let s = 0; s < 2; s++) {
+        if (social[s]) contagion(s, deathFields[s] as (typeof deathFields)[0], newlyDead, ownLoss);
       }
     }
     for (let i = 0; i < n; i++) {
@@ -1004,15 +1035,13 @@ export function simulateFreeBattle(
       }
       // E4b rout contagion after every rout of this tick is known, so index order cannot cascade.
       if (buffLayer && moraleBuff) {
-        for (let i = 0; i < n; i++) {
-          if (!routedNow[i]) continue;
-          routedNow[i] = 0;
-          const s = side[i] as number;
-          if (social[s]) shock(i, cohesion[s] as number, routShock[s] as number);
+        for (let s = 0; s < 2; s++) {
+          if (!social[s]) continue;
+          const shockLoss = routShock[s] as number;
+          contagion(s, routFields[s] as (typeof routFields)[0], isRoutedNow, () => shockLoss);
         }
-      } else {
-        routedNow.fill(0);
       }
+      routedNow.fill(0);
     }
     if (buffLayer) {
       for (let i = 0; i < n; i++) {
