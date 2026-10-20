@@ -77,6 +77,7 @@
             <li><a href="#reproducibility">Reproducibility</a></li>
             <li><a href="#results">Preliminary results with the defaults</a></li>
             <li><a href="#tigers-win">What would make the tigers win?</a></li>
+            <li><a href="#species">Other species and match-ups seen in the wild</a></li>
             <li><a href="#limitations">Limitations and future work</a></li>
             <li><a href="#references">References</a></li>
           </ol>
@@ -765,6 +766,87 @@
             </p>
           </section>
 
+          <section id="species">
+            <h2>Other species and match-ups seen in the wild</h2>
+            <p>
+              The engine has two roles: the <strong>large animal</strong> that fights alone (limited
+              turning, a frontal attack cone, shaking off attackers, slowed by their weight) and the
+              <strong>pack animal</strong> that attacks in numbers (sprint and cruise, stamina,
+              latching and damage per second, morale and routing). The rules above are the same for
+              every species; choosing a species changes the ranges and hard bounds of the 22
+              parameters and two constants. The large animals are T. rex, the African bush elephant,
+              the African buffalo and the brown bear; the pack animals are the tiger, the lion, the
+              gray wolf and the spotted hyena. Humans and domestic animals are not included.
+            </p>
+            <p>
+              With 1 HP per kilogram, mid-sized large animals fall to a pack far too easily, so each
+              large animal has a hide multiplier <code>hide</code> on the damage it takes from the
+              pack (elephant 0.3, buffalo and brown bear 0.5, T. rex 1). Each pack animal has a body
+              radius constant <code>radius</code> that sets its contact distance and latched
+              position (tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5 m). Neither constant draws
+              random numbers, and both compute exactly as before for T. rex and the tiger, so older
+              share links keep their results. Values and evidence levels are under
+              <a href="/en/parameters/#species">Species presets</a> in the parameter reference.
+            </p>
+            <p>
+              The simulator labels every match-up. <strong>Documented in the wild</strong> marks the
+              pairings below, which have field records. T. rex and any other species
+              <strong>never met</strong>; pairings that share an era but have no records are marked
+              <strong>no recorded encounters</strong>. Documented match-ups are still heavily
+              simplified, and the simulation figures below are indicative 60-run checks of the
+              presets.
+            </p>
+            <section id="matchup-elephants-and-lions">
+              <h3>African bush elephants and lions</h3>
+              <p>
+                Adult elephants are considered practically immune to predation, yet at Savuti in
+                Botswana’s Chobe National Park lions killed 74 elephants in 1993–96, and a pride of
+                about 30 took roughly one elephant every three days in the late dry season. Most
+                victims were young animals aged 4 to 11 (Joubert 2006; Power &amp; Compion 2009). In
+                the preset of 5 elephants against 30 lions the herd almost always holds.
+              </p>
+            </section>
+            <section id="matchup-buffalo-and-lions">
+              <h3>African buffalo and lions</h3>
+              <p>
+                Lions are the buffalo’s main predator. A pride isolates one animal, attacks the rear
+                and suffocates it with a bite to the muzzle; in other cases buffalo drive off or
+                kill lions. Male lions mainly hunt buffalo (Funston 2001). The model has no herd
+                rescue and no difference between bite positions.
+              </p>
+            </section>
+            <section id="matchup-buffalo-and-hyenas">
+              <h3>African buffalo and spotted hyenas</h3>
+              <p>
+                Spotted hyenas occasionally take adult buffalo bulls, but rarely. With the presets
+                the model favours the hyenas far more than field observations suggest, so treat this
+                pairing as one that still needs calibration.
+              </p>
+            </section>
+            <section id="matchup-brown-bears-and-wolves">
+              <h3>Brown bears and gray wolves</h3>
+              <p>
+                Brown bears often take over wolf kills, and most encounters end without bloodshed.
+                The first recorded grizzly kill of an adult wolf in the western United States was
+                published in 2008 (Jimenez 2008). The model’s bear only attacks to the front, which
+                may disadvantage it against surrounding wolves.
+              </p>
+            </section>
+            <section id="matchup-brown-bears-and-tigers">
+              <h3>Brown bears and tigers</h3>
+              <p>
+                In the Russian Far East, 32 attacks by Amur tigers on bears were recorded in
+                1944–59, and in 4 of them the bear killed the tiger. In the model a single tiger
+                rarely brings down a brown bear: repeatedly latching and falling back handicaps a
+                lone attacker. The field records mostly concern young or denning bears.
+              </p>
+            </section>
+            <p>
+              Ambushes, water, herd rescue, 360° close-range strikes, fleeing prey and courage that
+              depends on numbers are not in the engine yet, which is why the Nile crocodile,
+              Spinosaurus and the Komodo dragon are not in the roster.
+            </p>
+          </section>
           <section id="limitations">
             <h2>Limitations and future work</h2>
             <h3>Geometry and physics</h3>
@@ -817,8 +899,9 @@
             <p>
               Ideas under consideration include Sobol variance-based sensitivity indices, terrain
               and obstacles, injuries that reduce speed and bite, T-Rex fatigue, correlated
-              parameter sampling, juvenile T-Rex and other predator presets, and calibrating the
-              tiger damage rate and latch chance against documented big-cat attacks on large prey.
+              parameter sampling, juvenile variants and the phase-2 species (Giganotosaurus,
+              Allosaurus, polar bear, Deinonychus, African wild dog), and calibrating the tiger
+              damage rate and latch chance against documented big-cat attacks on large prey.
             </p>
           </section>
 

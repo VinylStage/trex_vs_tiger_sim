@@ -15,10 +15,15 @@ import { PARAMS } from '../src/sim/params';
 import {
   DEFAULT_HEAVY,
   DEFAULT_PACK,
+  HEAVY_SPECIES,
   HEAVY_SPECIES_IDS,
+  PACK_SPECIES,
   PACK_SPECIES_IDS,
   paramBounds,
+  paramEvidence,
   presetRange,
+  type HeavySpeciesId,
+  type PackSpeciesId,
 } from '../src/sim/species';
 import {
   CONTENT_PAGES,
@@ -872,6 +877,49 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
   it('states the work budget', () => {
     const budget = dataValues(html).filter((f) => f.k === 'maxWork');
     expect(one(budget, 'maxWork').value).toBe(String(MAX_WORK));
+  });
+
+  it('lists every species preset with its evidence tag and constants (src/sim/species.ts)', () => {
+    const presets = elements(html, 'data').filter((d) => d.attrs['data-k'] === 'preset');
+    const expected: string[] = [];
+    for (const [role, ids] of [
+      ['heavy', HEAVY_SPECIES_IDS],
+      ['pack', PACK_SPECIES_IDS],
+    ] as const) {
+      for (const p of PARAMS.filter((x) => x.role === role)) {
+        for (const id of ids) {
+          const h = role === 'heavy' ? (id as HeavySpeciesId) : DEFAULT_HEAVY;
+          const pk = role === 'pack' ? (id as PackSpeciesId) : DEFAULT_PACK;
+          const r = presetRange(p.id, h, pk);
+          expected.push(`${id} ${p.id} ${r.min} ${r.mode} ${r.max} ${paramEvidence(p.id, h, pk)}`);
+        }
+      }
+    }
+    const documented = presets.map((d) => {
+      const [min, mode, max] = (d.attrs['value'] ?? '').split(' ').map(Number);
+      expect(textOf(d.inner).split(' · ').map(shownNumber)).toEqual([min, mode, max]);
+      return `${d.attrs['data-species']} ${d.attrs['data-param']} ${min} ${mode} ${max} ${d.attrs['data-ev']}`;
+    });
+    expect([...documented].sort()).toEqual([...expected].sort());
+    const facts = (k: string): Record<string, string> =>
+      Object.fromEntries(
+        elements(html, 'data')
+          .filter((d) => d.attrs['data-k'] === k)
+          .map((d) => [d.attrs['data-species'] ?? '', d.attrs['value'] ?? '']),
+      );
+    expect(facts('hide')).toEqual(
+      Object.fromEntries(
+        HEAVY_SPECIES_IDS.map((id) => [id, String(HEAVY_SPECIES[id].constants.hide)]),
+      ),
+    );
+    expect(facts('weapon')).toEqual(
+      Object.fromEntries(HEAVY_SPECIES_IDS.map((id) => [id, HEAVY_SPECIES[id].weapon])),
+    );
+    expect(facts('radius')).toEqual(
+      Object.fromEntries(
+        PACK_SPECIES_IDS.map((id) => [id, String(PACK_SPECIES[id].constants.radius)]),
+      ),
+    );
   });
 
   it('lists engine constants with their code values', () => {

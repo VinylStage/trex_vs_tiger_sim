@@ -32,15 +32,15 @@
 
 ## Pages
 
-| Page id      | Korean         | English           | Content                                                                                                                                                               |
-| ------------ | -------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `simulator`  | `/`            | `/en/`            | The app (`index.html`, `en/index.html`), with a static intro, FAQ and footer outside `#app`                                                                           |
-| `guide`      | `/guide/`      | `/en/guide/`      | Step-by-step use of the simulator, reading results, sharing, a three-experiment tutorial, FAQ, troubleshooting                                                        |
-| `model`      | `/model/`      | `/en/model/`      | Plain-language model description: Monte Carlo design, agent rules, outcomes, statistics, reproducibility, limitations                                                 |
-| `parameters` | `/parameters/` | `/en/parameters/` | One card per parameter in `src/sim/params.ts`, every scenario setting, the engine constants                                                                           |
-| `about`      | `/about/`      | `/en/about/`      | Purpose, what it teaches, educational disclaimer, how it is built, open source, contact via GitHub issues                                                             |
-| `privacy`    | `/privacy/`    | `/en/privacy/`    | Privacy policy (effective 2026-10-20): no own cookies, `trexsim.tour` in localStorage (the v0.1.0 key `trexsim.lang` is deleted on load), Cloudflare cookies and logs |
-| `license`    | `/license/`    | `/en/license/`    | MIT License text (identical to `LICENSE`), what it covers, the Pretendard (OFL 1.1) notice and its full license text                                                  |
+| Page id      | Korean         | English           | Content                                                                                                                                                                                                   |
+| ------------ | -------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `simulator`  | `/`            | `/en/`            | The app (`index.html`, `en/index.html`), with a static intro, FAQ and footer outside `#app`                                                                                                               |
+| `guide`      | `/guide/`      | `/en/guide/`      | Step-by-step use of the simulator, reading results, sharing, a three-experiment tutorial, FAQ, troubleshooting                                                                                            |
+| `model`      | `/model/`      | `/en/model/`      | Plain-language model description: Monte Carlo design, agent rules, outcomes, statistics, reproducibility, species and documented match-ups (`#matchup-*` anchors the matchup badge links to), limitations |
+| `parameters` | `/parameters/` | `/en/parameters/` | One card per role parameter in `src/sim/params.ts` (default-species values), the species preset tables, every scenario setting, the engine constants                                                      |
+| `about`      | `/about/`      | `/en/about/`      | Purpose, what it teaches, educational disclaimer, how it is built, open source, contact via GitHub issues                                                                                                 |
+| `privacy`    | `/privacy/`    | `/en/privacy/`    | Privacy policy (effective 2026-10-20): no own cookies, `trexsim.tour` in localStorage (the v0.1.0 key `trexsim.lang` is deleted on load), Cloudflare cookies and logs                                     |
+| `license`    | `/license/`    | `/en/license/`    | MIT License text (identical to `LICENSE`), what it covers, the Pretendard (OFL 1.1) notice and its full license text                                                                                      |
 
 The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation (`NAV_PAGES`) is simulator · guide · model · parameters · about; about, privacy and license are linked from every footer (`FOOTER_LINKS`).
 
@@ -191,8 +191,9 @@ No ad code is included yet. The pages were written with an AdSense review in min
 
 `tests/pages.test.ts` reads the HTML sources and fails when:
 
-- a parameter in `src/sim/params.ts` is missing, extra, or its unit, min/mode/max, bounds or individual-variation flag differ (values and visible numbers); the card heading must contain the app's i18n label;
-- a scenario setting's default, limits or options differ from `defaultConfig()`, `LIMITS`, `SAMPLING_METHODS`, `TIGER_TACTICS`, or the work budget from `MAX_WORK`; an engine constant differs from `CONSTANTS`/`DT`;
+- a parameter in `src/sim/params.ts` is missing, extra, or its unit, min/mode/max, bounds (of the default species, T. rex and tiger, from `src/sim/species.ts`) or individual-variation flag differ (values and visible numbers); the card heading must contain the app’s i18n label;
+- a species preset in `src/sim/species.ts` (every species × role parameter: min/mode/max and evidence tag, `data-k="preset"`), a heavy weapon kind or a `hide`/`radius` constant is missing or differs on the parameters pages;
+- a scenario setting's default, limits or options differ from `defaultConfig()`, `LIMITS`, `SAMPLING_METHODS`, `PACK_TACTICS`, the species id lists, or the work budget from `MAX_WORK`; an engine constant differs from `CONSTANTS`/`DT`;
 - any page lacks a title, description, theme-colour, viewport, favicon, apple-touch-icon, manifest link, the shared CSS/JS, one `h1`, `main#main`, footer, or about 2,500 characters of text, or hand-writes a canonical, hreflang, `og:*` or `twitter:*` tag (those are generated); a title is longer than 60 or a description longer than 165 characters; titles or descriptions repeat (across all pages including `/` and `/en/`); ids repeat;
 - a content page lacks the visible breadcrumb (app short title → its nav label, `aria-label` = `breadcrumb.label`) that its BreadcrumbList JSON-LD describes;
 - a simulator page's `<title>` differs from `app.documentTitle`, its `#app` holds anything but the static header, it has not exactly one `<h1>` (`app.title`, before every other heading) or no static link to the other language, a text node in the static header, intro, FAQ or footer is not bound to a message key, its ordered `data-i18n*` key list differs from the other language's page, an `intro.*`/`faq.*` message is missing or repeated, the intro/FAQ/footer are not after `#app`, the intro has fewer than 3 or more than 4 steps, fewer than 3 or more than 5 FAQ items, or its links differ from guide · model#results · parameters · tour of its language;
