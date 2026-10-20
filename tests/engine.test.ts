@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { defaultConfig, type ScenarioConfig } from '../src/sim/config';
+import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../src/sim/config';
 import { Outcome, simulateBattle } from '../src/sim/engine';
 import { aggregate, runChunk } from '../src/sim/montecarlo';
 import { buildDesign, designRow } from '../src/sim/sampling';
+import { HEAVY_SPECIES, PACK_SPECIES, speciesRanges } from '../src/sim/species';
+import { checkTrace, countRng } from './trace-helpers';
 
 const small = (over: Partial<ScenarioConfig> = {}): ScenarioConfig => ({
   ...defaultConfig(),
@@ -118,5 +120,65 @@ describe('Monte Carlo runner', () => {
     c.params['heavy.biteAccuracy'] = { min: 0, mode: 0, max: 0 };
     const d = buildDesign(c);
     expect(aggregate(c, d, runChunk(c, d, 0, c.runs)).exchangeRatio).toBeNaN();
+  });
+});
+
+describe('species constants', () => {
+  const pair = (
+    heavySpecies: ScenarioConfig['heavySpecies'],
+    packSpecies: ScenarioConfig['packSpecies'],
+    over: Partial<ScenarioConfig> = {},
+  ): ScenarioConfig => {
+    const c = sanitizeConfig({ ...small(), heavySpecies, packSpecies, params: undefined });
+    return { ...c, ...over };
+  };
+
+  it('sizes the pack contact radius from the species and replays exactly', () => {
+    for (const [h, p] of [
+      ['brownBear', 'wolf'],
+      ['elephant', 'lion'],
+      ['buffalo', 'hyena'],
+    ] as const) {
+      const c = pair(h, p, { heavyCount: 1, packCount: 8, runs: 4 });
+      const d = buildDesign(c);
+      for (let run = 0; run < c.runs; run++) {
+        const plain = countRng(() => simulateBattle(c, designRow(d, run), run));
+        const traced = countRng(() => simulateBattle(c, designRow(d, run), run, true));
+        expect(traced.value.summary).toEqual(plain.value.summary);
+        expect(traced.calls).toBe(plain.calls);
+        const trace = traced.value.trace;
+        if (!trace) throw new Error('no trace');
+        expect(trace.meta.packRadius).toBe(PACK_SPECIES[p].constants.radius);
+        expect(checkTrace(trace, plain.value.summary).problems).toEqual([]);
+      }
+    }
+  });
+
+  it('lets a thick hide reduce the damage a heavy takes, without extra random draws', () => {
+    const params = speciesRanges('trex', 'lion');
+    // No heavy attacks and no shake-off: one lion stays latched and only the hide differs.
+    params['heavy.biteAccuracy'] = { min: 0, mode: 0, max: 0 };
+    params['heavy.shakeRate'] = { min: 0, mode: 0, max: 0 };
+    params['pack.latchChance'] = { min: 1, mode: 1, max: 1 };
+    params['pack.latchEndurance'] = { min: 1200, mode: 1200, max: 1200 };
+    params['pack.bleed'] = { min: 0, mode: 0, max: 0 };
+    const a = pair('trex', 'lion', {
+      heavyCount: 1,
+      packCount: 1,
+      runs: 1,
+      morale: false,
+      maxTime: 60,
+      individualCV: 0,
+      params,
+    });
+    const b: ScenarioConfig = { ...a, heavySpecies: 'elephant' };
+    const row = designRow(buildDesign(a), 0);
+    const ra = countRng(() => simulateBattle(a, row, 0));
+    const rb = countRng(() => simulateBattle(b, row, 0));
+    expect(rb.calls).toBe(ra.calls);
+    const lostA = 1 - ra.value.summary.heavyHpFrac;
+    const lostB = 1 - rb.value.summary.heavyHpFrac;
+    expect(lostA).toBeGreaterThan(0);
+    expect(lostB).toBeCloseTo(lostA * HEAVY_SPECIES.elephant.constants.hide, 9);
   });
 });

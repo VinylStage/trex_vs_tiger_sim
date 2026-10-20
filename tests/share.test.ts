@@ -2,6 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { defaultConfig, LIMITS, type ScenarioConfig } from '../src/sim/config';
 import { PARAMS } from '../src/sim/params';
 import {
+  HEAVY_SPECIES_IDS,
+  PACK_SPECIES,
+  PACK_SPECIES_IDS,
+  paramBounds,
+  speciesRanges,
+} from '../src/sim/species';
+import {
   base64UrlDecode,
   base64UrlEncode,
   configDiff,
@@ -98,8 +105,7 @@ describe('share codec', () => {
     expect(c.runs).toBe(3);
     expect(c.arenaSize).toBe(LIMITS.arenaSize[0]);
     expect(c.params['heavy.biteAccuracy']).toEqual({ min: 0, mode: 0.5, max: 1 });
-    const dpsBounds = PARAMS.find((p) => p.id === 'pack.dps')?.bounds;
-    expect(c.params['pack.dps'].max).toBe(dpsBounds?.[1]);
+    expect(c.params['pack.dps'].max).toBe(PACK_SPECIES.tiger.bounds.dps[1]);
   });
 
   it('drops unknown keys and unknown parameter ids', () => {
@@ -148,7 +154,7 @@ describe('share codec', () => {
   it('keeps the URL reasonably short even when every parameter is overridden', () => {
     const c = customConfig();
     for (const p of PARAMS) {
-      const [lo, hi] = p.bounds;
+      const [lo, hi] = paramBounds(p.id, c.heavySpecies, c.packSpecies);
       c.params[p.id] = { min: lo, mode: (lo + hi) / 2, max: hi };
     }
     const hash = hashFromConfig(c);
@@ -238,5 +244,64 @@ describe('v1 links', () => {
   it('ignores v2-only keys in a v1 payload, as v1 did', () => {
     const c = decodeConfig(encodeRaw({ v: 1, heavyCount: 7, params: { 'heavy.mass': [1, 2, 3] } }));
     expect(c).toEqual(defaultConfig());
+  });
+});
+
+describe('species in share links', () => {
+  it('round-trips every species pair, edited or not', () => {
+    for (const heavySpecies of HEAVY_SPECIES_IDS) {
+      for (const packSpecies of PACK_SPECIES_IDS) {
+        const c: ScenarioConfig = {
+          ...defaultConfig(),
+          heavySpecies,
+          packSpecies,
+          heavyCount: 2,
+          params: speciesRanges(heavySpecies, packSpecies),
+        };
+        expect(configFromHash(hashFromConfig(c))).toEqual(c);
+        c.params['pack.dps'] = { min: 1, mode: 2, max: 3 };
+        expect(configFromHash(hashFromConfig(c))).toEqual(c);
+      }
+    }
+  });
+
+  it('stores species ids and only the params that differ from their presets', () => {
+    const c: ScenarioConfig = {
+      ...defaultConfig(),
+      heavySpecies: 'elephant',
+      packSpecies: 'lion',
+      heavyCount: 5,
+      packCount: 30,
+      params: speciesRanges('elephant', 'lion'),
+    };
+    c.params['pack.dps'] = { min: 2, mode: 6, max: 10 };
+    expect(configDiff(c)).toEqual({
+      heavy: 'elephant',
+      pack: 'lion',
+      heavyCount: 5,
+      packCount: 30,
+      params: { 'pack.dps': [2, 6, 10] },
+    });
+    expect(hashFromConfig(c).length).toBeLessThan(140);
+  });
+
+  it('falls back to the default species for unknown ids without throwing', () => {
+    const c = decodeConfig(encodeRaw({ v: 2, heavy: 'gorilla', pack: 'lion', packCount: 7 }));
+    expect(c.heavySpecies).toBe('trex');
+    expect(c.packSpecies).toBe('lion');
+    expect(c.packCount).toBe(7);
+    expect(c.params['pack.mass']).toEqual(PACK_SPECIES.lion.ranges.mass);
+  });
+
+  it('a v2 link for T. rex and tigers equals the equivalent v1 link', () => {
+    const v1 = { v: 1, trexCount: 4, params: { 'tiger.mass': [90, 150, 200] } };
+    const v2 = {
+      v: 2,
+      heavy: 'trex',
+      pack: 'tiger',
+      heavyCount: 4,
+      params: { 'pack.mass': [90, 150, 200] },
+    };
+    expect(decodeConfig(encodeRaw(v1))).toEqual(decodeConfig(encodeRaw(v2)));
   });
 });

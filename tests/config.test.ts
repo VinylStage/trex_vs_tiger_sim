@@ -8,6 +8,15 @@ import {
   workEstimate,
 } from '../src/sim/config';
 import { PARAMS, paramDef } from '../src/sim/params';
+import {
+  HEAVY_SPECIES,
+  HEAVY_SPECIES_IDS,
+  PACK_SPECIES,
+  PACK_SPECIES_IDS,
+  paramBounds,
+  presetRange,
+  speciesRanges,
+} from '../src/sim/species';
 
 describe('sanitizeConfig', () => {
   it('returns defaults for non-objects', () => {
@@ -46,7 +55,7 @@ describe('sanitizeConfig', () => {
     const c = sanitizeConfig({
       params: { 'heavy.mass': { min: 9000, mode: 1e9, max: 2000 } },
     });
-    const [, hi] = paramDef('heavy.mass').bounds;
+    const [, hi] = paramBounds('heavy.mass', 'trex', 'tiger');
     expect(c.params['heavy.mass']).toEqual({ min: 2000, mode: 9000, max: hi });
   });
 });
@@ -94,13 +103,72 @@ describe('sanitizeConfig hardening', () => {
 });
 
 describe('parameter table', () => {
-  it('has defaults inside bounds and ordered', () => {
-    for (const p of PARAMS) {
-      const { min, mode, max } = p.default;
-      expect(min).toBeLessThanOrEqual(mode);
-      expect(mode).toBeLessThanOrEqual(max);
-      expect(min).toBeGreaterThanOrEqual(p.bounds[0]);
-      expect(max).toBeLessThanOrEqual(p.bounds[1]);
+  it('has every species preset inside its bounds and ordered', () => {
+    for (const h of HEAVY_SPECIES_IDS) {
+      for (const pk of PACK_SPECIES_IDS) {
+        for (const p of PARAMS) {
+          const { min, mode, max } = presetRange(p.id, h, pk);
+          const [lo, hi] = paramBounds(p.id, h, pk);
+          expect(min).toBeLessThanOrEqual(mode);
+          expect(mode).toBeLessThanOrEqual(max);
+          expect(min, `${h}/${pk} ${p.id}`).toBeGreaterThanOrEqual(lo);
+          expect(max, `${h}/${pk} ${p.id}`).toBeLessThanOrEqual(hi);
+        }
+      }
     }
+  });
+
+  it('keeps the parameter order and step metadata', () => {
+    expect(PARAMS.map((p) => p.id)).toHaveLength(22);
+    expect(paramDef('pack.bleed').individual).toBe(false);
+  });
+});
+
+describe('species in the config', () => {
+  it('defaults to T. rex vs tigers', () => {
+    const d = defaultConfig();
+    expect(d.heavySpecies).toBe('trex');
+    expect(d.packSpecies).toBe('tiger');
+    expect(d.params).toEqual(speciesRanges('trex', 'tiger'));
+  });
+
+  it('falls back to the default species for unknown ids', () => {
+    const c = sanitizeConfig({ heavySpecies: 'gorilla', packSpecies: 42 });
+    expect(c.heavySpecies).toBe('trex');
+    expect(c.packSpecies).toBe('tiger');
+  });
+
+  it('fills missing params from the selected species', () => {
+    const c = sanitizeConfig({
+      heavySpecies: 'elephant',
+      packSpecies: 'wolf',
+      params: { 'pack.dps': [1, 2, 3] },
+    });
+    expect(c.params['heavy.mass']).toEqual(HEAVY_SPECIES.elephant.ranges.mass);
+    expect(c.params['pack.mass']).toEqual(PACK_SPECIES.wolf.ranges.mass);
+    // Not an object triangle: rejected whole, the species preset stays.
+    expect(c.params['pack.dps']).toEqual(PACK_SPECIES.wolf.ranges.dps);
+  });
+
+  it('clamps with the selected species bounds', () => {
+    const big = { min: 50, mode: 120, max: 200 };
+    expect(sanitizeConfig({ params: { 'heavy.mass': big } }).params['heavy.mass']).toEqual({
+      min: 1000,
+      mode: 1000,
+      max: 1000,
+    });
+    expect(
+      sanitizeConfig({ heavySpecies: 'brownBear', params: { 'heavy.mass': big } }).params[
+        'heavy.mass'
+      ],
+    ).toEqual({ min: 100, mode: 120, max: 200 });
+  });
+
+  it('keeps T. rex and tiger on exactly the v1 bounds', () => {
+    expect(HEAVY_SPECIES.trex.bounds.mass).toEqual([1000, 20000]);
+    expect(HEAVY_SPECIES.trex.bounds.biteForce).toEqual([1, 150]);
+    expect(PACK_SPECIES.tiger.bounds.mass).toEqual([30, 500]);
+    expect(HEAVY_SPECIES.trex.constants.hide).toBe(1);
+    expect(PACK_SPECIES.tiger.constants.radius).toBe(0.8);
   });
 });

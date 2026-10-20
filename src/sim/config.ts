@@ -1,10 +1,24 @@
 import { DT } from './engine';
-import { PARAMS, defaultParamRanges, type ParamId, type Triangular } from './params';
+import { PARAMS, type ParamId, type Triangular } from './params';
+import {
+  DEFAULT_HEAVY,
+  DEFAULT_PACK,
+  HEAVY_SPECIES_IDS,
+  PACK_SPECIES_IDS,
+  paramBounds,
+  speciesRanges,
+  type HeavySpeciesId,
+  type PackSpeciesId,
+} from './species';
 
 export type SamplingMethod = 'lhs' | 'random';
 export type PackTactic = 'flank' | 'direct';
 
 export interface ScenarioConfig {
+  /** Species on the heavy side (src/sim/species.ts). */
+  heavySpecies: HeavySpeciesId;
+  /** Species on the pack side. */
+  packSpecies: PackSpeciesId;
   heavyCount: number;
   packCount: number;
   runs: number;
@@ -33,6 +47,8 @@ export const PACK_TACTICS: readonly PackTactic[] = ['flank', 'direct'];
 
 export function defaultConfig(): ScenarioConfig {
   return {
+    heavySpecies: DEFAULT_HEAVY,
+    packSpecies: DEFAULT_PACK,
     heavyCount: 10,
     packCount: 100,
     runs: 500,
@@ -43,7 +59,7 @@ export function defaultConfig(): ScenarioConfig {
     individualCV: 0.08,
     packTactic: 'flank',
     morale: true,
-    params: defaultParamRanges(),
+    params: speciesRanges(DEFAULT_HEAVY, DEFAULT_PACK),
   };
 }
 
@@ -108,10 +124,14 @@ export function sanitizeConfig(input: unknown): ScenarioConfig {
     typeof o['params'] === 'object' && o['params'] !== null
       ? (o['params'] as Record<string, unknown>)
       : {};
-  const params = { ...d.params };
+  // Unknown species fall back to the defaults; missing params come from the selected species.
+  const heavySpecies = pick(o['heavySpecies'], HEAVY_SPECIES_IDS, d.heavySpecies);
+  const packSpecies = pick(o['packSpecies'], PACK_SPECIES_IDS, d.packSpecies);
+  const params = speciesRanges(heavySpecies, packSpecies);
   for (const p of PARAMS) {
     if (Object.hasOwn(rawParams, p.id)) {
-      params[p.id] = triangular(rawParams[p.id], d.params[p.id], p.bounds);
+      const bounds = paramBounds(p.id, heavySpecies, packSpecies);
+      params[p.id] = triangular(rawParams[p.id], params[p.id], bounds);
     }
   }
   const heavyCount = num(o['heavyCount'], d.heavyCount, LIMITS.heavyCount, true);
@@ -122,6 +142,8 @@ export function sanitizeConfig(input: unknown): ScenarioConfig {
     maxRunsFor({ maxTime, heavyCount, packCount }),
   );
   return {
+    heavySpecies,
+    packSpecies,
     heavyCount,
     packCount,
     runs,

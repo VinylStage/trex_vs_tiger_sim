@@ -1064,6 +1064,53 @@
               시나리오 패널에서 바로 바꾸는 값입니다. 공유 링크에는 기본값과 다른 설정만 저장되며,
               링크로 들어온 값도 아래 범위로 잘린 뒤 쓰입니다.
             </p>
+            <section class="setting" id="setting-heavySpecies" data-setting="heavySpecies">
+              <h3>대형 동물 <code>heavySpecies</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>기본값</dt>
+                  <dd><data data-k="default" value="trex">티라노사우루스</data></dd>
+                </div>
+                <div>
+                  <dt>선택지</dt>
+                  <dd>
+                    <data data-k="option" value="trex">티라노사우루스</data>,
+                    <data data-k="option" value="elephant">아프리카코끼리</data>,
+                    <data data-k="option" value="buffalo">아프리카물소</data>,
+                    <data data-k="option" value="brownBear">불곰</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                혼자 싸우는 대형 동물 쪽의 종입니다. 종을 고르면 그 종의 파라미터 11개 범위와 허용
+                범위, 그리고 무리에게 받는 피해 배율(가죽 두께 상수)이 함께 정해집니다. 공유
+                링크에는
+                <code>heavy</code> 키로 저장됩니다.
+              </p>
+            </section>
+            <section class="setting" id="setting-packSpecies" data-setting="packSpecies">
+              <h3>무리 동물 <code>packSpecies</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>기본값</dt>
+                  <dd><data data-k="default" value="tiger">호랑이</data></dd>
+                </div>
+                <div>
+                  <dt>선택지</dt>
+                  <dd>
+                    <data data-k="option" value="tiger">호랑이</data>,
+                    <data data-k="option" value="lion">사자</data>,
+                    <data data-k="option" value="wolf">회색늑대</data>,
+                    <data data-k="option" value="hyena">점박이하이에나</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                여럿이 달려드는 무리 쪽의 종입니다. 종을 고르면 그 종의 파라미터 11개 범위와 허용
+                범위, 그리고 몸 반경 상수(접촉 거리와 매달린 위치에 쓰임, 호랑이 0.8 m)가 함께
+                정해집니다. 공유 링크에는 <code>pack</code> 키로 저장됩니다.
+              </p>
+            </section>
             <section class="setting" id="setting-heavyCount" data-setting="heavyCount">
               <h3>T-Rex 수 <code>heavyCount</code></h3>
               <dl class="facts">
@@ -1294,11 +1341,6 @@
                     <th scope="row"><code>DT</code></th>
                     <td><data data-k="value" value="0.1">0.1</data> s</td>
                     <td>시간 간격. 엔진은 0.1초마다 모든 동물을 갱신합니다.</td>
-                  </tr>
-                  <tr data-constant="packRadius">
-                    <th scope="row"><code>packRadius</code></th>
-                    <td><data data-k="value" value="0.8">0.8</data> m</td>
-                    <td>호랑이 몸 반경. 접촉 거리, 물기 판정 여유, 매달린 위치에 쓰입니다.</td>
                   </tr>
                   <tr data-constant="latchRetry">
                     <th scope="row"><code>latchRetry</code></th>

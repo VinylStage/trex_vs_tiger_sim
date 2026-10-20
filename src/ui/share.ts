@@ -1,5 +1,6 @@
 import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { PARAMS } from '../sim/params';
+import { speciesRanges } from '../sim/species';
 
 /** URL fragment key: `#s=<base64url(JSON)>`. */
 export const SHARE_KEY = 's';
@@ -12,7 +13,7 @@ export const SHARE_VERSION = 2;
 /** Reject absurdly long fragments before decoding. */
 export const MAX_SHARE_LENGTH = 8192;
 
-type ScalarKey = Exclude<keyof ScenarioConfig, 'params'>;
+type ScalarKey = Exclude<keyof ScenarioConfig, 'params' | 'heavySpecies' | 'packSpecies'>;
 const SCALAR_KEYS: readonly ScalarKey[] = [
   'heavyCount',
   'packCount',
@@ -43,19 +44,23 @@ export function base64UrlDecode(encoded: string): string {
 }
 
 /**
- * Minimal JSON-able diff against the defaults. Params are stored as `[min, mode, max]` tuples
- * and only for ids whose range differs from the default.
+ * Minimal JSON-able diff against the defaults. Species are stored as `heavy` and `pack` ids.
+ * Params are stored as `[min, mode, max]` tuples and only for ids whose range differs from the
+ * selected species' preset, so a link to an unedited matchup stays short.
  */
 export function configDiff(config: ScenarioConfig): Record<string, unknown> {
   const d = defaultConfig();
   const out: Record<string, unknown> = {};
+  if (config.heavySpecies !== d.heavySpecies) out['heavy'] = config.heavySpecies;
+  if (config.packSpecies !== d.packSpecies) out['pack'] = config.packSpecies;
   for (const k of SCALAR_KEYS) {
     if (config[k] !== d[k]) out[k] = config[k];
   }
+  const presets = speciesRanges(config.heavySpecies, config.packSpecies);
   const params: Record<string, [number, number, number]> = {};
   for (const p of PARAMS) {
     const a = config.params[p.id];
-    const b = d.params[p.id];
+    const b = presets[p.id];
     if (a.min !== b.min || a.mode !== b.mode || a.max !== b.max) {
       params[p.id] = [a.min, a.mode, a.max];
     }
@@ -131,7 +136,12 @@ export function decodeConfig(payload: string): ScenarioConfig {
     }
     const raw = parsed as Record<string, unknown>;
     const o = raw['v'] === undefined || raw['v'] === 1 ? upgradeV1(raw) : raw;
-    return sanitizeConfig({ ...o, params: expandParams(o['params']) });
+    return sanitizeConfig({
+      ...o,
+      heavySpecies: o['heavy'],
+      packSpecies: o['pack'],
+      params: expandParams(o['params']),
+    });
   } catch {
     return defaultConfig();
   }

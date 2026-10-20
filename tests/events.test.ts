@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LIMITS } from '../src/sim/config';
+import { HEAVY_SPECIES, PACK_SPECIES } from '../src/sim/species';
 import {
   CONSTANTS,
   DT,
@@ -29,7 +30,6 @@ import {
   packStateAfter,
   type EventLogLimits,
 } from '../src/sim/events';
-import { PARAMS } from '../src/sim/params';
 import { buildDesign, designRow } from '../src/sim/sampling';
 import { traceTransferList } from '../src/workers/protocol';
 import { checkTrace, framesDiff, noAttackParams, scenario } from './trace-helpers';
@@ -243,8 +243,8 @@ describe('battle trace v2', () => {
     expect(trace.version).toBe(2);
     expect(eventCount(trace.events)).toBe(trace.eventStats.p0 + trace.eventStats.p1);
     expect(trace.meta.dt).toBe(DT);
-    expect(trace.meta.packRadius).toBe(CONSTANTS.packRadius);
-    const radius = PARAMS.find((p) => p.id === 'heavy.bodyRadius')?.bounds ?? [0, 0];
+    expect(trace.meta.packRadius).toBe(PACK_SPECIES.tiger.constants.radius);
+    const radius = HEAVY_SPECIES.trex.bounds.bodyRadius;
     expect(trace.meta.bodyRadius).toBeGreaterThanOrEqual(radius[0]);
     expect(trace.meta.bodyRadius).toBeLessThanOrEqual(radius[1]);
     expect(trace.meta.reach).toHaveLength(3);

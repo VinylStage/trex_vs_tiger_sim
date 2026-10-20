@@ -9,6 +9,7 @@ import {
   type PackTactic,
 } from '../sim/config';
 import { PARAMS, type ParamDef, type ParamId, type Role, type Triangular } from '../sim/params';
+import { paramBounds, presetRange } from '../sim/species';
 import { costLevel, estimateTotalMs } from './cost';
 import { clear, h, uniqueId } from './dom';
 import { formatDuration } from './format';
@@ -364,6 +365,7 @@ export function createConfigForm(
     const name = `${speciesLabel(p.role)} ${paramLabel(p.id)}`;
     const helpId = uniqueId('ph');
     const inputs = {} as Record<keyof Triangular, HTMLInputElement>;
+    const bounds = paramBounds(p.id, cfg.heavySpecies, cfg.packSpecies);
     const cells: HTMLTableCellElement[] = [];
     for (const which of ['min', 'mode', 'max'] as const) {
       const input = h('input', {
@@ -371,8 +373,8 @@ export function createConfigForm(
         attrs: {
           type: 'number',
           inputmode: 'decimal',
-          min: String(p.bounds[0]),
-          max: String(p.bounds[1]),
+          min: String(bounds[0]),
+          max: String(bounds[1]),
           step: String(p.step),
           'aria-label': t('advanced.inputAria', { name, which: t(`advanced.${which}`) }),
           'aria-describedby': helpId,
@@ -382,7 +384,7 @@ export function createConfigForm(
       input.addEventListener('change', () => {
         const n = parseNum(input.value);
         const current = cfg.params[p.id];
-        const next = n === null ? current : orderRange(current, which, n, p.bounds);
+        const next = n === null ? current : orderRange(current, which, n, bounds);
         cfg = { ...cfg, params: { ...cfg.params, [p.id]: next } };
         inputs.min.value = String(next.min);
         inputs.mode.value = String(next.mode);
@@ -405,7 +407,10 @@ export function createConfigForm(
       },
     });
     reset.addEventListener('click', () => {
-      cfg = { ...cfg, params: { ...cfg.params, [p.id]: { ...p.default } } };
+      cfg = {
+        ...cfg,
+        params: { ...cfg.params, [p.id]: presetRange(p.id, cfg.heavySpecies, cfg.packSpecies) },
+      };
       syncInputs();
       emit();
     });

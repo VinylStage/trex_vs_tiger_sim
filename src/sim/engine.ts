@@ -13,6 +13,7 @@ import {
 } from './events';
 import { PARAMS, PARAM_INDEX as P } from './params';
 import { Rng, deriveSeed } from './rng';
+import { HEAVY_SPECIES, PACK_SPECIES, boundsTable } from './species';
 import { SpatialGrid } from './spatial';
 
 /** Fixed integration step in seconds. */
@@ -20,7 +21,6 @@ export const DT = 0.1;
 
 /** Model constants not exposed as uncertain parameters. Documented in docs/MODEL.md. */
 export const CONSTANTS = {
-  packRadius: 0.8,
   latchRetry: 1,
   moraleRadius: 40,
   routThreshold: 0.2,
@@ -160,12 +160,18 @@ export function simulateBattle(
   const M = config.packCount;
   const L = config.arenaSize;
   const cv = config.individualCV;
+  // Species constants: no random draws, and exact identities for T. rex (hide 1) and the tiger
+  // (radius 0.8 m, the former engine constant), so v1 links reproduce bit-identically.
+  const hide = HEAVY_SPECIES[config.heavySpecies].constants.hide;
+  const packRadius = PACK_SPECIES[config.packSpecies].constants.radius;
+  const bounds = boundsTable(config.heavySpecies, config.packSpecies);
 
   const indiv = (k: number): number => {
     const d = PARAMS[k] as (typeof PARAMS)[number];
+    const b = bounds[k] as readonly [number, number];
     const base = row[k] as number;
     const v = d.individual ? base * individualFactor(rng, cv) : base;
-    return Math.min(d.bounds[1], Math.max(d.bounds[0], v));
+    return Math.min(b[1], Math.max(b[0], v));
   };
   const runVal = (k: number): number => row[k] as number;
 
@@ -330,13 +336,13 @@ export function simulateBattle(
       // Latched tigers ride their host; use the host's current pose, not last tick's position.
       const h = tHost[j] as number;
       const a = (rh[h] as number) + (tLatchAng[j] as number);
-      px = (rx[h] as number) + Math.cos(a) * (radius + C.packRadius);
-      py = (ry[h] as number) + Math.sin(a) * (radius + C.packRadius);
+      px = (rx[h] as number) + Math.cos(a) * (radius + packRadius);
+      py = (ry[h] as number) + Math.sin(a) * (radius + packRadius);
     }
     const dx = px - (rx[biter] as number);
     const dy = py - (ry[biter] as number);
     const d = len(dx, dy);
-    if (d > (rReach[biter] as number) + C.packRadius) return;
+    if (d > (rReach[biter] as number) + packRadius) return;
     if (Math.abs(wrap(Math.atan2(dy, dx) - (rh[biter] as number))) > (rArc[biter] as number))
       return;
     const score = s === PackState.Latched && tHost[j] === biter ? d - 1000 : d;
@@ -455,12 +461,7 @@ export function simulateBattle(
         biter = i;
         best = -1;
         bestScore = Infinity;
-        grid.query(
-          rx[i] as number,
-          ry[i] as number,
-          (rReach[i] as number) + C.packRadius,
-          biteVisit,
-        );
+        grid.query(rx[i] as number, ry[i] as number, (rReach[i] as number) + packRadius, biteVisit);
         if (best >= 0) {
           rCd[i] = rBiteInt[i] as number;
           const latched = tState[best] === PackState.Latched;
@@ -512,7 +513,7 @@ export function simulateBattle(
           const dx = (rx[r] as number) - (tx[j] as number);
           const dy = (ry[r] as number) - (ty[j] as number);
           const dist = len(dx, dy);
-          const contact = radius + C.packRadius + 0.5;
+          const contact = radius + packRadius + 0.5;
           const rel = wrap(Math.atan2(-dy, -dx) - (rh[r] as number));
 
           let aimX = rx[r] as number;
@@ -587,9 +588,9 @@ export function simulateBattle(
             break;
           }
           const a = (rh[h] as number) + (tLatchAng[j] as number);
-          tx[j] = (rx[h] as number) + Math.cos(a) * (radius + C.packRadius);
-          ty[j] = (ry[h] as number) + Math.sin(a) * (radius + C.packRadius);
-          const dmg = (tDps[j] as number) * DT;
+          tx[j] = (rx[h] as number) + Math.cos(a) * (radius + packRadius);
+          ty[j] = (ry[h] as number) + Math.sin(a) * (radius + packRadius);
+          const dmg = (tDps[j] as number) * DT * hide;
           rHp[h] = (rHp[h] as number) - dmg;
           rWound[h] = (rWound[h] as number) + dmg;
           tStamina[j] = (tStamina[j] as number) - DT / (tLatchEnd[j] as number);
@@ -740,7 +741,7 @@ export function simulateBattle(
       meta: {
         dt: DT,
         bodyRadius: radius,
-        packRadius: C.packRadius,
+        packRadius,
         reach: Float32Array.from(rReach),
         arc: Float32Array.from(rArc),
       },

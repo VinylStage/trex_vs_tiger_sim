@@ -1120,6 +1120,54 @@
               that differ from the defaults, and values arriving through a link are clamped to the
               ranges below.
             </p>
+            <section class="setting" id="setting-heavySpecies" data-setting="heavySpecies">
+              <h3>Large animal <code>heavySpecies</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="trex">Tyrannosaurus rex</data></dd>
+                </div>
+                <div>
+                  <dt>Options</dt>
+                  <dd>
+                    <data data-k="option" value="trex">Tyrannosaurus rex</data>,
+                    <data data-k="option" value="elephant">African bush elephant</data>,
+                    <data data-k="option" value="buffalo">African buffalo</data>,
+                    <data data-k="option" value="brownBear">Brown bear</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                The species on the side of the large animals that fight alone. Choosing it sets that
+                species’ ranges and hard bounds for the 11 parameters and its multiplier on damage
+                taken from the pack (a constant for thick skin). Share links store it as
+                <code>heavy</code>.
+              </p>
+            </section>
+            <section class="setting" id="setting-packSpecies" data-setting="packSpecies">
+              <h3>Pack animal <code>packSpecies</code></h3>
+              <dl class="facts">
+                <div>
+                  <dt>Default</dt>
+                  <dd><data data-k="default" value="tiger">Tiger</data></dd>
+                </div>
+                <div>
+                  <dt>Options</dt>
+                  <dd>
+                    <data data-k="option" value="tiger">Tiger</data>,
+                    <data data-k="option" value="lion">Lion</data>,
+                    <data data-k="option" value="wolf">Gray wolf</data>,
+                    <data data-k="option" value="hyena">Spotted hyena</data>
+                  </dd>
+                </div>
+              </dl>
+              <p>
+                The species on the side that attacks in numbers. Choosing it sets that species’
+                ranges and hard bounds for the 11 parameters and its body radius constant (used for
+                contact distance and the latched position; 0.8 m for the tiger). Share links store
+                it as <code>pack</code>.
+              </p>
+            </section>
             <section class="setting" id="setting-heavyCount" data-setting="heavyCount">
               <h3>T-Rex count <code>heavyCount</code></h3>
               <dl class="facts">
@@ -1352,14 +1400,6 @@
                     <th scope="row"><code>DT</code></th>
                     <td><data data-k="value" value="0.1">0.1</data> s</td>
                     <td>Time step: every animal is updated every 0.1 s.</td>
-                  </tr>
-                  <tr data-constant="packRadius">
-                    <th scope="row"><code>packRadius</code></th>
-                    <td><data data-k="value" value="0.8">0.8</data> m</td>
-                    <td>
-                      Tiger body radius, used for contact, bite reach padding and the latched
-                      position.
-                    </td>
                   </tr>
                   <tr data-constant="latchRetry">
                     <th scope="row"><code>latchRetry</code></th>

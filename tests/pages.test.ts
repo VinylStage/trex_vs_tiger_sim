@@ -13,6 +13,14 @@ import {
 import { CONSTANTS, DT } from '../src/sim/engine';
 import { PARAMS } from '../src/sim/params';
 import {
+  DEFAULT_HEAVY,
+  DEFAULT_PACK,
+  HEAVY_SPECIES_IDS,
+  PACK_SPECIES_IDS,
+  paramBounds,
+  presetRange,
+} from '../src/sim/species';
+import {
   CONTENT_PAGES,
   NAV_LABEL_KEYS,
   RELEASES_URL,
@@ -799,11 +807,12 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
       DICTIONARIES[lang][`param.${p.id}`],
     );
     expect(numberFacts(s.inner, ['min', 'mode', 'max', 'lo', 'hi'])).toEqual({
-      min: p.default.min,
-      mode: p.default.mode,
-      max: p.default.max,
-      lo: p.bounds[0],
-      hi: p.bounds[1],
+      // The page documents the default species (T. rex and tiger); docs/SPECIES.md the others.
+      min: presetRange(p.id, DEFAULT_HEAVY, DEFAULT_PACK).min,
+      mode: presetRange(p.id, DEFAULT_HEAVY, DEFAULT_PACK).mode,
+      max: presetRange(p.id, DEFAULT_HEAVY, DEFAULT_PACK).max,
+      lo: paramBounds(p.id, DEFAULT_HEAVY, DEFAULT_PACK)[0],
+      hi: paramBounds(p.id, DEFAULT_HEAVY, DEFAULT_PACK)[1],
     });
     const individual = dataValues(s.inner).filter((d) => d.k === 'individual');
     expect(one(individual, 'individual').value).toBe(String(p.individual));
@@ -814,6 +823,8 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
   const choices: Partial<Record<keyof ScenarioConfig, readonly string[]>> = {
     sampling: SAMPLING_METHODS,
     packTactic: PACK_TACTICS,
+    heavySpecies: HEAVY_SPECIES_IDS,
+    packSpecies: PACK_SPECIES_IDS,
     morale: ['true', 'false'],
   };
 
