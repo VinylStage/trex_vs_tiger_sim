@@ -256,6 +256,27 @@ code {
   letter-spacing: 0.02em;
 }
 
+/* Visible breadcrumb, the same trail as the page's BreadcrumbList JSON-LD (docs/SEO.md). */
+.breadcrumb ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.45em;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.breadcrumb li + li::before {
+  content: '›';
+  margin-right: 0.45em;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.breadcrumb a {
+  color: inherit;
+}
+
 h1,
 h2,
 h3,

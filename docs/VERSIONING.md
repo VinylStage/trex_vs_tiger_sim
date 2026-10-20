@@ -164,7 +164,7 @@ sequenceDiagram
     Page->>Page: drop _r from the URL, show "최신 버전을 불러왔습니다"
 ```
 
-- **Confirmation.** The action asks first, inside the dialog, and says that the tutorial record (`trexsim.tour` in `localStorage`, the only stored key) is reset. The scenario and the language are kept: the scenario lives in the URL fragment (`#s=…`), which both redirects carry along, and the language is the URL path.
+- **Confirmation.** The action asks first, inside the dialog, and says that the tutorial record (`trexsim.tour` in `localStorage`, the only key the site writes; the v0.1.0 key `trexsim.lang` is deleted on every load, `src/pages/legacy-storage.ts`) is reset. The scenario and the language are kept: the scenario lives in the URL fragment (`#s=…`), which both redirects carry along, and the language is the URL path.
 - **Language round-trip.** The app passes its own path to `resetUrl()`; from the English app the reset URL gets `&to=%2Fen%2F`. `src/reset.ts` reads it with `returnPathFromSearch()`, which accepts only `/` and `/en/` (anything else falls back to `/`, so the parameter cannot redirect off-site), and `reloadUrl()` sends the visitor back to `/en/?_r=…#s=…`.
 - **`location.replace`** is used for both hops, so Back does not return to the old page or to `/reset/`.
 - **`?_r=<timestamp>`** gives `index.html` a URL that no cache has seen. `index.html` is already `no-cache`, and assets are content-hashed, so this is a belt-and-braces measure for intermediaries and for Chrome's partial `"cache"` support (see below). The app removes `_r` with `history.replaceState` right away, so shared links stay clean; other query parameters are kept.

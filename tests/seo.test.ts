@@ -11,7 +11,7 @@ import {
   parsePagePath,
   type PageId,
 } from '../src/pages/routes';
-import { extractFaq, extractPageFacts } from '../src/seo/extract';
+import { extractFaq, extractPageFacts, extractUpdated } from '../src/seo/extract';
 import {
   headTags,
   injectHead,
@@ -31,7 +31,7 @@ import {
   X_DEFAULT_LANG,
   pageSource,
 } from '../src/seo/site';
-import { sitemapXml } from '../src/seo/sitemap';
+import { pageLastmod, sitemapXml, visibleDateIsStale } from '../src/seo/sitemap';
 import { DICTIONARIES, LANGS, type Lang } from '../src/ui/i18n';
 import { findHtmlEntries } from '../vite.pages';
 import { absolutizeUrls, gitHistory, gitLastmod, notFoundLang, unshallow } from '../vite.seo';
@@ -53,7 +53,6 @@ const ROUTES = INDEXABLE_ROUTES.map(({ page, lang }) => {
     page,
     lang,
     facts: extractPageFacts(html),
-    dateModified: DATE,
     version: VERSION,
   };
   return { page, lang, file: pageSource(page, lang), html, input, built: injectHead(html, input) };
@@ -255,6 +254,11 @@ describe.each(ROUTES)('$file generated head', ({ page, lang, html, input, built 
         [1, DICTIONARIES[lang]['app.shortTitle'], canonicalUrl('simulator', lang)],
         [2, DICTIONARIES[lang][`nav.${page}`], url],
       ]);
+      // Structured data must match visible content: the page shows the same trail.
+      const trail = /<nav class="eyebrow breadcrumb"[\s\S]*?<\/nav>/.exec(html)?.[0] ?? '';
+      expect(
+        [...trail.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/g)].map((m) => textOf(m[1] ?? '')),
+      ).toEqual(crumbs.map((c) => c['name']));
       const type = ['guide', 'model', 'parameters'].includes(page)
         ? 'TechArticle'
         : page === 'about'
@@ -262,12 +266,14 @@ describe.each(ROUTES)('$file generated head', ({ page, lang, html, input, built 
           : 'WebPage';
       const article = nodeOf(graph, type);
       const h1 = /<h1>([\s\S]*?)<\/h1>/.exec(html)?.[1] ?? '';
+      const visibleDate = /<p class="page-meta">[\s\S]*?<time datetime="([^"]+)">/.exec(html)?.[1];
+      expect(visibleDate, 'a visible “last updated” date').toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(article).toMatchObject({
         headline: textOf(h1),
         description,
         inLanguage: lang,
         mainEntityOfPage: url,
-        dateModified: DATE,
+        dateModified: visibleDate,
         author: { '@type': 'Person', '@id': PERSON.id, name: 'VinylStage' },
       });
       expect((article['headline'] as string).length).toBeLessThanOrEqual(110);
@@ -319,12 +325,47 @@ describe('generated head (whole set)', () => {
     }
   });
 
-  it('omits dateModified when git cannot tell', () => {
+  it('takes dateModified from the visible date only, and omits it when a page shows none', () => {
     const r = ROUTES.find((x) => x.page === 'model' && x.lang === 'en');
-    const graph = structuredData({ ...(r?.input as HeadInput), dateModified: null })['@graph'];
+    const input = r?.input as HeadInput;
+    const article = (updated: string | null): Node =>
+      structuredData({ ...input, facts: { ...input.facts, updated } })['@graph'].find(
+        (n) => (n as Node)['@type'] === 'TechArticle',
+      ) as Node;
+    expect(article('2030-01-02')['dateModified']).toBe('2030-01-02');
+    expect(article(null)['dateModified']).toBeUndefined();
+  });
+
+  it('reads the visible date from the page-meta <time> and rejects a malformed one', () => {
     expect(
-      (graph.find((n) => (n as Node)['@type'] === 'TechArticle') as Node)['dateModified'],
-    ).toBeUndefined();
+      extractUpdated('<p class="page-meta">Updated <time datetime="2026-01-02">2 Jan</time></p>'),
+    ).toBe('2026-01-02');
+    expect(
+      extractUpdated('<p>x</p><time datetime="2026-01-02">a time elsewhere</time>'),
+    ).toBeNull();
+    expect(
+      extractUpdated('<p class="page-meta">no date</p><time datetime="2026-01-02"></time>'),
+    ).toBeNull();
+    expect(() =>
+      extractUpdated('<p class="page-meta"><time datetime="2 Jan 2026">x</time></p>'),
+    ).toThrow(/YYYY-MM-DD/);
+    for (const r of ROUTES) {
+      expect(r.input.facts.updated === null, r.file).toBe(r.page === 'simulator');
+    }
+  });
+
+  it('publishes the visible date as lastmod and falls back to git only without one', () => {
+    expect(pageLastmod('2026-10-20', '2026-10-25T01:00:00+00:00')).toBe('2026-10-20');
+    expect(pageLastmod(null, '2026-10-25T01:00:00+00:00')).toBe('2026-10-25T01:00:00+00:00');
+    expect(pageLastmod(null, null)).toBeNull();
+  });
+
+  it('flags a page committed after its visible date (the build warns)', () => {
+    expect(visibleDateIsStale('2026-10-20', '2026-10-21T00:10:00+09:00')).toBe(true);
+    expect(visibleDateIsStale('2026-10-20', '2026-10-20T23:59:00+09:00')).toBe(false);
+    expect(visibleDateIsStale('2026-10-20', '2026-10-19T08:00:00+00:00')).toBe(false);
+    expect(visibleDateIsStale(null, '2026-10-21T00:00:00+00:00')).toBe(false);
+    expect(visibleDateIsStale('2026-10-20', null)).toBe(false);
   });
 
   it('escapes markup in JSON-LD and attributes', () => {
@@ -401,6 +442,21 @@ describe('sitemap.xml', () => {
       expect(entry?.lastmod ?? null).toBe(lastmod(r.page, r.lang));
     }
     expect(sitemapXml(() => null)).not.toContain('<lastmod>');
+  });
+
+  it('gives every content page its visible date as lastmod, the same as its dateModified', () => {
+    const facts = (page: PageId, lang: Lang): HeadInput['facts'] =>
+      (ROUTES.find((r) => r.page === page && r.lang === lang) as (typeof ROUTES)[number]).input
+        .facts;
+    const built = sitemapXml((page, lang) => pageLastmod(facts(page, lang).updated, null));
+    for (const r of ROUTES.filter((x) => x.page !== 'simulator')) {
+      const graph = graphOf(r.built);
+      const modified = graph.find((n) => typeof n['dateModified'] === 'string')?.['dateModified'];
+      expect(modified, r.file).toBe(r.input.facts.updated);
+      expect(built, r.file).toContain(
+        `<loc>${canonicalUrl(r.page, r.lang)}</loc>\n    <lastmod>${modified as string}</lastmod>`,
+      );
+    }
   });
 });
 
@@ -497,6 +553,24 @@ describe('llms.txt and llms-full.txt', () => {
     expect(full).toContain(DICTIONARIES.en['intro.title']);
     expect(full).not.toMatch(/<\/?(p|a|div|span|section|li|code|strong|em)\b/);
     expect(full).toContain('Permission is hereby granted, free of charge');
+  });
+
+  it('keeps link targets as absolute Markdown links', () => {
+    const ko = DICTIONARIES.ko;
+    expect(full).toContain(`- [${ko['intro.link.guide']}](${canonicalUrl('guide', 'ko')})`);
+    expect(full).toContain(`[${ko['intro.link.model']}](${canonicalUrl('model', 'ko')}#results)`);
+    expect(full).toContain(`[${ko['intro.link.tour']}](${SITE_ORIGIN}/?tour=1)`);
+    const links = [...full.matchAll(/\]\(([^)\s]+)\)/g)].map((m) => m[1] ?? '');
+    expect(links.length).toBeGreaterThan(50);
+    for (const href of links) expect(href).toMatch(/^https:\/\//);
+    expect(
+      htmlToText(
+        '<p>See <a href="../model/#a">the <em>model</em></a>, <a href="#x">x [1]</a> and <a href="https://e.org/a_(b)">e</a>.</p>',
+        'https://s.test/en/guide/',
+      ),
+    ).toBe(
+      'See [the model](https://s.test/en/model/#a), [x \\[1\\]](https://s.test/en/guide/#x) and [e](https://e.org/a_%28b%29).',
+    );
   });
 
   it('converts headings, lists, tables and pre blocks', () => {

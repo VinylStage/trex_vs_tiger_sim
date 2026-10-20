@@ -14,6 +14,7 @@ import { CONSTANTS, DT } from '../src/sim/engine';
 import { PARAMS } from '../src/sim/params';
 import {
   CONTENT_PAGES,
+  NAV_LABEL_KEYS,
   RELEASES_URL,
   pagePath,
   parsePagePath,
@@ -133,6 +134,68 @@ function elements(html: string, name: string): { attrs: Record<string, string>; 
   });
 }
 
+const VOID = new Set([
+  'area',
+  'br',
+  'col',
+  'embed',
+  'hr',
+  'img',
+  'input',
+  'link',
+  'meta',
+  'source',
+]);
+const TOKEN_RE = /<\/([a-zA-Z][\w:-]*)\s*>|<([a-zA-Z][\w:-]*)\b[^>]*>|<!--[\s\S]*?-->|([^<]+)/g;
+
+/**
+ * The first element whose start tag matches, with nesting of its own tag name counted, so it is
+ * exact for elements that contain others of their kind (`<div id="app">`, sections).
+ */
+function outerElement(
+  html: string,
+  match: (t: Tag) => boolean,
+): { attrs: Record<string, string>; inner: string; outer: string; end: number } {
+  const start = tags(html).find(match);
+  expect(start, 'element').toBeDefined();
+  const t = start as Tag;
+  const open = html.lastIndexOf('<', t.end - 1);
+  let depth = 1;
+  const re = new RegExp(`<(/?)${t.name}\\b[^>]*>`, 'gi');
+  re.lastIndex = t.end;
+  for (let m = re.exec(html); m; m = re.exec(html)) {
+    depth += m[1] ? -1 : 1;
+    if (depth === 0) {
+      return {
+        attrs: t.attrs,
+        inner: html.slice(t.end, m.index),
+        outer: html.slice(open, m.index + m[0].length),
+        end: m.index + m[0].length,
+      };
+    }
+  }
+  throw new Error(`unclosed <${t.name}>`);
+}
+
+/** Every non-blank text node of a fragment with the elements that enclose it (outermost first). */
+function textNodes(html: string): { text: string; ancestors: Tag[] }[] {
+  const out: { text: string; ancestors: Tag[] }[] = [];
+  const stack: Tag[] = [];
+  for (const m of html.matchAll(TOKEN_RE)) {
+    if (m[1]) {
+      const name = m[1].toLowerCase();
+      const i = stack.map((s) => s.name).lastIndexOf(name);
+      if (i >= 0) stack.length = i;
+    } else if (m[2]) {
+      const tag = tags(m[0])[0];
+      if (tag && !VOID.has(tag.name) && !m[0].endsWith('/>')) stack.push(tag);
+    } else if (m[3] && m[3].trim() !== '') {
+      out.push({ text: textOf(m[3]), ancestors: [...stack] });
+    }
+  }
+  return out;
+}
+
 const one = <T>(xs: readonly T[], what: string): T => {
   expect(xs, what).toHaveLength(1);
   return xs[0] as T;
@@ -243,6 +306,24 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
     );
   });
 
+  it('shows a breadcrumb from the app to this page, named like the navigation', () => {
+    const d = DICTIONARIES[lang];
+    const nav = one(
+      elements(html, 'nav').filter((n) =>
+        (n.attrs['class'] ?? '').split(/\s+/).includes('breadcrumb'),
+      ),
+      'breadcrumb',
+    );
+    expect(nav.attrs['aria-label']).toBe(d['breadcrumb.label']);
+    const items = tags(nav.inner, 'li');
+    expect(elements(nav.inner, 'li').map((li) => textOf(li.inner))).toEqual([
+      d['app.shortTitle'],
+      d[NAV_LABEL_KEYS[page]],
+    ]);
+    expect(tags(nav.inner, 'a').map((a) => a.attrs['href'])).toEqual([pagePath('simulator', lang)]);
+    expect(items.map((li) => li.attrs['aria-current'] ?? null)).toEqual([null, 'page']);
+  });
+
   it('links its counterpart in the other language', () => {
     const sw = one(
       tags(html, 'a').filter((a) => 'data-lang-switch' in a.attrs),
@@ -342,14 +423,69 @@ describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
     expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION);
   });
 
-  it('loads the app script and keeps #app empty for it', () => {
+  it('loads the app script; #app holds only the static header the app replaces', () => {
     const script = one(tags(html, 'script'), '<script>');
     expect(script.attrs).toMatchObject({ type: 'module', src: '/src/main.ts' });
-    const app = one(
-      elements(html, 'div').filter((x) => x.attrs['id'] === 'app'),
-      '#app',
+    const app = outerElement(html, (t) => t.name === 'div' && t.attrs['id'] === 'app');
+    const head = outerElement(app.inner, (t) => t.name === 'header');
+    expect(head.attrs['class']).toBe('app-header app-static-head');
+    expect(app.inner.replace(head.outer, '').trim()).toBe('');
+  });
+
+  it('has exactly one static <h1>, the app title, before any other heading', () => {
+    const h1 = one(elements(html, 'h1'), '<h1>');
+    expect(h1.attrs['data-i18n']).toBe('app.title');
+    expect(textOf(h1.inner)).toBe(d['app.title']);
+    expect(html.search(/<h1[\s>]/)).toBeLessThan(html.search(/<h[2-6][\s>]/));
+    const head = outerElement(html, (t) => t.name === 'header');
+    expect(head.inner).toContain('<h1');
+  });
+
+  it('links the other language statically, for crawlers that do not run JavaScript', () => {
+    const sw = one(
+      tags(html, 'a').filter((a) => 'data-lang-switch' in a.attrs),
+      'language link',
     );
-    expect(app.inner.trim()).toBe('');
+    expect(sw.attrs).toMatchObject({
+      href: pagePath('simulator', other(lang)),
+      hreflang: other(lang),
+      lang: other(lang),
+      'data-i18n': 'lang.switch',
+    });
+  });
+
+  it('binds every piece of static text to a message key, so the in-place switch translates it', () => {
+    const regions = [
+      outerElement(html, (t) => t.attrs['class'] === 'app-header app-static-head'),
+      outerElement(html, (t) => t.attrs['id'] === 'intro'),
+      outerElement(html, (t) => t.attrs['id'] === 'faq'),
+      outerElement(html, (t) => t.name === 'footer'),
+    ];
+    for (const r of regions) {
+      for (const { text, ancestors } of textNodes(r.outer)) {
+        // Footer links are rebuilt from FOOTER_LINKS (checked against footerItems below).
+        const bound = ancestors.some((a) => 'data-i18n' in a.attrs || 'data-footer' in a.attrs);
+        expect(bound, `unbound text “${text}”`).toBe(true);
+      }
+    }
+  });
+
+  it('uses the same message keys in the same order as the other language’s page', () => {
+    const keysOf = (src: string): string[] =>
+      tags(src).flatMap((t) =>
+        (['data-i18n', 'data-i18n-aria', 'data-i18n-title'] as const)
+          .filter((a) => a in t.attrs)
+          .map((a) => `${a}=${t.attrs[a] ?? ''}`),
+      );
+    expect(keysOf(html)).toEqual(keysOf(read(appSourceOf(other(lang)))));
+  });
+
+  it('shows every intro and FAQ message exactly once', () => {
+    const used = tags(html)
+      .map((t) => t.attrs['data-i18n'])
+      .filter((k): k is string => k !== undefined && /^(intro|faq)\./.test(k));
+    const defined = Object.keys(d).filter((k) => /^(intro|faq)\./.test(k));
+    expect([...used].sort()).toEqual([...defined].sort());
   });
 
   it('puts the intro, the FAQ and the footer after #app, outside it', () => {
@@ -358,7 +494,7 @@ describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
       expect(i, needle).toBeGreaterThan(0);
       return i;
     };
-    const app = at('<div id="app"></div>');
+    const app = outerElement(html, (t) => t.name === 'div' && t.attrs['id'] === 'app').end;
     const intro = at('id="intro"');
     const faq = at('id="faq"');
     const footer = at('<footer class="site-footer"');
@@ -608,7 +744,8 @@ describe('privacy pages list the real storage keys', () => {
   const keys = storageKeys();
 
   it('finds the storage keys in the code', () => {
-    expect(keys).toEqual(['trexsim.tour']);
+    // trexsim.lang is only deleted (src/pages/legacy-storage.ts); the privacy pages say so.
+    expect(keys).toEqual(['trexsim.lang', 'trexsim.tour']);
   });
 
   it.each(LANGS)('%s: names every key and no other', (lang) => {

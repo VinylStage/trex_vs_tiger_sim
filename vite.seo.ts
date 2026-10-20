@@ -8,7 +8,7 @@ import { injectHead } from './src/seo/head.ts';
 import { llmsFullTxt, llmsTxt, type LlmsPage } from './src/seo/llms.ts';
 import { robotsTxt } from './src/seo/robots.ts';
 import { INDEXABLE_ROUTES, pageSource } from './src/seo/site.ts';
-import { sitemapXml } from './src/seo/sitemap.ts';
+import { pageLastmod, sitemapXml, visibleDateIsStale } from './src/seo/sitemap.ts';
 import type { Lang } from './src/ui/i18n.ts';
 
 /*
@@ -124,19 +124,24 @@ export function seo({ root, version, deepen }: SeoOptions): Plugin {
     deepened = unshallow(root);
     return gitHistory(root);
   };
-  const lastmods = new Map<string, string | null>();
-  const lastmod = (page: PageId, lang: Lang): string | null => {
+  const gitDates = new Map<string, string | null>();
+  const gitDate = (page: PageId, lang: Lang): string | null => {
     const file = pageSource(page, lang);
-    if (!lastmods.has(file)) {
+    if (!gitDates.has(file)) {
       history ??= loadHistory();
-      lastmods.set(file, gitLastmod(root, history, file));
+      gitDates.set(file, gitLastmod(root, history, file));
     }
-    return lastmods.get(file) ?? null;
+    return gitDates.get(file) ?? null;
   };
+  const sourceOf = (page: PageId, lang: Lang): string =>
+    readFileSync(join(root, pageSource(page, lang)), 'utf8');
+  const lastmod = (page: PageId, lang: Lang): string | null =>
+    pageLastmod(extractPageFacts(sourceOf(page, lang)).updated, gitDate(page, lang));
   const pages = (): LlmsPage[] =>
     INDEXABLE_ROUTES.map(({ page, lang }) => {
-      const html = readFileSync(join(root, pageSource(page, lang)), 'utf8');
-      return { page, lang, html, facts: extractPageFacts(html), lastmod: lastmod(page, lang) };
+      const html = sourceOf(page, lang);
+      const facts = extractPageFacts(html);
+      return { page, lang, html, facts, lastmod: pageLastmod(facts.updated, gitDate(page, lang)) };
     });
   const textFiles = (): Record<string, string> => {
     const all = pages();
@@ -174,7 +179,6 @@ export function seo({ root, version, deepen }: SeoOptions): Plugin {
           page: route.page,
           lang: route.lang,
           facts: extractPageFacts(html),
-          dateModified: lastmod(route.page, route.lang),
           version,
         });
       },
@@ -194,11 +198,25 @@ export function seo({ root, version, deepen }: SeoOptions): Plugin {
             out.source = absolutizeUrls(out.source, out.fileName);
           }
         }
-        const known = INDEXABLE_ROUTES.filter((r) => lastmod(r.page, r.lang) !== null).length;
+        let visible = 0;
+        let fromGit = 0;
+        for (const { page, lang } of INDEXABLE_ROUTES) {
+          const updated = extractPageFacts(sourceOf(page, lang)).updated;
+          const committed = gitDate(page, lang);
+          if (updated) visible += 1;
+          else if (committed) fromGit += 1;
+          if (visibleDateIsStale(updated, committed)) {
+            this.warn(
+              `${pageSource(page, lang)}: committed ${committed} but shows "last updated" ` +
+                `${updated}; bump the page-meta <time> if the content changed (docs/SEO.md#lastmod)`,
+            );
+          }
+        }
         const h = history ?? loadHistory();
         this.info(
-          `lastmod from git for ${known}/${INDEXABLE_ROUTES.length} pages ` +
-            `(git: ${h.available ? 'yes' : 'no'}, shallow: ${h.shallow ? `yes, ${h.boundary.size} boundary commit(s)` : 'no'}` +
+          `lastmod for ${visible + fromGit}/${INDEXABLE_ROUTES.length} pages ` +
+            `(${visible} from the visible date, ${fromGit} from git; ` +
+            `git: ${h.available ? 'yes' : 'no'}, shallow: ${h.shallow ? `yes, ${h.boundary.size} boundary commit(s)` : 'no'}` +
             `${deepened === null ? '' : `, unshallow: ${deepened ? 'done' : 'failed'}`})`,
         );
       },

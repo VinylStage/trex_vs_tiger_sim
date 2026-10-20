@@ -17,6 +17,23 @@
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>
+    <div id="app">
+      <header class="app-header app-static-head">
+        <div class="brand">
+          <img class="logo" src="/favicon.svg" alt="" width="40" height="40" />
+          <h1 data-i18n="app.title">T-Rex vs Tiger Simulator</h1>
+        </div>
+        <a
+          class="btn btn-ghost"
+          href="/"
+          hreflang="ko"
+          lang="ko"
+          data-lang-switch
+          data-i18n="lang.switch"
+          >한국어</a
+        >
+      </header>
+    </div>
     <noscript>
       <p class="noscript">
         This simulator needs JavaScript. Please enable it in your browser.<br />
@@ -25,7 +42,6 @@
         >
       </p>
     </noscript>
-    <div id="app"></div>
     <section class="site-intro" id="intro" aria-labelledby="intro-title">
       <div class="site-intro-inner">
         <h2 id="intro-title" data-i18n="intro.title">What is the T-Rex vs Tiger Simulator?</h2>

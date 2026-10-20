@@ -7,6 +7,26 @@ import { INDEXABLE_ROUTES, alternates } from './site.ts';
 export type LastmodOf = (page: PageId, lang: Lang) => string | null;
 
 /**
+ * The modification date the build publishes for a page (sitemap `<lastmod>`, llms-full.txt).
+ * A page that shows a "last updated" date uses exactly that date, the same one its JSON-LD
+ * `dateModified` carries; only a page without one (the simulator) falls back to the git date of
+ * its source. One source of truth per page, so the sitemap, the markup and the page agree.
+ */
+export function pageLastmod(updated: string | null, gitDate: string | null): string | null {
+  return updated ?? gitDate;
+}
+
+/**
+ * True when the page source was committed on a later day than its visible "last updated" date,
+ * i.e. someone edited the page without bumping the date. The build warns about it
+ * (vite.seo.ts); comparing calendar days in the committer's own time zone is enough here.
+ */
+export function visibleDateIsStale(updated: string | null, gitDate: string | null): boolean {
+  if (!updated || !gitDate) return false;
+  return gitDate.slice(0, 10) > updated;
+}
+
+/**
  * sitemap.xml for every indexable URL (Korean and English), each with its hreflang alternates
  * (`ko`, `en`, `x-default` → English) and, when known, an accurate `<lastmod>` (SEO_GEO §1.4).
  * No `<priority>` or `<changefreq>`: Google ignores both.

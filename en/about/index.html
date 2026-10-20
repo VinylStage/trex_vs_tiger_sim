@@ -42,13 +42,18 @@
     <main id="main" class="site-main">
       <article class="page">
         <header class="page-head">
-          <p class="eyebrow">About &amp; contact</p>
+          <nav class="eyebrow breadcrumb" aria-label="Breadcrumb" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/en/">T-Rex vs Tiger</a></li>
+              <li aria-current="page">About</li>
+            </ol>
+          </nav>
           <h1>About the T-Rex vs Tiger Simulator</h1>
           <p class="lead">
             An open-source educational simulator that starts from a fun question, “who would win, a
             T-Rex or a pack of tigers?”, and uses it to show how to reason under uncertainty.
           </p>
-          <p class="page-meta">Last updated <time datetime="2026-10-19">19 October 2026</time></p>
+          <p class="page-meta">Last updated <time datetime="2026-10-20">20 October 2026</time></p>
         </header>
 
         <nav class="toc" aria-labelledby="toc-title">
@@ -139,8 +144,8 @@
             <ul>
               <li>
                 <strong>A static website</strong>: no server-side program, just HTML, CSS and
-                JavaScript files served by Cloudflare Pages. There are no accounts, no database and
-                no analytics.
+                JavaScript files served by Cloudflare Pages. There are no accounts and no database,
+                and the site currently uses no analytics.
               </li>
               <li>
                 <strong>Computation in your browser</strong>: battles run in Web Workers spread over
@@ -149,8 +154,8 @@
               </li>
               <li>
                 <strong>No external libraries</strong>: the simulation engine, charts and replay are
-                written from scratch in TypeScript, so no third-party scripts are loaded at run
-                time.
+                written from scratch in TypeScript, so the simulator itself does not depend on any
+                third-party script.
               </li>
               <li>
                 <strong>A strict security policy</strong>: a Content Security Policy only allows

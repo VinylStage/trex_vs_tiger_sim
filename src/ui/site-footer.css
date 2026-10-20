@@ -52,20 +52,28 @@
   color: var(--fg);
 }
 
-.footer-meta {
+/* One row on wide screens (no 72ch cap); items wrap whole on narrow ones. */
+.site-footer .footer-meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0 14px;
+  max-width: none;
 }
 
 .footer-meta a {
   color: var(--muted);
 }
 
+.version-footer {
+  white-space: nowrap;
+}
+
+/* An inline-block does not take its link's underline; inherit it so the number reads as link. */
 .version-footer-num {
   display: inline-block;
   min-width: 5ch;
   font-variant-numeric: tabular-nums;
+  text-decoration: inherit;
 }
 
 @media (max-width: 560px) {

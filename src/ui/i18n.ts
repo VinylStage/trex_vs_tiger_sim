@@ -17,6 +17,7 @@ const ko = {
   'share.failed': '복사하지 못했습니다. 주소창의 URL을 직접 복사하세요.',
 
   'nav.label': '사이트 메뉴',
+  'breadcrumb.label': '이동 경로',
   'nav.simulator': '시뮬레이터',
   'nav.guide': '사용 방법',
   'nav.model': '모델 설명',
@@ -376,6 +377,7 @@ const en: Dictionary = {
   'share.failed': 'Could not copy. Copy the URL from the address bar instead.',
 
   'nav.label': 'Site',
+  'breadcrumb.label': 'Breadcrumb',
   'nav.simulator': 'Simulator',
   'nav.guide': 'Guide',
   'nav.model': 'Model',

@@ -32,15 +32,15 @@
 
 ## Pages
 
-| Page id      | Korean         | English           | Content                                                                                                               |
-| ------------ | -------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `simulator`  | `/`            | `/en/`            | The app (`index.html`, `en/index.html`), with a static intro, FAQ and footer outside `#app`                           |
-| `guide`      | `/guide/`      | `/en/guide/`      | Step-by-step use of the simulator, reading results, sharing, a three-experiment tutorial, FAQ, troubleshooting        |
-| `model`      | `/model/`      | `/en/model/`      | Plain-language model description: Monte Carlo design, agent rules, outcomes, statistics, reproducibility, limitations |
-| `parameters` | `/parameters/` | `/en/parameters/` | One card per parameter in `src/sim/params.ts`, every scenario setting, the engine constants                           |
-| `about`      | `/about/`      | `/en/about/`      | Purpose, what it teaches, educational disclaimer, how it is built, open source, contact via GitHub issues             |
-| `privacy`    | `/privacy/`    | `/en/privacy/`    | Privacy policy (effective 2026-10-20): no own cookies, `trexsim.tour` in localStorage, Cloudflare cookies and logs    |
-| `license`    | `/license/`    | `/en/license/`    | MIT License text (identical to `LICENSE`), what it covers, the Pretendard (OFL 1.1) notice and its full license text  |
+| Page id      | Korean         | English           | Content                                                                                                                                                               |
+| ------------ | -------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `simulator`  | `/`            | `/en/`            | The app (`index.html`, `en/index.html`), with a static intro, FAQ and footer outside `#app`                                                                           |
+| `guide`      | `/guide/`      | `/en/guide/`      | Step-by-step use of the simulator, reading results, sharing, a three-experiment tutorial, FAQ, troubleshooting                                                        |
+| `model`      | `/model/`      | `/en/model/`      | Plain-language model description: Monte Carlo design, agent rules, outcomes, statistics, reproducibility, limitations                                                 |
+| `parameters` | `/parameters/` | `/en/parameters/` | One card per parameter in `src/sim/params.ts`, every scenario setting, the engine constants                                                                           |
+| `about`      | `/about/`      | `/en/about/`      | Purpose, what it teaches, educational disclaimer, how it is built, open source, contact via GitHub issues                                                             |
+| `privacy`    | `/privacy/`    | `/en/privacy/`    | Privacy policy (effective 2026-10-20): no own cookies, `trexsim.tour` in localStorage (the v0.1.0 key `trexsim.lang` is deleted on load), Cloudflare cookies and logs |
+| `license`    | `/license/`    | `/en/license/`    | MIT License text (identical to `LICENSE`), what it covers, the Pretendard (OFL 1.1) notice and its full license text                                                  |
 
 The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation (`NAV_PAGES`) is simulator · guide · model · parameters · about; about, privacy and license are linked from every footer (`FOOTER_LINKS`).
 
@@ -92,10 +92,10 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 ## Writing and markup rules
 
 - **CSP**: no inline `<script>` (every script has `src`), no `<style>` blocks, no `style=` attributes, no `on*=` handlers, no `javascript:` URLs. Link the shared files exactly as the existing pages do: `<link rel="stylesheet" href="/src/pages/site.css" />` and `<script type="module" src="/src/pages/site.ts"></script>`.
-- **Semantics**: `header` → `nav.site-nav` → `main#main` → `article.page` (`header.page-head` with one `h1`, `nav.toc`, `div.page-body` of `section`s with `h2`/`h3`) → `footer`. Tables get `thead`/`th scope`.
+- **Semantics**: `header` → `nav.site-nav` → `main#main` → `article.page` (`header.page-head` with `nav.breadcrumb` (app short title › the page's nav label, matching the BreadcrumbList JSON-LD), one `h1`, a lead and `p.page-meta` with a `<time datetime="YYYY-MM-DD">`; then `nav.toc`, `div.page-body` of `section`s with `h2`/`h3`) → `footer`. Tables get `thead`/`th scope`.
 - **Tables**: every `<table>` sits in `<div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-<name>">` and has `<caption id="caption-<name>">`. The wrapper scrolls sideways on narrow screens so the page itself never does; `tabindex="0"` lets keyboard users focus the region and scroll it with the arrow keys (Safari never makes scroll containers focusable on its own; WCAG 2.1.1), and the caption gives the region and the table an accessible name. `.table-wrap:focus-visible` draws the focus ring. Use the same caption ids in both languages.
 - **Numbers that come from code** use `<data data-k="…" value="…">shown</data>`; the test compares both the `value` and the shown text with the code. Parameter cards are `section.param#param-<id>[data-param][data-unit]`, settings `section.setting#setting-<key>[data-setting]`, constants `tr[data-constant]`.
-- **Content**: write natural Korean and English (not word-for-word translation), keep claims consistent with `docs/MODEL.md` and `src/sim`, avoid describing UI details that are likely to change, and update the "last updated" date when a page changes materially. Korean uses `word-break: keep-all` so words are not split.
+- **Content**: write natural Korean and English (not word-for-word translation), keep claims consistent with `docs/MODEL.md` and `src/sim`, avoid describing UI details that are likely to change, and update the "last updated" date (`p.page-meta <time datetime>`, both languages) when a page changes materially: it is also the page's sitemap `lastmod` and JSON-LD `dateModified`, and the build warns when a page was committed after it ([SEO.md](SEO.md#sitemap-and-lastmod)). Korean uses `word-break: keep-all` so words are not split.
 - **Colour**: use the page colour roles for accent text and filled controls, not `--accent` (see [Colour contrast](#colour-contrast)).
 - Format with Prettier (`npx prettier --write <file>`); `npm run format:check` covers HTML.
 
@@ -104,9 +104,11 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 `index.html` (Korean) and `en/index.html` (English) carry the static head of their language (title = `app.documentTitle`, description; the build adds canonical, hreflang, Open Graph and JSON-LD including `FAQPage` from the visible FAQ) and this body:
 
 ```html
+<div id="app">
+  <header class="app-header app-static-head">…</header>
+  <!-- logo, the only <h1>, link to the other language; the app replaces it -->
+</div>
 <noscript>…</noscript>
-<div id="app"></div>
-<!-- the app mounts here -->
 <section class="site-intro" id="intro">…</section>
 <!-- answer-first intro -->
 <section class="site-faq" id="faq">…</section>
@@ -115,9 +117,10 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 <!-- shared footer -->
 ```
 
+- **Static header and `<h1>`.** `#app` starts with a static header in the app header's classes: logo, `<h1 data-i18n="app.title">` and `<a data-lang-switch hreflang lang data-i18n="lang.switch">` to the other language's app. Crawlers that do not run JavaScript thus get the page heading and the language link. `startApp` moves the `<h1>` element into its own header and removes the rest (the language button replaces the link), so the page always has exactly one `<h1>`.
 - **Outside `#app`.** The intro, FAQ and footer are siblings of `#app`, so they exist without JavaScript (crawlers that do not run scripts, see [SEO.md](SEO.md)) and stay in the DOM after the app mounts.
 - **Answer first, compact.** The intro says what the simulator is, how it works in four steps, what you learn (Monte Carlo, confidence intervals, sensitivity) and links to the guide, the model's preliminary results (`/model/#results`), the parameters and the tour. It states no simulation result numbers; the only number (22 parameters) is pinned to `PARAMS.length` by a test.
-- **Below the simulator, no layout shift.** The simulator stays at the top. `#app` reserves one viewport (`min-height: 100vh` / `100svh` in `src/ui/styles.css`), so the intro starts below the fold before the app mounts and stays there after it; mounting shifts nothing on screen (measured CLS 0.0000 at 1366/390/320 px). Without JavaScript (`@media (scripting: none)`) `#app` is hidden and the intro moves up under the `<noscript>` notice.
+- **Below the simulator, no layout shift.** The simulator stays at the top. `#app` reserves one viewport (`min-height: 100vh` / `100svh` in `src/ui/styles.css`), so the intro starts below the fold before the app mounts and stays there after it; mounting shifts nothing on screen (measured CLS 0.0000 at 1366/390/320 px). Without JavaScript (`@media (scripting: none)`) `#app` drops the reservation and shows only the static header; the `<noscript>` notice and the intro follow.
 - **Translatable in place.** Every static text element has `data-i18n="<key>"` and contains exactly `DICTIONARIES[lang][key]` (`data-i18n-aria`, `data-i18n-title` likewise), so the app's `applyI18n` translates it when the language switches. Links carry `data-page` (plus `data-href-suffix` such as `#results` or `?tour=1`) so `relocalizeLinks` can point them at the other language. The tour link also has `data-tour-start`: the app starts the tour in place on a plain click.
 
 ## Footer
@@ -178,7 +181,7 @@ Each `@font-face` rule covers a `unicode-range`, so a browser downloads only the
 No ad code is included yet. The pages were written with an AdSense review in mind: substantial original content on every page, an about/contact page, a privacy policy, clear navigation and no thin or auto-generated pages. When ads are added, change all of the following in the same PR:
 
 1. **Privacy policy** (both languages): name Google as a third-party vendor, describe its cookies and personalised-ads choices, link Google's policy, add a consent mechanism (certified CMP) for EEA/UK/Switzerland visitors, and bump the effective date.
-2. **About page**: the statements “no third-party scripts” / “외부 라이브러리 없음 … 다른 회사의 스크립트를 불러오지 않습니다” and “no analytics” must be revised.
+2. **About page**: it already says “currently uses no analytics” / “현재 분석 도구도 쓰지 않습니다” and that the simulator itself depends on no third-party script; recheck both against what the ads add (an analytics product would make the first false). The build regenerates `llms-full.txt` from the page, so no separate copy needs editing.
 3. **CSP** in `public/_headers` and [DEPLOYMENT.md](DEPLOYMENT.md): AdSense needs additional `script-src`, `img-src`, `frame-src`, `connect-src` origins; the inline bootstrap snippet AdSense suggests is not allowed under this CSP, so load it from a same-origin file or use a nonce-free integration.
 4. **`public/ads.txt`** with the publisher line.
 5. **Layout**: reserve fixed-size ad slots in `site.css` so ads cause no layout shift; keep ads out of the navigation and away from the simulator controls.
@@ -191,7 +194,8 @@ No ad code is included yet. The pages were written with an AdSense review in min
 - a parameter in `src/sim/params.ts` is missing, extra, or its unit, min/mode/max, bounds or individual-variation flag differ (values and visible numbers); the card heading must contain the app's i18n label;
 - a scenario setting's default, limits or options differ from `defaultConfig()`, `LIMITS`, `SAMPLING_METHODS`, `TIGER_TACTICS`, or the work budget from `MAX_WORK`; an engine constant differs from `CONSTANTS`/`DT`;
 - any page lacks a title, description, theme-colour, viewport, favicon, apple-touch-icon, manifest link, the shared CSS/JS, one `h1`, `main#main`, footer, or about 2,500 characters of text, or hand-writes a canonical, hreflang, `og:*` or `twitter:*` tag (those are generated); a title is longer than 60 or a description longer than 165 characters; titles or descriptions repeat (across all pages including `/` and `/en/`); ids repeat;
-- a simulator page's `<title>` differs from `app.documentTitle`, its `#app` is not empty, the intro/FAQ/footer are not after it, the intro has fewer than 3 or more than 4 steps, fewer than 3 or more than 5 FAQ items, or its links differ from guide · model#results · parameters · tour of its language;
+- a content page lacks the visible breadcrumb (app short title → its nav label, `aria-label` = `breadcrumb.label`) that its BreadcrumbList JSON-LD describes;
+- a simulator page's `<title>` differs from `app.documentTitle`, its `#app` holds anything but the static header, it has not exactly one `<h1>` (`app.title`, before every other heading) or no static link to the other language, a text node in the static header, intro, FAQ or footer is not bound to a message key, its ordered `data-i18n*` key list differs from the other language's page, an `intro.*`/`faq.*` message is missing or repeated, the intro/FAQ/footer are not after `#app`, the intro has fewer than 3 or more than 4 steps, fewer than 3 or more than 5 FAQ items, or its links differ from guide · model#results · parameters · tour of its language;
 - on any page, a `data-i18n` (`-aria`, `-title`) text differs from the dictionary, the footer links differ from `footerItems(lang)` (href, label, rel), the version link does not point at the releases, the header brand differs from `app.shortTitle`, or the footer still claims "no tracking";
 - the license pages' MIT text differs from `LICENSE`, or the OFL text from `src/assets/fonts/pretendard/LICENSE.txt`; `package.json` gains runtime `dependencies`;
 - a `'trexsim.*'` storage key in `src/` is missing from either privacy page, or a privacy page names a key the code does not use;

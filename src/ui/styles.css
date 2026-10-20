@@ -89,7 +89,9 @@ body {
 /*
  * The app mounts into #app; the static intro, FAQ and footer follow it (index.html,
  * en/index.html). Reserving one viewport keeps them below the fold before and after the mount,
- * so mounting the app shifts nothing on screen. Without JavaScript #app stays empty and is hidden.
+ * so mounting the app shifts nothing on screen. Before the mount #app holds only a static header
+ * (.app-static-head: logo, the page's <h1> and a link to the other language), which the app
+ * replaces with its own; without JavaScript that header is all #app shows.
  */
 #app {
   min-height: 100vh;
@@ -98,8 +100,12 @@ body {
 
 @media (scripting: none) {
   #app {
-    display: none;
+    min-height: 0;
   }
+}
+
+.app-static-head a.btn {
+  text-decoration: none;
 }
 
 h1,

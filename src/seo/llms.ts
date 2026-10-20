@@ -79,9 +79,10 @@ function tableToMarkdown(table: string): string {
 
 /**
  * Readable text of an HTML fragment: headings become `#` lines, list items `- ` lines, tables
- * Markdown tables, `<pre>` blocks fenced code; navigation and scripts are dropped.
+ * Markdown tables, `<pre>` blocks fenced code; navigation and scripts are dropped. With `base`
+ * (the page's absolute URL), links become `[text](absolute-url)`; without it only their text stays.
  */
-export function htmlToText(html: string): string {
+export function htmlToText(html: string, base?: string): string {
   const pres: string[] = [];
   let s = html.replace(/<pre\b[^>]*>([\s\S]*?)<\/pre>/gi, (_, inner: string) => {
     pres.push(
@@ -92,6 +93,20 @@ export function htmlToText(html: string): string {
     return `@@PRE${pres.length - 1}@@`;
   });
   s = s.replace(/<(script|style|svg|nav|template|noscript)\b[\s\S]*?<\/\1>/gi, '');
+  if (base !== undefined) {
+    // Entities stay encoded here; the whole text is decoded once, after the tags are gone.
+    s = s.replace(/<a\b([^>]*)>([\s\S]*?)<\/a\s*>/gi, (_, attrs: string, inner: string) => {
+      const text = inner
+        .replace(/<[^>]*>/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+      const href = /\bhref="([^"]*)"/.exec(attrs)?.[1];
+      if (!href || !text) return inner;
+      const url = new URL(decodeEntities(href), base).href;
+      const safe = url.replace(/[()]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+      return `[${text.replace(/[[\]]/g, '\\$&')}](${safe})`;
+    });
+  }
   // Tables are laid out here and protected from the whitespace collapse below.
   const tables: string[] = [];
   s = s.replace(/<table\b[\s\S]*?<\/table>/gi, (t) => {
@@ -122,16 +137,17 @@ export function htmlToText(html: string): string {
 
 /** The readable part of a page: `<main>` on content pages, the static intro and FAQ on the app. */
 export function pageMainText(p: LlmsPage): string {
+  const base = canonicalUrl(p.page, p.lang);
   if (p.page === 'simulator') {
     const parts = [elementById(p.html, 'section', 'intro'), elementById(p.html, 'section', 'faq')];
     return parts
       .filter((x): x is string => x !== null)
-      .map(htmlToText)
+      .map((x) => htmlToText(x, base))
       .join('\n\n');
   }
   const main = firstElement(p.html, 'main');
   if (main === null) throw new Error(`llms-full: ${p.lang} ${p.page} has no <main>`);
-  return htmlToText(main);
+  return htmlToText(main, base);
 }
 
 /** /llms-full.txt: every indexable page's main text, Korean pages first, each with its URL. */

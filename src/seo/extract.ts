@@ -12,10 +12,32 @@ export interface PageFacts {
   title: string;
   /** `<meta name="description">`. */
   description: string;
-  /** Text of the page's `<h1>`, or null (the simulator renders its heading with JavaScript). */
+  /** Text of the page's `<h1>`, or null when it has none. */
   h1: string | null;
   /** The visible FAQ (`<section id="faq">`), in page order; empty when the page has none. */
   faq: FaqItem[];
+  /**
+   * The visible "last updated" (or "effective") date, `YYYY-MM-DD`: the `datetime` of the
+   * `<time>` in the page's `<p class="page-meta">`, or null when the page shows none (the
+   * simulator). It is the only source of a content page's JSON-LD `dateModified` and sitemap
+   * `<lastmod>`, so the structured data always matches what readers see (docs/SEO.md#lastmod).
+   */
+  updated: string | null;
+}
+
+const PAGE_META_TIME =
+  /<p\s[^>]*\bclass="page-meta"[^>]*>(?:(?!<\/p>)[\s\S])*?<time\s[^>]*\bdatetime="([^"]*)"/i;
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The visible update date of a page (see {@link PageFacts.updated}); throws on a malformed one. */
+export function extractUpdated(html: string): string | null {
+  const m = PAGE_META_TIME.exec(html);
+  if (!m) return null;
+  const date = m[1] ?? '';
+  if (!ISO_DATE.test(date)) {
+    throw new Error(`page-meta <time datetime="${date}"> is not YYYY-MM-DD`);
+  }
+  return date;
 }
 
 /**
@@ -48,5 +70,6 @@ export function extractPageFacts(html: string): PageFacts {
     description: description.replace(/\s+/g, ' ').trim(),
     h1: h1 === null ? null : textOf(h1),
     faq: extractFaq(html),
+    updated: extractUpdated(html),
   };
 }

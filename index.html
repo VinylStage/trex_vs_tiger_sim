@@ -17,13 +17,29 @@
     <script type="module" src="/src/main.ts"></script>
   </head>
   <body>
+    <div id="app">
+      <header class="app-header app-static-head">
+        <div class="brand">
+          <img class="logo" src="/favicon.svg" alt="" width="40" height="40" />
+          <h1 data-i18n="app.title">티렉스 대 호랑이 시뮬레이터</h1>
+        </div>
+        <a
+          class="btn btn-ghost"
+          href="/en/"
+          hreflang="en"
+          lang="en"
+          data-lang-switch
+          data-i18n="lang.switch"
+          >English</a
+        >
+      </header>
+    </div>
     <noscript>
       <p class="noscript">
         이 시뮬레이터는 JavaScript가 필요합니다. 브라우저에서 JavaScript를 켜 주세요.<br />
         <span lang="en">This simulator needs JavaScript. Please enable it in your browser.</span>
       </p>
     </noscript>
-    <div id="app"></div>
     <section class="site-intro" id="intro" aria-labelledby="intro-title">
       <div class="site-intro-inner">
         <h2 id="intro-title" data-i18n="intro.title">티렉스 대 호랑이 시뮬레이터란?</h2>

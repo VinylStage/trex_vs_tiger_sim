@@ -27,8 +27,6 @@ export interface HeadInput {
   page: PageId;
   lang: Lang;
   facts: PageFacts;
-  /** Last commit date of the page source (ISO 8601), or null when git cannot tell. */
-  dateModified: string | null;
   /** package.json version, for WebApplication.softwareVersion. */
   version: string;
 }
@@ -123,7 +121,8 @@ function articleNode(input: HeadInput, page: Exclude<PageId, 'simulator'>, url: 
     isPartOf: { '@id': WEBSITE_ID },
     about: { '@id': appId(input.lang) },
   };
-  if (input.dateModified) node['dateModified'] = input.dateModified;
+  // The visible "last updated" date, never a git date, so the markup matches the page.
+  if (input.facts.updated) node['dateModified'] = input.facts.updated;
   return node;
 }
 

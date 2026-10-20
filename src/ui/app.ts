@@ -121,6 +121,13 @@ export function startApp(root: HTMLElement): void {
     else fail();
   });
 
+  // index.html and en/index.html ship a static header inside #app with the page's only <h1> and
+  // a link to the other language, for crawlers that do not run JavaScript (docs/SEO.md). The app
+  // moves that <h1> into its own header and drops the rest: the language button replaces the link.
+  const staticHead = root.querySelector('.app-static-head');
+  const title = staticHead?.querySelector('h1') ?? h('h1', { i18n: 'app.title' });
+  staticHead?.remove();
+
   const header = h(
     'header',
     { class: 'app-header' },
@@ -134,7 +141,7 @@ export function startApp(root: HTMLElement): void {
       h(
         'div',
         {},
-        h('div', { class: 'brand-title' }, h('h1', { i18n: 'app.title' }), createVersionBadge()),
+        h('div', { class: 'brand-title' }, title, createVersionBadge()),
         h('p', { class: 'tagline', i18n: 'app.tagline' }),
       ),
     ),

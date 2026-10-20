@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
+import { LEGACY_STORAGE_KEYS, dropLegacyStorage } from '../src/pages/legacy-storage';
 import {
   BLOG_URL,
   CONTENT_PAGES,
@@ -287,5 +288,25 @@ describe('findHtmlEntries', () => {
     }
     expect(entries['404']).toBe(join(ROOT, '404.html'));
     expect(entries['en-404']).toBe(join(ROOT, 'en', '404.html'));
+  });
+});
+
+describe('legacy storage cleanup', () => {
+  it('deletes the language key v0.1.0 stored, and only that', () => {
+    expect(LEGACY_STORAGE_KEYS).toEqual(['trexsim.lang']);
+    const removed: string[] = [];
+    dropLegacyStorage({ removeItem: (k) => removed.push(k) });
+    expect(removed).toEqual(['trexsim.lang']);
+  });
+
+  it('never throws when storage is missing or blocked', () => {
+    expect(() => dropLegacyStorage(null)).not.toThrow();
+    expect(() =>
+      dropLegacyStorage({
+        removeItem: () => {
+          throw new Error('SecurityError');
+        },
+      }),
+    ).not.toThrow();
   });
 });

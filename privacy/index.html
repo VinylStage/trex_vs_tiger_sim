@@ -44,7 +44,12 @@
     <main id="main" class="site-main">
       <article class="page">
         <header class="page-head">
-          <p class="eyebrow">개인정보처리방침</p>
+          <nav class="eyebrow breadcrumb" aria-label="이동 경로" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/">티렉스 대 호랑이</a></li>
+              <li aria-current="page">개인정보처리방침</li>
+            </ol>
+          </nav>
           <h1>개인정보처리방침</h1>
           <p class="lead">
             이 사이트는 처음부터 개인정보를 수집하지 않도록 만들었습니다. 어떤 정보가 어디에서, 왜
@@ -149,7 +154,8 @@
               <li>
                 화면 언어는 저장하지 않습니다. 한국어는 <code>/</code>, 영어는 <code>/en/</code>처럼
                 주소가 언어를 정하므로, 언어를 바꾸면 주소가 바뀔 뿐 브라우저에는 아무것도 남지
-                않습니다.
+                않습니다. v0.1.0이 언어를 기억하려고 저장했던 <code>trexsim.lang</code> 값은 더 이상
+                쓰지 않으며, 사이트를 열면 지워집니다.
               </li>
               <li>
                 localStorage에 저장된 값은 내 브라우저 안에만 있으며, 서버로 전송되지 않습니다. 이

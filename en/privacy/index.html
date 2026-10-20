@@ -42,7 +42,12 @@
     <main id="main" class="site-main">
       <article class="page">
         <header class="page-head">
-          <p class="eyebrow">Privacy</p>
+          <nav class="eyebrow breadcrumb" aria-label="Breadcrumb" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/en/">T-Rex vs Tiger</a></li>
+              <li aria-current="page">Privacy</li>
+            </ol>
+          </nav>
           <h1>Privacy policy</h1>
           <p class="lead">
             This site was built from the start not to collect personal data. Below is a complete
@@ -152,7 +157,9 @@
               <li>
                 Your interface language is not stored. The address sets it (<code>/</code> for
                 Korean, <code>/en/</code> for English), so switching language only changes the
-                address and leaves nothing in your browser.
+                address and leaves nothing in your browser. Version 0.1.0 remembered the language as
+                <code>trexsim.lang</code>; that value is no longer used and is deleted when you open
+                the site.
               </li>
               <li>
                 Values in localStorage stay inside your browser and are never sent to a server. They

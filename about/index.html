@@ -44,13 +44,18 @@
     <main id="main" class="site-main">
       <article class="page">
         <header class="page-head">
-          <p class="eyebrow">소개 · 문의</p>
+          <nav class="eyebrow breadcrumb" aria-label="이동 경로" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/">티렉스 대 호랑이</a></li>
+              <li aria-current="page">소개</li>
+            </ol>
+          </nav>
           <h1>티렉스 대 호랑이 시뮬레이터 소개</h1>
           <p class="lead">
             “티라노사우루스와 호랑이 무리가 싸우면 누가 이길까?”라는 재미있는 질문을 출발점으로,
             불확실성 아래에서 추론하는 방법을 직접 체험해 보는 오픈 소스 교육용 시뮬레이터입니다.
           </p>
-          <p class="page-meta">최종 수정 <time datetime="2026-10-19">2026년 10월 19일</time></p>
+          <p class="page-meta">최종 수정 <time datetime="2026-10-20">2026년 10월 20일</time></p>
         </header>
 
         <nav class="toc" aria-labelledby="toc-title">
@@ -140,7 +145,8 @@
             <ul>
               <li>
                 <strong>정적 웹사이트</strong>: 서버 프로그램 없이 HTML, CSS, JavaScript 파일만
-                Cloudflare Pages에서 제공합니다. 계정, 데이터베이스, 분석 도구가 없습니다.
+                Cloudflare Pages에서 제공합니다. 계정과 데이터베이스가 없고, 현재 분석 도구도 쓰지
+                않습니다.
               </li>
               <li>
                 <strong>브라우저 안의 계산</strong>: 전투 계산은 Web Worker에서 여러 CPU 코어로 나눠
@@ -148,7 +154,8 @@
               </li>
               <li>
                 <strong>외부 라이브러리 없음</strong>: 시뮬레이션 엔진, 차트, 재생 화면을 모두
-                TypeScript로 직접 구현해, 실행 시점에 다른 회사의 스크립트를 불러오지 않습니다.
+                TypeScript로 직접 구현해, 시뮬레이터 자체는 다른 회사의 스크립트에 의존하지
+                않습니다.
               </li>
               <li>
                 <strong>엄격한 보안 정책</strong>: 콘텐츠 보안 정책(CSP)으로 이 사이트의 파일만
