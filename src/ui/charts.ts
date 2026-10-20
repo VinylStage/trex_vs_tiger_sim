@@ -291,6 +291,8 @@ export class CanvasChart {
   private showTip(hit: Hit, x: number, y: number): void {
     this.tip.textContent = hit.text;
     this.tip.hidden = false;
+    // Measure at the left edge: at its last position the wrapping tip would be squeezed narrower.
+    this.tip.style.left = '0px';
     const bw = this.box.clientWidth;
     const tw = this.tip.offsetWidth;
     const th = this.tip.offsetHeight;
@@ -374,6 +376,32 @@ function ellipsize(ctx: CanvasRenderingContext2D, text: string, maxW: number): s
   return `${s}…`;
 }
 
+/**
+ * Break `text` at spaces into at most two lines no wider than `maxW`; the second line is cut with
+ * an ellipsis when the rest does not fit. One line when it fits whole.
+ */
+export function wrapLabel(text: string, maxW: number, measure: (s: string) => number): string[] {
+  if (measure(text) <= maxW) return [text];
+  const words = text.split(' ');
+  let first = '';
+  let i = 0;
+  for (; i < words.length; i++) {
+    const next = first ? `${first} ${words[i]}` : (words[i] ?? '');
+    if (first && measure(next) > maxW) break;
+    first = next;
+  }
+  const rest = words.slice(i).join(' ');
+  if (!rest || measure(first) > maxW) return [cut(text, maxW, measure)];
+  return [first, cut(rest, maxW, measure)];
+}
+
+function cut(text: string, maxW: number, measure: (s: string) => number): string {
+  if (measure(text) <= maxW) return text;
+  let s = text;
+  while (s.length > 1 && measure(`${s}…`) > maxW) s = s.slice(0, -1);
+  return `${s}…`;
+}
+
 function noData(ctx: CanvasRenderingContext2D, size: Size, theme: Theme): Hit[] {
   ctx.fillStyle = theme.muted;
   ctx.font = font(theme, 13);
@@ -417,7 +445,7 @@ export function paintOutcome(agg: AggregateResult): Painter {
     ctx.strokeStyle = theme.grid;
     ctx.lineWidth = 1;
     ctx.fillStyle = theme.muted;
-    ctx.font = font(theme, 11);
+    ctx.font = font(theme, 12);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     for (const p of [0, 0.25, 0.5, 0.75, 1]) {
@@ -500,7 +528,7 @@ export function paintHistogram(hist: Histogram, opts: HistogramOptions): Painter
     const yMax = Math.max(1, ...counts);
     const yTicks = niceTicks(0, yMax, 4, true);
     const yTop = Math.max(yMax, yTicks[yTicks.length - 1] ?? yMax);
-    ctx.font = font(theme, 11);
+    ctx.font = font(theme, 12);
     const left = Math.max(...yTicks.map((v) => ctx.measureText(formatNum(v, 0)).width)) + 10;
     const right = w - 8;
     const top = 8;
@@ -585,10 +613,13 @@ export function paintTornado(
     const maxAbs = Math.max(...rows.map((r) => Math.abs(r.rho)));
     const scale = [0.1, 0.2, 0.3, 0.5, 0.75, 1].find((s) => s >= maxAbs - 1e-9) ?? 1;
     ctx.font = font(theme, 12);
+    // Phones: a wider label column, and labels that do not fit wrap onto a second line.
+    const narrow = w < 400;
     const labelW = Math.min(
-      w * 0.42,
+      w * (narrow ? 0.45 : 0.42),
       Math.max(...rows.map((r) => ctx.measureText(label(r.id)).width)),
     );
+    const measure = (s: string): number => ctx.measureText(s).width;
     const headH = 20;
     const left = labelW + 12;
     const right = w - 4;
@@ -599,7 +630,7 @@ export function paintTornado(
     const barH = Math.min(18, bandH * 0.6);
 
     ctx.fillStyle = theme.muted;
-    ctx.font = font(theme, 11);
+    ctx.font = font(theme, 12);
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
     ctx.fillText(t('chart.favPack'), left, headH / 2);
@@ -620,7 +651,11 @@ export function paintTornado(
       ctx.fillStyle = theme.fg;
       ctx.font = font(theme, 12);
       ctx.textAlign = 'right';
-      ctx.fillText(ellipsize(ctx, name, labelW), labelW, cy);
+      const lines = narrow ? wrapLabel(name, labelW, measure) : [ellipsize(ctx, name, labelW)];
+      const lineH = Math.min(14, bandH / 2);
+      lines.forEach((line, j) => {
+        ctx.fillText(line, labelW, cy + (j - (lines.length - 1) / 2) * lineH);
+      });
 
       const len = (Math.abs(r.rho) / scale) * half;
       ctx.fillStyle = r.rho >= 0 ? theme.heavy : theme.pack;
@@ -629,7 +664,7 @@ export function paintTornado(
 
       const value = `${r.rho >= 0 ? '+' : '−'}${formatFixed(Math.abs(r.rho), 2)}`;
       ctx.fillStyle = theme.fg;
-      ctx.font = font(theme, 11);
+      ctx.font = font(theme, 12);
       ctx.textAlign = r.rho >= 0 ? 'left' : 'right';
       ctx.fillText(value, r.rho >= 0 ? cx + len + 4 : cx - len - 4, cy);
 

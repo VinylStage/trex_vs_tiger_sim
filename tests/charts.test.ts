@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { AggregateResult, Sensitivity } from '../src/sim/montecarlo';
 import { wilson } from '../src/sim/stats';
-import { histogramTable, nextHit, outcomeTable, tornadoTable } from '../src/ui/charts';
+import { histogramTable, nextHit, outcomeTable, tornadoTable, wrapLabel } from '../src/ui/charts';
 import { initLang } from '../src/ui/i18n';
 
 afterEach(() => initLang('ko'));
@@ -71,5 +71,23 @@ describe('keyboard tooltip', () => {
     expect(nextHit('End', 0, 3)).toBe(2);
     expect(nextHit('a', 0, 3)).toBeNull();
     expect(nextHit('ArrowRight', -1, 0)).toBeNull();
+  });
+});
+
+describe('wrapLabel', () => {
+  const measure = (s: string): number => s.length * 6;
+
+  it('keeps a label that fits on one line', () => {
+    expect(wrapLabel('T-Rex · 체중', 120, measure)).toEqual(['T-Rex · 체중']);
+  });
+
+  it('wraps at spaces onto a second line and cuts only what still does not fit', () => {
+    // 60 px = 10 characters per line.
+    expect(wrapLabel('T-Rex · bite angle (deg)', 60, measure)).toEqual(['T-Rex ·', 'bite angl…']);
+    expect(wrapLabel('Tiger · morale', 60, measure)).toEqual(['Tiger ·', 'morale']);
+  });
+
+  it('cuts a single word that is too long with an ellipsis', () => {
+    expect(wrapLabel('Spearmanrho', 30, measure)).toEqual(['Spea…']);
   });
 });

@@ -285,6 +285,25 @@
   }
 }
 
+/* Landscape phones: one row, so the banner covers as little of the short screen as possible. */
+@media (max-height: 500px) {
+  .update-banner {
+    flex-wrap: nowrap;
+    gap: 10px;
+    max-width: 44rem;
+    padding: 6px 12px;
+  }
+
+  .update-banner-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .update-banner-actions {
+    flex: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .version-badge[data-state='checking'] .version-badge-dot,
   .update-banner {

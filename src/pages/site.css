@@ -89,7 +89,7 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.7;
   overflow-wrap: break-word;
 }
@@ -323,7 +323,8 @@ h1 {
 
 .toc ol {
   margin: 0;
-  padding-left: 1.3em;
+  /* Room for two-digit markers ("10."), which overflowed the box at 1.3em. */
+  padding-left: 1.8em;
 }
 
 .toc li + li {
@@ -368,6 +369,12 @@ h1 {
 .page-body ul,
 .page-body ol {
   padding-left: 1.4em;
+}
+
+/* A comfortable line length for prose; tables and figures keep the column's full width. */
+.page-body p,
+.page-body li {
+  max-width: 70ch;
 }
 
 .page-body li + li {
@@ -460,7 +467,18 @@ h1 {
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-small);
-  background: var(--surface);
+  /*
+   * Scroll shadows: the edge shades (fixed to the box) show while a wide table extends past an
+   * edge; the covers (scrolling with the table) hide them once that edge is reached.
+   */
+  background:
+    linear-gradient(to right, var(--surface) 40%, transparent) left / 28px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 40%, transparent) right / 28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 0.18), transparent) left / 12px 100%
+      no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.18), transparent) right / 12px 100%
+      no-repeat scroll,
+    var(--surface);
 }
 
 .table-wrap:focus-visible {
@@ -583,7 +601,7 @@ tbody tr:last-child > * {
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.5;
   text-align: center;
@@ -686,7 +704,7 @@ tbody tr:last-child > * {
 
 @media (max-width: 560px) {
   body {
-    font-size: 15.5px;
+    font-size: 0.96875rem;
   }
 
   .site-header-inner {
