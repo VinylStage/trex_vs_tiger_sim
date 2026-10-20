@@ -33,6 +33,7 @@ Epic: #20.
 | Header logo restored to the original icon                             | —        | Done (#41)  |
 | Rout (flee) rate in the results                                       | #42      | Planned     |
 | Config export/import, result share links, result card                 | #51      | In review   |
+| Patch notes board (`/patch-notes/`), one playful entry per release    | —        | In review   |
 
 ## Later (candidates, not committed)
 
