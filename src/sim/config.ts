@@ -63,21 +63,26 @@ export function defaultConfig(): ScenarioConfig {
   };
 }
 
-const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
+export const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
 
 /** Only JSON numbers are accepted; strings, booleans etc. fall back to the default. */
-function num(v: unknown, fallback: number, [lo, hi]: readonly [number, number], int: boolean) {
+export function num(
+  v: unknown,
+  fallback: number,
+  [lo, hi]: readonly [number, number],
+  int: boolean,
+) {
   if (typeof v !== 'number' || !Number.isFinite(v)) return fallback;
   return clamp(int ? Math.round(v) : v, lo, hi);
 }
 
 const isFiniteNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
-function pick<T extends string>(v: unknown, allowed: readonly T[], fallback: T): T {
+export function pick<T extends string>(v: unknown, allowed: readonly T[], fallback: T): T {
   return typeof v === 'string' && (allowed as readonly string[]).includes(v) ? (v as T) : fallback;
 }
 
-function triangular(v: unknown, fallback: Triangular, bounds: readonly [number, number]) {
+export function triangular(v: unknown, fallback: Triangular, bounds: readonly [number, number]) {
   if (typeof v !== 'object' || v === null) return { ...fallback };
   const o = v as Record<string, unknown>;
   const raw = [o['min'], o['mode'], o['max']];

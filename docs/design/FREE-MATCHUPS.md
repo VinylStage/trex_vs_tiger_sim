@@ -72,17 +72,19 @@ The engine is one function, `simulateBattle` in `src/sim/engine.ts`, with two ha
 ### 2.1 Two symmetric sides
 
 ```ts
-// src/sim/free/config.ts (new)
+// src/sim/free/config.ts (P2)
 export interface SideConfig {
-  species: SpeciesId; // any species in the unified registry
-  count: number; // 1..5000, see §7 for the total cap
-  params: Record<TraitId, Triangular>; // this side's ranges, preset from `species`
+  species: FreeSpeciesId; // any species in the unified registry (src/sim/free/species.ts)
+  count: number; // 1..5000; both sides together at most 5,500 (§7)
+  params: Record<TraitId, Triangular>; // individual traits, preset from `species`
+  buff: Record<BuffTraitId, Triangular>; // pack-buff traits; neutral unless social
 }
 
 export interface FreeConfig {
   mode: 'free';
-  sides: readonly [SideConfig, SideConfig]; // A (left, blue), B (right, orange)
+  sides: [SideConfig, SideConfig]; // A (left, blue), B (right, orange)
   packBuff: PackBuffSwitches; // §5.5, all true by default
+  globals: Record<GlobalId, Triangular>; // R_latch, K_knock, woundRef, interference, T_grace
   runs: number;
   seed: number;
   arenaSize: number;
@@ -92,8 +94,10 @@ export interface FreeConfig {
   morale: boolean; // now applies to both sides
 }
 
-export type ScenarioConfig = LegacyConfig | FreeConfig; // LegacyConfig = today's interface + mode: 'legacy'
+export type AnyConfig = ScenarioConfig | FreeConfig; // isFreeConfig(c) checks mode === 'free'
 ```
+
+The legacy `ScenarioConfig` keeps its exact shape (no `mode` field), so `sanitizeConfig` output and every legacy design hash stay identical; a config without `mode: 'free'` is legacy.
 
 One species per side (decision D4, §9; mixed sides are deferred). Both sides may pick the same species.
 
