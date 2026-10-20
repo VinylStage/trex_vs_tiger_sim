@@ -1,3 +1,4 @@
+import { clamp } from '../sim/config';
 import type { Lang, MsgKey } from './i18n';
 
 /**
@@ -248,8 +249,6 @@ export interface Placement {
   maxH?: number;
 }
 
-const clamp = (v: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, v));
-
 /** A popover shorter than this (px) is too cramped to read; dock instead. */
 export const MIN_POPOVER_ROOM = 160;
 
@@ -319,15 +318,6 @@ export function parseTourFlag(v: unknown): TourFlag | null {
 /** The first-visit offer is shown only while no flag has been stored. */
 export function shouldOfferTour(flag: TourFlag | null): boolean {
   return flag === null;
-}
-
-/** `localStorage`, or null when it is missing or access throws (blocked storage). */
-export function browserStorage(): FlagStorage | null {
-  try {
-    return globalThis.localStorage ?? null;
-  } catch {
-    return null;
-  }
 }
 
 export function readTourFlag(storage: FlagStorage | null): TourFlag | null {

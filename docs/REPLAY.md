@@ -115,18 +115,18 @@ Known approximations, all within one simulation tick (0.1 s): the latch-tick mov
 
 Rule: **hue = side, shape = state, grey = out of the fight.** r = pack-animal radius on screen = max(2.2 px, `meta.packRadius` × scale), so the dot follows the species constant (tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5 m, _Homo erectus_ 0.3 m; MODEL.md §2.7); len = heavy length = max(11 px, L × scale), where L = 7 m × (species modal `bodyRadius` / 2.5 m): exactly 7 m for T. rex, about 4.8 m for the elephant, 4.5 m for the woolly mammoth, 2.4 m for the buffalo, 2.1 m for the brown bear and 0.7 m for _Homo erectus_, so latched pack animals stay outside the triangle (`heavyLengthForRadius`). Pack animals switch to LOD squares when a reference 0.8 m radius would be below 3 px, the same zoom threshold for every species. Sizes are `GLYPH` in `glyphs.ts`.
 
-| Entity or state    | Glyph                                            | Size                                                       | Paint                                                                   |
-| ------------------ | ------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------- |
-| T-Rex, full HP     | Isosceles triangle, nose along the heading       | len long, base 0.64·len (nose 0.6·len ahead of the centre) | `--replay-trex`; 1.25 px surface outline when ≤ 50 T-Rex or len ≥ 18 px |
-| T-Rex, damaged     | Same triangle, hollow, with an HP gauge          | gauge fills tail → nose, **area = HP** (h = 1 − √(1 − HP)) | 16 % tint, 1.5 px `--replay-trex` outline, gauge in `--replay-trex`     |
-| T-Rex, dead        | Outline triangle                                 | same                                                       | `--muted` at 60 %                                                       |
-| Tiger, approaching | Dot plus heading tick                            | dot 0.8r; tick from r to 2.3r along the motion             | `--replay-tiger`, tick 1.2 px                                           |
-| Tiger, latched     | **Diamond** plus tether to the host's centre     | half-diagonal 1.6r                                         | `--replay-tiger`, 1.2 px surface halo outside; tether 1.25 px at 85 %   |
-| Tiger, recovering  | Ring                                             | radius 0.9r                                                | 1.4 px `--replay-tiger`                                                 |
-| Tiger, routed      | Hollow-backed chevron along the flight direction | tip 1.6r ahead, wings 0.96r back and 1.1r out, notch 0.32r | `--replay-out`                                                          |
-| Tiger, dead        | ×                                                | half-size 0.8r                                             | 1.2 px `--replay-dead` at 50 %                                          |
-| Tiger, left        | not drawn                                        |                                                            |                                                                         |
-| Bite (event)       | Wedge: reach × ±half-arc around the biting T-Rex | per-T-Rex `meta.reach` and `meta.arc`                      | hit: fill `--replay-trex` at 20 % + outline; miss: outline only (55 %)  |
+| Entity or state    | Glyph                                            | Size                                                       | Paint                                                                    |
+| ------------------ | ------------------------------------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
+| T-Rex, full HP     | Isosceles triangle, nose along the heading       | len long, base 0.64·len (nose 0.6·len ahead of the centre) | `--replay-heavy`; 1.25 px surface outline when ≤ 50 T-Rex or len ≥ 18 px |
+| T-Rex, damaged     | Same triangle, hollow, with an HP gauge          | gauge fills tail → nose, **area = HP** (h = 1 − √(1 − HP)) | 16 % tint, 1.5 px `--replay-heavy` outline, gauge in `--replay-heavy`    |
+| T-Rex, dead        | Outline triangle                                 | same                                                       | `--muted` at 60 %                                                        |
+| Tiger, approaching | Dot plus heading tick                            | dot 0.8r; tick from r to 2.3r along the motion             | `--replay-pack`, tick 1.2 px                                             |
+| Tiger, latched     | **Diamond** plus tether to the host's centre     | half-diagonal 1.6r                                         | `--replay-pack`, 1.2 px surface halo outside; tether 1.25 px at 85 %     |
+| Tiger, recovering  | Ring                                             | radius 0.9r                                                | 1.4 px `--replay-pack`                                                   |
+| Tiger, routed      | Hollow-backed chevron along the flight direction | tip 1.6r ahead, wings 0.96r back and 1.1r out, notch 0.32r | `--replay-out`                                                           |
+| Tiger, dead        | ×                                                | half-size 0.8r                                             | 1.2 px `--replay-dead` at 50 %                                           |
+| Tiger, left        | not drawn                                        |                                                            |                                                                          |
+| Bite (event)       | Wedge: reach × ±half-arc around the biting T-Rex | per-T-Rex `meta.reach` and `meta.arc`                      | hit: fill `--replay-heavy` at 20 % + outline; miss: outline only (55 %)  |
 
 Bite cones are timed in real seconds (hit 320 ms, miss 220 ms) so they stay readable at 16×, and follow the biting T-Rex. Flash safety (WCAG 2.3.1, ANIMATION.md §3.4): a hit is filled only if the same T-Rex's previous bite was at least 0.34 s of real time earlier (≤ 3 fills per second), at speeds up to 4×, for wedges up to 4,000 px², and while the frame's filled area stays under 20,000 CSS px². Otherwise it is an outline.
 
@@ -134,15 +134,15 @@ Deviations from the ANIMATION.md §6.2 sizes, chosen to pass the V1 shape test w
 
 ## 5. Colour tokens
 
-The replay has its own tokens in `src/ui/styles.css` (`:root` and the dark-scheme block), so the brand colours (`--c-trex`, `--c-tiger`, used by the charts, the OG cards and `src/pages/site.css`) stay unchanged. Agent colours come from the Okabe-Ito colour-blind-safe set, except the dark-theme T-Rex blue, which is the brand blue: Okabe-Ito sky blue has the same lightness as the dark-theme orange and would merge with it in greyscale.
+The replay has its own tokens in `src/ui/styles.css` (`:root` and the dark-scheme block), so the brand colours (`--c-heavy`, `--c-pack`, used by the charts, the OG cards and `src/pages/site.css`) stay unchanged. Agent colours come from the Okabe-Ito colour-blind-safe set, except the dark-theme T-Rex blue, which is the brand blue: Okabe-Ito sky blue has the same lightness as the dark-theme orange and would merge with it in greyscale.
 
 | Token             | Light     | Dark      | Contrast vs arena (light / dark) | Use                                          |
 | ----------------- | --------- | --------- | -------------------------------- | -------------------------------------------- |
 | `--replay-arena`  | `#f3f2ee` | `#252523` | —                                | Arena floor, legend swatch background        |
 | `--replay-grid`   | `#e4e3de` | `#30302d` | —                                | Grid lines                                   |
 | `--replay-border` | `#b9b8b2` | `#4a4a46` | —                                | Arena border                                 |
-| `--replay-trex`   | `#0072b2` | `#3987e5` | 4.63 / 4.22                      | T-Rex glyphs, HP gauge, bite cones           |
-| `--replay-tiger`  | `#d55e00` | `#e69f00` | 3.45 / 6.82                      | Approaching, latched and recovering tigers   |
+| `--replay-heavy`  | `#0072b2` | `#3987e5` | 4.63 / 4.22                      | T-Rex glyphs, HP gauge, bite cones           |
+| `--replay-pack`   | `#d55e00` | `#e69f00` | 3.45 / 6.82                      | Approaching, latched and recovering tigers   |
 | `--replay-out`    | `#767676` | `#9a9993` | 4.05 / 5.38                      | Routed tigers                                |
 | `--replay-dead`   | `#8d8c87` | `#8d8c87` | 3.01 / 4.56                      | Dead-tiger crosses, drawn at 50 % on purpose |
 
@@ -163,7 +163,7 @@ One stage canvas (`alpha: false`), drawn back to front:
 
 Each layer is one or two buckets in `BUCKET_ORDER`; every bucket is one `Path2D` per frame painted with its entry in `PAINTS`. Agents outside the view are culled. `draw()` allocates no typed arrays.
 
-**LOD.** When r < 3 CSS px, tigers are drawn as `fillRect` squares grouped by state and snapped to device pixels (the fastest primitive on CPU raster, ANIMATION.md §3.6): side 1.6r (at least 2 device px); latched 1.2× in `--replay-tiger` (drawn above the T-Rex), recovering in tiger orange at 45 %, routed 0.8× in grey at 75 %, dead as 2-device-px grey dots. Shape coding then degrades to tone and size, and a hint overlaid on the stage says so.
+**LOD.** When r < 3 CSS px, tigers are drawn as `fillRect` squares grouped by state and snapped to device pixels (the fastest primitive on CPU raster, ANIMATION.md §3.6): side 1.6r (at least 2 device px); latched 1.2× in `--replay-pack` (drawn above the T-Rex), recovering in tiger orange at 45 %, routed 0.8× in grey at 75 %, dead as 2-device-px grey dots. Shape coding then degrades to tone and size, and a hint overlaid on the stage says so.
 
 **Backing store.** See §11.
 
@@ -217,10 +217,10 @@ Effects (`effects.ts`) are abstract outlines timed in **real** seconds (so they 
 
 | Event      | Effect                                                             | Colour           | Duration |
 | ---------- | ------------------------------------------------------------------ | ---------------- | -------- |
-| BiteHit    | Wedge (filled only under the flash rule) + impact ring 1.2r → 3.4r | `--replay-trex`  | 320 ms   |
-| BiteMiss   | Wedge outline                                                      | `--replay-trex`  | 220 ms   |
-| Latch      | Contracting ring 3.2r → 1.2r                                       | `--replay-tiger` | 280 ms   |
-| Throw      | Three short rays away from the host, 4 → 14 px out                 | `--replay-trex`  | 360 ms   |
+| BiteHit    | Wedge (filled only under the flash rule) + impact ring 1.2r → 3.4r | `--replay-heavy` | 320 ms   |
+| BiteMiss   | Wedge outline                                                      | `--replay-heavy` | 220 ms   |
+| Latch      | Contracting ring 3.2r → 1.2r                                       | `--replay-pack`  | 280 ms   |
+| Throw      | Three short rays away from the host, 4 → 14 px out                 | `--replay-heavy` | 360 ms   |
 | Rout       | Expanding ring 1r → 2.5r                                           | `--replay-out`   | 300 ms   |
 | PackDeath  | Expanding ring 1r → 4r                                             | `--replay-dead`  | 500 ms   |
 | HeavyDeath | Expanding ring 10 → 36 px                                          | `--replay-dead`  | 900 ms   |

@@ -114,7 +114,7 @@ export interface AggregateResult {
    */
   exchangeRatio: number;
   sensitivity: Sensitivity[];
-  /** Run index closest to the median trexAdvantage — a representative battle for replay. */
+  /** Run index closest to the median heavyAdvantage — a representative battle for replay. */
   representativeRun: number;
 }
 

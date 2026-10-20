@@ -16,8 +16,8 @@
   --accent-fill-fg: #ffffff;
   --control-border: #85847f;
   --focus: #2a78d6;
-  --c-trex: #2a78d6;
-  --c-tiger: #eb6834;
+  --c-heavy: #2a78d6;
+  --c-pack: #eb6834;
   --c-draw: #8d8c87;
   --c-neutral: #6250d6;
   --c-latched: #1baf7a;
@@ -25,8 +25,8 @@
   --replay-arena: #f3f2ee;
   --replay-grid: #e4e3de;
   --replay-border: #b9b8b2;
-  --replay-trex: #0072b2;
-  --replay-tiger: #d55e00;
+  --replay-heavy: #0072b2;
+  --replay-pack: #d55e00;
   --replay-out: #767676;
   --replay-dead: #8d8c87;
   --error-fg: #b42318;
@@ -61,8 +61,8 @@
     --accent-fg: #ffffff;
     --control-border: #77766f;
     --focus: #6da7ec;
-    --c-trex: #3987e5;
-    --c-tiger: #d95926;
+    --c-heavy: #3987e5;
+    --c-pack: #d95926;
     --c-draw: #8d8c87;
     --c-neutral: #9085e9;
     --c-latched: #199e70;
@@ -70,8 +70,8 @@
     --replay-arena: #252523;
     --replay-grid: #30302d;
     --replay-border: #4a4a46;
-    --replay-trex: #3987e5;
-    --replay-tiger: #e69f00;
+    --replay-heavy: #3987e5;
+    --replay-pack: #e69f00;
     --replay-out: #9a9993;
     --replay-dead: #8d8c87;
     --error-fg: #ff9b8f;
@@ -967,12 +967,15 @@ input.param-input {
   border-radius: 3px;
 }
 
+/* .mk-trex / .mk-tiger: old names, still used by app.ts and free-mode.ts until they switch (#62). */
+.mk-heavy,
 .mk-trex {
-  background: var(--c-trex);
+  background: var(--c-heavy);
 }
 
+.mk-pack,
 .mk-tiger {
-  background: var(--c-tiger);
+  background: var(--c-pack);
 }
 
 .mk-draw {

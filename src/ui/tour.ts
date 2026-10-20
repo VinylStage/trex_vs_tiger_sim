@@ -1,10 +1,10 @@
 import './tour.css';
+import { localStorageOrNull } from '../pages/legacy-storage';
 import { h, uniqueId } from './dom';
 import { getLang, onLangChange, t, type MsgKey } from './i18n';
 import {
   DEMO_RUNS,
   TOUR_STEPS,
-  browserStorage,
   findStep,
   guideHref,
   inflateRect,
@@ -119,7 +119,7 @@ const isDisabled = (btn: HTMLButtonElement): boolean =>
  * Everything is positioned through the CSSOM, so it works under the strict CSP.
  */
 export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STEPS): Tour {
-  const storage = browserStorage();
+  const storage = localStorageOrNull();
   /** Fallback when localStorage is unavailable: remember the choice for this page load. */
   let sessionFlag: TourFlag | null = null;
   let offerEl: HTMLElement | null = null;
