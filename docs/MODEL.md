@@ -30,6 +30,7 @@ The simulator asks a playground question: _N_ _Tyrannosaurus rex_ against _M_ ti
 - _T. rex_ (Late Cretaceous, about 68–66 Ma) and tigers (Pleistocene to present) **never coexisted**. No fight between them has ever happened.
 - Every interaction rule is an assumption: latching, shake-off, bleeding, morale and group tactics. Section 5 marks each parameter as sourced or **[speculative]**.
 - Tigers are solitary ambush predators. **Coordinated attacks by many adult tigers are not documented**, so both tiger "tactics" in the model are hypothetical.
+- Match-ups with _Homo erectus_, an extinct human species, are a **thought experiment on physical capability**: unclothed, no tools, weapons, fire or trained skill. They do not depict or endorse real violence; no modern humans are modelled.
 - Treat the win probabilities as statements about the model under its assumptions. Changing the assumptions changes the answer, and the UI exists to explore exactly that.
 
 ## 2. Monte Carlo design
@@ -94,21 +95,21 @@ Untrusted input, such as the URL fragment, goes through `sanitizeConfig`:
 - each triangular `(min, mode, max)` must supply all three numbers (a partial range falls back to the default triangle); values are clamped to the parameter's bounds and sorted so that `min ≤ mode ≤ max`;
 - **work budget:** `runs × (maxTime / 0.1) × (heavyCount + packCount)` must not exceed `MAX_WORK = 5·10¹⁰` agent-steps; otherwise `runs` is lowered to fit. This stops a shared link from requesting an effectively unbounded amount of CPU.
 
-| Setting        | Default        | Allowed                                           |
-| -------------- | -------------- | ------------------------------------------------- |
-| `heavySpecies` | `trex`         | `trex`, `elephant`, `buffalo`, `brownBear` (§2.7) |
-| `packSpecies`  | `tiger`        | `tiger`, `lion`, `wolf`, `hyena` (§2.7)           |
-| `heavyCount`   | 10             | 1–500                                             |
-| `packCount`    | 100            | 1–5,000                                           |
-| `runs`         | 500            | 1–20,000, and within the work budget              |
-| `seed`         | 20261019       | 0–2³²−1                                           |
-| `arenaSize`    | 600 m (square) | 100–5,000 m                                       |
-| `maxTime`      | 1,200 s        | 30–3,600 s                                        |
-| `sampling`     | `lhs`          | `lhs`, `random`                                   |
-| `individualCV` | 0.08           | 0–0.3                                             |
-| `packTactic`   | `flank`        | `flank`, `direct` (§3.6)                          |
-| `morale`       | `true`         | `true` / `false` (§3.8)                           |
-| `params`       | §5 table       | each `(min, mode, max)` within the listed bounds  |
+| Setting        | Default        | Allowed                                                                     |
+| -------------- | -------------- | --------------------------------------------------------------------------- |
+| `heavySpecies` | `trex`         | `trex`, `elephant`, `buffalo`, `brownBear`, `mammoth`, `homoErectus` (§2.7) |
+| `packSpecies`  | `tiger`        | `tiger`, `lion`, `wolf`, `hyena`, `homoErectus` (§2.7)                      |
+| `heavyCount`   | 10             | 1–500                                                                       |
+| `packCount`    | 100            | 1–5,000                                                                     |
+| `runs`         | 500            | 1–20,000, and within the work budget                                        |
+| `seed`         | 20261019       | 0–2³²−1                                                                     |
+| `arenaSize`    | 600 m (square) | 100–5,000 m                                                                 |
+| `maxTime`      | 1,200 s        | 30–3,600 s                                                                  |
+| `sampling`     | `lhs`          | `lhs`, `random`                                                             |
+| `individualCV` | 0.08           | 0–0.3                                                                       |
+| `packTactic`   | `flank`        | `flank`, `direct` (§3.6)                                                    |
+| `morale`       | `true`         | `true` / `false` (§3.8)                                                     |
+| `params`       | §5 table       | each `(min, mode, max)` within the listed bounds                            |
 
 Species fall back to `trex`/`tiger` when unknown. Missing parameters take the **selected species'** presets, and parameter values are clamped with that species' bounds (§2.7). Share links store the species as `heavy`/`pack` in a `v: 2` payload; `v: 1` links (`trexCount`, `trex.*`, …) are upgraded through an alias map and reproduce bit-identically (`tests/v1-golden.test.ts`).
 
@@ -132,20 +133,22 @@ Each run returns a `RunSummary`:
 
 ### 2.5 Aggregate metrics
 
-| Metric                       | Definition (`montecarlo.ts`, `stats.ts`)                                                                                                                                                                               |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P(T-Rex), P(tigers), P(draw) | Proportion of runs, with a **Wilson score 95% interval** (`z = 1.95996`).                                                                                                                                              |
-| Duration, T-Rex survivors    | Mean, p5, p50 and p95, using linearly interpolated quantiles. Histograms: duration in ≤ 30 bins over `[0, maxTime]`, each bin a whole number of 0.1 s steps (no aliasing); survivors in `heavyCount + 1` integer bins. |
-| Tigers killed, tigers routed | Mean, p5, p50 and p95.                                                                                                                                                                                                 |
-| Exchange ratio               | Σ tigers killed ÷ Σ T-Rex lost over all runs (a ratio of totals). `Infinity` if tigers died but no T-Rex did; `NaN` if nobody died.                                                                                    |
-| Sensitivity                  | For each parameter, the **Spearman rank correlation ρ** (average ranks for ties) between its _run-level_ design value and `heavyAdvantage`. Sorted by \|ρ\|; a non-finite ρ becomes 0.                                 |
-| Representative run           | The run whose `heavyAdvantage` is closest to the median `heavyAdvantage`, with ties going to the lowest run index. The UI replays this run.                                                                            |
+| Metric                              | Definition (`montecarlo.ts`, `stats.ts`)                                                                                                                                                                               |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P(T-Rex), P(tigers), P(draw)        | Proportion of runs, with a **Wilson score 95% interval** (`z = 1.95996`).                                                                                                                                              |
+| Duration, T-Rex survivors           | Mean, p5, p50 and p95, using linearly interpolated quantiles. Histograms: duration in ≤ 30 bins over `[0, maxTime]`, each bin a whole number of 0.1 s steps (no aliasing); survivors in `heavyCount + 1` integer bins. |
+| Tigers incapacitated, tigers routed | Mean, p5, p50 and p95.                                                                                                                                                                                                 |
+| Exchange ratio                      | Σ tigers incapacitated ÷ Σ T-Rex lost over all runs (a ratio of totals). `Infinity` if tigers were incapacitated but no T-Rex was; `NaN` if nobody was.                                                                |
+| Sensitivity                         | For each parameter, the **Spearman rank correlation ρ** (average ranks for ties) between its _run-level_ design value and `heavyAdvantage`. Sorted by \|ρ\|; a non-finite ρ becomes 0.                                 |
+| Representative run                  | The run whose `heavyAdvantage` is closest to the median `heavyAdvantage`, with ties going to the lowest run index. The UI replays this run.                                                                            |
 
 How to read the sensitivity:
 
 - When the T-Rex win every run, `packActive = 0` at the end, so `heavyAdvantage` equals `heavyHpFrac`. ρ then measures what drives the HP the T-Rex lose.
 - Spearman ρ captures monotonic one-at-a-time association only. Interactions are not captured; Sobol indices are on the roadmap.
 - As a rough guide, the standard error is about `1/√(runs−1)`, which is ≈ 0.045 at 500 runs. Treat \|ρ\| ≲ 0.1 as noise.
+
+**Where it runs.** In the app, `aggregate` runs in one of the run workers, not on the main thread: the pool packs the summaries into one `Float64Array` (`packSummaries`, 9 numbers per run), transfers it and receives the `AggregateResult`. The sensitivity loop ranks `heavyAdvantage` once and each parameter column once, then takes Pearson's r on the ranks, which gives the same doubles as `spearman()` (tested). Timings: [PERFORMANCE.md](PERFORMANCE.md).
 
 ### 2.6 Replay trace and event log
 
@@ -231,12 +234,13 @@ The stress case is a 3,600 s draw in which no tiger can ever latch, so tigers cy
 
 The engine has two roles. The **heavy** side (`heavy.*` parameters) is the large animal that fights alone: turn-limited, with a frontal attack cone, shake-off and carry slowdown. The **pack** side (`pack.*`) attacks in numbers: sprint and cruise, stamina, latching with damage per second, morale and rout. The rest of this document describes the rules with the default species, _T. rex_ and the tiger; the rules are the same for every species.
 
-`src/sim/species.ts` registers the phase-1 catalog: heavy `trex`, `elephant`, `buffalo`, `brownBear`; pack `tiger`, `lion`, `wolf`, `hyena`. Each species carries:
+`src/sim/species.ts` registers the phase-1 catalog (heavy `trex`, `elephant`, `buffalo`, `brownBear`; pack `tiger`, `lion`, `wolf`, `hyena`) plus the woolly mammoth (heavy `mammoth`) and _Homo erectus_ on both sides (`homoErectus`, [#47](https://github.com/VinylStage/trex_vs_tiger_sim/issues/47)). Each species carries:
 
 - preset triangles for its role's eleven parameters, each with an evidence tag (L literature, D derived, S speculative, U unverified);
-- its own **hard bounds**. _T. rex_ and the tiger keep exactly the v1 bounds of §5; the other species widen heavy mass to 100 kg, heavy weapon force to 0.1 kN and pack mass to 5–1,000 kg. The per-animal clamp in the engine uses the selected species' bounds;
-- an era (for the matchup badge) and, for heavies, a weapon kind that only relabels the `biteForce` family (tusk/trample, horn, bite/paw);
-- non-sampled constants: `hide` for heavies (multiplier on pack damage taken: elephant 0.3, buffalo 0.5, brown bear 0.5, _T. rex_ 1) and `radius` for packs (body contact radius: tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5 m). `radius` replaces the former engine constant `tigerRadius` wherever it was used (contact distance, bite reach padding, latched offset, trace `meta.packRadius`).
+- its own **hard bounds**. _T. rex_ and the tiger keep exactly the v1 bounds of §5; the other species widen heavy mass to 100 kg, heavy weapon force to 0.1 kN and pack mass to 5–1,000 kg; the heavy _Homo erectus_ alone widens further (mass from 20 kg, reach from 0.3 m, body radius from 0.1 m). The per-animal clamp in the engine uses the selected species' bounds;
+- an era (for the matchup badge) and, for heavies, a weapon kind that only relabels the `biteForce` family (tusk/trample, horn, bite/paw, bare hands);
+- two flags: `adSafe` (read through `matchupAdSafe`, see [ADSENSE.md](ADSENSE.md)) and `hominin`, which adds the thought-experiment note to the matchup badge;
+- non-sampled constants: `intimidation` for heavies (multiplier on the morale a pack animal loses to the heavy's hits and throws, and on the minimum recovery after a hit, not after a throw: 1 for every species except _H. erectus_, 0.02; `x × 1` is exact, so earlier results do not change), `hide` for heavies (multiplier on pack damage taken: woolly mammoth 0.25, elephant 0.3, buffalo 0.5, brown bear 0.5, _T. rex_ and _H. erectus_ 1) and `radius` for packs (body contact radius: tiger and lion 0.8 m, hyena 0.6 m, wolf 0.5 m, _H. erectus_ 0.3 m). `radius` replaces the former engine constant `tigerRadius` wherever it was used (contact distance, bite reach padding, latched offset, trace `meta.packRadius`).
 
 The constants draw no random numbers, and their _T. rex_/tiger values are exact identities (`x × 1`, 0.8 m), so every run with the default species is bit-identical to the engine before species existed. The values, sources and calibration notes are in [SPECIES.md](SPECIES.md).
 

@@ -1,0 +1,72 @@
+/*
+ * Metric-matched local fallback for Pretendard (font-display: swap), so text laid out before the
+ * web font arrives keeps nearly the same line breaks and line boxes, and the swap barely shifts
+ * the page (docs/PERFORMANCE.md#font-swap). --font-sans lists 'Pretendard Fallback' right after
+ * Pretendard; a face whose local() font is missing is skipped and the system stack applies.
+ *
+ * Pretendard Variable, measured in Chromium (Canvas TextMetrics at 1000 px): ascent 0.952 em,
+ * descent 0.241 em, no line gap; common Hangul syllables advance 0.8643 em at every weight; a
+ * Latin sentence is 1.0093x as wide as in Arial at weight 400 and 0.986x as wide as in Arial
+ * Bold at 600-700.
+ * Ascent and descent overrides are divided by size-adjust because they scale with it.
+ * Weights up to 550 use the regular face and heavier ones the bold face, so headings are not
+ * synthesised from the regular face (which would be narrower than Pretendard's bold).
+ */
+
+/* Latin, digits, punctuation: Arial and its metric-compatible equivalents. */
+@font-face {
+  font-family: 'Pretendard Fallback';
+  font-weight: 1 550;
+  src:
+    local('Arial'), local('ArialMT'), local('Helvetica'), local('Liberation Sans'),
+    local('LiberationSans');
+  size-adjust: 100.93%;
+  ascent-override: 94.32%;
+  descent-override: 23.88%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Pretendard Fallback';
+  font-weight: 551 1000;
+  src:
+    local('Arial Bold'), local('Arial-BoldMT'), local('Helvetica Bold'), local('Helvetica-Bold'),
+    local('Liberation Sans Bold'), local('LiberationSans-Bold');
+  size-adjust: 98.6%;
+  ascent-override: 96.55%;
+  descent-override: 24.44%;
+  line-gap-override: 0%;
+}
+
+/*
+ * Hangul: Korean system fonts whose Hangul advance is 1 em (Source Han Sans / Noto Sans CJK,
+ * WenQuanYi), scaled to Pretendard's 0.8643 em. Apple SD Gothic Neo and Malgun Gothic are left
+ * out: their advances were not measurable here, so they fall back unadjusted.
+ */
+@font-face {
+  font-family: 'Pretendard Fallback';
+  font-weight: 1 550;
+  src:
+    local('Noto Sans CJK KR'), local('NotoSansCJKkr-Regular'), local('Noto Sans KR'),
+    local('NotoSansKR-Regular'), local('Source Han Sans K'), local('Source Han Sans KR'),
+    local('SourceHanSansKR-Regular'), local('WenQuanYi Zen Hei');
+  unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7AF, U+D7B0-D7FF;
+  size-adjust: 86.43%;
+  ascent-override: 110.15%;
+  descent-override: 27.88%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: 'Pretendard Fallback';
+  font-weight: 551 1000;
+  src:
+    local('Noto Sans CJK KR Bold'), local('NotoSansCJKkr-Bold'), local('Noto Sans KR Bold'),
+    local('NotoSansKR-Bold'), local('Source Han Sans K Bold'), local('SourceHanSansKR-Bold'),
+    local('WenQuanYi Zen Hei');
+  unicode-range: U+1100-11FF, U+3130-318F, U+A960-A97F, U+AC00-D7AF, U+D7B0-D7FF;
+  size-adjust: 86.43%;
+  ascent-override: 110.15%;
+  descent-override: 27.88%;
+  line-gap-override: 0%;
+}

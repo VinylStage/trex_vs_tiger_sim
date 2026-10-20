@@ -56,17 +56,21 @@ export function histogram(
   return { min, max, counts };
 }
 
-/** Fractional ranks (ties get the average rank), 1-based. */
+/** Fractional ranks (ties get the average rank), 1-based. Inputs must not contain NaN. */
 export function ranks(xs: ArrayLike<number>): Float64Array {
   const n = xs.length;
-  const idx = Array.from({ length: n }, (_, i) => i).sort(
-    (a, b) => (xs[a] as number) - (xs[b] as number),
-  );
+  // Sort a typed index array keyed by a typed copy of the values: no boxed numbers, and the
+  // average rank of a tie group does not depend on the order inside the group.
+  const v = Float64Array.from(xs);
+  const idx = new Uint32Array(n);
+  for (let i = 0; i < n; i++) idx[i] = i;
+  idx.sort((a, b) => (v[a] as number) - (v[b] as number));
   const r = new Float64Array(n);
   let i = 0;
   while (i < n) {
     let j = i;
-    while (j + 1 < n && xs[idx[j + 1] as number] === xs[idx[i] as number]) j++;
+    const x = v[idx[i] as number] as number;
+    while (j + 1 < n && v[idx[j + 1] as number] === x) j++;
     const avg = (i + j) / 2 + 1;
     for (let k = i; k <= j; k++) r[idx[k] as number] = avg;
     i = j + 1;

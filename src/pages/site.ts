@@ -2,6 +2,7 @@
 // @font-face stylesheet shared by the app and the pages and links it from each page's HTML
 // (it applies without JavaScript too).
 import '../assets/fonts/pretendard/pretendard-variable-dynamic-subset.css';
+import '../assets/fonts/pretendard-fallback.css';
 import { dropLegacyStorage } from './legacy-storage';
 import { counterpartPath, parsePagePath } from './routes';
 

@@ -281,7 +281,7 @@
               </dl>
               <p>
                 <strong>What it does.</strong> A bite that connects deals “bite force × bite
-                lethality × U(0.7, 1.3)”. It largely decides whether one bite kills a tiger.
+                lethality × U(0.7, 1.3)”. It largely decides whether one bite incapacitates a tiger.
               </p>
               <p>
                 <strong>Basis.</strong> Estimates are 8,526–34,522 N [Gignac &amp; Erickson 2017]
@@ -321,12 +321,13 @@
               </dl>
               <p>
                 <strong>What it does.</strong> Converts bite force into damage: HP per kN. At the
-                default modes one bite deals 196–364 HP, which usually kills a 180 HP tiger at once.
+                default modes one bite deals 196–364 HP, which usually incapacitates a 180 HP tiger
+                at once.
               </p>
               <p>
                 <strong>Basis.</strong> No data maps bite force to damage. The range deliberately
-                spans “one bite kills” (upper end) to “one bite only wounds” (lower end: 8.5 kN × 4
-                HP/kN = 24–44 HP per hit).
+                spans “one bite incapacitates” (upper end) to “one bite only wounds” (lower end: 8.5
+                kN × 4 HP/kN = 24–44 HP per hit).
               </p>
             </section>
             <section
@@ -955,8 +956,8 @@
               </dl>
               <p>
                 <strong>What it does.</strong> Damage per second dealt to the T-Rex while latched.
-                It also adds to the T-Rex’s accumulated wounds, which drive bleeding. In fights to
-                the death (morale off) it is the assumption the result depends on most.
+                It also adds to the T-Rex’s accumulated wounds, which drive bleeding. In fights
+                without retreat (morale off) it is the assumption the result depends on most.
               </p>
               <p>
                 <strong>Basis.</strong> Tiger bite force is about 1.2–1.5 kN [Wroe 2005;
@@ -1091,8 +1092,8 @@
               </dl>
               <p>
                 <strong>What it does.</strong> Morale every tiger within 40 m loses when another
-                tiger dies. Applied only with the morale model on. In preliminary runs it was one of
-                the strongest drivers of the T-Rex’s health loss under the defaults.
+                tiger is incapacitated. Applied only with the morale model on. In preliminary runs
+                it was one of the strongest drivers of the T-Rex’s health loss under the defaults.
               </p>
               <p><strong>Basis.</strong> A judgement.</p>
             </section>
@@ -1129,8 +1130,29 @@
                 value="1000"
                 >1,000</data
               >
-              kg). T. rex and the tiger keep exactly their previous bounds, so older share links
-              still give the same results.
+              kg). Only Homo erectus as the large animal goes further, down to human size: mass from
+              <data data-k="hominin" data-param="heavy.mass" data-end="lo" value="20">20</data> kg,
+              attack reach from
+              <data data-k="hominin" data-param="heavy.biteReach" data-end="lo" value="0.3"
+                >0.3</data
+              >
+              m and body radius from
+              <data data-k="hominin" data-param="heavy.bodyRadius" data-end="lo" value="0.1"
+                >0.1</data
+              >
+              m. T. rex and the tiger keep exactly their previous bounds, so older share links still
+              give the same results.
+            </p>
+            <p>
+              Homo erectus, an extinct human species that lived from about 1.9 million to 110,000
+              years ago, is modelled on the same terms as every animal: no clothing, tools, weapons,
+              fire or trained fighting skill, only the physical capability of an average adult. It
+              is a thought experiment on physical capability and does not depict or endorse real
+              violence. As the large animal, its attack is bare-hand striking and gripping. A third
+              constant, <code>intimidation</code>, scales the morale a pack animal loses when this
+              large animal hits or throws it off, and its minimum recovery time after a hit (not
+              after a throw): 1 for every earlier species and 0.02 (speculative) for Homo erectus,
+              whose bare hands do little harm.
             </p>
             <p>
               Two constants are not sampled. <code>hide</code> multiplies the damage a large animal
@@ -1159,6 +1181,8 @@
                     <th scope="col">African bush elephant</th>
                     <th scope="col">African buffalo</th>
                     <th scope="col">Brown bear</th>
+                    <th scope="col">Woolly mammoth</th>
+                    <th scope="col">Homo erectus</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1205,6 +1229,28 @@
                         data-ev="L"
                         value="130 220 450"
                         >130 · 220 · 450</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="2800 4500 6000"
+                        >2,800 · 4,500 · 6,000</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.mass"
+                        data-ev="L"
+                        value="40 52 68"
+                        >40 · 52 · 68</data
                       >
                       <abbr class="ev ev-L" title="literature value">L</abbr>
                     </td>
@@ -1255,6 +1301,28 @@
                       >
                       <abbr class="ev ev-L" title="literature value">L</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.speed"
+                        data-ev="D"
+                        value="3 4.5 6.8"
+                        >3 · 4.5 · 6.8</data
+                      >
+                      <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.speed"
+                        data-ev="S"
+                        value="5 6.5 8.5"
+                        >5 · 6.5 · 8.5</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row"><a href="#param-heavy.turnRate">Turn rate (°/s)</a></th>
@@ -1299,6 +1367,28 @@
                         data-ev="S"
                         value="60 120 200"
                         >60 · 120 · 200</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.turnRate"
+                        data-ev="S"
+                        value="30 50 90"
+                        >30 · 50 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.turnRate"
+                        data-ev="S"
+                        value="120 200 300"
+                        >120 · 200 · 300</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -1349,6 +1439,28 @@
                       >
                       <abbr class="ev ev-D" title="derived from literature">D</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.biteForce"
+                        data-ev="S"
+                        value="10 25 50"
+                        >10 · 25 · 50</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.biteForce"
+                        data-ev="D"
+                        value="0.8 1.5 2.4"
+                        >0.8 · 1.5 · 2.4</data
+                      >
+                      <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row"><a href="#param-heavy.biteLethality">Lethality (HP/kN)</a></th>
@@ -1393,6 +1505,28 @@
                         data-ev="S"
                         value="4 8 12"
                         >4 · 8 · 12</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="2 5 9"
+                        >2 · 5 · 9</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.biteLethality"
+                        data-ev="S"
+                        value="0.2 0.5 1"
+                        >0.2 · 0.5 · 1</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -1443,6 +1577,28 @@
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="2 4 8"
+                        >2 · 4 · 8</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.biteInterval"
+                        data-ev="S"
+                        value="0.6 1 2"
+                        >0.6 · 1 · 2</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row"><a href="#param-heavy.biteReach">Attack reach (m)</a></th>
@@ -1487,6 +1643,28 @@
                         data-ev="S"
                         value="1.2 1.5 1.9"
                         >1.2 · 1.5 · 1.9</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="2.8 3.5 4.5"
+                        >2.8 · 3.5 · 4.5</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.biteReach"
+                        data-ev="S"
+                        value="0.7 0.85 1"
+                        >0.7 · 0.85 · 1</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -1537,6 +1715,28 @@
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="40 60 90"
+                        >40 · 60 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.biteArc"
+                        data-ev="S"
+                        value="50 70 100"
+                        >50 · 70 · 100</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row"><a href="#param-heavy.biteAccuracy">Accuracy</a></th>
@@ -1581,6 +1781,28 @@
                         data-ev="S"
                         value="0.3 0.45 0.65"
                         >0.3 · 0.45 · 0.65</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.15 0.3 0.5"
+                        >0.15 · 0.3 · 0.5</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.biteAccuracy"
+                        data-ev="S"
+                        value="0.15 0.25 0.4"
+                        >0.15 · 0.25 · 0.4</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -1631,6 +1853,28 @@
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.08 0.2 0.4"
+                        >0.08 · 0.2 · 0.4</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.shakeRate"
+                        data-ev="S"
+                        value="0.03 0.08 0.15"
+                        >0.03 · 0.08 · 0.15</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row"><a href="#param-heavy.bodyRadius">Body radius (m)</a></th>
@@ -1678,6 +1922,28 @@
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="mammoth"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="1.3 1.6 1.9"
+                        >1.3 · 1.6 · 1.9</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="heavy.bodyRadius"
+                        data-ev="S"
+                        value="0.2 0.25 0.3"
+                        >0.2 · 0.25 · 0.3</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row">Weapon</th>
@@ -1693,6 +1959,16 @@
                         >bite and paws</data
                       >
                     </td>
+                    <td>
+                      <data data-k="weapon" data-species="mammoth" value="tusk"
+                        >tusks and trampling</data
+                      >
+                    </td>
+                    <td>
+                      <data data-k="weapon" data-species="homoErectus" value="hands"
+                        >bare hands and grip</data
+                      >
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row">Hide multiplier <code>hide</code></th>
@@ -1700,6 +1976,21 @@
                     <td><data data-k="hide" data-species="elephant" value="0.3">0.3</data></td>
                     <td><data data-k="hide" data-species="buffalo" value="0.5">0.5</data></td>
                     <td><data data-k="hide" data-species="brownBear" value="0.5">0.5</data></td>
+                    <td><data data-k="hide" data-species="mammoth" value="0.25">0.25</data></td>
+                    <td><data data-k="hide" data-species="homoErectus" value="1">1</data></td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Intimidation <code>intimidation</code></th>
+                    <td><data data-k="intimidation" data-species="trex" value="1">1</data></td>
+                    <td><data data-k="intimidation" data-species="elephant" value="1">1</data></td>
+                    <td><data data-k="intimidation" data-species="buffalo" value="1">1</data></td>
+                    <td><data data-k="intimidation" data-species="brownBear" value="1">1</data></td>
+                    <td><data data-k="intimidation" data-species="mammoth" value="1">1</data></td>
+                    <td>
+                      <data data-k="intimidation" data-species="homoErectus" value="0.02"
+                        >0.02</data
+                      >
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -1721,6 +2012,7 @@
                     <th scope="col">Lion</th>
                     <th scope="col">Gray wolf</th>
                     <th scope="col">Spotted hyena</th>
+                    <th scope="col">Homo erectus</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1767,6 +2059,17 @@
                         data-ev="L"
                         value="40 55 70"
                         >40 · 55 · 70</data
+                      >
+                      <abbr class="ev ev-L" title="literature value">L</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.mass"
+                        data-ev="L"
+                        value="40 52 68"
+                        >40 · 52 · 68</data
                       >
                       <abbr class="ev ev-L" title="literature value">L</abbr>
                     </td>
@@ -1817,6 +2120,17 @@
                       >
                       <abbr class="ev ev-L" title="literature value">L</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.sprintSpeed"
+                        data-ev="S"
+                        value="6 7.5 9"
+                        >6 · 7.5 · 9</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row"><a href="#param-pack.cruiseSpeed">Cruise speed (m/s)</a></th>
@@ -1861,6 +2175,17 @@
                         data-ev="S"
                         value="3 4.5 6"
                         >3 · 4.5 · 6</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.cruiseSpeed"
+                        data-ev="S"
+                        value="2.3 3 4"
+                        >2.3 · 3 · 4</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -1913,6 +2238,17 @@
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.sprintEndurance"
+                        data-ev="S"
+                        value="20 40 90"
+                        >20 · 40 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row">
@@ -1955,6 +2291,17 @@
                       <data
                         data-k="preset"
                         data-species="hyena"
+                        data-param="pack.latchEndurance"
+                        data-ev="S"
+                        value="15 30 60"
+                        >15 · 30 · 60</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
                         data-param="pack.latchEndurance"
                         data-ev="S"
                         value="15 30 60"
@@ -2009,6 +2356,17 @@
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.recoveryTime"
+                        data-ev="S"
+                        value="20 40 90"
+                        >20 · 40 · 90</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row"><a href="#param-pack.latchChance">Latch chance</a></th>
@@ -2053,6 +2411,17 @@
                         data-ev="S"
                         value="0.15 0.3 0.5"
                         >0.15 · 0.3 · 0.5</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.latchChance"
+                        data-ev="S"
+                        value="0.1 0.2 0.35"
+                        >0.1 · 0.2 · 0.35</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -2103,6 +2472,17 @@
                       >
                       <abbr class="ev ev-D" title="derived from literature">D</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.dps"
+                        data-ev="S"
+                        value="0.2 0.8 2"
+                        >0.2 · 0.8 · 2</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row"><a href="#param-pack.bleed">Bleed rate (1/s)</a></th>
@@ -2147,6 +2527,17 @@
                         data-ev="S"
                         value="0.001 0.003 0.008"
                         >0.001 · 0.003 · 0.008</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.bleed"
+                        data-ev="S"
+                        value="0 0.0005 0.002"
+                        >0 · 0.0005 · 0.002</data
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
@@ -2197,6 +2588,17 @@
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.morale"
+                        data-ev="S"
+                        value="0.3 0.5 0.75"
+                        >0.3 · 0.5 · 0.75</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row"><a href="#param-pack.moraleLoss">Morale loss</a></th>
@@ -2244,6 +2646,17 @@
                       >
                       <abbr class="ev ev-S" title="speculative">S</abbr>
                     </td>
+                    <td>
+                      <data
+                        data-k="preset"
+                        data-species="homoErectus"
+                        data-param="pack.moraleLoss"
+                        data-ev="S"
+                        value="0.04 0.1 0.18"
+                        >0.04 · 0.1 · 0.18</data
+                      >
+                      <abbr class="ev ev-S" title="speculative">S</abbr>
+                    </td>
                   </tr>
                   <tr>
                     <th scope="row">Body radius constant <code>radius</code> (m)</th>
@@ -2251,6 +2664,7 @@
                     <td><data data-k="radius" data-species="lion" value="0.8">0.8</data></td>
                     <td><data data-k="radius" data-species="wolf" value="0.5">0.5</data></td>
                     <td><data data-k="radius" data-species="hyena" value="0.6">0.6</data></td>
+                    <td><data data-k="radius" data-species="homoErectus" value="0.3">0.3</data></td>
                   </tr>
                 </tbody>
               </table>
@@ -2277,7 +2691,9 @@
                     <data data-k="option" value="trex">Tyrannosaurus rex</data>,
                     <data data-k="option" value="elephant">African bush elephant</data>,
                     <data data-k="option" value="buffalo">African buffalo</data>,
-                    <data data-k="option" value="brownBear">Brown bear</data>
+                    <data data-k="option" value="brownBear">Brown bear</data>,
+                    <data data-k="option" value="mammoth">Woolly mammoth</data>,
+                    <data data-k="option" value="homoErectus">Homo erectus</data>
                   </dd>
                 </div>
               </dl>
@@ -2301,7 +2717,8 @@
                     <data data-k="option" value="tiger">Tiger</data>,
                     <data data-k="option" value="lion">Lion</data>,
                     <data data-k="option" value="wolf">Gray wolf</data>,
-                    <data data-k="option" value="hyena">Spotted hyena</data>
+                    <data data-k="option" value="hyena">Spotted hyena</data>,
+                    <data data-k="option" value="homoErectus">Homo erectus</data>
                   </dd>
                 </div>
               </dl>
@@ -2515,8 +2932,8 @@
               </dl>
               <p>
                 When on, tigers lose morale when bitten or shaken off and when a tiger within 40 m
-                dies, and they rout below 0.2. When off, tigers fight to the death. It is one of the
-                settings that changes the answer most.
+                is incapacitated, and they rout below 0.2. When off, tigers fight until
+                incapacitated. It is one of the settings that changes the answer most.
               </p>
             </section>
           </section>
@@ -2553,7 +2970,7 @@
                   <tr data-constant="moraleRadius">
                     <th scope="row"><code>moraleRadius</code></th>
                     <td><data data-k="value" value="40">40</data> m</td>
-                    <td>Radius in which a tiger’s death shocks the others’ morale.</td>
+                    <td>Radius in which a tiger’s incapacitation shocks the others’ morale.</td>
                   </tr>
                   <tr data-constant="routThreshold">
                     <th scope="row"><code>routThreshold</code></th>

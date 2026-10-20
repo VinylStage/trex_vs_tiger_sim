@@ -6,7 +6,7 @@
 > - 시뮬레이터 페이지에는 `#app` 바깥에 정적 소개 · FAQ가 있고, 모든 페이지에 같은 정적 푸터(면책 문구, 소개 · 개인정보처리방침 · 라이선스 · GitHub · 블로그 · Linktree, 버전)가 있습니다. 문구는 `src/ui/i18n.ts`와 글자 하나까지 같아야 하며 테스트가 확인합니다.
 > - 페이지는 손으로 쓴 HTML입니다(`<page>/index.html`, `en/<page>/index.html`). Vite가 저장소 안의 모든 `index.html`을 자동으로 찾아 빌드하므로, 새 페이지는 설정 변경 없이 폴더와 `index.html`만 추가하면 됩니다.
 > - 공통 스타일은 `src/pages/site.css`(앱과 같은 색 토큰, 다크 모드, 인쇄용), 공통 스크립트는 `src/pages/site.ts`(현재 메뉴 표시, 언어 링크 유지, 푸터 버전 표시)입니다. 인라인 스크립트·스타일은 쓰지 않습니다(CSP).
-> - 글꼴은 앱과 같은 자체 호스팅 Pretendard입니다. `site.ts`가 앱과 같은 `@font-face` 스타일시트를 불러오므로 빌드 결과에서 앱과 페이지가 파일 하나를 함께 씁니다.
+> - 글꼴은 앱과 같은 자체 호스팅 Pretendard입니다. `site.ts`가 앱과 같은 `@font-face` 스타일시트를 불러오므로 빌드 결과에서 앱과 페이지가 파일 하나를 함께 씁니다. 웹 글꼴이 오기 전에는 Pretendard와 글자 폭·줄 높이를 맞춘 대체 글꼴(`Pretendard Fallback`)로 그려서, 글꼴이 바뀔 때 레이아웃이 거의 움직이지 않습니다.
 > - 접근성: 본문 크기 글자는 양쪽 테마에서 명도 대비 4.5:1 이상([색 대비](#colour-contrast)), 가로로 스크롤되는 표는 키보드로 초점을 옮겨 스크롤할 수 있습니다.
 > - 상단 헤더(로고, 사이트 이름, 메뉴, 언어 링크)는 페이지마다 손으로 쓰지 않습니다. 원본에는 `<!-- site-header -->` 한 줄만 두고, 빌드(개발 서버 포함)가 `src/pages/site-header.ts`의 `renderSiteHeader(lang, page)`로 채웁니다. 로고는 모든 페이지와 앱이 같은 `SITE_LOGO`(`/header-logo.svg`)를 씁니다([사이트 헤더](#site-header)).
 > - 앱에서 쓸 메뉴는 `src/ui/site-nav.ts`의 `createSiteNav(lang)`이 만듭니다.
@@ -160,14 +160,15 @@ All links are in the static HTML; nothing a crawler needs is generated at run ti
 
 ## Colour contrast
 
-All page text is normal size, so WCAG 2.x AA needs a contrast ratio of at least **4.5:1**. The app's `--accent` (`#2a78d6` light, `#3987e5` dark) does not reach that as a text colour on the page background (4.09:1) or under white text (4.42:1 light, 3.64:1 dark). `site.css` therefore defines page-only colour roles in a top-level `html { }` block. They are not app tokens, so they stay out of the mirrored `:root` blocks:
+All page text is normal size, so WCAG 2.x AA needs a contrast ratio of at least **4.5:1**. The app's `--accent` (`#2a78d6` light, `#3987e5` dark) does not reach that as a text colour on the page background (4.09:1) or under white text (4.42:1 light, 3.64:1 dark). Both stylesheets therefore define these colour roles in their `:root` blocks (`src/ui/styles.css` is the source, `site.css` mirrors it), so the simulator and the pages use the same blue for links and filled buttons:
 
 | Role                  | Value                                        | Used for                                             |
 | --------------------- | -------------------------------------------- | ---------------------------------------------------- |
 | `--accent-text`       | `var(--accent-hover)`: `#256abf` / `#5598e7` | Links, eyebrow, parameter chips, TOC hover           |
 | `--accent-fill`       | `#256abf` (both themes)                      | Background of the button, skip link and step numbers |
 | `--accent-fill-hover` | `#1d5aa6` (both themes)                      | Button hover                                         |
-| `--accent-fill-fg`    | `var(--accent-fg)`: `#ffffff`                | Text on the filled controls                          |
+| `--accent-fill-fg`    | `#ffffff`                                    | Text on the filled controls                          |
+| `--control-border`    | `#85847f` / `#77766f`                        | Outline of inputs and selects (≥ 3:1, WCAG 1.4.11)   |
 
 Links inside `.warning` boxes use `--warn-fg` (underlined, thicker underline on hover). Link hover switches to `--fg`. `--accent` itself is kept for non-text decoration (formula border, current-nav underline, focus ring via `--focus`).
 
@@ -190,14 +191,16 @@ Checked pairs (light / dark), computed with the WCAG 2.x formula:
 
 The pages use the same typeface as the app: self-hosted **Pretendard** ([ADR-0005](adr/0005-self-hosted-pretendard.md)). `site.ts` imports `src/assets/fonts/pretendard/pretendard-variable-dynamic-subset.css`, the file `src/main.ts` also imports, and `site.css` mirrors the app's `--font-sans` stack (the token mirror test covers it). Because both entries import the same stylesheet, the build emits it once, in the shared chunk's CSS file (currently `assets/routes-<hash>.css`), and links it from every page's HTML, so it applies without JavaScript and is cached once for the whole site. The font files are same-origin, which `font-src 'self'` allows.
 
-Each `@font-face` rule covers a `unicode-range`, so a browser downloads only the subsets whose characters appear on the page. `font-display: swap` shows text at once in the fallback stack (`-apple-system`, `system-ui`, `Apple SD Gothic Neo`, `Noto Sans KR`, `Malgun Gothic`, …) and swaps in Pretendard when it arrives. That swap can reflow text once on a first visit, because the fallback fonts have slightly different metrics; later page views hit the immutable `assets/` cache and render in Pretendard straight away.
+Each `@font-face` rule covers a `unicode-range`, so a browser downloads only the subsets whose characters appear on the page. `font-display: swap` shows text at once in a fallback font and swaps in Pretendard when it arrives; later page views hit the immutable `assets/` cache and render in Pretendard straight away.
+
+To keep that first swap from reflowing the page, `--font-sans` lists a metric-matched local family, `Pretendard Fallback`, right after Pretendard. `src/assets/fonts/pretendard-fallback.css` (imported by `src/main.ts` and `site.ts`, so it lands in the same shared CSS file) maps it to Arial, Helvetica or Liberation Sans for Latin text and to Noto Sans CJK KR, Source Han Sans or WenQuanYi Zen Hei for Hangul, with `size-adjust` and ascent/descent overrides measured against Pretendard Variable, and separate bold faces above weight 550. Where none of those fonts is installed, the face is skipped and the system stack (`-apple-system`, `system-ui`, `Apple SD Gothic Neo`, `Noto Sans KR`, `Malgun Gothic`, …) applies with its own metrics. Measured font-swap CLS: [PERFORMANCE.md](PERFORMANCE.md#font-swap).
 
 ## SEO
 
 - Unique, descriptive `<title>` (`<topic> – <site name>`, at most 60 characters) and meta description (50–165 characters) per page, the two simulator pages included; the tests enforce length and uniqueness. Names, titles and descriptions: [SEO.md](SEO.md).
 - Canonical + `hreflang` (`ko`, `en`, `x-default` = English) on every page and in the sitemap; `og:locale` / `og:locale:alternate`; the language's 1200×630 card as `og:image` and `summary_large_image`; JSON-LD. All generated at build time from one registry ([SEO.md](SEO.md)).
 - `robots.txt` (generated) allows everything except `/reset/` and names the search and AI crawlers and the sitemap. Submitting the sitemap and setting up the webmaster tools are owner actions: [SEO.md](SEO.md#owner-actions).
-- Pages are complete HTML without JavaScript (the no-JS render is verified in the browser check), load one small stylesheet, the shared font stylesheet and a 1 KiB script, and reserve image sizes (`width`/`height`). The only possible layout shift is the one-time font swap described in [Fonts](#fonts).
+- Pages are complete HTML without JavaScript (the no-JS render is verified in the browser check), load one small stylesheet, the shared font stylesheet and a 1 KiB script, and reserve image sizes (`width`/`height`). The only possible layout shift is the one-time font swap described in [Fonts](#fonts), which the metric-matched fallback keeps near zero.
 
 ## AdSense readiness
 

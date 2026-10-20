@@ -1,4 +1,4 @@
-import type { ScenarioConfig } from '../sim/config';
+import { maxRunsFor, type ScenarioConfig } from '../sim/config';
 
 export type CostLevel = 'ok' | 'heavy' | 'extreme';
 
@@ -26,4 +26,32 @@ export function costLevel(c: CostInput, workers: number): CostLevel {
   if (ms >= COST_THRESHOLDS.extreme) return 'extreme';
   if (ms >= COST_THRESHOLDS.heavy) return 'heavy';
   return 'ok';
+}
+
+export interface CostSummary {
+  /** The run count the work budget reduces the runs to, or null when they fit. */
+  cap: number | null;
+  level: CostLevel;
+  /** Rough wall-clock milliseconds for the runs that will actually be done. */
+  etaMs: number;
+}
+
+/** What running `c` will cost: the work-budget cap (if any) and the time estimate after it. */
+export function costSummary(
+  c: Pick<ScenarioConfig, 'heavyCount' | 'packCount' | 'runs' | 'maxTime'>,
+  workers: number,
+): CostSummary {
+  const max = maxRunsFor(c);
+  const capped = c.runs > max;
+  const effective = capped ? { ...c, runs: max } : c;
+  return {
+    cap: capped ? max : null,
+    level: costLevel(effective, workers),
+    etaMs: estimateTotalMs(effective, workers),
+  };
+}
+
+/** Nothing to warn about: the runs fit the budget and finish in under a minute. */
+export function isCostOk(s: CostSummary): boolean {
+  return s.cap === null && s.level === 'ok';
 }

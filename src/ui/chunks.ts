@@ -23,10 +23,14 @@ export function splitRuns(runs: number, workers: number): RunRange[] {
   return out;
 }
 
-/** Pool size: one worker per logical core, capped at 8. */
+/**
+ * Pool size: one worker fewer than logical cores (at least 1, at most 8), so the main thread,
+ * the compositor and the replay keep a core. Measured in docs/PERFORMANCE.md: on 4 cores, 3
+ * workers finish as fast as 4, and 4 caused 56–155 ms main-thread stalls.
+ */
 export function poolSize(hardwareConcurrency: number | undefined): number {
   const hc = hardwareConcurrency && hardwareConcurrency > 0 ? Math.floor(hardwareConcurrency) : 4;
-  return Math.max(1, Math.min(hc, 8));
+  return Math.max(1, Math.min(hc - 1, 8));
 }
 
 /** Remaining time in ms from linear extrapolation, or null until there is enough signal. */

@@ -53,6 +53,6 @@ Do:
 Do not:
 
 - Draw animal or character shapes, silhouettes, faces, blood, wounds, splatter or corpses, in the replay, icons, OG images or tutorial art. Hit effects are not red.
-- Model domestic animals or pets (dogs, cats, roosters, horses), humans, real named individuals or specific zoo animals.
+- Model domestic animals or pets (dogs, cats, roosters, horses), living humans (_Homo sapiens_), real named individuals or specific zoo animals. The extinct hominin _Homo erectus_ is the one exception: it is modelled unclothed, without tools, weapons, fire or trained skill, and every place that shows it carries the physical-capability thought-experiment note ([docs/SPECIES.md §9](docs/SPECIES.md#9-content-rules)).
 - Use words such as 학살, 도륙, 피, 잔혹, massacre, gore or "kill count" in UI, titles, alt text or share text.
 - Link to or embed real animal-fight media, or promote products made from endangered species.

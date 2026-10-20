@@ -5,6 +5,7 @@ import { GLYPH, heavyLengthForRadius, heavyLengthPx } from '../src/ui/replay/gly
 import {
   PRESETS,
   matchupInfo,
+  matchupNoteText,
   presetLabel,
   qualifiedParamLabel,
   roleEdited,
@@ -16,6 +17,7 @@ import {
   initLang,
   paramLabel,
   setNamePair,
+  speciesCounter,
   speciesVars,
   t,
   teamLabel,
@@ -55,19 +57,77 @@ describe('species names in messages', () => {
     setNamePair({ heavySpecies: 'elephant', packSpecies: 'lion' });
     expect(getNamePair()).toEqual({ heavySpecies: 'elephant', packSpecies: 'lion' });
     expect(t('outcome.heavy')).toBe('Elephant victory');
-    expect(t('stat.killed')).toBe('Lions killed (mean)');
+    expect(t('stat.killed')).toBe('Lions incapacitated (mean)');
     expect(t('outcome.heavy', { Heavy: 'X' })).toBe('X victory');
     initLang('ko');
-    expect(t('verdict.pack', { p: '5%', lo: '1%', hi: '9%' })).toBe(
-      '사자 승리 확률 5% (95% CI 1%–9%)',
+    expect(t('verdict.pack', { n: '20', k: '1', pct: '5%' })).toBe(
+      '이 모델로 20번 싸워 보니 사자 쪽이 1번 이겼습니다 (5%).',
     );
   });
 
   it('keeps the default English texts for T-Rex and tigers', () => {
     initLang('en');
-    expect(t('stat.exchangeSub')).toBe('tigers killed per T-Rex lost');
+    expect(t('stat.exchangeSub')).toBe('tigers incapacitated per T-Rex lost');
     expect(t('chart.favHeavy')).toBe('favours T-Rex →');
     expect(t('field.packCount')).toBe('Tiger count');
+  });
+
+  it('counts Homo erectus with 명 in Korean and every animal with 마리', () => {
+    initLang('ko');
+    const pair = { heavySpecies: 'homoErectus', packSpecies: 'wolf' } as const;
+    expect(speciesCounter('homoErectus')).toBe('명');
+    for (const id of ['trex', 'mammoth', 'wolf', 'tiger'] as const) {
+      expect(speciesCounter(id)).toBe('마리');
+    }
+    expect(teamLabel('wolf', 8)).toBe('늑대 8마리');
+    expect(teamLabel('homoErectus', 1)).toBe('호모 에렉투스 1명');
+    expect(t('stat.ofN', { n: '1', counter: speciesCounter('homoErectus') })).toBe('1명 중');
+    expect(t('stat.ofN', { n: '8', counter: speciesCounter('wolf') })).toBe('8마리 중');
+    setNamePair(pair);
+    expect(t('stat.exchangeSub')).toBe('호모 에렉투스 1명 손실당 전투 불능 늑대');
+    expect(
+      t('replay.scene', {
+        time: '0:10',
+        alive: '1',
+        total: '1',
+        approach: '8',
+        latched: '0',
+        recover: '0',
+        out: '0',
+        dead: '0',
+      }),
+    ).toMatch(/^0:10: 호모 에렉투스 1명 중 1명 생존\./);
+    setNamePair({ heavySpecies: 'trex', packSpecies: 'tiger' });
+    expect(t('stat.exchangeSub')).toBe('T-Rex 1마리 손실당 전투 불능 호랑이');
+    // English has no counter word.
+    initLang('en');
+    setNamePair(pair);
+    expect(speciesCounter('homoErectus')).toBe('');
+    expect(t('stat.ofN', { n: '1', counter: speciesCounter('homoErectus') })).toBe('of 1');
+    expect(t('stat.exchangeSub')).toBe('wolves incapacitated per Homo erectus lost');
+  });
+
+  it('names the woolly mammoth and Homo erectus in both languages', () => {
+    initLang('en');
+    expect(teamLabel('mammoth', 1)).toBe('1 mammoth');
+    expect(teamLabel('mammoth', 12)).toBe('12 mammoths');
+    expect(teamLabel('homoErectus', 1)).toBe('1 Homo erectus');
+    expect(teamLabel('homoErectus', 100)).toBe('100 Homo erectus');
+    expect(paramLabel('heavy.biteForce', 'hands')).toBe('Bare-hand strike and grip force');
+    initLang('ko');
+    expect(teamLabel('homoErectus', 100)).toBe('호모 에렉투스 100명');
+    expect(teamLabel('mammoth', 1)).toBe('매머드 1마리');
+    expect(paramLabel('heavy.biteForce', 'hands')).toBe('맨손 타격 · 붙잡기 힘');
+  });
+
+  it('adds the thought-experiment note only to matchups with a hominin', () => {
+    initLang('en');
+    expect(matchupNoteText({ heavySpecies: 'trex', packSpecies: 'homoErectus' })).toContain(
+      'does not depict or endorse real violence',
+    );
+    expect(matchupNoteText({ heavySpecies: 'homoErectus', packSpecies: 'wolf' })).not.toBeNull();
+    expect(matchupNoteText({ heavySpecies: 'mammoth', packSpecies: 'wolf' })).toBeNull();
+    expect(matchupNoteText({ heavySpecies: 'trex', packSpecies: 'tiger' })).toBeNull();
   });
 
   it('relabels the weapon of non-biting heavies', () => {
@@ -106,6 +166,17 @@ describe('matchup presets and species changes', () => {
     const documented = PRESETS.filter((p) => matchupInfo(p).kind === 'documented');
     expect(documented.length).toBeGreaterThanOrEqual(4);
     expect(matchupInfo(PRESETS[0] ?? defaultConfig()).kind).toBe('neverMet');
+    initLang('en');
+    expect(matchupInfo({ heavySpecies: 'homoErectus', packSpecies: 'lion' }).text).toBe(
+      'No recorded overlap',
+    );
+    expect(matchupInfo({ heavySpecies: 'elephant', packSpecies: 'wolf' }).text).toBe(
+      'No recorded encounters',
+    );
+    initLang('ko');
+    expect(matchupInfo({ heavySpecies: 'homoErectus', packSpecies: 'lion' }).text).toBe(
+      '기록된 조우 없음',
+    );
     expect(matchupInfo({ heavySpecies: 'elephant', packSpecies: 'lion' }).href).toBe(
       '/model/#matchup-elephants-and-lions',
     );
@@ -131,7 +202,7 @@ describe('replay glyph sizes per species', () => {
     expect(heavyLengthForRadius(HEAVY_SPECIES.trex.ranges.bodyRadius.mode)).toBe(7);
     expect(heavyLengthPx(10)).toBe(70);
     expect(heavyLengthPx(10, heavyLengthForRadius(2.5))).toBe(heavyLengthPx(10));
-    for (const id of ['elephant', 'buffalo', 'brownBear'] as const) {
+    for (const id of ['elephant', 'buffalo', 'brownBear', 'mammoth', 'homoErectus'] as const) {
       const s = HEAVY_SPECIES[id];
       const len = heavyLengthForRadius(s.ranges.bodyRadius.mode);
       // The half-base stays inside the ring where the smallest pack animal latches.

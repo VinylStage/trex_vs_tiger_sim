@@ -13,7 +13,7 @@ import {
 } from './events';
 import { PARAMS, PARAM_INDEX as P } from './params';
 import { Rng, deriveSeed } from './rng';
-import { HEAVY_SPECIES, PACK_SPECIES, boundsTable } from './species';
+import { HEAVY_SPECIES, PACK_SPECIES, boundsTable, type HeavySpeciesId } from './species';
 import { SpatialGrid } from './spatial';
 
 /** Fixed integration step in seconds. */
@@ -144,6 +144,25 @@ const wrap = (a: number): number => {
 };
 
 /**
+ * What a heavy's hits and shake-offs cost the pack animal they strike: morale lost on a hit, on
+ * a throw, and the minimum recovery time after a hit. The species constant `intimidation` scales
+ * the shared constants; it is exactly 1 for every species that shipped before #47, and x × 1 is
+ * exact, so their results are unchanged.
+ */
+export function heavyMoraleEffects(id: HeavySpeciesId): {
+  woundMoraleLoss: number;
+  throwMoraleLoss: number;
+  hitRecoverTime: number;
+} {
+  const k = HEAVY_SPECIES[id].constants.intimidation;
+  return {
+    woundMoraleLoss: CONSTANTS.woundMoraleLoss * k,
+    throwMoraleLoss: CONSTANTS.throwMoraleLoss * k,
+    hitRecoverTime: CONSTANTS.recoverMinTime * k,
+  };
+}
+
+/**
  * Simulate one battle.
  * @param row run-level parameter values (one design row, ordered like PARAMS)
  */
@@ -163,6 +182,9 @@ export function simulateBattle(
   // Species constants: no random draws, and exact identities for T. rex (hide 1) and the pack animal
   // (radius 0.8 m, the former engine constant), so v1 links reproduce bit-identically.
   const hide = HEAVY_SPECIES[config.heavySpecies].constants.hide;
+  const { woundMoraleLoss, throwMoraleLoss, hitRecoverTime } = heavyMoraleEffects(
+    config.heavySpecies,
+  );
   const packRadius = PACK_SPECIES[config.packSpecies].constants.radius;
   const bounds = boundsTable(config.heavySpecies, config.packSpecies);
 
@@ -473,7 +495,7 @@ export function simulateBattle(
             log?.emit(EventType.BiteHit, damageByte(dmg, tMaxHp[best] as number), i, best);
             tHp[best] = (tHp[best] as number) - dmg;
             if ((tHp[best] as number) <= 0) kill(best, DeathCause.Bite, i);
-            else toRecover(best, C.woundMoraleLoss, C.recoverMinTime);
+            else toRecover(best, woundMoraleLoss, hitRecoverTime);
           } else {
             log?.emit(EventType.BiteMiss, 0, i, best);
           }
@@ -601,7 +623,7 @@ export function simulateBattle(
               kill(j, DeathCause.Throw, h);
               break;
             }
-            toRecover(j, C.throwMoraleLoss, C.recoverMinTime);
+            toRecover(j, throwMoraleLoss, C.recoverMinTime);
             moveToward(j, a, C.throwDistance);
             break;
           }

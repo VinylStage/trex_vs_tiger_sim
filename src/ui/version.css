@@ -166,15 +166,9 @@
   font-size: 0.875rem;
 }
 
-/* --accent is 4.42:1 on the light dialog surface; this shade reaches 6:1 (dark: 4.64:1 as is). */
+/* --accent is 4.42:1 on the light dialog surface; --accent-text reaches 5.39:1 (dark 5.65:1). */
 .version-links a {
-  color: #1f62b8;
-}
-
-@media (prefers-color-scheme: dark) {
-  .version-links a {
-    color: var(--accent);
-  }
+  color: var(--accent-text);
 }
 
 .version-actions {
@@ -288,6 +282,25 @@
     max-width: min(30rem, calc(100vw - 32px));
     margin: 0;
     translate: none;
+  }
+}
+
+/* Landscape phones: one row, so the banner covers as little of the short screen as possible. */
+@media (max-height: 500px) {
+  .update-banner {
+    flex-wrap: nowrap;
+    gap: 10px;
+    max-width: 44rem;
+    padding: 6px 12px;
+  }
+
+  .update-banner-text {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .update-banner-actions {
+    flex: none;
   }
 }
 
