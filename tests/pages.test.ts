@@ -35,6 +35,7 @@ import {
   type ContentPage,
   type PageId,
 } from '../src/pages/routes';
+import { SHARE_MESSAGES } from '../src/share/messages';
 import {
   DICTIONARIES,
   LANGS,
@@ -1289,6 +1290,13 @@ describe('public/_headers', () => {
 const DEATH_WORDS =
   /(?<!가)죽[은을는지기음었]|사망|\b(?:dead|killed|kills?|died|dies|die)\b|to the death/i;
 
+/**
+ * Words CONTRIBUTING.md forbids in any content (#66), field records included. 피 counts only as
+ * its own word (피를, 피가), so 피로 (fatigue), 피부 (skin), 피해 (damage) and 회피 (evasion) pass.
+ */
+const GORE_WORDS =
+  /(?<![가-힣])피[를가]|유혈|학살|도륙|잔혹|\b(?:blood\w*|massacre\w*|gore|gory)\b|kill count/i;
+
 const withoutFieldRecords = (html: string): string =>
   html.replace(/<section id="matchup-[^"]*">[\s\S]*?<\/section>/g, '');
 
@@ -1304,6 +1312,36 @@ describe('neutral outcome wording', () => {
       DEATH_WORDS.test(v.replace(/\{\w+\}/g, '')),
     );
     expect(hits).toEqual([]);
+  });
+
+  it.each(SHELL_PAGES.map((p) => [p.file, p] as const))(
+    '%s uses no gore words anywhere, field records included',
+    (_, p) => {
+      expect(GORE_WORDS.exec(textOf(p.html))?.[0] ?? null).toBeNull();
+    },
+  );
+
+  it.each(LANGS)('the %s dictionaries (app and sharing) use no gore words', (lang) => {
+    const strings = { ...DICTIONARIES[lang], ...SHARE_MESSAGES[lang] };
+    const hits = Object.entries(strings).filter(([, v]) => GORE_WORDS.test(v));
+    expect(hits).toEqual([]);
+  });
+
+  it('recognises the gore words, and allows 피로, 피부, 피해 and 회피', () => {
+    for (const s of [
+      '피를 보지 않고',
+      '피가 났다',
+      '유혈 충돌',
+      '학살',
+      'bloodshed',
+      'gore',
+      'kill count',
+    ]) {
+      expect(GORE_WORDS.test(s), s).toBe(true);
+    }
+    for (const s of ['T-Rex의 피로', '피부 흔적', '피해량', '회피가 늘었다', 'Gorenflo']) {
+      expect(GORE_WORDS.test(s), s).toBe(false);
+    }
   });
 
   it('still recognises the words it rejects, and allows 가죽 (hide)', () => {
