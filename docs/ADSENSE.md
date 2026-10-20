@@ -75,6 +75,7 @@ Privacy (G3)
 Strict CSP (G4)
 
 - [ ] Build step that injects one identical loader into every HTML page and writes its SHA-256 into `dist/_headers` (research §6.2). No `unsafe-inline` reliance; keep `'unsafe-eval'` only if Google's policy still lists it.
+- [ ] Decide on Trusted Types before ads: since #59 the CSP has `require-trusted-types-for 'script'; trusted-types sim-worker`, and third-party ad scripts write HTML and script URLs through sinks that it blocks. Either list Google's policy names (if documented) or drop `require-trusted-types-for` on ad-serving pages, and verify with the report-only canary.
 - [ ] Remove `autoplay=()` from `Permissions-Policy` in the ads PR (it blocks muted video ads). Keep COOP `same-origin`; never add COEP.
 - [ ] Report-only canary header for one release before enforcing.
 
