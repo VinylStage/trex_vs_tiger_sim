@@ -43,6 +43,7 @@ Epic: #20.
 | Code audit 2026-10-20: security, accessibility, docs, tests, performance | #82   | In progress: step 1 done (#85, v0.2.7)                                                                            |
 | Herd group defense for social herbivores                                 | #72   | Planned                                                                                                           |
 | Rout (flee) rate in the results                                          | #42   | Planned                                                                                                           |
+| Patch notes board (`/patch-notes/`), one playful entry per release       | —     | In review                                                                                                         |
 
 ## Later (candidates, not committed)
 

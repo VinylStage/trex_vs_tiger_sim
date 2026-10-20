@@ -23,6 +23,7 @@
 - [Adding a page](#adding-a-page)
 - [Writing and markup rules](#writing-and-markup-rules)
 - [Site header](#site-header)
+- [Patch notes](#patch-notes)
 - [The simulator pages (`/`, `/en/`)](#the-simulator-pages--en)
 - [Footer](#footer)
 - [Colour contrast](#colour-contrast)
@@ -34,17 +35,18 @@
 
 ## Pages
 
-| Page id      | Korean         | English           | Content                                                                                                                                                                                                   |
-| ------------ | -------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `simulator`  | `/`            | `/en/`            | The app (`index.html`, `en/index.html`), with a static intro, FAQ and footer outside `#app`                                                                                                               |
-| `guide`      | `/guide/`      | `/en/guide/`      | Step-by-step use of the simulator, reading results, sharing, a three-experiment tutorial, FAQ, troubleshooting                                                                                            |
-| `model`      | `/model/`      | `/en/model/`      | Plain-language model description: Monte Carlo design, agent rules, outcomes, statistics, reproducibility, species and documented match-ups (`#matchup-*` anchors the matchup badge links to), limitations |
-| `parameters` | `/parameters/` | `/en/parameters/` | One card per role parameter in `src/sim/params.ts` (default-species values), the species preset tables, every scenario setting, the engine constants                                                      |
-| `about`      | `/about/`      | `/en/about/`      | Purpose, what it teaches, educational disclaimer, how it is built, open source, contact via GitHub issues                                                                                                 |
-| `privacy`    | `/privacy/`    | `/en/privacy/`    | Privacy policy (effective 2026-10-20): no own cookies, `trexsim.tour` in localStorage (the v0.1.0 key `trexsim.lang` is deleted on load), Cloudflare cookies and logs                                     |
-| `license`    | `/license/`    | `/en/license/`    | MIT License text (identical to `LICENSE`), what it covers, the Pretendard (OFL 1.1) notice and its full license text                                                                                      |
+| Page id       | Korean          | English            | Content                                                                                                                                                                                                   |
+| ------------- | --------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `simulator`   | `/`             | `/en/`             | The app (`index.html`, `en/index.html`), with a static intro, FAQ and footer outside `#app`                                                                                                               |
+| `guide`       | `/guide/`       | `/en/guide/`       | Step-by-step use of the simulator, reading results, sharing, a three-experiment tutorial, FAQ, troubleshooting                                                                                            |
+| `model`       | `/model/`       | `/en/model/`       | Plain-language model description: Monte Carlo design, agent rules, outcomes, statistics, reproducibility, species and documented match-ups (`#matchup-*` anchors the matchup badge links to), limitations |
+| `parameters`  | `/parameters/`  | `/en/parameters/`  | One card per role parameter in `src/sim/params.ts` (default-species values), the species preset tables, every scenario setting, the engine constants                                                      |
+| `about`       | `/about/`       | `/en/about/`       | Purpose, what it teaches, educational disclaimer, how it is built, open source, contact via GitHub issues                                                                                                 |
+| `patch-notes` | `/patch-notes/` | `/en/patch-notes/` | Patch notes board: one card per release, newest first, generated from `src/content/patch-notes.ts` ([Patch notes](#patch-notes))                                                                          |
+| `privacy`     | `/privacy/`     | `/en/privacy/`     | Privacy policy (effective 2026-10-20): no own cookies, `trexsim.tour` in localStorage (the v0.1.0 key `trexsim.lang` is deleted on load), Cloudflare cookies and logs                                     |
+| `license`     | `/license/`     | `/en/license/`     | MIT License text (identical to `LICENSE`), what it covers, the Pretendard (OFL 1.1) notice and its full license text                                                                                      |
 
-The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation (`NAV_PAGES`) is simulator · guide · model · parameters · about; about, privacy and license are linked from every footer (`FOOTER_LINKS`).
+The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation (`NAV_PAGES`) is simulator · guide · model · parameters · about · patch notes; about, privacy and license are linked from every footer (`FOOTER_LINKS`).
 
 ## URL scheme and languages
 
@@ -122,6 +124,17 @@ The header is not written by hand. Every content page and both 404 pages have on
 **One logo.** `SITE_LOGO` is the only place the header logo is named: `/header-logo.svg` (the owner's icon, [BRANDING.md](BRANDING.md#assets)), 40 px in the app header and 32 px in the content-page header. The app takes it from the same constant: `src/ui/app.ts` builds its logo with `logoAttrs('app')`, and the static head of `index.html` / `en/index.html` has an `<!-- app-logo -->` line the same plugin replaces with `renderAppLogo()`. To change the logo or its size, change `SITE_LOGO` and nothing else.
 
 A placeholder on a page whose path the plugin cannot resolve, `<!-- site-header -->` on the simulator or `<!-- app-logo -->` on a content page fails the build. `tests/pages.test.ts` runs the same `expandSiteHeader` over the sources, so every other page test sees the header as built, and fails if a source hand-writes a header or a logo `<img>`, lacks its placeholder, or if any page's header logo (src, size, alt) differs from `SITE_LOGO`.
+
+## Patch notes
+
+`/patch-notes/` and `/en/patch-notes/` are a notice board of releases. The sources (`patch-notes/index.html`, `en/patch-notes/index.html`) hold the head, breadcrumb, `h1`, lead, "last updated" date and footer like any content page, and one `<!-- patch-notes -->` line where the board goes. `patchNotes(version)` in `vite.pages.ts` (`order: 'pre'`, dev and build) replaces it with `renderPatchNotes(lang, version)` from `src/pages/patch-notes-page.ts`:
+
+- `nav.toc.patch-index`: a chip per version linking its card, the newest marked "최신" / "Latest";
+- `div.page-body.patch-board`: one `section.patch-card#v<x>-<y>-<z>` per version (`versionAnchor`, e.g. `#v0-2-9`), newest first. Each card shows the version badge (a link to its own anchor), the date, a NEW tag on the newest card, the title (`h2`), the bullets grouped under emoji category headings (`h3`: ✨ new · 🛠 improved · 🐛 fixed · 🔒 security · ♿ accessibility · ⚠️ known issues) with their issue links, and the PRs and the GitHub release in its foot.
+
+The words live in `src/content/patch-notes.ts` (`PATCH_NOTES`, typed data, ko and en written separately), never in the HTML. The board shows the entries up to the build's `package.json` version (`releasedNotes`), so an entry written ahead for the next release appears with it. `vite.seo.ts` expands the same placeholder for `llms-full.txt`, and `tests/pages.test.ts` reads the pages expanded. `tests/patch-notes.test.ts` requires an entry, dated as in `CHANGELOG.md`, for every released version, the newest-first order, both languages, 2–6 bullets and the content framing rules (no blood, death or gore words), and a "last updated" date no older than the newest release. Adding an entry is part of every release ([CONTRIBUTING.md](../CONTRIBUTING.md#release-cadence)).
+
+The app's version dialog links "패치노트 보기" / "Patch notes" to the running version's card, and the update banner links "바뀐 점 보기" / "What's new" to the deployed version's card (`src/ui/version.ts`; both follow an in-app language switch through `data-page`).
 
 ## The simulator pages (`/`, `/en/`)
 

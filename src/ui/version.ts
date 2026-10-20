@@ -1,4 +1,5 @@
 import { h, uniqueId } from './dom';
+import { versionAnchor } from '../content/patch-notes';
 import { pagePath } from '../pages/routes';
 import { getLang, locale, onLangChange, t, type MsgKey } from './i18n';
 import { clearSiteData } from './site-data';
@@ -47,6 +48,23 @@ const LIFT_PROPERTY = '--update-banner-lift';
 const BANNER_GAP_PX = 8;
 
 const versionLabel = (b: BuildInfo): string => `v${b.version} (${shortSha(b.sha)})`;
+
+/**
+ * Link to a version's card on the patch notes page (docs/PAGES.md#patch-notes). `data-page` and
+ * `data-href-suffix` let relocalizeLinks (src/ui/site-nav.ts) follow an in-app language switch.
+ */
+function patchNotesLink(key: MsgKey, version: string, className?: string): HTMLAnchorElement {
+  const suffix = `#${versionAnchor(version)}`;
+  return h('a', {
+    ...(className ? { class: className } : {}),
+    i18n: key,
+    attrs: {
+      href: `${pagePath('patch-notes', getLang())}${suffix}`,
+      'data-page': 'patch-notes',
+      'data-href-suffix': suffix,
+    },
+  });
+}
 
 /** Update text only when it changes, so live regions do not repeat themselves on re-renders. */
 function setText(el: HTMLElement, text: string): void {
@@ -215,6 +233,7 @@ export function createVersionBadge(): HTMLButtonElement {
         h(
           'p',
           { class: 'version-links' },
+          patchNotesLink('version.patchNotes', CURRENT_BUILD.version),
           h('a', {
             i18n: 'version.releaseNotes',
             attrs: { href: RELEASES_URL, rel: 'noopener', target: '_blank' },
@@ -322,12 +341,18 @@ export function createVersionBadge(): HTMLButtonElement {
       attrs: { type: 'button' },
     });
     const dismissBtn = h('button', { class: 'btn btn-small btn-ghost', attrs: { type: 'button' } });
+    // Points at the deployed version's card; the page is fetched fresh, so the card exists there.
+    const notesLink = patchNotesLink(
+      'version.bannerNotes',
+      CURRENT_BUILD.version,
+      'update-banner-notes',
+    );
     const el = h(
       'section',
       { class: 'update-banner', i18nAria: 'version.bannerRegion' },
       text,
       live,
-      h('div', { class: 'update-banner-actions' }, updateBtn, dismissBtn),
+      h('div', { class: 'update-banner-actions' }, notesLink, updateBtn, dismissBtn),
     );
     el.hidden = true;
     updateBtn.addEventListener('click', () => openDialog(true));
@@ -335,7 +360,7 @@ export function createVersionBadge(): HTMLButtonElement {
     el.addEventListener('animationend', schedulePlace);
     el.addEventListener('transitionend', schedulePlace);
     document.body.append(el);
-    return { el, text, live, updateBtn, dismissBtn };
+    return { el, text, live, notesLink, updateBtn, dismissBtn };
   }
 
   function bannerText(): string {
@@ -428,6 +453,12 @@ export function createVersionBadge(): HTMLButtonElement {
     }
     const withActions = bannerMode === 'update';
     b.updateBtn.hidden = !withActions;
+    b.notesLink.hidden = !withActions;
+    if (withActions && status.kind === 'update') {
+      const suffix = `#${versionAnchor(status.deployed.version)}`;
+      b.notesLink.dataset['hrefSuffix'] = suffix;
+      b.notesLink.href = `${pagePath('patch-notes', getLang())}${suffix}`;
+    }
     b.dismissBtn.textContent = t(withActions ? 'version.bannerDismiss' : 'version.close');
     setText(b.text, bannerText());
     if (b.el.hidden) {

@@ -18,6 +18,7 @@ export const CONTENT_PAGES = [
   'model',
   'parameters',
   'about',
+  'patch-notes',
   'privacy',
   'license',
 ] as const;
@@ -30,7 +31,14 @@ export type ContentPage = (typeof CONTENT_PAGES)[number];
 export type PageId = 'simulator' | ContentPage;
 
 /** Order of the shared site navigation (header). Privacy and license are in the footer only. */
-export const NAV_PAGES: readonly PageId[] = ['simulator', 'guide', 'model', 'parameters', 'about'];
+export const NAV_PAGES: readonly PageId[] = [
+  'simulator',
+  'guide',
+  'model',
+  'parameters',
+  'about',
+  'patch-notes',
+];
 
 /** Dictionary key of each page's short name (navigation, breadcrumbs, llms.txt). */
 export const NAV_LABEL_KEYS: Readonly<Record<PageId, MsgKey>> = {
@@ -39,6 +47,7 @@ export const NAV_LABEL_KEYS: Readonly<Record<PageId, MsgKey>> = {
   model: 'nav.model',
   parameters: 'nav.parameters',
   about: 'nav.about',
+  'patch-notes': 'nav.patch-notes',
   privacy: 'nav.privacy',
   license: 'nav.license',
 };

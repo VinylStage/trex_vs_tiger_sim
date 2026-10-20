@@ -22,7 +22,7 @@ A Monte Carlo, agent-based battle simulator: N _Tyrannosaurus rex_ vs M tigers o
 - Share any scenario as a URL; the seed is included, so results reproduce exactly in the same browser engine (and statistically across engines)
 - Export and import settings as a `TVT2-…` code or a `.json` file (previewed before applying)
 - Share a finished result: a `/r/` result page with a snapshot and "run it yourself" check, a story or square result card image, and a Wordle-style emoji text; link previews show the result through a tiny `/r/`-only Pages Function
-- Korean (`/`) and English (`/en/`) UI, plus static guide, model, parameter, about, privacy and license pages in both languages; generated sitemap, robots.txt, llms.txt and structured data
+- Korean (`/`) and English (`/en/`) UI, plus static guide, model, parameter, about, patch notes, privacy and license pages in both languages; generated sitemap, robots.txt, llms.txt and structured data
 - Interactive guided tour (header **튜토리얼 / Tutorial** button or `?tour=1`)
 - Release version badge that detects newer deployments and can reload the latest version after clearing this site's cache and storage
 - No backend: every simulation runs in your browser (the only server code rewrites link-preview text on `/r/`, [ADR-0006](docs/adr/0006-pages-function-share-previews.md))

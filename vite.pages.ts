@@ -1,6 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import type { Plugin } from 'vite';
+import { expandPatchNotes } from './src/pages/patch-notes-page.ts';
 import { expandSiteHeader, headerRouteOf } from './src/pages/site-header.ts';
 
 /**
@@ -61,6 +62,24 @@ export function siteHeader(): Plugin {
       order: 'pre',
       handler(html, ctx) {
         return expandSiteHeader(html, headerRouteOf(ctx.path), ctx.path);
+      },
+    },
+  };
+}
+
+/**
+ * Fills the patch notes board (docs/PAGES.md#patch-notes): `<!-- patch-notes -->` in
+ * patch-notes/index.html and en/patch-notes/index.html becomes the version cards rendered from
+ * src/content/patch-notes.ts, showing the entries up to the build's package.json `version`.
+ * Like {@link siteHeader} it runs before Vite's HTML processing, in dev and in the build.
+ */
+export function patchNotes(version: string): Plugin {
+  return {
+    name: 'trexsim:patch-notes',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html, ctx) {
+        return expandPatchNotes(html, headerRouteOf(ctx.path), version, ctx.path);
       },
     },
   };

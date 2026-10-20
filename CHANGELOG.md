@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.11](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.10...trex-vs-tiger-sim-v0.2.11) (2026-10-20)
+
+
+### Features
+
+* **pages:** patch notes board, one card per version ([#98](https://github.com/VinylStage/trex_vs_tiger_sim/issues/98)) ([249d2df](https://github.com/VinylStage/trex_vs_tiger_sim/commit/249d2df27139c1af54a4f559a39f7a452e00a05f))
+
+
+### Performance Improvements
+
+* **ui:** aggregate free-mode results in the worker ([#96](https://github.com/VinylStage/trex_vs_tiger_sim/issues/96)) ([fe9ec88](https://github.com/VinylStage/trex_vs_tiger_sim/commit/fe9ec88ca9e3d316e9d857fca8012dd3423f6641)), closes [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50)
+
 ## [0.2.10](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.9...trex-vs-tiger-sim-v0.2.10) (2026-10-20)
 
 
