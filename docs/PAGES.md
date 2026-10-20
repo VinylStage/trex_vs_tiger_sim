@@ -2,9 +2,10 @@
 
 > **한국어 요약**
 >
-> - 시뮬레이터(`/`) 외에 검색엔진이 읽을 수 있는 정적 안내 페이지 5종을 한국어(`/<page>/`)와 영어(`/en/<page>/`)로 제공합니다: 사용 방법, 모델 설명, 파라미터 설명, 소개 · 문의, 개인정보처리방침.
+> - 시뮬레이터는 한국어 `/`, 영어 `/en/` 두 주소로 제공됩니다(같은 `src/main.ts`, 언어는 URL로 결정, 저장하지 않음). 그 밖에 검색엔진이 읽을 수 있는 정적 안내 페이지 6종을 한국어(`/<page>/`)와 영어(`/en/<page>/`)로 제공합니다: 사용 방법, 모델 설명, 파라미터 설명, 소개 · 문의, 개인정보처리방침, 라이선스.
+> - 시뮬레이터 페이지에는 `#app` 바깥에 정적 소개 · FAQ가 있고, 모든 페이지에 같은 정적 푸터(면책 문구, 소개 · 개인정보처리방침 · 라이선스 · GitHub · 블로그 · Linktree, 버전)가 있습니다. 문구는 `src/ui/i18n.ts`와 글자 하나까지 같아야 하며 테스트가 확인합니다.
 > - 페이지는 손으로 쓴 HTML입니다(`<page>/index.html`, `en/<page>/index.html`). Vite가 저장소 안의 모든 `index.html`을 자동으로 찾아 빌드하므로, 새 페이지는 설정 변경 없이 폴더와 `index.html`만 추가하면 됩니다.
-> - 공통 스타일은 `src/pages/site.css`(앱과 같은 색 토큰, 다크 모드, 인쇄용), 공통 스크립트는 `src/pages/site.ts`(현재 메뉴 표시, 언어 링크 유지)입니다. 인라인 스크립트·스타일은 쓰지 않습니다(CSP).
+> - 공통 스타일은 `src/pages/site.css`(앱과 같은 색 토큰, 다크 모드, 인쇄용), 공통 스크립트는 `src/pages/site.ts`(현재 메뉴 표시, 언어 링크 유지, 푸터 버전 표시)입니다. 인라인 스크립트·스타일은 쓰지 않습니다(CSP).
 > - 글꼴은 앱과 같은 자체 호스팅 Pretendard입니다. `site.ts`가 앱과 같은 `@font-face` 스타일시트를 불러오므로 빌드 결과에서 앱과 페이지가 파일 하나를 함께 씁니다.
 > - 접근성: 본문 크기 글자는 양쪽 테마에서 명도 대비 4.5:1 이상([색 대비](#colour-contrast)), 가로로 스크롤되는 표는 키보드로 초점을 옮겨 스크롤할 수 있습니다.
 > - 앱에서 쓸 메뉴는 `src/ui/site-nav.ts`의 `createSiteNav(lang)`이 만듭니다.
@@ -19,6 +20,8 @@
 - [How the build finds pages](#how-the-build-finds-pages)
 - [Adding a page](#adding-a-page)
 - [Writing and markup rules](#writing-and-markup-rules)
+- [The simulator pages (`/`, `/en/`)](#the-simulator-pages--en)
+- [Footer](#footer)
 - [Colour contrast](#colour-contrast)
 - [Fonts](#fonts)
 - [SEO](#seo)
@@ -30,37 +33,41 @@
 
 | Page id      | Korean         | English           | Content                                                                                                               |
 | ------------ | -------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `simulator`  | `/`            | `/` (client-side) | The app itself (`index.html`); not a content page                                                                     |
+| `simulator`  | `/`            | `/en/`            | The app (`index.html`, `en/index.html`), with a static intro, FAQ and footer outside `#app`                           |
 | `guide`      | `/guide/`      | `/en/guide/`      | Step-by-step use of the simulator, reading results, sharing, a three-experiment tutorial, FAQ, troubleshooting        |
 | `model`      | `/model/`      | `/en/model/`      | Plain-language model description: Monte Carlo design, agent rules, outcomes, statistics, reproducibility, limitations |
 | `parameters` | `/parameters/` | `/en/parameters/` | One card per parameter in `src/sim/params.ts`, every scenario setting, the engine constants                           |
 | `about`      | `/about/`      | `/en/about/`      | Purpose, what it teaches, educational disclaimer, how it is built, open source, contact via GitHub issues             |
-| `privacy`    | `/privacy/`    | `/en/privacy/`    | Privacy policy (effective 2026-10-19): no own cookies, `trexsim.lang` in localStorage, Cloudflare cookies and logs    |
+| `privacy`    | `/privacy/`    | `/en/privacy/`    | Privacy policy (effective 2026-10-20): no own cookies, `trexsim.tour` in localStorage, Cloudflare cookies and logs    |
+| `license`    | `/license/`    | `/en/license/`    | MIT License text (identical to `LICENSE`), what it covers, the Pretendard (OFL 1.1) notice and its full license text  |
 
-The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation (`NAV_PAGES`) is simulator · guide · model · parameters · about; privacy and about are also linked from every footer.
+The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation (`NAV_PAGES`) is simulator · guide · model · parameters · about; about, privacy and license are linked from every footer (`FOOTER_LINKS`).
 
 ## URL scheme and languages
 
-- Korean is the default language: `/<page>/`. English lives under `/en/<page>/`. The simulator is `/` in both languages because it switches language client-side.
+- Korean is the default language: `/<page>/`. English lives under `/en/<page>/`. The simulator is `/` (Korean) and `/en/` (English): two static entries, `index.html` and `en/index.html`, that load the same `src/main.ts`.
+- **The URL decides the language.** Every page has a static `<html lang>`; the app reads its language with `pageLang(location.pathname, <html lang>)` (`src/pages/routes.ts`). Nothing is stored (there is no language key in `localStorage`), and visitors are never redirected by browser language.
+- **In-place switch in the app.** The header language button translates the UI (`applyI18n`, also covering the static intro and footer through their `data-i18n` keys), rebuilds the site nav and the footer links, re-points the intro links (`a[data-page]`, `relocalizeLinks`), sets `<html lang>` and `document.title` (the other language's static `<title>`, `app.documentTitle`) and rewrites the URL with `history.replaceState` to `switchedAppUrl(lang, search, hash)`: `/#s=…` ↔ `/en/#s=…`, query and fragment kept. Results, the replay and form state stay. Reloading `/en/` shows English.
 - Every page carries `<link rel="canonical">` to its own URL on the production domain `https://trex-vs-tiger.vinylims.com`, so `*.pages.dev` copies (production alias and previews) consolidate onto it.
 - Every page carries `hreflang` alternates `ko`, `en` and `x-default` (= Korean).
 - The header's language link (`a[data-lang-switch]`) points to the counterpart page. Both languages use the **same section ids**, so `site.ts` can keep the reader's place (`/guide/#share` ↔ `/en/guide/#share`).
-- Links from a page to the simulator (`/`) make the app open in the language being read: `site.ts` writes `trexsim.lang` (the same localStorage key `src/ui/i18n.ts` uses) when such a link is clicked.
+- Links from a page to the simulator use the simulator URL of the page's language (`/` or `/en/`, the tour deep link `/?tour=1` or `/en/?tour=1`). Links from the app to the static files it needs are root-absolute (`/favicon.svg`, `/version.json`, `/reset/`), and workers load relative to the bundle (`import.meta.url`), so the app works at both `/` and `/en/`.
 - Cloudflare Pages serves `<dir>/index.html` at `/<dir>/` and redirects `/<dir>` and `/<dir>/index.html` there.
 
 ## Files
 
-| File                                        | Role                                                                                                                                                                                                                                                                                                    |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<page>/index.html`, `en/<page>/index.html` | The pages: complete, crawlable HTML with head metadata, shared header/nav, `<main>` article and footer                                                                                                                                                                                                  |
-| `src/pages/site.css`                        | Shared stylesheet. Its `:root` tokens mirror `src/ui/styles.css` (light and dark); responsive; print rules. Imports `src/ui/site-nav.css`                                                                                                                                                               |
-| `src/pages/site.ts`                         | Imports the self-hosted Pretendard stylesheet (see [Fonts](#fonts)). Otherwise progressive enhancement only: `aria-current` on the nav, language link keeps the `#hash`, remembers the language for the simulator. Never imports `i18n.ts` at run time (it would pull the dictionaries into every page) |
-| `src/pages/routes.ts`                       | DOM-free page registry and path helpers (`pagePath`, `parsePagePath`, `counterpartPath`, `canonicalUrl`), `SITE_ORIGIN`, `LANG_STORAGE_KEY`                                                                                                                                                             |
-| `src/ui/site-nav.ts`, `src/ui/site-nav.css` | `createSiteNav(lang, current?)` for the app, and the pure `siteNavItems()` the tests compare the static navs against                                                                                                                                                                                    |
-| `vite.pages.ts`                             | `findHtmlEntries(root)`: the build input map                                                                                                                                                                                                                                                            |
-| `public/robots.txt`                         | Allow all; points at the sitemap                                                                                                                                                                                                                                                                        |
-| `public/sitemap.xml`                        | The app and every page, with `xhtml:link` hreflang alternates                                                                                                                                                                                                                                           |
-| `public/_headers` rule `/*/`                | `Cache-Control: no-cache, no-transform` on every directory-style page (see [DEPLOYMENT.md](DEPLOYMENT.md#rule--content-pages))                                                                                                                                                                          |
+| File                                        | Role                                                                                                                                                                                                                                                                                                               |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `<page>/index.html`, `en/<page>/index.html` | The pages: complete, crawlable HTML with head metadata, shared header/nav, `<main>` article and footer                                                                                                                                                                                                             |
+| `src/pages/site.css`                        | Shared stylesheet. Its `:root` tokens mirror `src/ui/styles.css` (light and dark); responsive; print rules. Imports `src/ui/site-nav.css`                                                                                                                                                                          |
+| `src/pages/site.ts`                         | Imports the self-hosted Pretendard stylesheet (see [Fonts](#fonts)). Otherwise progressive enhancement only: `aria-current` on the nav, language link keeps the `#hash`, writes `v<version>` into the footer. Stores nothing. Never imports `i18n.ts` at run time (it would pull the dictionaries into every page) |
+| `src/pages/routes.ts`                       | DOM-free page registry and path helpers (`pagePath`, `parsePagePath`, `counterpartPath`, `pageLang`, `switchedAppUrl`, `canonicalUrl`), `SITE_ORIGIN`, owner URLs, `FOOTER_LINKS`                                                                                                                                  |
+| `src/ui/site-footer.css`                    | Footer styles shared by the app and the pages (imported by `src/ui/app.ts` and `site.css`)                                                                                                                                                                                                                         |
+| `src/ui/site-nav.ts`, `src/ui/site-nav.css` | `createSiteNav(lang, current?)` for the app, the pure `siteNavItems()` and `footerItems()` the tests compare the static navs and footers against, `renderFooterLinks()` and `relocalizeLinks()` for the in-place language switch                                                                                   |
+| `vite.pages.ts`                             | `findHtmlEntries(root)`: the build input map                                                                                                                                                                                                                                                                       |
+| `public/robots.txt`                         | Allow all; points at the sitemap                                                                                                                                                                                                                                                                                   |
+| `public/sitemap.xml`                        | Both app URLs and every page, with `xhtml:link` hreflang alternates (static for now; generated from the registry in a later change)                                                                                                                                                                                |
+| `public/_headers` rule `/*/`                | `Cache-Control: no-cache, no-transform` on every directory-style page (see [DEPLOYMENT.md](DEPLOYMENT.md#rule--content-pages))                                                                                                                                                                                     |
 
 ## How the build finds pages
 
@@ -72,10 +79,10 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 
 ## Adding a page
 
-**A content page in both languages** (e.g. a FAQ):
+**A content page in both languages** (e.g. a FAQ; `license` was added this way):
 
 1. Add its id to `CONTENT_PAGES` in `src/pages/routes.ts`. If it belongs in the header, also add it to `NAV_PAGES`, to `NAV_LABEL_KEYS` in `src/ui/site-nav.ts` and a `nav.<id>` key to both dictionaries in `src/ui/i18n.ts`, and add the link to the nav of every page.
-2. Copy an existing pair (for example `about/index.html` and `en/about/index.html`) to `<id>/index.html` and `en/<id>/index.html`. Update `<title>`, the meta description, canonical, the three `hreflang` alternates, `og:*`/`twitter:*`, the language link and the content. Keep section ids identical in both languages.
+2. Copy an existing pair (for example `about/index.html` and `en/about/index.html`) to `<id>/index.html` and `en/<id>/index.html`. Update `<title>`, the meta description, canonical, the three `hreflang` alternates, `og:*`/`twitter:*`, the language link and the content. Keep section ids identical in both languages, and keep the header and the footer exactly as copied.
 3. Add both URLs to `public/sitemap.xml` with their alternates.
 4. Run `npm run check`. `tests/pages.test.ts` lists anything missing or inconsistent.
 
@@ -90,6 +97,39 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 - **Content**: write natural Korean and English (not word-for-word translation), keep claims consistent with `docs/MODEL.md` and `src/sim`, avoid describing UI details that are likely to change, and update the "last updated" date when a page changes materially. Korean uses `word-break: keep-all` so words are not split.
 - **Colour**: use the page colour roles for accent text and filled controls, not `--accent` (see [Colour contrast](#colour-contrast)).
 - Format with Prettier (`npx prettier --write <file>`); `npm run format:check` covers HTML.
+
+## The simulator pages (`/`, `/en/`)
+
+`index.html` (Korean) and `en/index.html` (English) carry the static head of their language (title = `app.documentTitle`, description, canonical, hreflang, Open Graph) and this body:
+
+```html
+<noscript>…</noscript>
+<div id="app"></div>
+<!-- the app mounts here -->
+<section class="site-intro" id="intro">…</section>
+<!-- answer-first intro -->
+<section class="site-faq" id="faq">…</section>
+<!-- 4 visible Q&A -->
+<footer class="site-footer">…</footer>
+<!-- shared footer -->
+```
+
+- **Outside `#app`.** The intro, FAQ and footer are siblings of `#app`, so they exist without JavaScript (crawlers that do not run scripts, see [SEO.md](SEO.md)) and stay in the DOM after the app mounts.
+- **Answer first, compact.** The intro says what the simulator is, how it works in four steps, what you learn (Monte Carlo, confidence intervals, sensitivity) and links to the guide, the model's preliminary results (`/model/#results`), the parameters and the tour. It states no simulation result numbers; the only number (22 parameters) is pinned to `PARAMS.length` by a test.
+- **Below the simulator, no layout shift.** The simulator stays at the top. `#app` reserves one viewport (`min-height: 100vh` / `100svh` in `src/ui/styles.css`), so the intro starts below the fold before the app mounts and stays there after it; mounting shifts nothing on screen (measured CLS 0.0000 at 1366/390/320 px). Without JavaScript (`@media (scripting: none)`) `#app` is hidden and the intro moves up under the `<noscript>` notice.
+- **Translatable in place.** Every static text element has `data-i18n="<key>"` and contains exactly `DICTIONARIES[lang][key]` (`data-i18n-aria`, `data-i18n-title` likewise), so the app's `applyI18n` translates it when the language switches. Links carry `data-page` (plus `data-href-suffix` such as `#results` or `?tour=1`) so `relocalizeLinks` can point them at the other language. The tour link also has `data-tour-start`: the app starts the tour in place on a plain click.
+
+## Footer
+
+Every page (both app entries, all content pages including the license pages) has exactly one static `<footer class="site-footer">`:
+
+1. the educational disclaimer (`footer.disclaimer`, including that the site does not promote or endorse real animal fighting);
+2. `ul.footer-links` in the order of `FOOTER_LINKS` (`src/pages/routes.ts`): about · privacy · license (site pages of the page's language), source code (GitHub repository, `rel="noopener"`), blog `https://vinylims.com` and Linktree `https://link.vinylims.com` (both `rel="me noopener"`, they identify the owner);
+3. `p.footer-meta`: "시뮬레이션은 모두 브라우저에서 실행됩니다 / Simulations run in your browser", the copyright line and the version link to the GitHub releases, whose number is filled in by script ([VERSIONING.md](VERSIONING.md#footer-version)).
+
+All links are in the static HTML; nothing a crawler needs is generated at run time. The old app footer claim "서버 전송 · 추적 없음 / No server, no tracking" is gone, because it would become false once ads are added ([ADSENSE.md](ADSENSE.md)). The app no longer renders a footer of its own: it fills the version, and on a language switch rebuilds the links (`renderFooterLinks`) and re-translates the rest. Styles: `src/ui/site-footer.css`.
+
+`/reset/` is a transient utility page (noindex, about half a second on screen) and has no footer.
 
 ## Colour contrast
 
@@ -127,7 +167,7 @@ Each `@font-face` rule covers a `unicode-range`, so a browser downloads only the
 
 ## SEO
 
-- Unique, descriptive `<title>` (`<topic> | <site name>`) and meta description (50–320 characters) per page; the tests enforce uniqueness.
+- Unique, descriptive `<title>` (`<topic> – <site name>`, at most 60 characters) and meta description (50–165 characters) per page, the two simulator pages included; the tests enforce length and uniqueness. Names, titles and descriptions: [SEO.md](SEO.md).
 - Canonical + `hreflang` (`ko`, `en`, `x-default`) on every page and in the sitemap; `og:locale` / `og:locale:alternate`.
 - `robots.txt` allows everything and names the sitemap. Submit `https://trex-vs-tiger.vinylims.com/sitemap.xml` in Google Search Console after deployment.
 - Pages are complete HTML without JavaScript (the no-JS render is verified in the browser check), load one small stylesheet, the shared font stylesheet and a 1 KiB script, and reserve image sizes (`width`/`height`). The only possible layout shift is the one-time font swap described in [Fonts](#fonts).
@@ -149,18 +189,22 @@ No ad code is included yet. The pages were written with an AdSense review in min
 
 - a parameter in `src/sim/params.ts` is missing, extra, or its unit, min/mode/max, bounds or individual-variation flag differ (values and visible numbers); the card heading must contain the app's i18n label;
 - a scenario setting's default, limits or options differ from `defaultConfig()`, `LIMITS`, `SAMPLING_METHODS`, `TIGER_TACTICS`, or the work budget from `MAX_WORK`; an engine constant differs from `CONSTANTS`/`DT`;
-- any page lacks a title, description, canonical, the three hreflang alternates, OG/Twitter, theme-colour, viewport, favicon, the shared CSS/JS, one `h1`, `main#main`, footer, or about 2,500 characters of text; titles or descriptions repeat; ids repeat;
+- any page lacks a title, description, canonical, the three hreflang alternates, OG/Twitter, theme-colour, viewport, favicon, the shared CSS/JS, one `h1`, `main#main`, footer, or about 2,500 characters of text; a title is longer than 60 or a description longer than 165 characters; titles or descriptions repeat (across all pages including `/` and `/en/`); ids repeat;
+- a simulator page's `<title>` differs from `app.documentTitle`, its `#app` is not empty, the intro/FAQ/footer are not after it, the intro has fewer than 3 or more than 4 steps, fewer than 3 or more than 5 FAQ items, or its links differ from guide · model#results · parameters · tour of its language;
+- on any page, a `data-i18n` (`-aria`, `-title`) text differs from the dictionary, the footer links differ from `footerItems(lang)` (href, label, rel), the version link does not point at the releases, `og:site_name` or the header brand differs from `app.shortTitle`, or the footer still claims "no tracking";
+- the license pages' MIT text differs from `LICENSE`, or the OFL text from `src/assets/fonts/pretendard/LICENSE.txt`; `package.json` gains runtime `dependencies`;
+- a `'trexsim.*'` storage key in `src/` is missing from either privacy page, or a privacy page names a key the code does not use;
 - a static nav differs from `siteNavItems(lang, page)`; the language link is wrong; ko/en section ids differ; an internal link or `#anchor` points nowhere; an external link is not `https`;
 - a table is not inside a `.table-wrap` with `role="region"`, `tabindex="0"` and an `aria-labelledby` that names its own `<caption id>`;
 - any discovered HTML file (including the app's `index.html`) has inline script, style blocks, style attributes, event handlers or `javascript:` URLs;
 - `site.css` tokens (colours and `--font-sans`) differ from `src/ui/styles.css`, or a text/background pair from [Colour contrast](#colour-contrast) falls below 4.5:1 in either theme;
 - `_headers` does not give every page exactly one `Cache-Control: no-cache, no-transform` (and the CSP), or `robots.txt`/`sitemap.xml` miss a page or an alternate.
 
-`tests/site.test.ts` covers the path helpers, `siteNavItems`, the shared storage key and `findHtmlEntries` (including the ignored directories).
+`tests/site.test.ts` covers the path helpers (including `/en/` and the language from the URL, `switchedAppUrl` keeping query and fragment), `siteNavItems`, `FOOTER_LINKS`/`footerItems` (order, hrefs, `rel="me"`), `relocalizeLinks` and `findHtmlEntries` (including the ignored directories and the `en` entry). `tests/i18n.test.ts` checks that the language state never touches `localStorage`.
 
 ## Mounting the site navigation in the app
 
-`src/ui/app.ts` appends `createSiteNav(getLang())` to the app header as a full-width row (`.app-header .site-nav` in `src/ui/styles.css`) and rebuilds it in its `onLangChange` handler:
+`src/ui/app.ts` appends `createSiteNav(getLang())` to the app header as a full-width row (`.app-header .site-nav` in `src/ui/styles.css`) and rebuilds it in its `onLangChange` handler, together with the footer links and the URL (see [URL scheme and languages](#url-scheme-and-languages)):
 
 ```ts
 let siteNav = createSiteNav(getLang());

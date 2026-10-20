@@ -1,0 +1,81 @@
+/*
+ * Shared site footer: static HTML on every page (docs/PAGES.md#footer), styled the same in the
+ * app (imported by src/ui/app.ts) and on the content pages (imported by src/pages/site.css).
+ * Uses the design tokens of src/ui/styles.css (app) and src/pages/site.css (pages);
+ * --page-max is the page's content width.
+ */
+
+.site-footer {
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.site-footer-inner {
+  display: grid;
+  gap: 10px;
+  max-width: var(--page-max, 1120px);
+  margin: 0 auto;
+  padding: 24px 24px 40px;
+}
+
+.site-footer p {
+  max-width: 72ch;
+  margin: 0;
+}
+
+:lang(ko) .site-footer {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* 24 px tall targets (WCAG 2.5.8) without changing the line rhythm. */
+.footer-links a {
+  display: inline-block;
+  padding: 2px 0;
+  min-height: 24px;
+  color: var(--muted);
+}
+
+.footer-links a:hover,
+.footer-meta a:hover {
+  color: var(--fg);
+}
+
+.footer-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 14px;
+}
+
+.footer-meta a {
+  color: var(--muted);
+}
+
+.version-footer-num {
+  display: inline-block;
+  min-width: 5ch;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 560px) {
+  .site-footer-inner {
+    padding: 20px 16px 32px;
+  }
+}
+
+@media print {
+  .site-footer {
+    border: 0;
+  }
+}

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>파라미터 설명: 22개 모델 파라미터와 시나리오 설정 | T-Rex vs 호랑이 시뮬레이터</title>
+    <title>파라미터와 출처: 22개 능력치와 시나리오 설정 – 티렉스 대 호랑이</title>
     <meta
       name="description"
       content="티라노사우루스와 호랑이의 22개 모델 파라미터(체중, 속도, 무는 힘, 매달리기, 출혈, 사기 등)의 기본 범위, 허용 범위, 단위, 개체 변동 여부, 엔진에서의 역할과 문헌 근거, 그리고 마릿수·실행 횟수·시드 등 시나리오 설정을 정리했습니다."
@@ -20,12 +20,12 @@
     <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
     <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="T-Rex vs 호랑이 시뮬레이터" />
+    <meta property="og:site_name" content="티렉스 대 호랑이" />
     <meta property="og:locale" content="ko_KR" />
     <meta property="og:locale:alternate" content="en_US" />
     <meta
       property="og:title"
-      content="파라미터 설명: 22개 모델 파라미터와 시나리오 설정 | T-Rex vs 호랑이 시뮬레이터"
+      content="파라미터와 출처: 22개 능력치와 시나리오 설정 – 티렉스 대 호랑이"
     />
     <meta
       property="og:description"
@@ -35,7 +35,7 @@
     <meta name="twitter:card" content="summary" />
     <meta
       name="twitter:title"
-      content="파라미터 설명: 22개 모델 파라미터와 시나리오 설정 | T-Rex vs 호랑이 시뮬레이터"
+      content="파라미터와 출처: 22개 능력치와 시나리오 설정 – 티렉스 대 호랑이"
     />
     <meta
       name="twitter:description"
@@ -51,7 +51,7 @@
       <div class="site-header-inner">
         <a class="site-brand" href="/">
           <img src="/favicon.svg" alt="" width="32" height="32" />
-          <span>T-Rex vs 호랑이</span>
+          <span>티렉스 대 호랑이</span>
         </a>
         <nav class="site-nav" aria-label="사이트 메뉴">
           <ul class="site-nav-list">
@@ -1437,19 +1437,47 @@
     </main>
     <footer class="site-footer">
       <div class="site-footer-inner">
-        <p>
-          T. rex와 호랑이는 같은 시대에 산 적이 없고, 이 사이트의 모든 상호작용 규칙은 가정입니다.
-          결과는 교육용 모델이 가정에 따라 어떻게 반응하는지 보여 줄 뿐, 실제 싸움을 예측하지
-          않습니다.
+        <p class="footer-disclaimer" data-i18n="footer.disclaimer">
+          T. rex와 호랑이는 같은 시대에 산 적이 없고, 모든 상호작용 규칙은 가정입니다. 결과는
+          불확실한 입력에 따라 승패가 어떻게 달라지는지 보여 주는 교육용 모델일 뿐 실제 싸움의
+          예측이 아니며, 이 사이트는 실제 동물 싸움을 조장하거나 지지하지 않습니다.
         </p>
-        <ul class="footer-links">
-          <li><a href="/privacy/">개인정보처리방침</a></li>
-          <li><a href="/about/">소개 · 문의</a></li>
+        <ul class="footer-links" aria-label="사이트 정보와 링크" data-i18n-aria="footer.linksLabel">
+          <li><a href="/about/" data-footer="about">소개 · 문의</a></li>
+          <li><a href="/privacy/" data-footer="privacy">개인정보처리방침</a></li>
+          <li><a href="/license/" data-footer="license">라이선스</a></li>
           <li>
-            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+            <a
+              href="https://github.com/VinylStage/trex_vs_tiger_sim"
+              rel="noopener"
+              data-footer="source"
+              >소스 코드 (GitHub)</a
+            >
+          </li>
+          <li>
+            <a href="https://vinylims.com" rel="me noopener" data-footer="blog"
+              >블로그 (Vinyl’s Log)</a
+            >
+          </li>
+          <li>
+            <a href="https://link.vinylims.com" rel="me noopener" data-footer="linktree"
+              >Linktree</a
+            >
           </li>
         </ul>
-        <p>© 2026 VinylStage · MIT 라이선스 오픈 소스</p>
+        <p class="footer-meta">
+          <span data-i18n="footer.local">시뮬레이션은 모두 브라우저에서 실행됩니다.</span>
+          <span data-i18n="footer.copyright">© 2026 VinylStage · MIT 라이선스 오픈 소스</span>
+          <a
+            class="version-footer"
+            href="https://github.com/VinylStage/trex_vs_tiger_sim/releases"
+            rel="noopener"
+            title="릴리스 노트 보기"
+            data-i18n-title="version.footerTitle"
+            ><span data-i18n="version.footer">버전</span>
+            <span class="version-footer-num" data-app-version></span
+          ></a>
+        </p>
       </div>
     </footer>
   </body>

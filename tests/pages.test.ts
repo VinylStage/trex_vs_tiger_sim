@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -14,14 +14,16 @@ import { CONSTANTS, DT } from '../src/sim/engine';
 import { PARAMS } from '../src/sim/params';
 import {
   CONTENT_PAGES,
+  RELEASES_URL,
   SITE_ORIGIN,
   canonicalUrl,
   pagePath,
   parsePagePath,
   type ContentPage,
+  type PageId,
 } from '../src/pages/routes';
 import { DICTIONARIES, LANGS, type Lang, type MsgKey } from '../src/ui/i18n';
-import { siteNavItems } from '../src/ui/site-nav';
+import { footerItems, siteNavItems } from '../src/ui/site-nav';
 import { findHtmlEntries } from '../vite.pages';
 
 /*
@@ -44,6 +46,25 @@ const PAGES = LANGS.flatMap((lang) =>
     html: read(sourceOf(page, lang)),
   })),
 );
+
+/** The simulator's two static entries: `index.html` (ko, `/`) and `en/index.html` (en, `/en/`). */
+const appSourceOf = (lang: Lang): string => (lang === 'ko' ? 'index.html' : 'en/index.html');
+const APP_PAGES = LANGS.map((lang) => ({
+  page: 'simulator' as const,
+  lang,
+  file: appSourceOf(lang),
+  html: read(appSourceOf(lang)),
+}));
+
+/** Every page with the shared site shell (static footer, i18n-bound text). */
+const ALL_PAGES: readonly { page: PageId; lang: Lang; file: string; html: string }[] = [
+  ...APP_PAGES,
+  ...PAGES,
+];
+
+/** Search-result limits used in docs/SEO.md: titles up to 60 characters, descriptions ~160. */
+const MAX_TITLE = 60;
+const MAX_DESCRIPTION = 165;
 
 // ---------- tiny HTML helpers (the pages are well-formed, Prettier-formatted HTML) ----------
 
@@ -129,6 +150,7 @@ describe('every HTML page is CSP-safe', () => {
 
   it('includes the app and all content pages', () => {
     expect(files).toContain('index.html');
+    expect(files).toContain('en/index.html');
     for (const p of PAGES) expect(files).toContain(p.file);
   });
 
@@ -159,9 +181,10 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
   it('has a title, description, canonical URL and hreflang alternates', () => {
     const title = one(elements(html, 'title'), '<title>').inner.trim();
     expect(title.length).toBeGreaterThan(10);
+    expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
     const description = one(meta(html, 'name', 'description'), 'meta description');
     expect(description.length).toBeGreaterThanOrEqual(50);
-    expect(description.length).toBeLessThanOrEqual(320);
+    expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION);
 
     const links = tags(html, 'link');
     const canonical = one(
@@ -271,42 +294,309 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
   });
 
   it('only links to pages and anchors that exist', () => {
-    const own = new Set(ids(html));
-    for (const a of tags(html, 'a')) {
-      const href = a.attrs['href'] ?? '';
-      if (href.startsWith('#')) {
-        expect(own.has(href.slice(1)), `${href} on this page`).toBe(true);
-      } else if (href.startsWith('/')) {
-        const [pathAndQuery = '', frag] = href.split('#');
-        const [path = '', query] = pathAndQuery.split('?');
-        const target = parsePagePath(path);
-        expect(target, href).not.toBeNull();
-        if (!target || target.page === 'simulator') {
-          expect(path, href).toBe('/');
-          expect(frag, href).toBeUndefined();
-          if (query !== undefined) expect(query, `${href}: only the tour deep link`).toBe('tour=1');
-          continue;
-        }
-        expect(query, `${href}: content pages take no query`).toBeUndefined();
-        expect(path, `${href}: canonical form`).toBe(pagePath(target.page, target.lang ?? 'ko'));
-        const expected = 'data-lang-switch' in a.attrs ? other(lang) : lang;
-        expect(target.lang, `${href}: link language`).toBe(expected);
-        if (frag !== undefined) {
-          expect(ids(read(sourceOf(target.page, lang))), href).toContain(frag);
-        }
-      } else {
-        expect(href, 'external links use https').toMatch(/^https:\/\//);
+    checkLinks(html, lang);
+  });
+});
+
+/**
+ * Every link of a page in `lang` goes to an existing page in the same language (the language
+ * switch to the other one), in canonical form, to an existing `#anchor`, or to an https URL.
+ */
+function checkLinks(html: string, lang: Lang): void {
+  const own = new Set(ids(html));
+  for (const a of tags(html, 'a')) {
+    const href = a.attrs['href'] ?? '';
+    if (href.startsWith('#')) {
+      expect(own.has(href.slice(1)), `${href} on this page`).toBe(true);
+    } else if (href.startsWith('/')) {
+      const [pathAndQuery = '', frag] = href.split('#');
+      const [path = '', query] = pathAndQuery.split('?');
+      const target = parsePagePath(path);
+      expect(target, href).not.toBeNull();
+      if (!target) continue;
+      const expected = 'data-lang-switch' in a.attrs ? other(lang) : lang;
+      expect(target.lang, `${href}: link language`).toBe(expected);
+      expect(path, `${href}: canonical form`).toBe(pagePath(target.page, target.lang));
+      if (target.page === 'simulator') {
+        expect(frag, href).toBeUndefined();
+        if (query !== undefined) expect(query, `${href}: only the tour deep link`).toBe('tour=1');
+        continue;
       }
+      expect(query, `${href}: content pages take no query`).toBeUndefined();
+      if (frag !== undefined) {
+        expect(ids(read(sourceOf(target.page, lang))), href).toContain(frag);
+      }
+    } else {
+      expect(href, 'external links use https').toMatch(/^https:\/\//);
+    }
+  }
+}
+
+describe('all pages as a set', () => {
+  it('have unique titles and descriptions, the simulator included', () => {
+    const titles = ALL_PAGES.map((p) => one(elements(p.html, 'title'), 'title').inner.trim());
+    const descriptions = ALL_PAGES.map((p) =>
+      one(meta(p.html, 'name', 'description'), 'description'),
+    );
+    expect(new Set(titles).size).toBe(ALL_PAGES.length);
+    expect(new Set(descriptions).size).toBe(ALL_PAGES.length);
+  });
+});
+
+// ---------- the simulator's static entries (/ and /en/) ----------
+
+describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
+  const d = DICTIONARIES[lang];
+
+  it('declares its language statically', () => {
+    expect(one(tags(html, 'html'), '<html>').attrs['lang']).toBe(lang);
+  });
+
+  it('has the static title the app sets as document.title', () => {
+    const title = decode(one(elements(html, 'title'), '<title>').inner.trim());
+    expect(title).toBe(d['app.documentTitle']);
+    expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
+    expect(one(meta(html, 'property', 'og:title'), 'og:title')).toBe(title);
+    expect(one(meta(html, 'name', 'twitter:title'), 'twitter:title')).toBe(title);
+  });
+
+  it('has a description, canonical URL, hreflang alternates and Open Graph tags', () => {
+    const description = one(meta(html, 'name', 'description'), 'description');
+    expect(description.length).toBeGreaterThanOrEqual(50);
+    expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION);
+    expect(one(meta(html, 'property', 'og:description'), 'og:description')).toBe(description);
+    const links = tags(html, 'link');
+    const canonical = one(
+      links.filter((l) => l.attrs['rel'] === 'canonical'),
+      'canonical',
+    );
+    expect(canonical.attrs['href']).toBe(canonicalUrl('simulator', lang));
+    const alternates = Object.fromEntries(
+      links
+        .filter((l) => l.attrs['rel'] === 'alternate')
+        .map((l) => [l.attrs['hreflang'], l.attrs['href']]),
+    );
+    expect(alternates).toEqual({
+      ko: canonicalUrl('simulator', 'ko'),
+      en: canonicalUrl('simulator', 'en'),
+      'x-default': canonicalUrl('simulator', 'ko'),
+    });
+    expect(one(meta(html, 'property', 'og:url'), 'og:url')).toBe(canonicalUrl('simulator', lang));
+    expect(one(meta(html, 'property', 'og:locale'), 'og:locale')).toBe(
+      lang === 'ko' ? 'ko_KR' : 'en_US',
+    );
+  });
+
+  it('loads the app script and keeps #app empty for it', () => {
+    const script = one(tags(html, 'script'), '<script>');
+    expect(script.attrs).toMatchObject({ type: 'module', src: '/src/main.ts' });
+    const app = one(
+      elements(html, 'div').filter((x) => x.attrs['id'] === 'app'),
+      '#app',
+    );
+    expect(app.inner.trim()).toBe('');
+  });
+
+  it('puts the intro, the FAQ and the footer after #app, outside it', () => {
+    const at = (needle: string): number => {
+      const i = html.indexOf(needle);
+      expect(i, needle).toBeGreaterThan(0);
+      return i;
+    };
+    const app = at('<div id="app"></div>');
+    const intro = at('id="intro"');
+    const faq = at('id="faq"');
+    const footer = at('<footer class="site-footer"');
+    expect(app).toBeLessThan(intro);
+    expect(intro).toBeLessThan(faq);
+    expect(faq).toBeLessThan(footer);
+    expect(tags(html, 'footer')).toHaveLength(1);
+    const all = ids(html);
+    expect(new Set(all).size, 'duplicate ids').toBe(all.length);
+  });
+
+  it('answers what, how and what you learn, links the docs and the tour, and has a short FAQ', () => {
+    const keys = tags(html)
+      .map((t) => t.attrs['data-i18n'])
+      .filter((k): k is string => k !== undefined);
+    for (const k of [
+      'intro.title',
+      'intro.lead',
+      'intro.howTitle',
+      'intro.learnTitle',
+      'faq.title',
+    ]) {
+      expect(keys).toContain(k);
+    }
+    expect(keys.filter((k) => /^intro\.how\d$/.test(k)).length).toBeGreaterThanOrEqual(3);
+    expect(keys.filter((k) => /^intro\.how\d$/.test(k)).length).toBeLessThanOrEqual(4);
+    const questions = keys.filter((k) => /^faq\.q\d$/.test(k));
+    expect(questions.length).toBeGreaterThanOrEqual(3);
+    expect(questions.length).toBeLessThanOrEqual(5);
+    expect(keys.filter((k) => /^faq\.a\d$/.test(k))).toHaveLength(questions.length);
+
+    const intro = tags(html, 'a').filter((a) => a.attrs['data-page'] !== undefined);
+    expect(intro.map((a) => [a.attrs['data-page'], a.attrs['href']])).toEqual([
+      ['guide', pagePath('guide', lang)],
+      ['model', `${pagePath('model', lang)}#results`],
+      ['parameters', pagePath('parameters', lang)],
+      ['simulator', `${pagePath('simulator', lang)}?tour=1`],
+    ]);
+    for (const a of intro) {
+      const suffix = a.attrs['data-href-suffix'] ?? '';
+      expect(a.attrs['href'], 'href = page path + data-href-suffix').toBe(
+        `${pagePath(a.attrs['data-page'] as PageId, lang)}${suffix}`,
+      );
+    }
+    expect(intro.filter((a) => 'data-tour-start' in a.attrs)).toHaveLength(1);
+    checkLinks(html, lang);
+  });
+
+  it('states only facts the code pins (the number of parameters)', () => {
+    expect(d['intro.how1']).toContain(String(PARAMS.length));
+  });
+});
+
+// ---------- shared shell on every page: i18n-bound text, footer, brand ----------
+
+/** Text of every element bound to a message key, with the binding attribute. */
+function boundTexts(
+  html: string,
+): { key: string; kind: 'text' | 'aria' | 'title'; text: string }[] {
+  const out: { key: string; kind: 'text' | 'aria' | 'title'; text: string }[] = [];
+  for (const t of tags(html)) {
+    const text = t.attrs['data-i18n'];
+    if (text !== undefined) {
+      const close = html.indexOf(`</${t.name}`, t.end);
+      out.push({ key: text, kind: 'text', text: textOf(html.slice(t.end, close)) });
+    }
+    const aria = t.attrs['data-i18n-aria'];
+    if (aria !== undefined)
+      out.push({ key: aria, kind: 'aria', text: t.attrs['aria-label'] ?? '' });
+    const title = t.attrs['data-i18n-title'];
+    if (title !== undefined) out.push({ key: title, kind: 'title', text: t.attrs['title'] ?? '' });
+  }
+  return out;
+}
+
+const norm = (s: string): string => s.replace(/\s+/g, ' ').trim();
+
+describe.each(ALL_PAGES)('$file shell', ({ page, lang, html }) => {
+  const d: Readonly<Record<string, string>> = DICTIONARIES[lang];
+
+  it('repeats the dictionary text exactly wherever text is bound to a message key', () => {
+    const bound = boundTexts(html);
+    expect(bound.length).toBeGreaterThan(5);
+    for (const b of bound) {
+      expect(Object.hasOwn(d, b.key), `unknown key ${b.key}`).toBe(true);
+      expect(b.text, `${b.kind} ${b.key}`).toBe(norm(d[b.key] ?? ''));
+    }
+  });
+
+  it('has the shared footer: disclaimer, links, version and notes', () => {
+    const footer = one(elements(html, 'footer'), '<footer>');
+    expect(one(tags(html, 'footer'), 'footer').attrs['class']).toBe('site-footer');
+    const list = one(
+      elements(footer.inner, 'ul').filter((u) => u.attrs['class'] === 'footer-links'),
+      'ul.footer-links',
+    );
+    const links = elements(list.inner, 'a').map((a) => ({
+      id: a.attrs['data-footer'],
+      href: a.attrs['href'],
+      label: textOf(a.inner),
+      rel: a.attrs['rel'] ?? null,
+    }));
+    expect(links).toEqual(
+      footerItems(lang).map(({ id, href, label, rel }) => ({ id, href, label, rel })),
+    );
+    const keys = boundTexts(footer.inner).map((b) => b.key);
+    for (const k of ['footer.disclaimer', 'footer.local', 'footer.copyright', 'version.footer']) {
+      expect(keys).toContain(k);
+    }
+    const version = one(
+      tags(footer.inner, 'a').filter((a) => a.attrs['class'] === 'version-footer'),
+      'a.version-footer',
+    );
+    expect(version.attrs['href']).toBe(RELEASES_URL);
+    expect(tags(footer.inner, 'span').filter((x) => 'data-app-version' in x.attrs)).toHaveLength(1);
+    expect(textOf(footer.inner)).not.toMatch(/추적 없음|no tracking/i);
+  });
+
+  it('names the site consistently', () => {
+    expect(one(meta(html, 'property', 'og:site_name'), 'og:site_name')).toBe(d['app.shortTitle']);
+    if (page !== 'simulator') {
+      const brand = one(
+        elements(html, 'a').filter((a) => a.attrs['class'] === 'site-brand'),
+        'brand',
+      );
+      expect(brand.attrs['href']).toBe(pagePath('simulator', lang));
+      expect(textOf(brand.inner)).toBe(d['app.shortTitle']);
     }
   });
 });
 
-describe('content pages as a set', () => {
-  it('have unique titles and descriptions', () => {
-    const titles = PAGES.map((p) => one(elements(p.html, 'title'), 'title').inner.trim());
-    const descriptions = PAGES.map((p) => one(meta(p.html, 'name', 'description'), 'description'));
-    expect(new Set(titles).size).toBe(PAGES.length);
-    expect(new Set(descriptions).size).toBe(PAGES.length);
+// ---------- license pages ----------
+
+describe.each(LANGS)('license page (%s)', (lang) => {
+  const html = read(sourceOf('license', lang));
+  // The HTML parser drops one newline right after <pre> (Prettier puts the text on its own line).
+  const pre = (id: string): string =>
+    decode(
+      one(
+        elements(html, 'pre').filter((p) => p.attrs['id'] === id),
+        id,
+      ).inner.replace(/^\n/, ''),
+    );
+  const file = (rel: string): string => read(rel).replace(/\r\n/g, '\n').trimEnd();
+
+  it('quotes the MIT License exactly as in LICENSE', () => {
+    expect(pre('mit-text')).toBe(file('LICENSE'));
+  });
+
+  it('quotes the Pretendard license exactly as shipped with the font', () => {
+    expect(pre('ofl-text')).toBe(file('src/assets/fonts/pretendard/LICENSE.txt'));
+    expect(textOf(html)).toContain('SIL Open Font License');
+    expect(textOf(html)).toContain(
+      "Copyright (c) 2021, Kil Hyung-jin, with Reserved Font Name 'Pretendard'.",
+    );
+  });
+
+  it('ships no runtime dependency that would need a notice', () => {
+    const pkg = JSON.parse(read('package.json')) as Record<string, unknown>;
+    expect(pkg['dependencies'] ?? {}).toEqual({});
+  });
+});
+
+// ---------- privacy pages: every stored key is disclosed ----------
+
+/** Every `'trexsim.*'` string literal in src/: the site's localStorage/sessionStorage keys. */
+function storageKeys(): string[] {
+  const keys = new Set<string>();
+  const walk = (dir: string): void => {
+    for (const e of readdirSync(join(ROOT, dir), { withFileTypes: true })) {
+      const rel = `${dir}/${e.name}`;
+      if (e.isDirectory()) walk(rel);
+      else if (/\.ts$/.test(e.name)) {
+        for (const m of read(rel).matchAll(/['"`](trexsim\.[\w.-]+)['"`]/g)) keys.add(m[1] ?? '');
+      }
+    }
+  };
+  walk('src');
+  return [...keys].sort();
+}
+
+describe('privacy pages list the real storage keys', () => {
+  const keys = storageKeys();
+
+  it('finds the storage keys in the code', () => {
+    expect(keys).toEqual(['trexsim.tour']);
+  });
+
+  it.each(LANGS)('%s: names every key and no other', (lang) => {
+    const html = read(sourceOf('privacy', lang));
+    for (const k of keys) expect(html, k).toContain(`<code>${k}</code>`);
+    const named = [...html.matchAll(/<code>(trexsim\.[\w.-]+)<\/code>/g)].map((m) => m[1]);
+    expect([...new Set(named)].sort()).toEqual(keys);
   });
 });
 
@@ -543,7 +833,7 @@ function headersFor(src: string, path: string): Record<string, string[]> {
 
 describe('public/_headers', () => {
   const src = read('public/_headers');
-  const htmlPaths = ['/', ...PAGES.map((p) => pagePath(p.page, p.lang))];
+  const htmlPaths = ALL_PAGES.map((p) => pagePath(p.page, p.lang));
 
   it.each(htmlPaths)('%s gets the CSP and exactly one no-cache, no-transform', (path) => {
     const h = headersFor(src, path);
@@ -583,9 +873,9 @@ describe('robots.txt and sitemap.xml', () => {
       ),
     }));
     expect(urls.map((u) => u.loc).sort()).toEqual(
-      [`${SITE_ORIGIN}/`, ...PAGES.map((p) => canonicalUrl(p.page, p.lang))].sort(),
+      ALL_PAGES.map((p) => canonicalUrl(p.page, p.lang)).sort(),
     );
-    for (const p of PAGES) {
+    for (const p of ALL_PAGES) {
       const entry = urls.find((u) => u.loc === canonicalUrl(p.page, p.lang));
       expect(entry?.alternates).toEqual({
         ko: canonicalUrl(p.page, 'ko'),

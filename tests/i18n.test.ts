@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PARAM_IDS } from '../src/sim/params';
-import { DICTIONARIES, LANGS, getLang, interpolate, setLang, t } from '../src/ui/i18n';
+import {
+  DICTIONARIES,
+  LANGS,
+  getLang,
+  initLang,
+  interpolate,
+  onLangChange,
+  setLang,
+  t,
+} from '../src/ui/i18n';
 
 const placeholders = (s: string): string[] =>
   [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1] ?? '').sort();
@@ -51,5 +60,41 @@ describe('t / interpolate', () => {
     expect(t('progress.text', { done: 1, total: 2, pct: '50%' })).toBe('1 / 2 runs (50%)');
     setLang('ko');
     expect(getLang()).toBe('ko');
+  });
+});
+
+describe('language state', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    initLang('ko');
+  });
+
+  it('starts in the language it is given (the URL’s), Korean by default', () => {
+    expect(initLang('en')).toBe('en');
+    expect(getLang()).toBe('en');
+    expect(initLang()).toBe('ko');
+  });
+
+  it('never reads or writes localStorage', () => {
+    const touched: string[] = [];
+    const spy = new Proxy(
+      {},
+      {
+        get(_, prop) {
+          touched.push(String(prop));
+          return () => null;
+        },
+      },
+    );
+    vi.stubGlobal('localStorage', spy);
+    initLang('ko');
+    const seen: string[] = [];
+    const off = onLangChange((l) => seen.push(l));
+    setLang('en');
+    setLang('en');
+    setLang('ko');
+    off();
+    expect(seen).toEqual(['en', 'ko']);
+    expect(touched).toEqual([]);
   });
 });

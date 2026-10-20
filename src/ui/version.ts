@@ -1,5 +1,6 @@
 import { h, uniqueId } from './dom';
-import { locale, onLangChange, t, type MsgKey } from './i18n';
+import { pagePath } from '../pages/routes';
+import { getLang, locale, onLangChange, t, type MsgKey } from './i18n';
 import { clearSiteData } from './site-data';
 import {
   POLL_INTERVAL_MS,
@@ -483,7 +484,9 @@ export function createVersionBadge(): HTMLButtonElement {
     resetting = true;
     render();
     await clearSiteData();
-    location.replace(resetUrl(CURRENT_BUILD.version, location.hash));
+    location.replace(
+      resetUrl(CURRENT_BUILD.version, location.hash, pagePath('simulator', getLang())),
+    );
   }
 
   document.addEventListener('visibilitychange', () => {
@@ -511,16 +514,13 @@ export function createVersionBadge(): HTMLButtonElement {
   return badge;
 }
 
-/** Footer line with the running version, linking to the release notes. */
-export function createVersionFooter(): HTMLAnchorElement {
-  return h(
-    'a',
-    {
-      class: 'version-footer',
-      i18nTitle: 'version.footerTitle',
-      attrs: { href: RELEASES_URL, rel: 'noopener', target: '_blank' },
-    },
-    h('span', { i18n: 'version.footer' }),
-    ` ${versionLabel(CURRENT_BUILD)}`,
-  );
+/**
+ * Fill the version slot of the static footer (`[data-app-version]` inside `a.version-footer`,
+ * see docs/VERSIONING.md) with the running version and build. The link to the release notes and
+ * its label are in the static HTML of every page.
+ */
+export function fillVersionFooter(root: ParentNode): void {
+  for (const el of root.querySelectorAll<HTMLElement>('[data-app-version]')) {
+    el.textContent = versionLabel(CURRENT_BUILD);
+  }
 }

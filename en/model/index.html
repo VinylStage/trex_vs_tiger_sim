@@ -3,12 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      How the model works: a Monte Carlo agent-based battle model | T-Rex vs Tiger Simulator
-    </title>
+    <title>Model explained (Monte Carlo, agent-based) – T-Rex vs Tiger</title>
     <meta
       name="description"
-      content="A plain-language explanation of the T-Rex vs tiger simulation model: triangular distributions and Latin hypercube sampling, individual variation, bite, latch, bleeding and morale rules, outcomes, Wilson intervals, Spearman sensitivity, reproducibility and limitations."
+      content="Plain-language model explanation: Latin hypercube sampling, individual variation, bite, latch, bleeding and morale rules, Wilson intervals and limitations."
     />
     <link rel="canonical" href="https://trex-vs-tiger.vinylims.com/en/model/" />
     <link rel="alternate" hreflang="ko" href="https://trex-vs-tiger.vinylims.com/model/" />
@@ -18,26 +16,26 @@
     <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
     <meta property="og:type" content="article" />
-    <meta property="og:site_name" content="T-Rex vs Tiger Simulator" />
+    <meta property="og:site_name" content="T-Rex vs Tiger" />
     <meta property="og:locale" content="en_US" />
     <meta property="og:locale:alternate" content="ko_KR" />
     <meta
       property="og:title"
-      content="How the model works: a Monte Carlo agent-based battle model | T-Rex vs Tiger Simulator"
+      content="Model explained (Monte Carlo, agent-based) – T-Rex vs Tiger"
     />
     <meta
       property="og:description"
-      content="A plain-language explanation of the T-Rex vs tiger simulation model: triangular distributions and Latin hypercube sampling, individual variation, bite, latch, bleeding and morale rules, outcomes, Wilson intervals, Spearman sensitivity, reproducibility and limitations."
+      content="Plain-language model explanation: Latin hypercube sampling, individual variation, bite, latch, bleeding and morale rules, Wilson intervals and limitations."
     />
     <meta property="og:url" content="https://trex-vs-tiger.vinylims.com/en/model/" />
     <meta name="twitter:card" content="summary" />
     <meta
       name="twitter:title"
-      content="How the model works: a Monte Carlo agent-based battle model | T-Rex vs Tiger Simulator"
+      content="Model explained (Monte Carlo, agent-based) – T-Rex vs Tiger"
     />
     <meta
       name="twitter:description"
-      content="A plain-language explanation of the T-Rex vs tiger simulation model: triangular distributions and Latin hypercube sampling, individual variation, bite, latch, bleeding and morale rules, outcomes, Wilson intervals, Spearman sensitivity, reproducibility and limitations."
+      content="Plain-language model explanation: Latin hypercube sampling, individual variation, bite, latch, bleeding and morale rules, Wilson intervals and limitations."
     />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/src/pages/site.css" />
@@ -47,13 +45,13 @@
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="site-header-inner">
-        <a class="site-brand" href="/">
+        <a class="site-brand" href="/en/">
           <img src="/favicon.svg" alt="" width="32" height="32" />
-          <span>T-Rex vs Tigers</span>
+          <span>T-Rex vs Tiger</span>
         </a>
         <nav class="site-nav" aria-label="Site">
           <ul class="site-nav-list">
-            <li><a class="site-nav-link" href="/" data-page="simulator">Simulator</a></li>
+            <li><a class="site-nav-link" href="/en/" data-page="simulator">Simulator</a></li>
             <li><a class="site-nav-link" href="/en/guide/" data-page="guide">Guide</a></li>
             <li><a class="site-nav-link" href="/en/model/" data-page="model">Model</a></li>
             <li>
@@ -940,26 +938,60 @@
               <strong>Change the assumptions yourself.</strong> Every range is editable in the
               simulator.
             </p>
-            <a class="button" href="/">Open the simulator</a>
+            <a class="button" href="/en/">Open the simulator</a>
           </aside>
         </div>
       </article>
     </main>
     <footer class="site-footer">
       <div class="site-footer-inner">
-        <p>
-          T. rex and tigers never lived at the same time, and every interaction rule on this site is
-          an assumption. The results show how an educational model responds to its assumptions; they
-          do not predict a real fight.
+        <p class="footer-disclaimer" data-i18n="footer.disclaimer">
+          T. rex and tigers never coexisted, and every interaction rule is an assumption. This
+          educational model shows how the outcome depends on uncertain inputs; it does not predict a
+          real fight, and this site does not promote or endorse real animal fighting.
         </p>
-        <ul class="footer-links">
-          <li><a href="/en/privacy/">Privacy</a></li>
-          <li><a href="/en/about/">About & contact</a></li>
+        <ul
+          class="footer-links"
+          aria-label="Site information and links"
+          data-i18n-aria="footer.linksLabel"
+        >
+          <li><a href="/en/about/" data-footer="about">About &amp; contact</a></li>
+          <li><a href="/en/privacy/" data-footer="privacy">Privacy</a></li>
+          <li><a href="/en/license/" data-footer="license">License</a></li>
           <li>
-            <a href="https://github.com/VinylStage/trex_vs_tiger_sim" rel="noopener">GitHub</a>
+            <a
+              href="https://github.com/VinylStage/trex_vs_tiger_sim"
+              rel="noopener"
+              data-footer="source"
+              >Source code (GitHub)</a
+            >
+          </li>
+          <li>
+            <a href="https://vinylims.com" rel="me noopener" data-footer="blog"
+              >Blog (Vinyl’s Log)</a
+            >
+          </li>
+          <li>
+            <a href="https://link.vinylims.com" rel="me noopener" data-footer="linktree"
+              >Linktree</a
+            >
           </li>
         </ul>
-        <p>© 2026 VinylStage · Open source under the MIT License</p>
+        <p class="footer-meta">
+          <span data-i18n="footer.local">Simulations run in your browser.</span>
+          <span data-i18n="footer.copyright"
+            >© 2026 VinylStage · Open source under the MIT License</span
+          >
+          <a
+            class="version-footer"
+            href="https://github.com/VinylStage/trex_vs_tiger_sim/releases"
+            rel="noopener"
+            title="View release notes"
+            data-i18n-title="version.footerTitle"
+            ><span data-i18n="version.footer">Version</span>
+            <span class="version-footer-num" data-app-version></span
+          ></a>
+        </p>
       </div>
     </footer>
   </body>

@@ -5,6 +5,7 @@
  */
 
 @import '../ui/site-nav.css';
+@import '../ui/site-footer.css';
 
 :root {
   color-scheme: light;
@@ -622,44 +623,23 @@ tbody tr:last-child > * {
   color: var(--accent-fill-fg);
 }
 
-/* ---------- footer ---------- */
+/* ---------- license texts ---------- */
 
-.site-footer {
-  border-top: 1px solid var(--border);
-  color: var(--muted);
-  font-size: 0.85rem;
-  line-height: 1.6;
+/* Verbatim license files: keep line breaks, wrap long lines so the page never scrolls sideways. */
+.license-text {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
-.site-footer-inner {
-  display: grid;
-  gap: 10px;
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 24px 24px 40px;
-}
-
-.site-footer p {
-  max-width: 72ch;
-  margin: 0;
-}
-
-.footer-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 18px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.footer-links a {
-  color: var(--muted);
-}
-
-.footer-links a:hover {
-  color: var(--fg);
-}
+/* Footer: src/ui/site-footer.css. */
 
 @media (max-width: 560px) {
   body {
@@ -672,10 +652,6 @@ tbody tr:last-child > * {
 
   .site-main {
     padding: 24px 16px 40px;
-  }
-
-  .site-footer-inner {
-    padding: 20px 16px 32px;
   }
 
   .param,
@@ -709,8 +685,7 @@ tbody tr:last-child > * {
     display: none;
   }
 
-  .site-header,
-  .site-footer {
+  .site-header {
     border: 0;
   }
 

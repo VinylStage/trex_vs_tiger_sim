@@ -29,7 +29,8 @@
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Header button       | **튜토리얼** / **Tutorial**, next to the language switch. Always available.                                                                                   |
 | First-visit offer   | A small banner under the header with **Start the tour** and **No thanks**. Shown only until the visitor decides; see [below](#first-visit-offer-and-storage). |
-| Deep link `?tour=1` | Opens the tour right after the page loads; see [Deep link](#deep-link).                                                                                       |
+| Deep link `?tour=1` | Opens the tour right after the page loads (`/?tour=1`, `/en/?tour=1`); see [Deep link](#deep-link).                                                           |
+| Intro link          | **1분 튜토리얼 시작** in the static intro under the simulator; starts the tour in place.                                                                      |
 
 ## Steps
 
@@ -139,7 +140,8 @@ Append **`?tour=1`** to the page URL, for example `https://trex-vs-tiger.vinylim
 
 - The query parameter is used instead of a hash parameter because the URL fragment already carries the shared scenario (`#s=…`, see [ADR-0003](adr/0003-no-backend-url-sharing.md)). Both can be combined: `/?tour=1#s=…`.
 - On load the parameter is removed with `history.replaceState`, so reloading or copying the link afterwards does not restart the tour. Other query parameters and the fragment are kept.
-- The guide pages (`/guide/`, `/en/guide/`) can link to `/?tour=1`. The tour uses the language stored by the language switch (Korean by default).
+- The Korean guide links to `/?tour=1`, the English guide to `/en/?tour=1`. The tour runs in the language of the URL (`/` Korean, `/en/` English); nothing about the language is stored.
+- The static intro under the simulator (`index.html`, `en/index.html`) has a **1분 튜토리얼 시작 / Take the one-minute tour** link (`a[data-tour-start]`, `href` = the deep link). With JavaScript the app intercepts a plain click and starts the tour in place, without reloading; modified clicks (new tab) and no-JS visits follow the deep link.
 
 ## CSP notes
 

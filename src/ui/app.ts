@@ -27,13 +27,12 @@ import {
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
 import { configFromHash, hashFromConfig } from './share';
-import { createSiteNav } from './site-nav';
+import { pageLang, switchedAppUrl } from '../pages/routes';
+import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
+import './site-footer.css';
 import { createTour } from './tour';
 import { DEMO_RUNS, tourRequested, withoutTourParam } from './tour-model';
-import { createVersionBadge, createVersionFooter } from './version';
-
-export const REPO_URL = 'https://github.com/VinylStage/trex_vs_tiger_sim';
-export const MODEL_DOC_URL = `${REPO_URL}/blob/main/docs/MODEL.md`;
+import { createVersionBadge, fillVersionFooter } from './version';
 
 interface RunResult {
   config: ScenarioConfig;
@@ -67,8 +66,10 @@ function outcomeKey(o: number): MsgKey {
 }
 
 export function startApp(root: HTMLElement): void {
-  initLang();
-  document.title = t('app.title');
+  // The language comes from the URL (`/` Korean, `/en/` English) and its static `<html lang>`.
+  initLang(pageLang(location.pathname, document.documentElement.lang));
+  // Same text as the static <title> of this language's page (tests/pages.test.ts).
+  document.title = t('app.documentTitle');
   const pool = new SimPool();
   let config: ScenarioConfig = configFromHash(location.hash) ?? defaultConfig();
   let result: RunResult | null = null;
@@ -128,7 +129,7 @@ export function startApp(root: HTMLElement): void {
       { class: 'brand' },
       h('img', {
         class: 'logo',
-        attrs: { src: 'favicon.svg', alt: '', width: '40', height: '40' },
+        attrs: { src: '/favicon.svg', alt: '', width: '40', height: '40' },
       }),
       h(
         'div',
@@ -293,36 +294,12 @@ export function startApp(root: HTMLElement): void {
   );
 
   // ---------- footer ----------
-  const footer = h(
-    'footer',
-    { class: 'app-footer' },
-    h('p', { class: 'disclaimer', i18n: 'footer.disclaimer' }),
-    h(
-      'p',
-      { class: 'footer-links' },
-      h('a', {
-        attrs: { href: MODEL_DOC_URL, rel: 'noopener', target: '_blank' },
-        i18n: 'footer.model',
-      }),
-      h('span', { attrs: { 'aria-hidden': 'true' }, text: ' · ' }),
-      h('a', {
-        attrs: { href: REPO_URL, rel: 'noopener', target: '_blank' },
-        i18n: 'footer.source',
-      }),
-      h('span', { attrs: { 'aria-hidden': 'true' }, text: ' · ' }),
-      h('span', { i18n: 'footer.privacy' }),
-      h('span', { attrs: { 'aria-hidden': 'true' }, text: ' · ' }),
-      createVersionFooter(),
-    ),
-  );
+  // The footer is static HTML outside #app (index.html, en/index.html): links, disclaimer and a
+  // version slot. The app fills the version and re-localises it when the language changes.
+  fillVersionFooter(document);
 
   clear(root);
-  root.append(
-    header,
-    h('main', { class: 'layout', id: 'main' }, configPanel, resultsPanel),
-    footer,
-    toast,
-  );
+  root.append(header, h('main', { class: 'layout', id: 'main' }, configPanel, resultsPanel), toast);
 
   // ---------- behaviour ----------
   function writeUrl(): void {
@@ -605,12 +582,18 @@ export function startApp(root: HTMLElement): void {
     renderReplayInfo();
   }
 
+  // In-place language switch: results, replay and form state stay; the URL moves to the other
+  // language's app path (`/` ↔ `/en/`) with the query and `#s=` fragment kept.
   onLangChange((lang) => {
     const nextNav = createSiteNav(lang);
     siteNav.replaceWith(nextNav);
     siteNav = nextNav;
-    document.title = t('app.title');
+    document.title = t('app.documentTitle');
     langBtn.lang = otherLang();
+    history.replaceState(history.state, '', switchedAppUrl(lang, location.search, location.hash));
+    const footerLinks = document.querySelector<HTMLElement>('.site-footer .footer-links');
+    if (footerLinks) renderFooterLinks(footerLinks, lang);
+    relocalizeLinks(document, lang);
     applyI18n(document.body);
     form.refresh();
     renderStatus();
@@ -641,6 +624,15 @@ export function startApp(root: HTMLElement): void {
     },
   });
   tourBtn.addEventListener('click', () => tour.start());
+  // Static tour links (`a[data-tour-start]`, e.g. in the intro) start the tour in place instead of
+  // reloading the page through `?tour=1`.
+  document.addEventListener('click', (e) => {
+    const a = e.target instanceof Element ? e.target.closest('a[data-tour-start]') : null;
+    if (!a || !(e instanceof MouseEvent) || e.button !== 0) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    tour.start();
+  });
 
   // Canvas text does not reflow when a web font arrives; redraw once Pretendard is ready.
   void document.fonts?.ready.then(() => {
