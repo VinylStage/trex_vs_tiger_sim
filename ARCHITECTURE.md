@@ -56,6 +56,14 @@ flowchart LR
         replay@{ shape: rect, label: "replay.ts<br/>battle replay" }
         pool@{ shape: rect, label: "pool.ts<br/>worker pool" }
         helpers@{ shape: rect, label: "chunks.ts · cost.ts<br/>dom.ts · format.ts" }
+        nav@{ shape: rect, label: "site-nav.ts<br/>header nav" }
+        tour@{ shape: rect, label: "tour.ts · tour-model.ts<br/>guided tour" }
+        version@{ shape: rect, label: "version.ts · version-model.ts<br/>badge, update check" }
+        sitedata@{ shape: rect, label: "site-data.ts<br/>cache / storage reset" }
+    end
+    subgraph PAGES["src/pages (static content pages)"]
+        site@{ shape: rect, label: "site.ts · site.css<br/>progressive enhancement" }
+        routes@{ shape: doc, label: "routes.ts<br/>page registry" }
     end
     subgraph W["src/workers"]
         worker@{ shape: hex, label: "sim.worker.ts" }
@@ -72,6 +80,9 @@ flowchart LR
         stats@{ shape: rect, label: "stats.ts<br/>Wilson, Spearman" }
     end
     app --> form & charts & replay & pool & share & i18n
+    app --> nav & tour & version
+    version --> sitedata
+    nav & site --> routes
     share --> config
     form --> config & params
     pool e1@--> worker
@@ -86,6 +97,18 @@ flowchart LR
 ```
 
 Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run inside workers.
+
+### Entry points (multi-page build)
+
+`vite.pages.ts` `findHtmlEntries()` turns every `index.html` in the repository into a build input, so a new page needs no config change ([docs/PAGES.md](docs/PAGES.md)).
+
+| Entry                                       | Script                          | Purpose                                                                                                               |
+| ------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `index.html`                                | `src/main.ts` → `src/ui/app.ts` | The simulator (with header nav, guided tour and version badge)                                                        |
+| `<page>/index.html`, `en/<page>/index.html` | `src/pages/site.ts`             | Static, crawlable guide, model, parameters, about and privacy pages in Korean and English ([PAGES.md](docs/PAGES.md)) |
+| `reset/index.html`                          | `src/reset.ts`                  | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                 |
+
+The build also emits `version.json` (version, commit SHA, build time), which open tabs poll to detect a newer deployment ([VERSIONING.md](docs/VERSIONING.md)). The guided tour is documented in [TUTORIAL.md](docs/TUTORIAL.md).
 
 ## 3. Run sequence
 
@@ -185,7 +208,8 @@ flowchart LR
 
 ## 6. Security
 
-- Static site; no secrets, cookies, storage of user data or third-party requests.
-- CSP in `public/_headers`: `default-src 'self'`, no inline scripts, `worker-src 'self'`, `frame-ancestors 'none'`.
+- Static site; no secrets, no cookies of its own and no third-party requests. `localStorage` holds only UI preferences (language, tour seen flag); the version check fetches the same-origin `/version.json`.
+- CSP in `public/_headers`: `default-src 'self'`, no inline scripts, `worker-src 'self'`, `frame-ancestors 'none'`. HTML responses carry `Cache-Control: no-cache, no-transform` so Cloudflare Bot Fight Mode does not inject an inline script (this also disables Cloudflare's compression of HTML; see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+- The reset page uses `Clear-Site-Data: "cache", "storage"` but never `"cookies"`, which would clear cookies for every `*.vinylims.com` site ([VERSIONING.md](docs/VERSIONING.md)).
 - URL fragment input is untrusted → `JSON.parse` only, schema check, numeric clamping, unknown keys dropped (`src/sim/config.ts`).
 - Resource limits (max agents, runs, time) are clamped to prevent a shared link from freezing a browser.
