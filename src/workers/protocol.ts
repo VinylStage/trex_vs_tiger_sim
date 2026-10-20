@@ -1,10 +1,13 @@
 import type { ScenarioConfig } from '../sim/config';
 import type { BattleTrace, RunSummary } from '../sim/engine';
+import type { FreeConfig } from '../sim/free/config';
+import type { FreeRunSummary } from '../sim/free/engine';
 import type { AggregateResult } from '../sim/montecarlo';
 
 /** Main thread → worker. */
 export type WorkerRequest =
-  | { type: 'run'; jobId: number; config: ScenarioConfig; start: number; end: number }
+  /** A free-model config (`mode: 'free'`) runs on the free engine (src/sim/free). */
+  | { type: 'run'; jobId: number; config: ScenarioConfig | FreeConfig; start: number; end: number }
   | { type: 'replay'; jobId: number; config: ScenarioConfig; run: number }
   /** `summaries` is `packSummaries(...)` of every run, transferred (src/sim/montecarlo.ts). */
   | { type: 'aggregate'; jobId: number; config: ScenarioConfig; summaries: Float64Array };
@@ -12,7 +15,7 @@ export type WorkerRequest =
 /** Worker → main thread. */
 export type WorkerResponse =
   | { type: 'progress'; jobId: number; done: number }
-  | { type: 'result'; jobId: number; summaries: RunSummary[] }
+  | { type: 'result'; jobId: number; summaries: RunSummary[] | FreeRunSummary[] }
   | { type: 'replay'; jobId: number; trace: BattleTrace }
   | { type: 'aggregate'; jobId: number; agg: AggregateResult }
   | { type: 'error'; jobId: number; message: string };

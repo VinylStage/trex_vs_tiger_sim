@@ -2,6 +2,8 @@ import { sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { simulateBattle } from '../sim/engine';
 import { aggregate, runChunk, unpackSummaries } from '../sim/montecarlo';
 import { buildDesign, designRow, type Design } from '../sim/sampling';
+import { buildFreeDesign, sanitizeFreeConfig } from '../sim/free/config';
+import { runFreeChunk } from '../sim/free/montecarlo';
 import { traceTransferList, type WorkerRequest, type WorkerResponse } from './protocol';
 
 // tsconfig `lib` is DOM-only, so type the worker global locally.
@@ -25,7 +27,38 @@ function designFor(config: ScenarioConfig): Design {
   return cachedDesign;
 }
 
+let cachedFreeKey = '';
+let cachedFreeDesign: Design | null = null;
+
+/** A free-model run chunk (`mode: 'free'`), sanitized like every other payload. */
+function handleFree(msg: Extract<WorkerRequest, { type: 'run' }>): void {
+  const config = sanitizeFreeConfig(msg.config);
+  const key = JSON.stringify(config);
+  if (cachedFreeDesign === null || key !== cachedFreeKey) {
+    cachedFreeDesign = buildFreeDesign(config);
+    cachedFreeKey = key;
+  }
+  const start = Math.max(0, Math.min(config.runs, Math.floor(msg.start)));
+  const end = Math.max(start, Math.min(config.runs, Math.floor(msg.end)));
+  let last = performance.now();
+  const summaries = runFreeChunk(config, cachedFreeDesign, start, end, (done) => {
+    const now = performance.now();
+    if (now - last >= PROGRESS_INTERVAL_MS) {
+      last = now;
+      ctx.postMessage({ type: 'progress', jobId: msg.jobId, done });
+    }
+  });
+  ctx.postMessage({ type: 'result', jobId: msg.jobId, summaries });
+}
+
+const isFreePayload = (c: unknown): boolean =>
+  typeof c === 'object' && c !== null && (c as { mode?: unknown }).mode === 'free';
+
 function handle(msg: WorkerRequest): void {
+  if (msg.type === 'run' && isFreePayload(msg.config)) {
+    handleFree(msg);
+    return;
+  }
   // Never trust the payload: the config may originate from a shared URL.
   const config = sanitizeConfig(msg.config);
   const design = designFor(config);

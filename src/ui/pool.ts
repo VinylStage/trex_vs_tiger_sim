@@ -1,5 +1,7 @@
 import type { ScenarioConfig } from '../sim/config';
 import type { BattleTrace, RunSummary } from '../sim/engine';
+import type { FreeConfig } from '../sim/free/config';
+import type { FreeRunSummary } from '../sim/free/engine';
 import { packSummaries, type AggregateResult } from '../sim/montecarlo';
 import type { WorkerRequest, WorkerResponse } from '../workers/protocol';
 import { estimateRemainingMs, poolSize, splitRuns, type RunRange } from './chunks';
@@ -31,15 +33,16 @@ interface Chunk {
 }
 
 interface RunJob {
-  config: ScenarioConfig;
+  /** A legacy config, or a free-model one (the worker dispatches on `mode: 'free'`). */
+  config: ScenarioConfig | FreeConfig;
   queue: RunRange[];
   inFlight: Map<number, Chunk>;
   completedRuns: number;
-  summaries: RunSummary[];
+  summaries: (RunSummary | FreeRunSummary)[];
   startedAt: number;
   lastReport: number;
   onProgress: (p: PoolProgress) => void;
-  resolve: (s: RunSummary[]) => void;
+  resolve: (s: (RunSummary | FreeRunSummary)[]) => void;
   reject: (e: Error) => void;
 }
 
@@ -79,9 +82,21 @@ export class SimPool {
 
   /** Run every Monte Carlo run of `config`. Rejects with CancelledError if cancelled. */
   run(config: ScenarioConfig, onProgress: (p: PoolProgress) => void): Promise<RunSummary[]> {
+    return this.start(config, onProgress) as Promise<RunSummary[]>;
+  }
+
+  /** Run every run of a free-model config (src/sim/free) on the same workers. */
+  runFree(config: FreeConfig, onProgress: (p: PoolProgress) => void): Promise<FreeRunSummary[]> {
+    return this.start(config, onProgress) as Promise<FreeRunSummary[]>;
+  }
+
+  private start(
+    config: ScenarioConfig | FreeConfig,
+    onProgress: (p: PoolProgress) => void,
+  ): Promise<(RunSummary | FreeRunSummary)[]> {
     this.cancel();
     const chunks = splitRuns(config.runs, this.size);
-    return new Promise<RunSummary[]>((resolve, reject) => {
+    return new Promise<(RunSummary | FreeRunSummary)[]>((resolve, reject) => {
       const job: RunJob = {
         config,
         queue: chunks,
