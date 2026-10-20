@@ -106,6 +106,15 @@ html {
   }
 }
 
+/*
+ * Korean breaks between words, not inside them (MDN word-break: keep-all); overflow-wrap still
+ * breaks a word that cannot fit at all.
+ */
+:lang(ko) body {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 body {
   --page-max: 1360px;
 
@@ -509,6 +518,23 @@ input[type='checkbox'] {
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.4;
+  text-wrap: pretty;
+}
+
+.field-note {
+  color: var(--error-fg);
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.field-note:empty {
+  display: none;
+}
+
+input[aria-invalid='true'] {
+  border-color: var(--error-fg);
+  box-shadow: 0 0 0 1px var(--error-fg);
 }
 
 .input-row {

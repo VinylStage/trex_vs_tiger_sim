@@ -131,6 +131,11 @@ const ko = {
   'advanced.intro':
     '각 파라미터는 실행마다 삼각분포(최소 · 최빈 · 최대)에서 샘플링됩니다. 기본값은 고른 종의 프리셋이고, 이름 옆 글자는 근거 수준입니다(L 문헌, D 문헌에서 유도, S 추정, U 미검증). 출처는 파라미터 설명 페이지와 docs/SPECIES.md에 있습니다.',
   'advanced.param': '파라미터',
+  'clamp.typing': '{min}–{max} 사이로 입력하세요.',
+  'clamp.range': '{min}–{max} 범위 밖이라 {value}에 맞췄습니다.',
+  'clamp.integer': '정수만 쓸 수 있어 {value}에 맞췄습니다.',
+  'clamp.empty': '값이 비어 있어 이전 값으로 되돌렸습니다: {value}',
+  'clamp.order': '최소 ≤ 최빈 ≤ 최대가 되도록 다른 값도 맞췄습니다.',
   'advanced.min': '최소',
   'advanced.mode': '최빈',
   'advanced.max': '최대',
@@ -609,6 +614,11 @@ const en: Dictionary = {
   'advanced.intro':
     'Each parameter is sampled per run from a triangular (min · mode · max) distribution. The defaults are the selected species’ presets; the letter next to each name shows its evidence (L literature, D derived from literature, S speculative, U unverified). Sources are on the parameter reference page and in docs/SPECIES.md.',
   'advanced.param': 'Parameter',
+  'clamp.typing': 'Enter a value from {min} to {max}.',
+  'clamp.range': 'Outside {min}–{max}; set to {value}.',
+  'clamp.integer': 'Whole numbers only; set to {value}.',
+  'clamp.empty': 'The field was empty; restored the previous value: {value}',
+  'clamp.order': 'The other values were adjusted to keep min ≤ mode ≤ max.',
   'advanced.min': 'Min',
   'advanced.mode': 'Mode',
   'advanced.max': 'Max',
