@@ -4,7 +4,7 @@ import { env } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
-import { findHtmlEntries } from './vite.pages.ts';
+import { findHtmlEntries, siteHeader } from './vite.pages.ts';
 import { seo } from './vite.seo.ts';
 
 interface BuildInfo {
@@ -66,7 +66,11 @@ export default defineConfig({
     __BUILD_SHA__: JSON.stringify(info.sha),
     __BUILD_TIME__: JSON.stringify(info.builtAt),
   },
-  plugins: [versionJson(info), seo({ root, version: info.version, deepen: env.CF_PAGES === '1' })],
+  plugins: [
+    versionJson(info),
+    siteHeader(),
+    seo({ root, version: info.version, deepen: env.CF_PAGES === '1' }),
+  ],
   build: {
     target: 'es2022',
     sourcemap: false,

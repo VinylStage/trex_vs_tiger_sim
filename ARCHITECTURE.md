@@ -53,13 +53,16 @@ flowchart LR
         share@{ shape: rect, label: "share.ts<br/>URL codec" }
         i18n@{ shape: rect, label: "i18n.ts<br/>ko / en" }
         charts@{ shape: rect, label: "charts.ts<br/>canvas charts" }
-        replay@{ shape: rect, label: "replay.ts<br/>battle replay" }
+        replay@{ shape: rect, label: "replay.ts + replay/*<br/>v2 renderer (prepare, world,<br/>draw, camera, timeline)" }
         pool@{ shape: rect, label: "pool.ts<br/>worker pool" }
         helpers@{ shape: rect, label: "chunks.ts · cost.ts<br/>dom.ts · format.ts" }
         nav@{ shape: rect, label: "site-nav.ts<br/>header nav" }
         tour@{ shape: rect, label: "tour.ts · tour-model.ts<br/>guided tour" }
         version@{ shape: rect, label: "version.ts · version-model.ts<br/>badge, update check" }
         sitedata@{ shape: rect, label: "site-data.ts<br/>cache / storage reset" }
+    end
+    subgraph SEO["src/seo (build time)"]
+        seo@{ shape: rect, label: "head · sitemap · robots<br/>llms · JSON-LD" }
     end
     subgraph PAGES["src/pages (static content pages)"]
         site@{ shape: rect, label: "site.ts · site.css<br/>progressive enhancement" }
@@ -71,7 +74,9 @@ flowchart LR
     end
     subgraph SIM["src/sim (pure, DOM-free)"]
         config@{ shape: doc, label: "config.ts<br/>schema + clamp" }
-        params@{ shape: doc, label: "params.ts<br/>parameter table" }
+        params@{ shape: doc, label: "params.ts<br/>heavy.* / pack.* table" }
+        species@{ shape: doc, label: "species.ts<br/>8-species registry" }
+        events@{ shape: rect, label: "events.ts<br/>replay event log" }
         rng@{ shape: rect, label: "rng.ts<br/>sfc32 + splitmix" }
         sampling@{ shape: rect, label: "sampling.ts<br/>LHS / MC design" }
         engine@{ shape: rect, label: "engine.ts<br/>agent battle" }
@@ -92,7 +97,9 @@ flowchart LR
     app --> mc
     mc --> sampling & engine & stats
     sampling --> rng & params
-    engine --> spatial & rng
+    engine --> spatial & rng & events
+    config & engine --> species
+    seo --> routes
     e1@{ animate: true }
 ```
 
@@ -102,11 +109,15 @@ Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run insi
 
 `vite.pages.ts` `findHtmlEntries()` turns every `index.html` in the repository into a build input, so a new page needs no config change ([docs/PAGES.md](docs/PAGES.md)).
 
-| Entry                                       | Script                          | Purpose                                                                                                               |
-| ------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `index.html`                                | `src/main.ts` → `src/ui/app.ts` | The simulator (with header nav, guided tour and version badge)                                                        |
-| `<page>/index.html`, `en/<page>/index.html` | `src/pages/site.ts`             | Static, crawlable guide, model, parameters, about and privacy pages in Korean and English ([PAGES.md](docs/PAGES.md)) |
-| `reset/index.html`                          | `src/reset.ts`                  | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                 |
+| Entry                                         | Script                          | Purpose                                                                                                               |
+| --------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `index.html`, `en/index.html`                 | `src/main.ts` → `src/ui/app.ts` | The simulator in Korean (`/`) and English (`/en/`); language comes from the URL ([SEO.md](docs/SEO.md))               |
+| `<page>/index.html`, `en/<page>/index.html`   | `src/pages/site.ts`             | Static, crawlable guide, model, parameters, about and privacy pages in Korean and English ([PAGES.md](docs/PAGES.md)) |
+| `reset/index.html`                            | `src/reset.ts`                  | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                 |
+| `license/index.html`, `en/license/index.html` | `src/pages/site.ts`             | MIT text and third-party notices                                                                                      |
+| `404.html`, `en/404.html`                     | `src/pages/site.ts`             | Real 404 pages (disable the Pages SPA fallback)                                                                       |
+
+At build time `vite.seo.ts` (code in `src/seo/`) writes the head tags, JSON-LD, `sitemap.xml`, `robots.txt` and `llms*.txt` from the page registry ([SEO.md](docs/SEO.md)). Species presets and bounds live in `src/sim/species.ts` ([SPECIES.md](docs/SPECIES.md)); the replay renderer and its event log are described in [REPLAY.md](docs/REPLAY.md) and MODEL.md §2.6.
 
 The build also emits `version.json` (version, commit SHA, build time), which open tabs poll to detect a newer deployment ([VERSIONING.md](docs/VERSIONING.md)). The guided tour is documented in [TUTORIAL.md](docs/TUTORIAL.md).
 
@@ -208,7 +219,7 @@ flowchart LR
 
 ## 6. Security
 
-- Static site; no secrets, no cookies of its own and no third-party requests. `localStorage` holds only UI preferences (language, tour seen flag); the version check fetches the same-origin `/version.json`.
+- Static site; no secrets, no cookies of its own and no third-party requests. `localStorage` holds only the tour-seen flag (language comes from the URL); the version check fetches the same-origin `/version.json`.
 - CSP in `public/_headers`: `default-src 'self'`, no inline scripts, `worker-src 'self'`, `frame-ancestors 'none'`. HTML responses carry `Cache-Control: no-cache, no-transform` so Cloudflare Bot Fight Mode does not inject an inline script (this also disables Cloudflare's compression of HTML; see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 - The reset page uses `Clear-Site-Data: "cache", "storage"` but never `"cookies"`, which would clear cookies for every `*.vinylims.com` site ([VERSIONING.md](docs/VERSIONING.md)).
 - URL fragment input is untrusted → `JSON.parse` only, schema check, numeric clamping, unknown keys dropped (`src/sim/config.ts`).

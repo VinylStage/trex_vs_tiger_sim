@@ -1,5 +1,7 @@
 import { readdirSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import type { Plugin } from 'vite';
+import { expandSiteHeader, headerRouteOf } from './src/pages/site-header.ts';
 
 /**
  * Directories never searched for pages: dependencies, build/test output, static files copied
@@ -42,4 +44,23 @@ export function findHtmlEntries(root: string): Record<string, string> {
   walk(root);
   found.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return Object.fromEntries(found);
+}
+
+/**
+ * Fills the shared header into every page (docs/PAGES.md#site-header): `<!-- site-header -->` in
+ * the content and 404 pages and `<!-- app-logo -->` in the simulator's static head become the
+ * markup of src/pages/site-header.ts. It runs before Vite's own HTML processing (`order: 'pre'`),
+ * so the logo URL is handled like hand-written markup, and in dev as well as in the build, so the
+ * served and built HTML both contain the complete static header.
+ */
+export function siteHeader(): Plugin {
+  return {
+    name: 'trexsim:site-header',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html, ctx) {
+        return expandSiteHeader(html, headerRouteOf(ctx.path), ctx.path);
+      },
+    },
+  };
 }

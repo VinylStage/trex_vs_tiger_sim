@@ -36,6 +36,7 @@ import { ReplayView } from './replay';
 import { heavyLengthForRadius } from './replay/glyphs';
 import { configFromHash, hashFromConfig } from './share';
 import { pageLang, pagePath, switchedAppUrl } from '../pages/routes';
+import { logoAttrs } from '../pages/site-header';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
 import './site-footer.css';
 import { createTour } from './tour';
@@ -166,7 +167,7 @@ export function startApp(root: HTMLElement): void {
       { class: 'brand' },
       h('img', {
         class: 'logo',
-        attrs: { src: '/header-logo.svg', alt: '', width: '40', height: '40' },
+        attrs: logoAttrs('app'),
       }),
       h(
         'div',
