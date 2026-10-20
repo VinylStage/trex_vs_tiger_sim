@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.6...trex-vs-tiger-sim-v0.2.7) (2026-10-20)
+
+
+### Bug Fixes
+
+* **security:** pin Actions, add HSTS, enforce Trusted Types ([#85](https://github.com/VinylStage/trex_vs_tiger_sim/issues/85)) ([7d1f2e6](https://github.com/VinylStage/trex_vs_tiger_sim/commit/7d1f2e6764fee48b4776d34cb4c285f577aa4252))
+
 ## [0.2.6](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.5...trex-vs-tiger-sim-v0.2.6) (2026-10-20)
 
 
