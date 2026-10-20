@@ -258,6 +258,25 @@ describe('findHtmlEntries', () => {
     });
   });
 
+  it('adds 404.html files, keyed by directory, next to the pages of the same directory', () => {
+    for (const rel of [
+      '404.html',
+      'en/404.html',
+      'en/index.html',
+      'public/404.html',
+      'x/400.html',
+    ]) {
+      touch(rel);
+    }
+    const entries = findHtmlEntries(tmp);
+    expect(entries['404']).toBe(join(tmp, '404.html'));
+    expect(entries['en-404']).toBe(join(tmp, 'en/404.html'));
+    expect(entries['en']).toBe(join(tmp, 'en/index.html'));
+    expect(Object.values(entries)).not.toContain(join(tmp, 'public/404.html'));
+    expect(Object.values(entries)).not.toContain(join(tmp, 'x/400.html'));
+    expect(Object.keys(entries)).toEqual([...Object.keys(entries)].sort());
+  });
+
   it('discovers both app entries and every content page of this repository', () => {
     const entries = findHtmlEntries(ROOT);
     expect(entries['index']).toBe(join(ROOT, 'index.html'));
@@ -266,5 +285,7 @@ describe('findHtmlEntries', () => {
       expect(entries[page]).toBe(join(ROOT, page, 'index.html'));
       expect(entries[`en-${page}`]).toBe(join(ROOT, 'en', page, 'index.html'));
     }
+    expect(entries['404']).toBe(join(ROOT, '404.html'));
+    expect(entries['en-404']).toBe(join(ROOT, 'en', '404.html'));
   });
 });
