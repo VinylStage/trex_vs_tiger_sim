@@ -34,7 +34,7 @@ import {
 import { sitemapXml } from '../src/seo/sitemap';
 import { DICTIONARIES, LANGS, type Lang } from '../src/ui/i18n';
 import { findHtmlEntries } from '../vite.pages';
-import { absolutizeUrls, gitHistory, gitLastmod, notFoundLang } from '../vite.seo';
+import { absolutizeUrls, gitHistory, gitLastmod, notFoundLang, unshallow } from '../vite.seo';
 
 /*
  * Build-time SEO (docs/SEO.md). The generators are pure; these tests run them over the real page
@@ -597,6 +597,13 @@ describe('lastmod from git', () => {
     // a.html last changed before the boundary: its real date is not in the clone
     expect(gitLastmod(shallow, hs, 'a.html')).toBeNull();
     expect(gitLastmod(shallow, hs, 'b.html')).toBeNull();
+
+    // what the build does on Cloudflare Pages: fetch the rest of the history, then date the files
+    expect(unshallow(shallow)).toBe(true);
+    const full = gitHistory(shallow);
+    expect(full.shallow).toBe(false);
+    expect(gitLastmod(shallow, full, 'a.html')).toBe('2026-01-02T03:04:05+09:00');
+    expect(gitLastmod(shallow, full, 'b.html')).toBe('2026-02-03T04:05:06+09:00');
 
     const outside = join(tmp, 'plain');
     execFileSync('mkdir', ['-p', outside]);

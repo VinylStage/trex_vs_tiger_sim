@@ -56,6 +56,24 @@ export function gitHistory(root: string): GitHistory {
 }
 
 /**
+ * Fetch the full history into a shallow clone, so file dates can be read. Cloudflare Pages builds
+ * from a depth-1 clone (docs/SEO.md#lastmod), so the plugin does this on Pages (`CF_PAGES=1`) and
+ * never touches a developer's clone. Returns whether the clone is complete afterwards.
+ */
+export function unshallow(root: string): boolean {
+  try {
+    execFileSync('git', ['fetch', '--quiet', '--unshallow', 'origin'], {
+      cwd: root,
+      stdio: ['ignore', 'ignore', 'pipe'],
+      timeout: 120_000,
+    });
+  } catch {
+    // Network or credential problem: keep the shallow clone and omit lastmod.
+  }
+  return git(root, ['rev-parse', '--is-shallow-repository']) === 'false';
+}
+
+/**
  * Committer date (ISO 8601) of the last commit that touched `file`, or null when git cannot tell:
  * no repository, the file is untracked or has uncommitted changes, or the commit found is a
  * shallow-clone boundary (whose date says nothing about when the file last changed).
@@ -93,15 +111,24 @@ export function absolutizeUrls(html: string, fileName: string): string {
 export interface SeoOptions {
   root: string;
   version: string;
+  /** Fetch the missing history first when the build runs in a shallow clone (Cloudflare Pages). */
+  deepen: boolean;
 }
 
-export function seo({ root, version }: SeoOptions): Plugin {
+export function seo({ root, version, deepen }: SeoOptions): Plugin {
   let history: GitHistory | null = null;
+  let deepened: boolean | null = null;
+  const loadHistory = (): GitHistory => {
+    const first = gitHistory(root);
+    if (!first.shallow || !deepen) return first;
+    deepened = unshallow(root);
+    return gitHistory(root);
+  };
   const lastmods = new Map<string, string | null>();
   const lastmod = (page: PageId, lang: Lang): string | null => {
     const file = pageSource(page, lang);
     if (!lastmods.has(file)) {
-      history ??= gitHistory(root);
+      history ??= loadHistory();
       lastmods.set(file, gitLastmod(root, history, file));
     }
     return lastmods.get(file) ?? null;
@@ -183,14 +210,19 @@ export function seo({ root, version }: SeoOptions): Plugin {
             `statusAll=${diag(['status', '--porcelain']).slice(0, 2000)}`,
             `shallowFile=${diag(['rev-parse', '--git-path', 'shallow'])}`,
             `boundary=${[...gitHistory(root).boundary].join(',')}`,
+            `deepened=${String(deepened)}`,
+            `count2=${diag(['rev-list', '--count', 'HEAD'])}`,
+            `indexAfter=${diag(['log', '-1', '--format=%H %cI', '--', 'index.html'])}`,
+            `guide=${diag(['log', '-1', '--format=%H %cI', '--', 'guide/index.html'])}`,
             '',
           ].join('\n'),
         });
         const known = INDEXABLE_ROUTES.filter((r) => lastmod(r.page, r.lang) !== null).length;
-        const h = history ?? gitHistory(root);
+        const h = history ?? loadHistory();
         this.info(
           `lastmod from git for ${known}/${INDEXABLE_ROUTES.length} pages ` +
-            `(git: ${h.available ? 'yes' : 'no'}, shallow: ${h.shallow ? `yes, ${h.boundary.size} boundary commit(s)` : 'no'})`,
+            `(git: ${h.available ? 'yes' : 'no'}, shallow: ${h.shallow ? `yes, ${h.boundary.size} boundary commit(s)` : 'no'}` +
+            `${deepened === null ? '' : `, unshallow: ${deepened ? 'done' : 'failed'}`})`,
         );
       },
     },

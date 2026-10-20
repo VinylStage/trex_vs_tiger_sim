@@ -66,7 +66,7 @@ export default defineConfig({
     __BUILD_SHA__: JSON.stringify(info.sha),
     __BUILD_TIME__: JSON.stringify(info.builtAt),
   },
-  plugins: [versionJson(info), seo({ root, version: info.version })],
+  plugins: [versionJson(info), seo({ root, version: info.version, deepen: env.CF_PAGES === '1' })],
   build: {
     target: 'es2022',
     sourcemap: false,
