@@ -3,7 +3,8 @@ import { simulateBattle } from '../sim/engine';
 import { aggregate, runChunk, unpackSummaries } from '../sim/montecarlo';
 import { buildDesign, designRow, type Design } from '../sim/sampling';
 import { buildFreeDesign, sanitizeFreeConfig } from '../sim/free/config';
-import { runFreeChunk } from '../sim/free/montecarlo';
+import { runFreeChunk, unpackFreeSummaries } from '../sim/free/montecarlo';
+import { aggregateFree } from '../sim/free/aggregate';
 import { traceTransferList, type WorkerRequest, type WorkerResponse } from './protocol';
 
 // tsconfig `lib` is DOM-only, so type the worker global locally.
@@ -55,6 +56,13 @@ const isFreePayload = (c: unknown): boolean =>
   typeof c === 'object' && c !== null && (c as { mode?: unknown }).mode === 'free';
 
 function handle(msg: WorkerRequest): void {
+  if (msg.type === 'aggregate-free') {
+    // Off the main thread, like the legacy aggregate (#24).
+    const config = sanitizeFreeConfig(msg.config);
+    const agg = aggregateFree(config, unpackFreeSummaries(msg.summaries));
+    ctx.postMessage({ type: 'aggregate-free', jobId: msg.jobId, agg });
+    return;
+  }
   if (msg.type === 'run' && isFreePayload(msg.config)) {
     handleFree(msg);
     return;

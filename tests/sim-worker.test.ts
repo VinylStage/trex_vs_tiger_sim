@@ -3,6 +3,9 @@ import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../src/sim/c
 import { simulateBattle } from '../src/sim/engine';
 import { aggregate, packSummaries, runChunk } from '../src/sim/montecarlo';
 import { buildDesign, designRow } from '../src/sim/sampling';
+import { aggregateFree } from '../src/sim/free/aggregate';
+import { buildFreeDesign, sanitizeFreeConfig } from '../src/sim/free/config';
+import { packFreeSummaries, runFreeChunk, unpackFreeSummaries } from '../src/sim/free/montecarlo';
 import { traceTransferList, type WorkerResponse } from '../src/workers/protocol';
 
 /*
@@ -84,6 +87,24 @@ describe('sim.worker dispatch', () => {
     const msg = out[0]?.msg;
     expect(msg?.type).toBe('aggregate');
     expect(msg?.type === 'aggregate' && msg.agg).toEqual(aggregate(config, design, summaries));
+  });
+
+  it('aggregate-free: aggregates a free batch in the worker, with a sanitized config', () => {
+    const config = sanitizeFreeConfig({
+      runs: 8,
+      sides: [
+        { species: 'tiger', count: 2 },
+        { species: 'lion', count: 2 },
+      ],
+    });
+    const summaries = runFreeChunk(config, buildFreeDesign(config), 0, config.runs);
+    const packed = packFreeSummaries(summaries);
+    expect(unpackFreeSummaries(packed)).toEqual(summaries);
+    const out = send({ type: 'aggregate-free', jobId: 5, config, summaries: packed });
+    expect(out).toHaveLength(1);
+    const msg = out[0]?.msg;
+    expect(msg?.type).toBe('aggregate-free');
+    expect(msg?.type === 'aggregate-free' && msg.agg).toEqual(aggregateFree(config, summaries));
   });
 
   it('replay: sends the traced battle of the requested run and transfers its buffers', () => {
