@@ -37,6 +37,9 @@ import { CancelledError, SimPool, type PoolProgress } from './pool';
 import { ReplayView } from './replay';
 import { heavyLengthForRadius } from './replay/glyphs';
 import { configFromHash, hashFromConfig } from './share';
+import { defaultFreeConfig } from '../sim/free/config';
+import { createFreeMode } from './free-mode';
+import { freeConfigFromHash, hashFromFreeConfig } from './share-free';
 import { copyText } from '../share/share-ui';
 import { createConfigTransfer } from './config-transfer';
 import { createReproduceCheck, createResultShare } from './result-share';
@@ -103,7 +106,11 @@ export function startApp(root: HTMLElement): void {
   // Same text as the static <title> of this language's page (tests/pages.test.ts).
   document.title = t('app.documentTitle');
   const pool = new SimPool();
-  let config: ScenarioConfig = configFromHash(location.hash) ?? defaultConfig();
+  // A v3 link (`#s=` with `m: "free"`) opens in free mode; everything else stays classic (D1).
+  const startFree = freeConfigFromHash(location.hash);
+  let mode: 'classic' | 'free' = startFree ? 'free' : 'classic';
+  let config: ScenarioConfig =
+    (startFree ? null : configFromHash(location.hash)) ?? defaultConfig();
   // "Run it yourself" links carry a result snapshot (`&chk=`); read it before the URL is rewritten.
   const repro = createReproduceCheck(location.hash, config);
   const resultShare = createResultShare();
@@ -189,6 +196,35 @@ export function startApp(root: HTMLElement): void {
   let siteNav = createSiteNav(getLang());
   header.append(siteNav);
 
+  // ---------- match-up mode (classic / free, #50) ----------
+  let switchSeq = 0;
+  /** Radio group choosing the model; one instance per config panel. */
+  function modeSwitch(): HTMLElement {
+    const name = `matchup-mode-${++switchSeq}`;
+    const hintId = `${name}-hint`;
+    const option = (value: 'classic' | 'free', key: MsgKey): HTMLElement => {
+      const input = h('input', { attrs: { type: 'radio', name, value } });
+      input.checked = mode === value;
+      input.addEventListener('change', () => {
+        if (input.checked) setMode(value);
+      });
+      return h('label', { class: 'mode-option' }, input, h('span', { text: t(key) }));
+    };
+    return h(
+      'fieldset',
+      { class: 'mode-switch', attrs: { 'aria-describedby': hintId } },
+      h('legend', { text: t('mode.label') }),
+      h(
+        'div',
+        { class: 'mode-options' },
+        option('classic', 'mode.classic'),
+        option('free', 'mode.free'),
+      ),
+      h('small', { class: 'hint', id: hintId, text: t('mode.help') }),
+    );
+  }
+  const classicSwitchSlot = h('div', { class: 'classic-mode-switch' });
+
   // ---------- config panel ----------
   const form = createConfigForm(config, pool.size, (c) => {
     config = c;
@@ -268,6 +304,7 @@ export function startApp(root: HTMLElement): void {
     'section',
     { class: 'panel config-panel', attrs: { 'aria-labelledby': 'config-title' } },
     h('h2', { id: 'config-title', i18n: 'config.title' }),
+    classicSwitchSlot,
     form.el,
     runBar,
     createConfigTransfer({
@@ -405,13 +442,54 @@ export function startApp(root: HTMLElement): void {
   // version slot. The app fills the version and re-localises it when the language changes.
   fillVersionFooter(document);
 
+  const free = createFreeMode({
+    initial: startFree ?? defaultFreeConfig(),
+    pool,
+    modeSwitch,
+    onChange: () => writeUrl(),
+    showToast,
+  });
+
   clear(root);
-  root.append(header, h('main', { class: 'layout', id: 'main' }, configPanel, resultsPanel), toast);
+  root.append(
+    header,
+    h(
+      'main',
+      { class: 'layout', id: 'main' },
+      configPanel,
+      resultsPanel,
+      free.configPanel,
+      free.resultsPanel,
+    ),
+    toast,
+  );
   renderCostNote();
+  applyMode();
+
+  function applyMode(): void {
+    const isFree = mode === 'free';
+    configPanel.hidden = isFree;
+    resultsPanel.hidden = isFree;
+    free.configPanel.hidden = !isFree;
+    free.resultsPanel.hidden = !isFree;
+    classicSwitchSlot.replaceChildren(modeSwitch());
+  }
+
+  function setMode(next: 'classic' | 'free'): void {
+    if (next === mode) return;
+    if (running || free.isRunning()) pool.cancel();
+    mode = next;
+    applyMode();
+    if (next === 'free') free.relocalize();
+    writeUrl();
+    // Keep focus on the switch of the panel now shown.
+    const panel = next === 'free' ? free.configPanel : configPanel;
+    panel.querySelector<HTMLInputElement>(`.mode-switch input[value="${next}"]`)?.focus();
+  }
 
   // ---------- behaviour ----------
   function writeUrl(): void {
-    const hash = hashFromConfig(config);
+    const hash = mode === 'free' ? hashFromFreeConfig(free.getConfig()) : hashFromConfig(config);
     if (hash === location.hash) return;
     history.replaceState(history.state, '', hash || `${location.pathname}${location.search}`);
   }
@@ -843,6 +921,8 @@ export function startApp(root: HTMLElement): void {
     relocalizeLinks(document, lang);
     applyI18n(document.body);
     form.refresh();
+    classicSwitchSlot.replaceChildren(modeSwitch());
+    free.relocalize();
     renderStatus();
     renderProgress();
     // Charts repaint once, after the new text is on screen (not twice in the same task).
@@ -851,8 +931,15 @@ export function startApp(root: HTMLElement): void {
   });
 
   window.addEventListener('hashchange', () => {
+    const fc = freeConfigFromHash(location.hash);
+    if (fc) {
+      free.setConfig(fc);
+      if (mode !== 'free') setMode('free');
+      return;
+    }
     const c = configFromHash(location.hash);
     if (!c) return;
+    if (mode !== 'classic') setMode('classic');
     config = c;
     form.setConfig(c);
     updateStale();
@@ -872,7 +959,11 @@ export function startApp(root: HTMLElement): void {
       return run();
     },
   });
-  tourBtn.addEventListener('click', () => tour.start());
+  tourBtn.addEventListener('click', () => {
+    // The tour walks through the classic form and results.
+    setMode('classic');
+    tour.start();
+  });
   // Static tour links (`a[data-tour-start]`, e.g. in the intro) start the tour in place instead of
   // reloading the page through `?tour=1`.
   document.addEventListener('click', (e) => {
