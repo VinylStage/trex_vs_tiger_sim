@@ -1236,6 +1236,33 @@ function headersFor(src: string, path: string): Record<string, string[]> {
   return out;
 }
 
+describe('English pages mark Korean words (WCAG 3.1.2 language of parts, #71)', () => {
+  it.each(SHELL_PAGES.filter((p) => p.lang === 'en').map((p) => [p.file, p.html] as const))(
+    '%s',
+    (_file, html) => {
+      const body = (/<body[\s\S]*<\/body>/.exec(html)?.[0] ?? '').replace(
+        /<script[\s\S]*?<\/script>/g,
+        '',
+      );
+      // Drop every element marked lang="ko" (none of them nest another element of the same tag).
+      const unmarked = body.replace(/<(\w+)[^>]*\blang="ko"[^>]*>[\s\S]*?<\/\1>/g, '');
+      const text = unmarked.replace(/<[^>]*>/g, ' ');
+      expect(text.match(/[가-힣]+/g) ?? []).toEqual([]);
+    },
+  );
+});
+
+describe('public/site.webmanifest', () => {
+  it('writes name, short name and description in its declared language (#71)', () => {
+    const m = JSON.parse(read('public/site.webmanifest')) as Record<string, string>;
+    expect(m['lang']).toBe('ko');
+    for (const k of ['name', 'short_name', 'description']) {
+      expect(m[k], k).toMatch(/[가-힣]/);
+      expect(m[k], k).not.toMatch(/\b(the|and|on|in|your)\b/i);
+    }
+  });
+});
+
 describe('public/_headers', () => {
   const src = read('public/_headers');
   const htmlPaths = ALL_PAGES.map((p) => pagePath(p.page, p.lang));

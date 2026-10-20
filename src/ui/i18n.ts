@@ -513,7 +513,7 @@ const en: Dictionary = {
     'Tyrannosaurus rex vs tigers · learn the Monte Carlo method with an educational simulation',
   'app.documentTitle': 'T-Rex vs Tiger Simulator – who wins, T. rex or tigers?',
   'lang.switch': '한국어',
-  'lang.switchAria': '인터페이스를 한국어로 바꾸기',
+  'lang.switchAria': '한국어: 인터페이스를 한국어로 바꾸기',
   'share.copy': 'Copy settings link',
   'share.hint': 'Share the current settings as a URL. The seed is included, so results reproduce.',
   'share.copied': 'Link copied.',
