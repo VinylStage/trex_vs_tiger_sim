@@ -59,6 +59,40 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.11',
+    date: '2026-10-20',
+    title: {
+      ko: '게시판 개장, 그리고 버벅임 퇴치 📜',
+      en: 'A notice board, and no more freezes 📜',
+    },
+    prs: [95, 96],
+    items: [
+      {
+        cat: 'new',
+        ko: '지금 보고 계신 바로 이 패치노트 게시판이 생겼습니다! 버전마다 바뀐 점을 정리해 두고, 버전 배지와 업데이트 알림에서 한 번에 넘어올 수 있어요.',
+        en: 'Hello from the very board you’re reading! Every version now gets its own notes, one tap away from the version badge and the update banner.',
+      },
+      {
+        cat: 'improved',
+        refs: [50],
+        ko: '자유 대결 결과 집계를 백그라운드 워커로 옮겼습니다. 큰 판을 돌려도 화면이 얼어붙지 않아요.',
+        en: 'Free-mode results are now tallied in a background worker, so big free runs no longer freeze the page.',
+      },
+      {
+        cat: 'fixed',
+        refs: [81],
+        ko: '화면 확대 · 축소나 다른 모니터로 옮겨 픽셀 밀도가 바뀌어도 차트가 흐려지지 않고 다시 선명하게 그려집니다.',
+        en: 'Charts redraw crisp and sharp when you zoom or move the window to a screen with a different pixel density.',
+      },
+      {
+        cat: 'improved',
+        refs: [64, 62, 63],
+        ko: '푸터를 모듈 하나에서 만들고, 색상 토큰 이름을 정리하고, 안 쓰는 코드를 치웠습니다. 겉모습은 그대로, 속은 한결 가벼워졌어요.',
+        en: 'The footer now comes from a single module, the colour tokens got clearer names, and unused code was swept out. Same look, lighter inside.',
+      },
+    ],
+  },
+  {
     version: '0.2.10',
     date: '2026-10-20',
     title: {
