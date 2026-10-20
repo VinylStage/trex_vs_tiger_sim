@@ -58,6 +58,15 @@ export const FREE_CONSTANTS = {
   restraintFloor: 0.5,
   /** E4a: bound on the numbers-based morale support `c` (**S**, 0–0.2). */
   supportCap: 0.1,
+  /**
+   * E4b: most allies' deaths and routs that cost an agent morale in one tick (**S**, 1–5 and
+   * 1–3). Without a cap a few routs in a large pack cascade into a rout of the whole pack within
+   * a second; the design bounds every effect's magnitude (§5.2).
+   */
+  contagionDeathCap: 3,
+  /** E5: allies within cohesion range examined for a fresh reliever, nearest cells first (cost cap). */
+  reliefMaxVisits: 32,
+  contagionRoutCap: 1,
   /** E4a: allies and enemies counted for morale support, at most (cost cap, §7). */
   supportCountCap: 16,
   /** E4a support is refreshed every this many ticks (2 s), staggered; it changes slowly. */
@@ -416,6 +425,31 @@ export function simulateFreeBattle(
   };
   const deathFields = [makeField(C.moraleRadius), makeField(C.moraleRadius)];
   const routFields = [makeField(cohesion[0] as number), makeField(cohesion[1] as number)];
+  // Active agents per coarse cell of size R_coh, rebuilt on refresh ticks: an empty 3×3 block
+  // around an agent proves there is no ally within R_coh (exact reject, design §7).
+  const cohFields = [makeField(cohesion[0] as number), makeField(cohesion[1] as number)];
+  const fillCohesion = (s: number): void => {
+    const f = cohFields[s] as (typeof cohFields)[0];
+    f.counts.fill(0);
+    const off = offOf(s);
+    for (let k = 0; k < cntOf(s); k++) {
+      const i = off + k;
+      if ((state[i] as number) >= FreeState.Routed) continue;
+      const c = cellOf(y[i] as number, f) * f.cols + cellOf(x[i] as number, f);
+      f.counts[c] = (f.counts[c] as number) + 1;
+    }
+  };
+  const blockCount = (i: number, f: (typeof cohFields)[0]): number => {
+    const cx = cellOf(x[i] as number, f);
+    const cy = cellOf(y[i] as number, f);
+    let m = 0;
+    for (let row = Math.max(0, cy - 1); row <= Math.min(f.cols - 1, cy + 1); row++) {
+      for (let col = Math.max(0, cx - 1); col <= Math.min(f.cols - 1, cx + 1); col++) {
+        m += f.counts[row * f.cols + col] as number;
+      }
+    }
+    return m;
+  };
   const cellOf = (v: number, f: { cols: number; size: number }): number => {
     const c = Math.floor(v / f.size);
     return c < 0 ? 0 : c >= f.cols ? f.cols - 1 : c;
@@ -429,6 +463,7 @@ export function simulateFreeBattle(
     f: { cols: number; size: number; counts: Int32Array },
     isSource: (i: number) => boolean,
     loss: (j: number) => number,
+    cap: number,
   ): void => {
     const off = offOf(s);
     const cnt = cntOf(s);
@@ -460,6 +495,7 @@ export function simulateFreeBattle(
       }
       if (isSource(j)) m -= 1;
       if (m <= 0) continue;
+      if (m > cap) m = cap;
       morale[j] = (morale[j] as number) - loss(j) * m;
       st.contagion += m;
     }
@@ -625,6 +661,7 @@ export function simulateFreeBattle(
     // reads another's status from this tick before it is final. Draws no random numbers.
     if (buffLayer) {
       const R = F.buffRefreshTicks;
+      for (let s = 0; s < 2; s++) if (social[s]) fillCohesion(s);
       for (let i = 0; i < n; i++) {
         const s = side[i] as number;
         if (!social[s]) continue;
@@ -635,7 +672,17 @@ export function simulateFreeBattle(
           continue;
         }
         if (step === 0 || (i + step) % R === 0) {
-          const c = countAllies(i, cohesion[s] as number, 1, false) >= 1;
+          self = i;
+          const c =
+            blockCount(i, cohFields[s] as (typeof cohFields)[0]) > 1 &&
+            (grids[s] as SpatialGrid).hasWithin(
+              x[i] as number,
+              y[i] as number,
+              cohesion[s] as number,
+              xs[s] as Float64Array,
+              ys[s] as Float64Array,
+              allyFilters[s] as (k: number) => boolean,
+            );
           cohesive[i] = c ? 1 : 0;
           if (c) graceLeft[i] = buffGrace;
           else if (step > 0) graceLeft[i] = (graceLeft[i] as number) - R * DT;
@@ -940,6 +987,7 @@ export function simulateFreeBattle(
             xs[s] as Float64Array,
             ys[s] as Float64Array,
             reliefFilters[s] as (k: number) => boolean,
+            F.reliefMaxVisits,
           );
           if (k >= 0) {
             nstate[i] = FreeState.Recover;
@@ -977,7 +1025,14 @@ export function simulateFreeBattle(
     }
     if (buffLayer && moraleBuff) {
       for (let s = 0; s < 2; s++) {
-        if (social[s]) contagion(s, deathFields[s] as (typeof deathFields)[0], newlyDead, ownLoss);
+        if (social[s])
+          contagion(
+            s,
+            deathFields[s] as (typeof deathFields)[0],
+            newlyDead,
+            ownLoss,
+            F.contagionDeathCap,
+          );
       }
     }
     for (let i = 0; i < n; i++) {
@@ -1038,7 +1093,13 @@ export function simulateFreeBattle(
         for (let s = 0; s < 2; s++) {
           if (!social[s]) continue;
           const shockLoss = routShock[s] as number;
-          contagion(s, routFields[s] as (typeof routFields)[0], isRoutedNow, () => shockLoss);
+          contagion(
+            s,
+            routFields[s] as (typeof routFields)[0],
+            isRoutedNow,
+            () => shockLoss,
+            F.contagionRoutCap,
+          );
         }
       }
       routedNow.fill(0);

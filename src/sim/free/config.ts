@@ -181,18 +181,34 @@ export function defaultFreeConfig(): FreeConfig {
   };
 }
 
-/** Agent-steps of a free batch, the same measure as the legacy `workEstimate`. */
-export function freeWorkEstimate(
-  c: Pick<FreeConfig, 'runs' | 'maxTime'> & { sides: readonly { count: number }[] },
-): number {
-  return c.runs * Math.round(c.maxTime / DT) * totalCount(c.sides);
+/**
+ * Cost of a free agent-step relative to a legacy one, for the work budget (design §7). The
+ * individual layer costs no more than the legacy engine per agent-step; with an active pack
+ * buff (a social side with any effect on) it measured about 1.8–2.4× (docs/PERFORMANCE.md), so
+ * such configs count 2.5 agent-steps each and `MAX_WORK` keeps its meaning.
+ */
+export const FREE_WORK_WEIGHT_BUFF = 2.5;
+
+type WorkInput = Pick<FreeConfig, 'maxTime'> & {
+  sides: readonly { count: number; species?: FreeSpeciesId }[];
+  packBuff?: PackBuffSwitches;
+};
+
+export function freeWorkWeight(c: WorkInput): number {
+  const sw = c.packBuff;
+  if (!sw || !PACK_BUFF_EFFECTS.some((e) => sw[e])) return 1;
+  const social = c.sides.some((s) => s.species !== undefined && FREE_SPECIES[s.species].social);
+  return social ? FREE_WORK_WEIGHT_BUFF : 1;
+}
+
+/** Weighted agent-steps of a free batch, the same measure as the legacy `workEstimate`. */
+export function freeWorkEstimate(c: WorkInput & Pick<FreeConfig, 'runs'>): number {
+  return c.runs * Math.round(c.maxTime / DT) * totalCount(c.sides) * freeWorkWeight(c);
 }
 
 /** Largest run count that keeps `freeWorkEstimate` within MAX_WORK (at least 1). */
-export function freeMaxRunsFor(
-  c: Pick<FreeConfig, 'maxTime'> & { sides: readonly { count: number }[] },
-): number {
-  const perRun = Math.round(c.maxTime / DT) * totalCount(c.sides);
+export function freeMaxRunsFor(c: WorkInput): number {
+  const perRun = Math.round(c.maxTime / DT) * totalCount(c.sides) * freeWorkWeight(c);
   return Math.max(1, Math.min(LIMITS.runs[1], Math.floor(MAX_WORK / perRun)));
 }
 
@@ -266,7 +282,7 @@ export function sanitizeFreeConfig(input: unknown): FreeConfig {
   const sides: [SideConfig, SideConfig] = [a, b];
   const runs = Math.min(
     num(o['runs'], d.runs, LIMITS.runs, true),
-    freeMaxRunsFor({ maxTime, sides }),
+    freeMaxRunsFor({ maxTime, sides, packBuff }),
   );
   return {
     mode: 'free',

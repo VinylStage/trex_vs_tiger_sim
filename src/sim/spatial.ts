@@ -130,6 +130,53 @@ export class SpatialGrid {
   }
 
   /**
+   * Whether any `accept`ed point lies within distance `r` of (x, y). Scans the cell holding
+   * (x, y) first, where a neighbour usually is, then the rest of the square.
+   */
+  hasWithin(
+    x: number,
+    y: number,
+    r: number,
+    xs: Float64Array,
+    ys: Float64Array,
+    accept: (i: number) => boolean,
+  ): boolean {
+    const r2 = r * r;
+    const home = this.col(y) * this.cols + this.col(x);
+    if (this.cellHas(home, x, y, r2, xs, ys, accept)) return true;
+    const c0 = Math.max(this.col(x - r), this.minCol);
+    const c1 = Math.min(this.col(x + r), this.maxCol);
+    const r0 = Math.max(this.col(y - r), this.minRow);
+    const r1 = Math.min(this.col(y + r), this.maxRow);
+    for (let row = r0; row <= r1; row++) {
+      for (let col = c0; col <= c1; col++) {
+        const c = row * this.cols + col;
+        if (c !== home && this.cellHas(c, x, y, r2, xs, ys, accept)) return true;
+      }
+    }
+    return false;
+  }
+
+  private cellHas(
+    c: number,
+    x: number,
+    y: number,
+    r2: number,
+    xs: Float64Array,
+    ys: Float64Array,
+    accept: (i: number) => boolean,
+  ): boolean {
+    const end = this.cellStart[c + 1] as number;
+    for (let k = this.cellStart[c] as number; k < end; k++) {
+      const i = this.items[k] as number;
+      const dx = (xs[i] as number) - x;
+      const dy = (ys[i] as number) - y;
+      if (dx * dx + dy * dy <= r2 && accept(i)) return true;
+    }
+    return false;
+  }
+
+  /**
    * First `accept`ed point within distance `r` of (x, y) in cell order (the order `query`
    * visits), or -1. Stops at the first match.
    */
@@ -140,21 +187,35 @@ export class SpatialGrid {
     xs: Float64Array,
     ys: Float64Array,
     accept: (i: number) => boolean,
+    maxVisits = Infinity,
   ): number {
     const r2 = r * r;
     const c0 = Math.max(this.col(x - r), this.minCol);
     const c1 = Math.min(this.col(x + r), this.maxCol);
     const r0 = Math.max(this.col(y - r), this.minRow);
     const r1 = Math.min(this.col(y + r), this.maxRow);
-    for (let row = r0; row <= r1; row++) {
-      for (let col = c0; col <= c1; col++) {
-        const c = row * this.cols + col;
-        const end = this.cellStart[c + 1] as number;
-        for (let k = this.cellStart[c] as number; k < end; k++) {
-          const i = this.items[k] as number;
-          const dx = (xs[i] as number) - x;
-          const dy = (ys[i] as number) - y;
-          if (dx * dx + dy * dy <= r2 && accept(i)) return i;
+    // Rings of cells outward from the cell holding (x, y), so a capped search sees the nearest
+    // candidates first; `maxVisits` bounds the points examined within distance r.
+    const cx = this.col(x);
+    const cy = this.col(y);
+    const rings = Math.max(cx - c0, c1 - cx, cy - r0, r1 - cy);
+    let visits = 0;
+    for (let ring = 0; ring <= rings; ring++) {
+      for (let row = cy - ring; row <= cy + ring; row++) {
+        if (row < r0 || row > r1) continue;
+        const edge = row === cy - ring || row === cy + ring;
+        for (let col = cx - ring; col <= cx + ring; col += edge || ring === 0 ? 1 : 2 * ring) {
+          if (col < c0 || col > c1) continue;
+          const c = row * this.cols + col;
+          const end = this.cellStart[c + 1] as number;
+          for (let k = this.cellStart[c] as number; k < end; k++) {
+            const i = this.items[k] as number;
+            const dx = (xs[i] as number) - x;
+            const dy = (ys[i] as number) - y;
+            if (dx * dx + dy * dy > r2) continue;
+            if (accept(i)) return i;
+            if (++visits >= maxVisits) return -1;
+          }
         }
       }
     }

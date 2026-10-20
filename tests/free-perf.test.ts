@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { sanitizeConfig } from '../src/sim/config';
 import { DT, simulateBattle } from '../src/sim/engine';
-import { buildFreeDesign, sanitizeFreeConfig } from '../src/sim/free/config';
+import { buildFreeDesign, freeWorkWeight, sanitizeFreeConfig } from '../src/sim/free/config';
 import { simulateFreeBattle } from '../src/sim/free/engine';
 import { buildDesign, designRow } from '../src/sim/sampling';
 
@@ -66,7 +66,7 @@ function freeRun(
   const t0 = performance.now();
   for (let r = 0; r < runs; r++) {
     const s = simulateFreeBattle(c, designRow(d, r), r).summary;
-    agentSteps += Math.round(s.duration / DT) * (heavy + pack);
+    agentSteps += Math.round(s.duration / DT) * (heavy + pack) * freeWorkWeight(c);
   }
   return { ms: performance.now() - t0, agentSteps };
 }
@@ -97,7 +97,7 @@ describe('free engine cost per agent-step', () => {
     expect(r.ratio).toBeLessThanOrEqual(1.5);
   }, 120_000);
 
-  it('stays within 1.5× with a social side and the pack buff on (10 T. rex v 100 wolves)', () => {
+  it('stays within 1.5× per weighted agent-step with the pack buff on (10 T. rex v 100 wolves)', () => {
     const r = compare('wolf', 10, 100, 6, 300, 3);
     expect(r.ratio).toBeLessThanOrEqual(1.5);
   }, 120_000);
