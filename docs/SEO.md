@@ -224,7 +224,7 @@ Sitemap: https://trex-vs-tiger.vinylims.com/sitemap.xml
 
 - `404.html` (Korean) and `en/404.html` (English) are build entries (`findHtmlEntries` returns every `404.html`). Cloudflare Pages serves the **nearest** `404.html` up the directory tree with status 404, and the presence of a top-level `404.html` turns off the single-page-app fallback.
 - Content: noindex, the site header and nav, links to the five main pages and to the other language, the shared footer. No canonical, no hreflang, no JSON-LD.
-- Asset URLs: with `base: './'` Vite writes `./assets/…` and `../favicon.svg`, which would resolve against the requested path (`/a/b/c` → `/a/b/assets/…`). The plugin rewrites every relative `src`/`href` in the two 404 files to the root-absolute path (`absolutizeUrls`).
+- Asset URLs: with `base: './'` Vite writes `./assets/…` and `../favicon.svg`, which would resolve against the requested path (`/a/b/c` → `/a/b/assets/…`). The plugin rewrites every relative `src`/`href` to the root-absolute path (`absolutizeUrls`). Since #82 step 2 it does this for **every** built HTML page, not just the two 404 files: the app moves between `/` and `/en/` with `history.pushState`, which made `./favicon.svg` resolve to `/en/favicon.svg` (404), and the `/r/` pages are served through a Pages Function under `/r/*`.
 
 Measured on the branch preview (commit 4509af6):
 

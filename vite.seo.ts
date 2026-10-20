@@ -92,9 +92,17 @@ export function gitLastmod(root: string, history: GitHistory, file: string): str
 export { notFoundLang };
 
 /**
- * 404 pages are served at any unknown path (`/a/b/c`), so the relative URLs Vite writes for
- * `base: './'` (`./assets/…`, `../favicon.svg`) would resolve against that path. Rewrite every
- * relative `src`/`href` in a 404 page (emitted at `fileName`) to the root-absolute path it means.
+ * Built HTML pages whose relative URLs are rewritten root-absolute: all of them. 404 pages are
+ * served at any unknown path (`/a/b/c`), the app moves between `/` and `/en/` with
+ * `history.pushState` (so `./favicon.svg` became `/en/favicon.svg`), and `/r/` pages are served
+ * through a Pages Function under `/r/*`. One rule for every page keeps them all consistent.
+ */
+export const needsRootAbsoluteUrls = (fileName: string): boolean => fileName.endsWith('.html');
+
+/**
+ * Vite writes relative URLs for `base: './'` (`./assets/…`, `../favicon.svg`), which resolve
+ * against the address the page is shown at. Rewrite every relative `src`/`href` in a page
+ * (emitted at `fileName`) to the root-absolute path it means.
  */
 export function absolutizeUrls(html: string, fileName: string): string {
   return html.replace(/(\s(?:src|href)=")(\.\.?\/[^"]*)"/g, (_, attr: string, rel: string) => {
@@ -187,7 +195,7 @@ export function seo({ root, version, deepen }: SeoOptions): Plugin {
         for (const out of Object.values(bundle)) {
           if (
             out.type === 'asset' &&
-            notFoundLang(out.fileName) &&
+            needsRootAbsoluteUrls(out.fileName) &&
             typeof out.source === 'string'
           ) {
             out.source = absolutizeUrls(out.source, out.fileName);
