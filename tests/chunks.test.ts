@@ -40,10 +40,13 @@ describe('splitRuns', () => {
 });
 
 describe('poolSize / ETA', () => {
-  it('uses the core count capped at 8 with a fallback of 4', () => {
-    expect(poolSize(undefined)).toBe(4);
-    expect(poolSize(0)).toBe(4);
-    expect(poolSize(2)).toBe(2);
+  it('leaves one core free, keeps at least 1 and at most 8 workers, assumes 4 cores if unknown', () => {
+    expect(poolSize(undefined)).toBe(3);
+    expect(poolSize(0)).toBe(3);
+    expect(poolSize(1)).toBe(1);
+    expect(poolSize(2)).toBe(1);
+    expect(poolSize(4)).toBe(3);
+    expect(poolSize(9)).toBe(8);
     expect(poolSize(64)).toBe(8);
   });
 

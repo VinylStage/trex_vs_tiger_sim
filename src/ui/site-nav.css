@@ -48,6 +48,18 @@
   }
 }
 
+/* 320–360 px: all items on one line. */
+@media (max-width: 360px) {
+  .site-nav-list {
+    gap: 0;
+  }
+
+  .site-nav-link {
+    padding: 0 4px;
+    font-size: 0.84rem;
+  }
+}
+
 @media print {
   .site-nav {
     display: none;

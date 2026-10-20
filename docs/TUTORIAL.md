@@ -36,22 +36,22 @@
 
 Steps are shown in this order. "Anchor" is the `data-tour` id the step spotlights. A step is skipped while none of its required anchors is visible, so the counter (`n / N`) only counts the steps that can be shown right now. Before the first run there are 10 steps; once results exist there are 13.
 
-| #   | id            | Anchor(s) (`data-tour`)           | Shown when                 | Notes                                                                 |
-| --- | ------------- | --------------------------------- | -------------------------- | --------------------------------------------------------------------- |
-| 1   | `welcome`     | none (centred)                    | always                     | What the simulator is; keyboard hints.                                |
-| 2   | `presets`     | `presets`                         | always                     | Preset chips.                                                         |
-| 3   | `counts`      | `counts` (T-Rex and tiger fields) | always                     | Both fields share one spotlight.                                      |
-| 4   | `runs`        | `runs`, `seed`                    | always                     | Two spotlights.                                                       |
-| 5   | `advanced`    | `advanced`                        | always                     | Opens the `<details>` for the step and restores its previous state.   |
-| 6   | `run`         | `run` (run bar)                   | always                     | Quick-demo button; see [The quick demo](#the-quick-demo).             |
-| 7   | `results`     | `results` (results panel)         | `results-empty` is visible | Preview of what appears after a run. Replaced by steps 8–11 later.    |
-| 8   | `verdict`     | `verdict`, `stat-cards`           | results exist              | Verdict line and summary cards.                                       |
-| 9   | `outcome`     | `outcome-chart`                   | results exist              | Outcome bars with 95% CI; mentions the histograms.                    |
-| 10  | `sensitivity` | `sensitivity-chart`               | results exist              | Spearman tornado chart.                                               |
-| 11  | `replay`      | `replay`                          | results exist              | Replay canvas and controls.                                           |
-| 12  | `share`       | `share`                           | always                     | Copy-link button and what the URL contains.                           |
-| 13  | `header`      | `lang`, `tour`                    | always                     | Language switch and the Tutorial button.                              |
-| 14  | `finish`      | none (centred)                    | always                     | Link to the guide page: `/guide/` (Korean) or `/en/guide/` (English). |
+| #   | id            | Anchor(s) (`data-tour`)           | Shown when                 | Notes                                                                                                                                    |
+| --- | ------------- | --------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `welcome`     | none (centred)                    | always                     | What the simulator is; keyboard hints.                                                                                                   |
+| 2   | `presets`     | `presets`                         | always                     | Preset chips.                                                                                                                            |
+| 3   | `counts`      | `counts` (T-Rex and tiger fields) | always                     | Both fields share one spotlight.                                                                                                         |
+| 4   | `runs`        | `runs`, `seed`                    | always                     | Two spotlights.                                                                                                                          |
+| 5   | `advanced`    | `advanced`                        | always                     | Opens the `<details>` (firing `toggle` at once, so the lazy table is built before the step is measured) and restores its previous state. |
+| 6   | `run`         | `run` (run bar)                   | always                     | Quick-demo button; see [The quick demo](#the-quick-demo).                                                                                |
+| 7   | `results`     | `results` (results panel)         | `results-empty` is visible | Preview of what appears after a run. Replaced by steps 8–11 later.                                                                       |
+| 8   | `verdict`     | `verdict`, `stat-cards`           | results exist              | Verdict line and summary cards.                                                                                                          |
+| 9   | `outcome`     | `outcome-chart`                   | results exist              | Outcome bars with 95% CI; mentions the histograms.                                                                                       |
+| 10  | `sensitivity` | `sensitivity-chart`               | results exist              | Spearman tornado chart.                                                                                                                  |
+| 11  | `replay`      | `replay`                          | results exist              | Replay canvas and controls.                                                                                                              |
+| 12  | `share`       | `share`                           | always                     | Copy-link button and what the URL contains.                                                                                              |
+| 13  | `header`      | `lang`, `tour`                    | always                     | Language switch and the Tutorial button.                                                                                                 |
+| 14  | `finish`      | none (centred)                    | always                     | Link to the guide page: `/guide/` (Korean) or `/en/guide/` (English).                                                                    |
 
 ## Files
 
@@ -106,7 +106,8 @@ The `run` step offers **Run a quick demo (100 runs)** (`DEMO_RUNS` in `tour-mode
 
 - The tour is a full-viewport modal `<dialog>` in the top layer. An inline SVG covers it: a dimming rectangle with an SVG `<mask>` that has one black, rounded `<rect>` per hole. A ring `<div>` outlines each hole.
 - Each target's rectangle is clipped by its scrolling ancestors (for example the sticky config panel on wide screens) and by the viewport, padded by 6 px, and merged with neighbours closer than 24 px (`mergeRects`).
-- `placePopover` puts the popover below the targets, else above, else right, else left. If none fits, it docks to the bottom edge. Without a target it is centred. It always keeps a 12 px margin inside the viewport.
+- `placePopover` puts the popover below the targets, else above, else right, else left. If none fits whole, it goes on the side (above or below) with more room and scrolls inside itself (`maxH`), provided that leaves at least `MIN_POPOVER_ROOM` (160 px). Otherwise it docks to the bottom edge and the spotlight is trimmed to the part of the target above it. Without a target it is centred. It always keeps a 12 px margin inside the viewport.
+- A sticky target (the run bar) is not scrolled to the centre: the tour scrolls the end of its container (the config panel) to the bottom edge, so the bar rests there with the space above it free for the popover.
 - The popover is at most the viewport height minus 24 px. On short viewports (for example 320 × 256, which is 1280 × 1024 at 400% zoom) its text scrolls, starting at the top on every step, while the **Skip / Back / Next** row stays pinned to its bottom edge (`position: sticky`). `scroll-padding-bottom` is set to the height of that row, so a focused demo button or guide link is never scrolled in behind it.
 - On step change the first target is scrolled into view (`block: 'center'`, or `'start'` for tall targets) unless all targets are already fully visible, smoothly unless reduced motion is requested. A new step first cancels any smooth scroll the previous step started (an instant `scrollTo` to the current position), so pressing Next quickly cannot carry the new target off screen. Layout is recomputed in `requestAnimationFrame` on window resize, on any scroll (a capturing `scroll` listener catches nested scroll containers), and when the body, the popover or a target changes size (`ResizeObserver`).
 - Clicks on the dimmed page do nothing. The page behind the dialog is inert, so it cannot be operated during the tour, but it can still be scrolled.
