@@ -42,6 +42,7 @@ import {
   type Lang,
   type MsgKey,
 } from '../src/ui/i18n';
+import { PRESETS } from '../src/ui/form';
 import { footerItems, siteNavItems } from '../src/ui/site-nav';
 import { findHtmlEntries } from '../vite.pages';
 
@@ -922,6 +923,38 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
     );
   });
 
+  it('states the widened bounds of the other species as in src/sim/species.ts', () => {
+    // Every non-default species shares one set of widened bounds; the prose names exactly the
+    // ends that differ from the T. rex/tiger (v1) bounds.
+    const wide = (id: (typeof PARAMS)[number]['id']): readonly [number, number] =>
+      paramBounds(id, 'elephant', 'lion');
+    for (const p of PARAMS) {
+      for (const h of HEAVY_SPECIES_IDS.filter((s) => s !== DEFAULT_HEAVY)) {
+        for (const pk of PACK_SPECIES_IDS.filter((s) => s !== DEFAULT_PACK)) {
+          expect(paramBounds(p.id, h, pk), `${h}/${pk} ${p.id}`).toEqual(wide(p.id));
+        }
+      }
+    }
+    const expected: string[] = [];
+    for (const p of PARAMS) {
+      const v1 = paramBounds(p.id, DEFAULT_HEAVY, DEFAULT_PACK);
+      const w = wide(p.id);
+      if (w[0] !== v1[0]) expected.push(`${p.id} lo ${w[0]}`);
+      if (w[1] !== v1[1]) expected.push(`${p.id} hi ${w[1]}`);
+    }
+    const stated = dataValues(html)
+      .filter((d) => d.k === 'wide')
+      .map((d) => {
+        expect(shownNumber(d.shown)).toBe(Number(d.value));
+        return d;
+      });
+    const named = elements(html, 'data')
+      .filter((d) => d.attrs['data-k'] === 'wide')
+      .map((d) => `${d.attrs['data-param']} ${d.attrs['data-end']} ${Number(d.attrs['value'])}`);
+    expect(stated).toHaveLength(named.length);
+    expect([...named].sort()).toEqual([...expected].sort());
+  });
+
   it('lists engine constants with their code values', () => {
     const rows = tags(html, 'tr').filter((t) => t.attrs['data-constant'] !== undefined);
     expect(rows.length).toBeGreaterThanOrEqual(15);
@@ -931,6 +964,30 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
       expect(Object.hasOwn(values, name), `unknown constant ${name}`).toBe(true);
       expect(numberFacts(row.inner, ['value'])).toEqual({ value: values[name] });
     }
+  });
+});
+
+describe.each(LANGS)('guide page (%s)', (lang) => {
+  it('lists the matchup presets of src/ui/form.ts in order', () => {
+    const html = read(sourceOf('guide', lang));
+    const rows = elements(html, 'tr').filter((r) => r.attrs['data-heavy'] !== undefined);
+    expect(
+      rows.map((r) => {
+        const facts = Object.fromEntries(
+          elements(r.inner, 'data').map((d) => {
+            expect(shownNumber(d.inner)).toBe(Number(d.attrs['value']));
+            return [d.attrs['data-k'], Number(d.attrs['value'])];
+          }),
+        );
+        return {
+          heavySpecies: r.attrs['data-heavy'],
+          packSpecies: r.attrs['data-pack'],
+          heavyCount: facts['heavyCount'],
+          packCount: facts['packCount'],
+          runs: facts['runs'],
+        };
+      }),
+    ).toEqual(PRESETS.map((p) => ({ ...p })));
   });
 });
 

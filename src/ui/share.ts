@@ -135,7 +135,9 @@ export function decodeConfig(payload: string): ScenarioConfig {
       return defaultConfig();
     }
     const raw = parsed as Record<string, unknown>;
-    const o = raw['v'] === undefined || raw['v'] === 1 ? upgradeV1(raw) : raw;
+    // Main ignored `v`, so anything that is not a number ≥ 2 is a v1 payload.
+    const v = raw['v'];
+    const o = typeof v !== 'number' || !(v >= 2) ? upgradeV1(raw) : raw;
     return sanitizeConfig({
       ...o,
       heavySpecies: o['heavy'],

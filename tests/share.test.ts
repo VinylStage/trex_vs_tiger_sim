@@ -241,6 +241,20 @@ describe('v1 links', () => {
     expect(c.params['pack.mass']).toEqual({ min: 30, mode: 30, max: 500 });
   });
 
+  it('treats any payload without a numeric v >= 2 as v1', () => {
+    const want = decodeConfig(
+      encodeRaw({ v: 1, trexCount: 3, params: { 'tiger.dps': [1, 2, 3] } }),
+    );
+    expect(want.heavyCount).toBe(3);
+    for (const v of ['1', '2', null, true, 0, 1.5, Number.NaN, [2], { n: 2 }]) {
+      const raw = { v, trexCount: 3, params: { 'tiger.dps': [1, 2, 3] } };
+      expect(decodeConfig(encodeRaw(raw)), JSON.stringify(v)).toEqual(want);
+    }
+    expect(
+      decodeConfig(encodeRaw({ v: 3, heavyCount: 3, params: { 'pack.dps': [1, 2, 3] } })),
+    ).toEqual(want);
+  });
+
   it('ignores v2-only keys in a v1 payload, as v1 did', () => {
     const c = decodeConfig(encodeRaw({ v: 1, heavyCount: 7, params: { 'heavy.mass': [1, 2, 3] } }));
     expect(c).toEqual(defaultConfig());
