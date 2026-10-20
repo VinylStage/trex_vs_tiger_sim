@@ -1,6 +1,6 @@
 import { sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { simulateBattle } from '../sim/engine';
-import { runChunk } from '../sim/montecarlo';
+import { aggregate, runChunk, unpackSummaries } from '../sim/montecarlo';
 import { buildDesign, designRow, type Design } from '../sim/sampling';
 import { traceTransferList, type WorkerRequest, type WorkerResponse } from './protocol';
 
@@ -41,6 +41,12 @@ function handle(msg: WorkerRequest): void {
       }
     });
     ctx.postMessage({ type: 'result', jobId: msg.jobId, summaries });
+    return;
+  }
+  if (msg.type === 'aggregate') {
+    // Off the main thread: at 20,000 runs the Spearman sensitivities alone take hundreds of ms.
+    const agg = aggregate(config, design, unpackSummaries(msg.summaries));
+    ctx.postMessage({ type: 'aggregate', jobId: msg.jobId, agg });
     return;
   }
   const run = Math.max(0, Math.min(config.runs - 1, Math.floor(msg.run)));

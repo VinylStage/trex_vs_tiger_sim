@@ -148,6 +148,8 @@ How to read the sensitivity:
 - Spearman ρ captures monotonic one-at-a-time association only. Interactions are not captured; Sobol indices are on the roadmap.
 - As a rough guide, the standard error is about `1/√(runs−1)`, which is ≈ 0.045 at 500 runs. Treat \|ρ\| ≲ 0.1 as noise.
 
+**Where it runs.** In the app, `aggregate` runs in one of the run workers, not on the main thread: the pool packs the summaries into one `Float64Array` (`packSummaries`, 9 numbers per run), transfers it and receives the `AggregateResult`. The sensitivity loop ranks `heavyAdvantage` once and each parameter column once, then takes Pearson's r on the ranks, which gives the same doubles as `spearman()` (tested). Timings: [PERFORMANCE.md](PERFORMANCE.md).
+
 ### 2.6 Replay trace and event log
 
 The UI replays the representative run (§2.5) by simulating it again with `trace = true` in a Web Worker. Only that run records a trace. Monte Carlo runs use `trace = false` and record nothing.

@@ -2,8 +2,9 @@ import type { AggregateResult, Sensitivity } from '../sim/montecarlo';
 import type { ParamId } from '../sim/params';
 import { histogram, type Histogram } from '../sim/stats';
 import { h } from './dom';
-import { formatFixed, formatNum, formatPct } from './format';
+import { formatFixed, formatInt, formatNum, formatPct } from './format';
 import { t, type MsgKey } from './i18n';
+import { formatBound, formatCountShare, formatShare, outcomes } from './verdict';
 
 /** Colors and font read from CSS custom properties, so charts follow the light/dark theme. */
 export interface Theme {
@@ -70,58 +71,134 @@ export function redrawAllCharts(): void {
   for (const c of live) c.redraw();
 }
 
+/** The data behind a chart as a table: one header row and the body rows (all text). */
+export interface ChartTable {
+  head: readonly string[];
+  rows: readonly (readonly string[])[];
+}
+
 /**
  * A HiDPI-aware canvas inside a <figure>, redrawn on resize and on color-scheme change, with a
- * hover/tap tooltip driven by the hit regions the painter returns.
+ * tooltip driven by the hit regions the painter returns and a data table with every plotted
+ * value (WCAG 1.1.1 long description, docs/research/UX_AUDIT.md P0-5).
+ *
+ * The tooltip follows a mouse, stays after a tap or pen press until the next tap elsewhere or
+ * Esc, and steps through the values with the arrow keys while the canvas has focus.
  */
 export class CanvasChart {
   readonly el: HTMLElement;
   private readonly box: HTMLDivElement;
   private readonly canvas: HTMLCanvasElement;
   private readonly tip: HTMLDivElement;
+  private readonly details: HTMLDetailsElement;
+  private readonly tableSlot: HTMLDivElement;
+  private readonly titleKey: MsgKey;
   private painter: Painter | null = null;
+  private table: ChartTable | null = null;
+  private tableDirty = false;
   private hits: Hit[] = [];
   private readonly ro: ResizeObserver;
   private lastW = -1;
+  /** Index of the hit shown by keyboard, -1 when none. */
+  private active = -1;
+  /** A tap or pen press pinned the tooltip; it stays until a tap elsewhere or Esc. */
+  private pinned = false;
+  private readonly onOutside = (e: PointerEvent): void => {
+    if (e.target instanceof Node && this.box.contains(e.target)) return;
+    this.hideTip();
+  };
 
   constructor(titleKey: MsgKey, className: string, note?: MsgKey) {
+    this.titleKey = titleKey;
     this.canvas = h('canvas', { attrs: { role: 'img' } });
     this.tip = h('div', { class: 'chart-tip', attrs: { 'aria-hidden': 'true' } });
     this.tip.hidden = true;
     this.box = h('div', { class: `chart-box ${className}` }, this.canvas, this.tip);
+    this.tableSlot = h('div', { class: 'chart-table-wrap' });
+    this.details = h(
+      'details',
+      { class: 'chart-data' },
+      h('summary', { i18n: 'table.show' }),
+      this.tableSlot,
+    );
+    // The table is built when it is first shown, so rendering results stays cheap.
+    this.details.addEventListener('toggle', () => {
+      if (this.details.open) this.renderTable();
+    });
     this.el = h(
       'figure',
       { class: 'chart' },
       h('figcaption', {}, h('span', { class: 'chart-title', i18n: titleKey })),
       note ? h('p', { class: 'chart-note', i18n: note }) : null,
       this.box,
+      this.details,
     );
     this.ro = new ResizeObserver(() => {
       const w = this.box.clientWidth;
       if (w !== this.lastW) this.redraw();
     });
     this.ro.observe(this.box);
-    this.canvas.addEventListener('pointermove', (e) => this.onPointer(e));
-    this.canvas.addEventListener('pointerdown', (e) => this.onPointer(e));
-    this.canvas.addEventListener('pointerleave', () => {
-      this.tip.hidden = true;
+    this.canvas.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'mouse' && !this.pinned) this.onPointer(e);
     });
+    this.canvas.addEventListener('pointerdown', (e) => {
+      this.pinned = e.pointerType !== 'mouse';
+      this.onPointer(e);
+      if (this.pinned && !this.tip.hidden) {
+        document.addEventListener('pointerdown', this.onOutside, true);
+      }
+    });
+    this.canvas.addEventListener('pointerleave', (e) => {
+      // A touch ends with pointerleave right after pointerup; a pinned tooltip stays.
+      if (e.pointerType === 'mouse' && !this.pinned) this.hideTip();
+    });
+    this.canvas.addEventListener('keydown', (e) => this.onKey(e));
+    this.canvas.addEventListener('blur', () => this.hideTip());
     live.add(this);
     watchColorScheme();
   }
 
-  set(painter: Painter, ariaLabel: string, cssHeight?: number): void {
+  /**
+   * Show a painter. `table` lists every plotted value; `deferPaint` paints after the next frame
+   * instead of now (the language switch shows the new text first).
+   */
+  set(
+    painter: Painter,
+    ariaLabel: string,
+    opts: { cssHeight?: number; table?: ChartTable; deferPaint?: boolean } = {},
+  ): void {
     this.painter = painter;
-    this.canvas.setAttribute('aria-label', ariaLabel);
-    if (cssHeight !== undefined) this.canvas.style.height = `${cssHeight}px`;
-    this.redraw();
+    this.canvas.setAttribute('aria-label', `${ariaLabel}. ${t('chart.tableHint')}`);
+    this.canvas.tabIndex = 0;
+    if (opts.cssHeight !== undefined) this.canvas.style.height = `${opts.cssHeight}px`;
+    this.table = opts.table ?? null;
+    this.tableDirty = true;
+    if (this.details.open) this.renderTable();
+    if (opts.deferPaint) {
+      this.hideTip();
+      requestAnimationFrame(() => setTimeout(() => this.redraw(), 0));
+    } else this.redraw();
+  }
+
+  /** Forget the painter and the table (results are being recomputed); the size stays. */
+  reset(): void {
+    this.painter = null;
+    this.table = null;
+    this.tableDirty = true;
+    this.hits = [];
+    this.hideTip();
+    this.canvas.removeAttribute('aria-label');
+    this.canvas.removeAttribute('tabindex');
+    this.renderTable();
+    const ctx = this.canvas.getContext('2d');
+    ctx?.clearRect(0, 0, this.canvas.width, this.canvas.height);
   }
 
   redraw(): void {
     const w = this.box.clientWidth;
     const hgt = this.canvas.clientHeight;
     this.lastW = w;
-    this.tip.hidden = true;
+    this.hideTip();
     if (!this.painter || w <= 0 || hgt <= 0) return;
     const dpr = Math.max(1, Math.min(3, globalThis.devicePixelRatio || 1));
     this.canvas.width = Math.round(w * dpr);
@@ -135,7 +212,68 @@ export class CanvasChart {
 
   destroy(): void {
     this.ro.disconnect();
+    document.removeEventListener('pointerdown', this.onOutside, true);
     live.delete(this);
+  }
+
+  private renderTable(): void {
+    if (!this.tableDirty) return;
+    this.tableDirty = false;
+    const data = this.table;
+    if (!data) {
+      this.tableSlot.replaceChildren();
+      return;
+    }
+    const table = h(
+      'table',
+      { class: 'chart-table' },
+      h('caption', { class: 'visually-hidden', text: t(this.titleKey) }),
+      h(
+        'thead',
+        {},
+        h('tr', {}, ...data.head.map((c) => h('th', { attrs: { scope: 'col' }, text: c }))),
+      ),
+      h(
+        'tbody',
+        {},
+        ...data.rows.map((r) =>
+          h(
+            'tr',
+            {},
+            ...r.map((c, i) =>
+              i === 0 ? h('th', { attrs: { scope: 'row' }, text: c }) : h('td', { text: c }),
+            ),
+          ),
+        ),
+      ),
+    );
+    this.tableSlot.replaceChildren(table);
+  }
+
+  private hideTip(): void {
+    this.tip.hidden = true;
+    this.pinned = false;
+    this.active = -1;
+    document.removeEventListener('pointerdown', this.onOutside, true);
+  }
+
+  private onKey(e: KeyboardEvent): void {
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    const n = this.hits.length;
+    if (e.key === 'Escape') {
+      if (this.tip.hidden) return;
+      this.hideTip();
+      e.preventDefault();
+      return;
+    }
+    if (n === 0) return;
+    const next = nextHit(e.key, this.active, n);
+    if (next === null) return;
+    e.preventDefault();
+    const hit = this.hits[next];
+    if (!hit) return;
+    this.active = next;
+    this.showTip(hit, hit.x + hit.w / 2, hit.y + hit.h / 2);
   }
 
   private onPointer(e: PointerEvent): void {
@@ -144,11 +282,17 @@ export class CanvasChart {
     const y = e.clientY - r.top;
     const hit = this.hits.find((k) => x >= k.x && x <= k.x + k.w && y >= k.y && y <= k.y + k.h);
     if (!hit) {
-      this.tip.hidden = true;
+      this.hideTip();
       return;
     }
+    this.showTip(hit, x, y);
+  }
+
+  private showTip(hit: Hit, x: number, y: number): void {
     this.tip.textContent = hit.text;
     this.tip.hidden = false;
+    // Measure at the left edge: at its last position the wrapping tip would be squeezed narrower.
+    this.tip.style.left = '0px';
     const bw = this.box.clientWidth;
     const tw = this.tip.offsetWidth;
     const th = this.tip.offsetHeight;
@@ -157,6 +301,19 @@ export class CanvasChart {
     this.tip.style.left = `${left}px`;
     this.tip.style.top = `${top}px`;
   }
+}
+
+/**
+ * The hit a key moves the keyboard tooltip to: arrows step (wrapping), Home/End jump to the ends;
+ * null for any other key. `active` is -1 before the first step.
+ */
+export function nextHit(key: string, active: number, n: number): number | null {
+  if (n <= 0) return null;
+  if (key === 'ArrowRight' || key === 'ArrowDown') return (active + 1) % n;
+  if (key === 'ArrowLeft' || key === 'ArrowUp') return active <= 0 ? n - 1 : active - 1;
+  if (key === 'Home') return 0;
+  if (key === 'End') return n - 1;
+  return null;
 }
 
 // ---------- helpers ----------
@@ -219,6 +376,32 @@ function ellipsize(ctx: CanvasRenderingContext2D, text: string, maxW: number): s
   return `${s}…`;
 }
 
+/**
+ * Break `text` at spaces into at most two lines no wider than `maxW`; the second line is cut with
+ * an ellipsis when the rest does not fit. One line when it fits whole.
+ */
+export function wrapLabel(text: string, maxW: number, measure: (s: string) => number): string[] {
+  if (measure(text) <= maxW) return [text];
+  const words = text.split(' ');
+  let first = '';
+  let i = 0;
+  for (; i < words.length; i++) {
+    const next = first ? `${first} ${words[i]}` : (words[i] ?? '');
+    if (first && measure(next) > maxW) break;
+    first = next;
+  }
+  const rest = words.slice(i).join(' ');
+  if (!rest || measure(first) > maxW) return [cut(text, maxW, measure)];
+  return [first, cut(rest, maxW, measure)];
+}
+
+function cut(text: string, maxW: number, measure: (s: string) => number): string {
+  if (measure(text) <= maxW) return text;
+  let s = text;
+  while (s.length > 1 && measure(`${s}…`) > maxW) s = s.slice(0, -1);
+  return `${s}…`;
+}
+
 function noData(ctx: CanvasRenderingContext2D, size: Size, theme: Theme): Hit[] {
   ctx.fillStyle = theme.muted;
   ctx.font = font(theme, 13);
@@ -230,16 +413,25 @@ function noData(ctx: CanvasRenderingContext2D, size: Size, theme: Theme): Hit[] 
 
 // ---------- outcome bars ----------
 
+const OUTCOME_NAME = {
+  heavy: 'outcome.heavy',
+  pack: 'outcome.pack',
+  draw: 'outcome.draw',
+} as const;
+
 export function paintOutcome(agg: AggregateResult): Painter {
   return (ctx, { w, h: hgt }, theme) => {
-    const rows = [
-      { name: t('outcome.heavy'), iv: agg.pHeavy, color: theme.heavy },
-      { name: t('outcome.pack'), iv: agg.pPack, color: theme.pack },
-      { name: t('outcome.draw'), iv: agg.pDraw, color: theme.draw },
-    ];
+    const color = { heavy: theme.heavy, pack: theme.pack, draw: theme.draw };
+    const rows = outcomes(agg).map((o) => ({
+      ...o,
+      name: t(OUTCOME_NAME[o.kind]),
+      color: color[o.kind],
+      label: formatShare(o.k, o.n),
+    }));
+    ctx.font = font(theme, 13, 600);
+    const valueW = Math.max(...rows.map((r) => ctx.measureText(r.label).width));
     ctx.font = font(theme, 13);
     const labelW = Math.min(w * 0.35, Math.max(...rows.map((r) => ctx.measureText(r.name).width)));
-    const valueW = ctx.measureText(formatPct(1)).width;
     const left = labelW + 12;
     const right = w - valueW - 12;
     const top = 4;
@@ -253,7 +445,7 @@ export function paintOutcome(agg: AggregateResult): Painter {
     ctx.strokeStyle = theme.grid;
     ctx.lineWidth = 1;
     ctx.fillStyle = theme.muted;
-    ctx.font = font(theme, 11);
+    ctx.font = font(theme, 12);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     for (const p of [0, 0.25, 0.5, 0.75, 1]) {
@@ -295,7 +487,7 @@ export function paintOutcome(agg: AggregateResult): Painter {
       ctx.fillStyle = theme.fg;
       ctx.font = font(theme, 13, 600);
       ctx.textAlign = 'right';
-      ctx.fillText(formatPct(r.iv.p), w, cy);
+      ctx.fillText(r.label, w, cy);
 
       hits.push({
         x: 0,
@@ -304,9 +496,11 @@ export function paintOutcome(agg: AggregateResult): Painter {
         h: bandH,
         text: t('chart.outcomeTip', {
           name: r.name,
-          p: formatPct(r.iv.p),
-          lo: formatPct(r.iv.lo),
-          hi: formatPct(r.iv.hi),
+          n: formatInt(r.n),
+          k: formatInt(r.k),
+          p: r.label,
+          lo: formatBound(r.iv.lo, r.n),
+          hi: formatBound(r.iv.hi, r.n),
         }),
       });
     });
@@ -334,7 +528,7 @@ export function paintHistogram(hist: Histogram, opts: HistogramOptions): Painter
     const yMax = Math.max(1, ...counts);
     const yTicks = niceTicks(0, yMax, 4, true);
     const yTop = Math.max(yMax, yTicks[yTicks.length - 1] ?? yMax);
-    ctx.font = font(theme, 11);
+    ctx.font = font(theme, 12);
     const left = Math.max(...yTicks.map((v) => ctx.measureText(formatNum(v, 0)).width)) + 10;
     const right = w - 8;
     const top = 8;
@@ -377,7 +571,7 @@ export function paintHistogram(hist: Histogram, opts: HistogramOptions): Painter
         text: t('chart.binTip', {
           range: opts.binLabel(lo, lo + binW),
           count: formatNum(c, 0),
-          pct: formatPct(c / total),
+          pct: formatCountShare(c, total),
         }),
       });
     });
@@ -419,11 +613,21 @@ export function paintTornado(
     const maxAbs = Math.max(...rows.map((r) => Math.abs(r.rho)));
     const scale = [0.1, 0.2, 0.3, 0.5, 0.75, 1].find((s) => s >= maxAbs - 1e-9) ?? 1;
     ctx.font = font(theme, 12);
+    // Phones: a wider label column, and labels that do not fit wrap onto a second line.
+    const narrow = w < 400;
     const labelW = Math.min(
-      w * 0.42,
+      w * (narrow ? 0.45 : 0.42),
       Math.max(...rows.map((r) => ctx.measureText(label(r.id)).width)),
     );
-    const headH = 20;
+    const measure = (s: string): number => ctx.measureText(s).width;
+    ctx.font = font(theme, 12);
+    const packHead = t('chart.favPack');
+    const heavyHead = t('chart.favHeavy');
+    const headW = measure(packHead) + measure(heavyHead) + 12;
+    // The direction labels sit over the plot; when they do not fit there they may use the label
+    // column's width too, and failing that take a row each.
+    const twoRowHead = headW > w - 4;
+    const headH = twoRowHead ? 36 : 20;
     const left = labelW + 12;
     const right = w - 4;
     const valueRoom = ctx.measureText('−0.00').width + 8;
@@ -433,12 +637,12 @@ export function paintTornado(
     const barH = Math.min(18, bandH * 0.6);
 
     ctx.fillStyle = theme.muted;
-    ctx.font = font(theme, 11);
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'left';
-    ctx.fillText(t('chart.favPack'), left, headH / 2);
+    const packX = headW <= right - left ? left : 0;
+    ctx.fillText(packHead, packX, twoRowHead ? 9 : headH / 2);
     ctx.textAlign = 'right';
-    ctx.fillText(t('chart.favHeavy'), right, headH / 2);
+    ctx.fillText(heavyHead, right, twoRowHead ? 27 : headH / 2);
 
     ctx.strokeStyle = theme.grid;
     ctx.lineWidth = 1;
@@ -454,7 +658,11 @@ export function paintTornado(
       ctx.fillStyle = theme.fg;
       ctx.font = font(theme, 12);
       ctx.textAlign = 'right';
-      ctx.fillText(ellipsize(ctx, name, labelW), labelW, cy);
+      const lines = narrow ? wrapLabel(name, labelW, measure) : [ellipsize(ctx, name, labelW)];
+      const lineH = Math.min(14, bandH / 2);
+      lines.forEach((line, j) => {
+        ctx.fillText(line, labelW, cy + (j - (lines.length - 1) / 2) * lineH);
+      });
 
       const len = (Math.abs(r.rho) / scale) * half;
       ctx.fillStyle = r.rho >= 0 ? theme.heavy : theme.pack;
@@ -463,7 +671,7 @@ export function paintTornado(
 
       const value = `${r.rho >= 0 ? '+' : '−'}${formatFixed(Math.abs(r.rho), 2)}`;
       ctx.fillStyle = theme.fg;
-      ctx.font = font(theme, 11);
+      ctx.font = font(theme, 12);
       ctx.textAlign = r.rho >= 0 ? 'left' : 'right';
       ctx.fillText(value, r.rho >= 0 ? cx + len + 4 : cx - len - 4, cy);
 
@@ -476,5 +684,53 @@ export function paintTornado(
       });
     });
     return hits;
+  };
+}
+
+// ---------- data tables ----------
+
+/** Outcome, count, share and 95% interval of each outcome. */
+export function outcomeTable(agg: AggregateResult): ChartTable {
+  return {
+    head: [t('table.outcome'), t('table.count'), t('table.share'), t('table.interval')],
+    rows: outcomes(agg).map((o) => [
+      t(OUTCOME_NAME[o.kind]),
+      `${formatInt(o.k)} / ${formatInt(o.n)}`,
+      formatShare(o.k, o.n),
+      `${formatBound(o.iv.lo, o.n)}–${formatBound(o.iv.hi, o.n)}`,
+    ]),
+  };
+}
+
+/** Every bin of a histogram: its range, run count and share (the same labels as the tooltips). */
+export function histogramTable(
+  hist: Histogram,
+  binLabel: (lo: number, hi: number) => string,
+): ChartTable {
+  const total = hist.counts.reduce((a, b) => a + b, 0);
+  const binW = (hist.max - hist.min) / Math.max(1, hist.counts.length);
+  return {
+    head: [t('table.range'), t('table.runs'), t('table.share')],
+    rows: hist.counts.map((c, i) => {
+      const lo = hist.min + i * binW;
+      return [binLabel(lo, lo + binW), formatInt(c), formatCountShare(c, total)];
+    }),
+  };
+}
+
+/** Every plotted sensitivity: parameter, signed ρ and the side larger values favour. */
+export function tornadoTable(
+  sens: readonly Sensitivity[],
+  label: (id: ParamId) => string,
+  top = 10,
+): ChartTable {
+  const rows = sens.filter((s) => Number.isFinite(s.rho)).slice(0, top);
+  return {
+    head: [t('table.param'), t('table.rho'), t('table.favours')],
+    rows: rows.map((r) => [
+      label(r.id),
+      `${r.rho >= 0 ? '+' : '−'}${formatFixed(Math.abs(r.rho), 2)}`,
+      r.rho > 0 ? t('chart.favHeavy') : r.rho < 0 ? t('chart.favPack') : t('table.none'),
+    ]),
   };
 }

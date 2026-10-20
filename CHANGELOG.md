@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.2.1](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.0...trex-vs-tiger-sim-v0.2.1) (2026-10-20)
+
+
+### Features
+
+* **ui:** UX and performance pass with mobile responsive fixes ([#52](https://github.com/VinylStage/trex_vs_tiger_sim/issues/52)) ([08b174d](https://github.com/VinylStage/trex_vs_tiger_sim/commit/08b174db50abe5a28c3d484f05169280cf45b3e6))
+
+## [0.2.0](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.1.0...trex-vs-tiger-sim-v0.2.0) (2026-10-20)
+
+
+### Features
+
+* **brand:** "티렉스 대 호랑이" OG cards, icon set and reproducible render pipeline ([#34](https://github.com/VinylStage/trex_vs_tiger_sim/issues/34)) ([cf8716b](https://github.com/VinylStage/trex_vs_tiger_sim/commit/cf8716b34943756c202f96c38e7a9931d40f2677)), closes [#29](https://github.com/VinylStage/trex_vs_tiger_sim/issues/29)
+* **pages:** static guide, model, parameters, about and privacy pages in Korean and English ([#37](https://github.com/VinylStage/trex_vs_tiger_sim/issues/37)) ([c30dea7](https://github.com/VinylStage/trex_vs_tiger_sim/commit/c30dea75f995726a684aa04eb68c0d52bceca785)), closes [#21](https://github.com/VinylStage/trex_vs_tiger_sim/issues/21)
+* **replay:** event-exact abstract replay v2 with camera, timeline and accessibility ([#44](https://github.com/VinylStage/trex_vs_tiger_sim/issues/44)) ([f18a934](https://github.com/VinylStage/trex_vs_tiger_sim/commit/f18a9342d72fe1dd0d1bc7d49b500d389ca15dde)), closes [#26](https://github.com/VinylStage/trex_vs_tiger_sim/issues/26)
+* **seo:** site shell with URL languages, footer, license pages, 404s, generated sitemap and structured data ([#43](https://github.com/VinylStage/trex_vs_tiger_sim/issues/43)) ([15bb461](https://github.com/VinylStage/trex_vs_tiger_sim/commit/15bb4614bb1f497b5f26f11e4993563b1f5315e1)), closes [#28](https://github.com/VinylStage/trex_vs_tiger_sim/issues/28) [#30](https://github.com/VinylStage/trex_vs_tiger_sim/issues/30)
+* **sim:** multi-species roster with species pickers, matchup presets and v1-compatible share links ([#45](https://github.com/VinylStage/trex_vs_tiger_sim/issues/45)) ([4bae10b](https://github.com/VinylStage/trex_vs_tiger_sim/commit/4bae10b0289a92c9bf76f369e2abb93387def805)), closes [#25](https://github.com/VinylStage/trex_vs_tiger_sim/issues/25)
+* **ui:** interactive guided tour on the simulator page ([#38](https://github.com/VinylStage/trex_vs_tiger_sim/issues/38)) ([48aeb23](https://github.com/VinylStage/trex_vs_tiger_sim/commit/48aeb236ab6f8496f9f15a4a1ddd56d870a50f01)), closes [#22](https://github.com/VinylStage/trex_vs_tiger_sim/issues/22)
+* **ui:** restore the original icon as the simulator header logo ([#41](https://github.com/VinylStage/trex_vs_tiger_sim/issues/41)) ([24e9518](https://github.com/VinylStage/trex_vs_tiger_sim/commit/24e95182adf1cad96b02cc536d4a3e721e47d574))
+* **ui:** self-host Pretendard as the single site typeface ([#32](https://github.com/VinylStage/trex_vs_tiger_sim/issues/32)) ([6c84e0e](https://github.com/VinylStage/trex_vs_tiger_sim/commit/6c84e0e69a172b2800246e4cc0992f02a1a21c87)), closes [#31](https://github.com/VinylStage/trex_vs_tiger_sim/issues/31)
+* **ui:** show release version, detect newer deployments and reset caches ([#39](https://github.com/VinylStage/trex_vs_tiger_sim/issues/39)) ([bf6f62d](https://github.com/VinylStage/trex_vs_tiger_sim/commit/bf6f62d3cce1d73a7cf22652e2cbbb2fc3a1c1b5)), closes [#23](https://github.com/VinylStage/trex_vs_tiger_sim/issues/23)
+
+
+### Bug Fixes
+
+* **pages:** render the site header from one module so the logo matches the app ([#48](https://github.com/VinylStage/trex_vs_tiger_sim/issues/48)) ([af45edc](https://github.com/VinylStage/trex_vs_tiger_sim/commit/af45edcfc13ad485876a80c3bd9287aa753c599c))
+
 ## 0.1.0 (2026-10-19)
 
 

@@ -10,6 +10,7 @@ import {
   inflateRect,
   intersectRect,
   mergeRects,
+  expandNow,
   placePopover,
   readTourFlag,
   resolveStep,
@@ -230,7 +231,7 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
       const d = tourElements(s.expand).find((el) => el instanceof HTMLDetailsElement);
       if (d instanceof HTMLDetailsElement) {
         expanded = { id: s.expand, wasOpen: d.open };
-        d.open = true;
+        expandNow(d);
       }
     }
     render();
@@ -352,6 +353,26 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
     const first = els[0];
     if (!first) return;
     const vp = viewport();
+    const smooth = !reducedMotion();
+    // A sticky target (the run bar) floats over the content it scrolls with, so scrolling it to the
+    // centre does nothing useful. Scroll the end of its container into view instead: the bar then
+    // rests at the bottom of the screen and the space above it is free for the popover.
+    const sticky = els.find((el) => getComputedStyle(el).position === 'sticky');
+    if (sticky) {
+      const box = sticky.parentElement;
+      const r = sticky.getBoundingClientRect();
+      const scroller = box && scrollContainers(box).find((el) => el.scrollHeight > el.clientHeight);
+      if (box && scroller && (r.bottom < vp.h - MERGE_GAP || r.top < 0 || r.bottom > vp.h + 1)) {
+        // Not scrollIntoView: the page's scroll-padding (kept clear of this very bar) would stop
+        // the container's end a bar's height short of the bottom edge.
+        scroller.scrollBy({
+          top: box.getBoundingClientRect().bottom - vp.h,
+          behavior: smooth ? 'smooth' : 'instant',
+        });
+        if (smooth) scrolled = [scroller];
+      }
+      return;
+    }
     const fullyVisible = els.every((el) => {
       const r = el.getBoundingClientRect();
       const v = visibleRect(el, vp);
@@ -360,7 +381,6 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
     if (fullyVisible) return;
     const union = unionRect(els.map((el) => toRect(el.getBoundingClientRect())));
     const tall = union !== null && union.h > vp.h * 0.55;
-    const smooth = !reducedMotion();
     first.scrollIntoView({
       block: tall ? 'start' : 'center',
       inline: 'nearest',
@@ -415,11 +435,18 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
       }
     }
     const merged = mergeRects(rects, MERGE_GAP);
-    syncHoles(merged);
+    // Measure the popover at its natural height (the CSS cap still applies), then fit it.
+    pop.style.maxHeight = '';
     const place = placePopover(
       unionRect(merged),
       { w: pop.offsetWidth, h: pop.offsetHeight },
       { w: vp.w, h: vp.h },
+    );
+    pop.style.maxHeight = place.maxH === undefined ? '' : `${place.maxH}px`;
+    // Docked over a target that fills the screen: spotlight only the part above the popover.
+    const above: Rect = { x: 0, y: 0, w: vp.w, h: place.y - HOLE_PAD };
+    syncHoles(
+      place.side === 'dock' ? merged.flatMap((r) => intersectRect(r, above) ?? []) : merged,
     );
     pop.style.left = `${Math.round(place.x)}px`;
     pop.style.top = `${Math.round(place.y)}px`;

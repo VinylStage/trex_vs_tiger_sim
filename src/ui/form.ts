@@ -2,7 +2,6 @@ import {
   LIMITS,
   SAMPLING_METHODS,
   PACK_TACTICS,
-  maxRunsFor,
   type SamplingMethod,
   type ScenarioConfig,
   type PackTactic,
@@ -26,9 +25,9 @@ import {
   type PackSpeciesId,
 } from '../sim/species';
 import { pagePath } from '../pages/routes';
-import { costLevel, estimateTotalMs } from './cost';
+import { costSummary, isCostOk } from './cost';
 import { clear, h, uniqueId } from './dom';
-import { formatDuration } from './format';
+import { formatDuration, formatNum } from './format';
 import {
   getLang,
   paramHelp,
@@ -209,6 +208,24 @@ export function withPreset(c: ScenarioConfig, p: Preset): ScenarioConfig {
   };
 }
 
+/**
+ * What the form tells the user after correcting a typed value (WCAG 3.3.1/3.3.3: no silent
+ * clamping): `null` when the value was taken as typed.
+ */
+export function correctionNote(
+  typed: number | null,
+  stored: number,
+  [lo, hi]: readonly [number, number],
+): string | null {
+  const v = formatNum(stored, 6);
+  if (typed === null) return t('clamp.empty', { value: v });
+  if (typed === stored) return null;
+  if (typed < lo || typed > hi) {
+    return t('clamp.range', { min: formatNum(lo, 6), max: formatNum(hi, 6), value: v });
+  }
+  return t('clamp.integer', { value: v });
+}
+
 /** Keep `min ≤ mode ≤ max` while honouring the field the user just edited. */
 export function orderRange(
   r: Triangular,
@@ -297,17 +314,14 @@ export function createConfigForm(
 
   function updateDerived(): void {
     if (costEl) {
-      const cap = maxRunsFor(cfg);
-      const capped = cfg.runs > cap;
-      const effective = capped ? { ...cfg, runs: cap } : cfg;
-      const level = costLevel(effective, workers);
-      costEl.hidden = level === 'ok' && !capped;
-      costEl.className = `cost-warning cost-${level === 'ok' ? 'heavy' : level}`;
+      const cost = costSummary(cfg, workers);
+      costEl.hidden = isCostOk(cost);
+      costEl.className = `cost-warning cost-${cost.level === 'ok' ? 'heavy' : cost.level}`;
       const parts: string[] = [];
-      if (capped) parts.push(t('cost.capped', { n: cap.toLocaleString() }));
-      if (level !== 'ok') {
-        const eta = formatDuration(estimateTotalMs(effective, workers) / 1000, 0);
-        parts.push(t(level === 'heavy' ? 'cost.heavy' : 'cost.extreme', { eta }));
+      if (cost.cap !== null) parts.push(t('cost.capped', { n: cost.cap.toLocaleString() }));
+      if (cost.level !== 'ok') {
+        const eta = formatDuration(cost.etaMs / 1000, 0);
+        parts.push(t(cost.level === 'heavy' ? 'cost.heavy' : 'cost.extreme', { eta }));
       }
       costEl.textContent = parts.join(' ');
     }
@@ -347,19 +361,39 @@ export function createConfigForm(
     control: HTMLElement,
     id: string,
     described: HTMLElement = control,
+    note?: HTMLElement,
   ): HTMLElement {
     const hintId = `${id}-hint`;
-    described.setAttribute('aria-describedby', hintId);
+    described.setAttribute('aria-describedby', note ? `${hintId} ${note.id}` : hintId);
     return h(
       'div',
       { class: 'field' },
       h('label', { attrs: { for: id }, text: label }),
       control,
       h('small', { class: 'hint', id: hintId, text: help }),
+      note ?? null,
     );
   }
 
-  function numberField(key: NumKey): { input: HTMLInputElement; id: string } {
+  /**
+   * A polite live note under a field: why a typed value was corrected, or the allowed range while
+   * the typed value is outside it (then the input is also aria-invalid). Empty notes take no space.
+   */
+  function noteFor(
+    input: HTMLInputElement,
+    id: string,
+  ): (text: string | null, invalid: boolean) => HTMLElement {
+    const note = h('small', { class: 'field-note', id, attrs: { 'aria-live': 'polite' } });
+    const set = (text: string | null, invalid: boolean): HTMLElement => {
+      if (note.textContent !== (text ?? '')) note.textContent = text ?? '';
+      if (invalid) input.setAttribute('aria-invalid', 'true');
+      else input.removeAttribute('aria-invalid');
+      return note;
+    };
+    return set;
+  }
+
+  function numberField(key: NumKey): { input: HTMLInputElement; id: string; note: HTMLElement } {
     const spec = NUM_FIELDS[key];
     const [lo, hi] = LIMITS[key];
     const id = uniqueId(`f-${key}`);
@@ -375,13 +409,20 @@ export function createConfigForm(
       },
     });
     input.value = String(cfg[key]);
+    const setNote = noteFor(input, `${id}-note`);
+    const note = setNote(null, false);
     const normalise = (n: number): number => {
       const v = clamp(spec.int ? Math.round(n) : n, lo, hi);
       return key === 'seed' ? v >>> 0 : v;
     };
     input.addEventListener('input', () => {
       const n = parseNum(input.value);
-      if (n === null || n < lo || n > hi || (spec.int && !Number.isInteger(n))) return;
+      const bad = n !== null && (n < lo || n > hi || (spec.int && !Number.isInteger(n)));
+      setNote(
+        bad ? t('clamp.typing', { min: formatNum(lo, 6), max: formatNum(hi, 6) }) : null,
+        bad,
+      );
+      if (n === null || bad) return;
       if (cfg[key] === n) return;
       cfg = { ...cfg, [key]: normalise(n) };
       emit();
@@ -389,6 +430,7 @@ export function createConfigForm(
     input.addEventListener('change', () => {
       const n = parseNum(input.value);
       const v = n === null ? cfg[key] : normalise(n);
+      setNote(correctionNote(n, v, [lo, hi]), false);
       input.value = String(v);
       if (cfg[key] !== v) {
         cfg = { ...cfg, [key]: v };
@@ -396,7 +438,7 @@ export function createConfigForm(
       }
     });
     numInputs.set(key, input);
-    return { input, id };
+    return { input, id, note };
   }
 
   function select<T extends string>(
@@ -510,8 +552,8 @@ export function createConfigForm(
     const grid = h('div', { class: 'field-grid' });
     const nv = names();
     const add = (key: NumKey, label: MsgKey, help: MsgKey, tour?: string): void => {
-      const { input, id } = numberField(key);
-      const el = field(t(label, nv), t(help, nv), input, id);
+      const { input, id, note } = numberField(key);
+      const el = field(t(label, nv), t(help, nv), input, id, input, note);
       if (tour) el.dataset.tour = tour;
       grid.append(el);
     };
@@ -557,10 +599,19 @@ export function createConfigForm(
       crypto.getRandomValues(buf);
       cfg = { ...cfg, seed: (buf[0] ?? 0) >>> 0 };
       seed.input.value = String(cfg.seed);
+      seed.note.textContent = '';
+      seed.input.removeAttribute('aria-invalid');
       emit();
     });
     const seedRow = h('div', { class: 'input-row' }, seed.input, randomBtn);
-    const seedField = field(t('field.seed'), t('help.seed'), seedRow, seed.id, seed.input);
+    const seedField = field(
+      t('field.seed'),
+      t('help.seed'),
+      seedRow,
+      seed.id,
+      seed.input,
+      seed.note,
+    );
     seedField.classList.add('field-wide');
     seedField.dataset.tour = 'seed';
     grid.append(seedField);
@@ -637,6 +688,8 @@ export function createConfigForm(
     const label = paramLabel(p.id, weapon);
     const name = `${speciesLabel(p.role, cfg)} ${label}`;
     const helpId = uniqueId('ph');
+    const noteId = `${helpId}-note`;
+    const note = h('small', { class: 'field-note', id: noteId, attrs: { 'aria-live': 'polite' } });
     const inputs = {} as Record<keyof Triangular, HTMLInputElement>;
     const bounds = paramBounds(p.id, cfg.heavySpecies, cfg.packSpecies);
     const cells: HTMLTableCellElement[] = [];
@@ -650,7 +703,7 @@ export function createConfigForm(
           max: String(bounds[1]),
           step: String(p.step),
           'aria-label': t('advanced.inputAria', { name, which: t(`advanced.${which}`) }),
-          'aria-describedby': helpId,
+          'aria-describedby': `${helpId} ${noteId}`,
         },
       });
       input.value = String(cfg.params[p.id][which]);
@@ -658,6 +711,10 @@ export function createConfigForm(
         const n = parseNum(input.value);
         const current = cfg.params[p.id];
         const next = n === null ? current : orderRange(current, which, n, bounds);
+        const parts = [correctionNote(n, next[which], bounds)];
+        const others = (['min', 'mode', 'max'] as const).filter((k) => k !== which);
+        if (n !== null && others.some((k) => next[k] !== current[k])) parts.push(t('clamp.order'));
+        note.textContent = parts.filter((x) => x !== null).join(' ');
         cfg = { ...cfg, params: { ...cfg.params, [p.id]: next } };
         inputs.min.value = String(next.min);
         inputs.mode.value = String(next.mode);
@@ -695,6 +752,7 @@ export function createConfigForm(
         ' ',
         evidenceChip(p),
         h('small', { class: 'param-help', id: helpId, text: paramHelp(p.id, names()) }),
+        note,
       ),
       ...cells,
       h('td', { class: 'col-unit', text: unitLabel(p.unit) }),
@@ -704,14 +762,33 @@ export function createConfigForm(
     return row;
   }
 
+  /**
+   * The advanced parameter table (22 rows, 66 inputs) is built when the section is first opened,
+   * not with the rest of the form: most visits never open it, and building it was the largest part
+   * of the start-up and language-switch work (docs/PERFORMANCE.md).
+   */
   function buildAdvanced(): HTMLDetailsElement {
     const details = h('details', { class: 'advanced', attrs: { 'data-tour': 'advanced' } });
-    details.open = detailsOpen;
-    details.addEventListener('toggle', () => {
-      detailsOpen = details.open;
-    });
     modifiedEl = h('span', { class: 'badge' });
     const summary = h('summary', {}, h('span', { text: t('advanced.title') }), ' ', modifiedEl);
+    details.append(summary);
+    let filled = false;
+    const fill = (): void => {
+      if (filled) return;
+      filled = true;
+      details.append(...advancedBody());
+      updateDerived();
+    };
+    details.open = detailsOpen;
+    if (detailsOpen) fill();
+    details.addEventListener('toggle', () => {
+      detailsOpen = details.open;
+      if (details.open) fill();
+    });
+    return details;
+  }
+
+  function advancedBody(): HTMLElement[] {
     const head = h(
       'thead',
       {},
@@ -753,13 +830,11 @@ export function createConfigForm(
       syncInputs();
       emit();
     });
-    details.append(
-      summary,
+    return [
       h('p', { class: 'hint', text: t('advanced.intro') }),
       h('div', { class: 'table-wrap' }, table),
       h('div', { class: 'advanced-actions' }, resetAll),
-    );
-    return details;
+    ];
   }
 
   function build(): void {

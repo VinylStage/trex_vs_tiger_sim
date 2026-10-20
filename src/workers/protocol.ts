@@ -1,16 +1,20 @@
 import type { ScenarioConfig } from '../sim/config';
 import type { BattleTrace, RunSummary } from '../sim/engine';
+import type { AggregateResult } from '../sim/montecarlo';
 
 /** Main thread → worker. */
 export type WorkerRequest =
   | { type: 'run'; jobId: number; config: ScenarioConfig; start: number; end: number }
-  | { type: 'replay'; jobId: number; config: ScenarioConfig; run: number };
+  | { type: 'replay'; jobId: number; config: ScenarioConfig; run: number }
+  /** `summaries` is `packSummaries(...)` of every run, transferred (src/sim/montecarlo.ts). */
+  | { type: 'aggregate'; jobId: number; config: ScenarioConfig; summaries: Float64Array };
 
 /** Worker → main thread. */
 export type WorkerResponse =
   | { type: 'progress'; jobId: number; done: number }
   | { type: 'result'; jobId: number; summaries: RunSummary[] }
   | { type: 'replay'; jobId: number; trace: BattleTrace }
+  | { type: 'aggregate'; jobId: number; agg: AggregateResult }
   | { type: 'error'; jobId: number; message: string };
 
 /**

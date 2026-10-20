@@ -19,6 +19,11 @@
   --accent: #2a78d6;
   --accent-hover: #256abf;
   --accent-fg: #ffffff;
+  --accent-text: var(--accent-hover);
+  --accent-fill: #256abf;
+  --accent-fill-hover: #1d5aa6;
+  --accent-fill-fg: #ffffff;
+  --control-border: #85847f;
   --focus: #2a78d6;
   --c-trex: #2a78d6;
   --c-tiger: #eb6834;
@@ -29,8 +34,9 @@
   --radius-small: 8px;
   --shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 4px 16px rgb(0 0 0 / 0.04);
   --font-sans:
-    'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto,
-    'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+    'Pretendard Variable', Pretendard, 'Pretendard Fallback', -apple-system, BlinkMacSystemFont,
+    system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR',
+    'Malgun Gothic', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -46,6 +52,7 @@
     --accent: #3987e5;
     --accent-hover: #5598e7;
     --accent-fg: #ffffff;
+    --control-border: #77766f;
     --focus: #6da7ec;
     --c-trex: #3987e5;
     --c-tiger: #d95926;
@@ -57,18 +64,13 @@
 }
 
 /*
- * Page-only colour roles (not app tokens, so they live outside :root and the mirror test).
- * The app's --accent is too light for body-size text on the page backgrounds (4.09:1 on --bg)
- * and under white text (4.42:1 light, 3.64:1 dark). Accent-coloured text therefore uses
- * --accent-hover, and filled controls use a deeper blue with white text in both themes.
- * tests/pages.test.ts checks every pair against WCAG AA 4.5:1 (docs/PAGES.md#colour-contrast).
+ * Colour roles shared with the app (in :root above, mirrored from src/ui/styles.css).
+ * --accent is too light for body-size text on the page backgrounds (4.09:1 on --bg) and under
+ * white text (4.42:1 light, 3.64:1 dark). Accent-coloured text therefore uses --accent-text
+ * (= --accent-hover), and filled controls use --accent-fill, a deeper blue with white text in
+ * both themes. Form controls are outlined with --control-border (≥ 3:1, WCAG 1.4.11).
+ * tests/pages.test.ts checks every pair against WCAG AA (docs/PAGES.md#colour-contrast).
  */
-html {
-  --accent-text: var(--accent-hover);
-  --accent-fill: #256abf;
-  --accent-fill-hover: #1d5aa6;
-  --accent-fill-fg: var(--accent-fg);
-}
 
 *,
 *::before,
@@ -87,7 +89,7 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.7;
   overflow-wrap: break-word;
 }
@@ -321,7 +323,8 @@ h1 {
 
 .toc ol {
   margin: 0;
-  padding-left: 1.3em;
+  /* Room for two-digit markers ("10."), which overflowed the box at 1.3em. */
+  padding-left: 1.8em;
 }
 
 .toc li + li {
@@ -366,6 +369,12 @@ h1 {
 .page-body ul,
 .page-body ol {
   padding-left: 1.4em;
+}
+
+/* A comfortable line length for prose; tables and figures keep the column's full width. */
+.page-body p,
+.page-body li {
+  max-width: 70ch;
 }
 
 .page-body li + li {
@@ -458,7 +467,18 @@ h1 {
   overflow-x: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius-small);
-  background: var(--surface);
+  /*
+   * Scroll shadows: the edge shades (fixed to the box) show while a wide table extends past an
+   * edge; the covers (scrolling with the table) hide them once that edge is reached.
+   */
+  background:
+    linear-gradient(to right, var(--surface) 40%, transparent) left / 28px 100% no-repeat local,
+    linear-gradient(to left, var(--surface) 40%, transparent) right / 28px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%, rgb(0 0 0 / 0.18), transparent) left / 12px 100%
+      no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%, rgb(0 0 0 / 0.18), transparent) right / 12px 100%
+      no-repeat scroll,
+    var(--surface);
 }
 
 .table-wrap:focus-visible {
@@ -581,7 +601,7 @@ tbody tr:last-child > * {
   border: 1px solid var(--border);
   border-radius: 4px;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   font-weight: 700;
   line-height: 1.5;
   text-align: center;
@@ -684,7 +704,7 @@ tbody tr:last-child > * {
 
 @media (max-width: 560px) {
   body {
-    font-size: 15.5px;
+    font-size: 0.96875rem;
   }
 
   .site-header-inner {

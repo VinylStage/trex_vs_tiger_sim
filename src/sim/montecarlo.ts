@@ -5,8 +5,9 @@ import { buildDesign, designRow, type Design } from './sampling';
 import {
   histogram,
   mean,
+  pearson,
   quantileSorted,
-  spearman,
+  ranks,
   wilson,
   type Histogram,
   type Interval,
@@ -30,6 +31,57 @@ export function runChunk(
 export function runAll(config: ScenarioConfig): { design: Design; summaries: RunSummary[] } {
   const design = buildDesign(config);
   return { design, summaries: runChunk(config, design, 0, config.runs) };
+}
+
+/** Fields of a RunSummary in the order `packSummaries` stores them. */
+const SUMMARY_FIELDS = [
+  'run',
+  'outcome',
+  'duration',
+  'heavyAlive',
+  'packKilled',
+  'packRouted',
+  'packActive',
+  'heavyHpFrac',
+  'heavyAdvantage',
+] as const satisfies readonly (keyof RunSummary)[];
+
+/** Numbers per run in a packed summary buffer. */
+export const SUMMARY_STRIDE = SUMMARY_FIELDS.length;
+
+/**
+ * Pack run summaries into one Float64Array (9 numbers per run), so they cross to a worker as a
+ * single transferable buffer instead of thousands of cloned objects. Every field is a double or a
+ * small integer, so `unpackSummaries` returns exactly the same values.
+ */
+export function packSummaries(summaries: readonly RunSummary[]): Float64Array<ArrayBuffer> {
+  const out = new Float64Array(summaries.length * SUMMARY_STRIDE);
+  summaries.forEach((s, i) => {
+    SUMMARY_FIELDS.forEach((f, k) => {
+      out[i * SUMMARY_STRIDE + k] = s[f];
+    });
+  });
+  return out;
+}
+
+export function unpackSummaries(packed: Float64Array): RunSummary[] {
+  const n = Math.floor(packed.length / SUMMARY_STRIDE);
+  const out: RunSummary[] = new Array<RunSummary>(n);
+  for (let i = 0; i < n; i++) {
+    const at = (k: number): number => packed[i * SUMMARY_STRIDE + k] as number;
+    out[i] = {
+      run: at(0),
+      outcome: at(1) as RunSummary['outcome'],
+      duration: at(2),
+      heavyAlive: at(3),
+      packKilled: at(4),
+      packRouted: at(5),
+      packActive: at(6),
+      heavyHpFrac: at(7),
+      heavyAdvantage: at(8),
+    };
+  }
+  return out;
 }
 
 export interface Sensitivity {
@@ -97,9 +149,15 @@ export function aggregate(
   const totalHeavyLost = sorted.reduce((a, s) => a + (config.heavyCount - s.heavyAlive), 0);
 
   const adv = sorted.map((s) => s.heavyAdvantage);
+  // Spearman's rho = Pearson on ranks. The outcome is ranked once instead of once per
+  // parameter; the result is the same number as spearman(xs, adv) bit for bit.
+  const advRanks = ranks(adv);
+  const xs = new Float64Array(n);
   const sensitivity: Sensitivity[] = PARAMS.map((p, j) => {
-    const xs = sorted.map((s) => design.values[s.run * design.dims + j] as number);
-    const rho = spearman(xs, adv);
+    for (let i = 0; i < n; i++) {
+      xs[i] = design.values[(sorted[i] as RunSummary).run * design.dims + j] as number;
+    }
+    const rho = pearson(ranks(xs), advRanks);
     return { id: p.id, rho: Number.isFinite(rho) ? rho : 0 };
   }).sort((a, b) => Math.abs(b.rho) - Math.abs(a.rho));
 
