@@ -1,7 +1,7 @@
 import type { ScenarioConfig } from '../sim/config';
 import type { BattleTrace, RunSummary } from '../sim/engine';
 import type { FreeConfig } from '../sim/free/config';
-import type { FreeRunSummary } from '../sim/free/engine';
+import type { FreeRunSummary, FreeTrace } from '../sim/free/engine';
 import type { FreeAggregate } from '../sim/free/aggregate';
 import { packFreeSummaries } from '../sim/free/montecarlo';
 import { packSummaries, type AggregateResult } from '../sim/montecarlo';
@@ -90,7 +90,7 @@ interface AggregateJob {
 
 interface ReplayJob {
   jobId: number;
-  resolve: (t: BattleTrace) => void;
+  resolve: (t: BattleTrace | FreeTrace) => void;
   reject: (e: Error) => void;
 }
 
@@ -210,6 +210,17 @@ export class SimPool {
 
   /** Re-simulate one run with a full trace. A newer replay request supersedes an older one. */
   replay(config: ScenarioConfig, run: number): Promise<BattleTrace> {
+    return this.startReplay({ type: 'replay', jobId: 0, config, run }) as Promise<BattleTrace>;
+  }
+
+  /** Re-simulate one free-model run with its trace (shares the replay worker and its rule). */
+  replayFree(config: FreeConfig, run: number): Promise<FreeTrace> {
+    return this.startReplay({ type: 'replay-free', jobId: 0, config, run }) as Promise<FreeTrace>;
+  }
+
+  private startReplay(
+    req: Extract<WorkerRequest, { type: 'replay' | 'replay-free' }>,
+  ): Promise<BattleTrace | FreeTrace> {
     if (this.replayJob) {
       this.replayWorker?.terminate();
       this.replayWorker = null;
@@ -218,9 +229,9 @@ export class SimPool {
     }
     const worker = (this.replayWorker ??= this.createReplayWorker());
     const jobId = this.nextJobId++;
-    return new Promise<BattleTrace>((resolve, reject) => {
+    return new Promise<BattleTrace | FreeTrace>((resolve, reject) => {
       this.replayJob = { jobId, resolve, reject };
-      const msg: WorkerRequest = { type: 'replay', jobId, config, run };
+      const msg: WorkerRequest = { ...req, jobId };
       worker.postMessage(msg);
     });
   }
@@ -251,7 +262,7 @@ export class SimPool {
       const msg = e.data;
       const job = this.replayJob;
       if (!job || msg.jobId !== job.jobId) return;
-      if (msg.type === 'replay') {
+      if (msg.type === 'replay' || msg.type === 'replay-free') {
         this.replayJob = null;
         job.resolve(msg.trace);
       } else if (msg.type === 'error') {
