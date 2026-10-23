@@ -59,6 +59,41 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.13',
+    date: '2026-10-23',
+    title: {
+      ko: '자유 대결 결과, 이제 자랑하세요 📣',
+      en: 'Free-match results, now made for bragging 📣',
+    },
+    prs: [102, 104],
+    items: [
+      {
+        cat: 'new',
+        refs: [50],
+        ko: '자유 대결 결과도 ‘결과 공유’ 링크로 보낼 수 있어요. 카톡에 붙이면 “호랑이 1 vs 사자 1 — 호랑이 54%”처럼 미리보기 제목이 결과에 맞게 바뀝니다.',
+        en: 'Free-match results get a “Share result” link too. Paste it into a chat and the preview title reads like “Tiger 1 vs Lion 1 — Tiger 54%”.',
+      },
+      {
+        cat: 'new',
+        refs: [50],
+        ko: '결과 카드 이미지와 이모지 텍스트 공유도 자유 대결을 지원합니다. 같은 종끼리 붙으면 ‘호랑이 A’와 ‘호랑이 B’로 구분해 드려요.',
+        en: 'The result card and the emoji text share now handle free matches, and mirror bouts are labelled “Tiger A” and “Tiger B” so nobody gets confused.',
+      },
+      {
+        cat: 'new',
+        refs: [50],
+        ko: '친구가 보낸 자유 대결 링크에서 ‘직접 실행’을 누르면 같은 결과가 나오는지 바로 확인해 줍니다.',
+        en: 'Hit “Run it yourself” on a friend’s free-match link and the app checks whether you get the same result.',
+      },
+      {
+        cat: 'improved',
+        refs: [79, 67],
+        ko: '페이지마다 그 언어의 단어장만 불러오도록 정리해서 첫 로딩이 가벼워졌습니다(시작 스크립트 약 7~10 KB 감소). 다른 언어는 언어 버튼을 누를 때 살짝 가져와요.',
+        en: 'Each page now loads only its own language pack, trimming roughly 7–10 KB from the first load. The other language is fetched only when you tap the language button.',
+      },
+    ],
+  },
+  {
     version: '0.2.12',
     date: '2026-10-20',
     title: {
