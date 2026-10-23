@@ -14,7 +14,7 @@ import { counterpartPath, parsePagePath } from './routes';
  * 3. writes the running version into the footer's version link, and
  * 4. deletes the language value v0.1.0 stored (src/pages/legacy-storage.ts).
  * Nothing is stored: every page, the simulator included, takes its language from its URL.
- * It must not import src/ui/i18n.ts at runtime (that would pull the dictionaries into the pages).
+ * It must not import src/i18n dictionaries or src/ui/i18n.ts at runtime (that would pull the words into the pages).
  */
 
 dropLegacyStorage();

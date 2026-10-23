@@ -1,3 +1,5 @@
+// Both languages: the Function answers /r/ and /en/r/ (#79).
+import '../i18n/boot-all.ts';
 import { buildMeta } from './result-text.ts';
 
 /*

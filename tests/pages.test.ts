@@ -1,4 +1,5 @@
 import { readFileSync, readdirSync } from 'node:fs';
+import { DICTIONARIES, SHARE_MESSAGES } from '../src/i18n/dictionaries';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -35,15 +36,8 @@ import {
   type ContentPage,
   type PageId,
 } from '../src/pages/routes';
-import { SHARE_MESSAGES } from '../src/share/messages';
-import {
-  DICTIONARIES,
-  LANGS,
-  interpolate,
-  speciesVars,
-  type Lang,
-  type MsgKey,
-} from '../src/ui/i18n';
+
+import { LANGS, interpolate, speciesVars, type Lang, type MsgKey } from '../src/ui/i18n';
 import { PRESETS } from '../src/ui/form';
 import { footerItems, siteNavItems } from '../src/ui/site-nav';
 import {
@@ -471,7 +465,8 @@ describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
 
   it('loads the app script; #app holds only the static header the app replaces', () => {
     const script = one(tags(html, 'script'), '<script>');
-    expect(script.attrs).toMatchObject({ type: 'module', src: '/src/main.ts' });
+    // One entry per language, so the page bundles only its own words (#79).
+    expect(script.attrs).toMatchObject({ type: 'module', src: `/src/main-${lang}.ts` });
     const app = outerElement(html, (t) => t.name === 'div' && t.attrs['id'] === 'app');
     const head = outerElement(app.inner, (t) => t.name === 'header');
     expect(head.attrs['class']).toBe('app-header app-static-head');

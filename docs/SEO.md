@@ -101,15 +101,15 @@ Every page links, in static HTML: about, privacy, license, the source code, the 
 
 Everything below is produced by one Vite plugin, `vite.seo.ts` (`trexsim:seo`), from pure generators in `src/seo/`. Nothing is hand-maintained twice.
 
-| Source of truth       | What it provides                                                                                |
-| --------------------- | ----------------------------------------------------------------------------------------------- |
-| `src/pages/routes.ts` | Page ids, URLs (`canonicalUrl`), `SITE_ORIGIN`, `NAV_LABEL_KEYS`, owner URLs                    |
-| `src/ui/i18n.ts`      | Site names, page short names (breadcrumbs, `llms.txt`), the disclaimer                          |
-| each page's HTML      | `<title>`, meta description, `<h1>` (article headline), visible FAQ, main text                  |
-| `src/seo/site.ts`     | Indexable pages, x-default language, OG images and alt texts, Person, schema types, topics      |
-| each page's HTML      | Visible "last updated" date (`<p class="page-meta"><time datetime>`): `dateModified`, `lastmod` |
-| git history           | `lastmod` of the simulator pages (no visible date); stale-date warning on content pages         |
-| `package.json`        | `softwareVersion`                                                                               |
+| Source of truth            | What it provides                                                                                |
+| -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `src/pages/routes.ts`      | Page ids, URLs (`canonicalUrl`), `SITE_ORIGIN`, `NAV_LABEL_KEYS`, owner URLs                    |
+| `src/i18n/dictionaries.ts` | Site names, page short names (breadcrumbs, `llms.txt`), the disclaimer                          |
+| each page's HTML           | `<title>`, meta description, `<h1>` (article headline), visible FAQ, main text                  |
+| `src/seo/site.ts`          | Indexable pages, x-default language, OG images and alt texts, Person, schema types, topics      |
+| each page's HTML           | Visible "last updated" date (`<p class="page-meta"><time datetime>`): `dateModified`, `lastmod` |
+| git history                | `lastmod` of the simulator pages (no visible date); stale-date warning on content pages         |
+| `package.json`             | `softwareVersion`                                                                               |
 
 | File                 | Role                                                                                                                                         |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -123,7 +123,7 @@ Everything below is produced by one Vite plugin, `vite.seo.ts` (`trexsim:seo`), 
 
 ```mermaid
 flowchart LR
-  reg["routes.ts + i18n.ts + src/seo/site.ts"] --> gen["src/seo generators"]
+  reg["routes.ts + src/i18n + src/seo/site.ts"] --> gen["src/seo generators"]
   html["page sources (title, description, h1, FAQ, visible date, main)"] --> gen
   git["git log per page source (simulator lastmod, stale-date warning)"] --> gen
   gen --> head["head tags + JSON-LD in every indexable page"]

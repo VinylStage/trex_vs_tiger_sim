@@ -11,7 +11,7 @@ import { llmsFullTxt, llmsTxt, type LlmsPage } from './src/seo/llms.ts';
 import { robotsTxt } from './src/seo/robots.ts';
 import { INDEXABLE_ROUTES, pageSource } from './src/seo/site.ts';
 import { pageLastmod, sitemapXml, visibleDateIsStale } from './src/seo/sitemap.ts';
-import type { Lang } from './src/ui/i18n.ts';
+import type { Lang } from './src/i18n/lang.ts';
 
 /*
  * Build-time SEO (docs/SEO.md): injects canonical, hreflang, Open Graph, Twitter and JSON-LD into
