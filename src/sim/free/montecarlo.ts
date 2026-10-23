@@ -1,5 +1,6 @@
 import { designRow, type Design } from '../sampling';
-import { buildFreeDesign, type FreeConfig } from './config';
+import type { FreeConfig } from './config';
+import { buildFreeDesign } from './design';
 import { emptyBuffStats, simulateFreeBattle, type BuffStats, type FreeRunSummary } from './engine';
 
 /**

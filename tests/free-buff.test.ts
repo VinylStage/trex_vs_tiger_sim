@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   PACK_BUFF_EFFECTS,
-  buildFreeDesign,
   sanitizeFreeConfig,
   type FreeConfig,
   type PackBuffEffect,
 } from '../src/sim/free/config';
+import { buildFreeDesign } from '../src/sim/free/design';
 import {
   FREE_FRAME_STRIDE,
   FreeOutcome,

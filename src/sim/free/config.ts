@@ -12,7 +12,6 @@ import {
 } from '../config';
 import { DT } from '../engine';
 import type { Triangular } from '../params';
-import { buildDesignFrom, type Design } from '../sampling';
 import {
   FREE_SPECIES,
   FREE_SPECIES_IDS,
@@ -356,9 +355,4 @@ export function freeRanges(c: FreeConfig): Triangular[] {
     const side = c.sides[p.side === 'a' ? 0 : 1];
     return p.kind === 'trait' ? side.params[p.id as TraitId] : side.buff[p.id as BuffTraitId];
   });
-}
-
-/** Free design matrix: `runs × FREE_PARAMS.length`, same generator as the legacy design. */
-export function buildFreeDesign(c: FreeConfig): Design {
-  return buildDesignFrom(freeRanges(c), c.runs, c.seed, c.sampling);
 }

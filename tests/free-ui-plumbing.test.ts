@@ -4,7 +4,7 @@ import { aggregateFree } from '../src/sim/free/aggregate';
 import { defaultFreeConfig, sanitizeFreeConfig, type FreeConfig } from '../src/sim/free/config';
 import { FreeOutcome, type FreeRunSummary } from '../src/sim/free/engine';
 import { runAllFree, runFreeChunk } from '../src/sim/free/montecarlo';
-import { buildFreeDesign } from '../src/sim/free/config';
+import { buildFreeDesign } from '../src/sim/free/design';
 import { configFromHash, decodeConfig, encodeConfig, hashFromConfig } from '../src/ui/share';
 import {
   FREE_CODE_PREFIX,
