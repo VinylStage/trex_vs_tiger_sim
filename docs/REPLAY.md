@@ -24,7 +24,7 @@ Status (issue #26): all three stages of the rollout (ANIMATION.md §8, steps 1�
 
 ## 1. Architecture
 
-`src/ui/replay.ts` is the entry the app uses (`ReplayView`, unchanged public API: `el`, `load`, `clear`, `refresh`, `destroy`). Everything else lives in `src/ui/replay/`. Only `replay.ts`, `legend.ts`, `strip.ts`, the `paintOverview` helper in `draw.ts` and `theme.ts#readReplayTheme` touch the DOM; `prepare`, `World`, `interp`, `camera`, `timeline`, `effects`, `quality`, `overview` and `glyphs` are pure and unit-tested in Node.
+`src/ui/replay.ts` is the entry the app uses (`ReplayView`, unchanged public API: `el`, `load`, `clear`, `refresh`, `destroy`). The app loads it with `import()` when Run is pressed (or when a replay is requested), not at startup, and mounts the view into `.replay-slot` (#80). Run is a user input, so the mount right after it is not counted as a layout shift; measured CLS is the same as before (0.0169 at 1366×900, 0.0002 at 390×800, both from earlier font work). Everything else lives in `src/ui/replay/`. Only `replay.ts`, `legend.ts`, `strip.ts`, the `paintOverview` helper in `draw.ts` and `theme.ts#readReplayTheme` touch the DOM; `prepare`, `World`, `interp`, `camera`, `timeline`, `effects`, `quality`, `overview` and `glyphs` are pure and unit-tested in Node.
 
 ```mermaid
 ---

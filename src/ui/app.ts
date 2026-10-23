@@ -37,8 +37,7 @@ import {
   type Vars,
 } from './i18n';
 import { CancelledError, SimPool, type PoolProgress } from './pool';
-import { ReplayView } from './replay';
-import { heavyLengthForRadius } from './replay/glyphs';
+import type { ReplayView } from './replay';
 import { configFromHash, hashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
@@ -50,7 +49,8 @@ import { pageLang, pagePath, switchedAppUrl } from '../pages/routes';
 import { logoAttrs } from '../pages/site-shell';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
 import './site-footer.css';
-import { createTour } from './tour';
+import type { Tour } from './tour';
+import { createTourOffer } from './tour-offer';
 import { DEMO_RUNS, tourRequested, withoutTourParam } from './tour-model';
 import { createVersionBadge, fillVersionFooter } from './version';
 import {
@@ -379,7 +379,23 @@ export function startApp(root: HTMLElement): void {
   const survivorsChart = new CanvasChart('chart.survivors', 'h-hist');
   const tornadoChart = new CanvasChart('chart.sensitivity', 'h-tornado', 'chart.sensitivityHelp');
 
-  const replayView = new ReplayView();
+  // The replay renderer loads when it is first needed (#80): on Run, or for a shared result. Run
+  // is a user input, so the replay mounting into its slot shortly after it is not a layout shift.
+  const replaySlot = h('div', { class: 'replay-slot' });
+  let replayView: ReplayView | null = null;
+  let replayModule: Promise<typeof import('./replay')> | null = null;
+  const ensureReplay = (): Promise<typeof import('./replay')> =>
+    (replayModule ??= import('./replay').then(
+      (m) => {
+        replayView = new m.ReplayView();
+        replaySlot.append(replayView.el);
+        return m;
+      },
+      (err: unknown) => {
+        replayModule = null;
+        throw err;
+      },
+    ));
   const repBtn = h('button', {
     class: 'btn btn-small',
     i18n: 'replay.representative',
@@ -445,7 +461,7 @@ export function startApp(root: HTMLElement): void {
         h('div', { class: 'replay-buttons' }, repBtn, randomBtn),
       ),
       replayInfo,
-      replayView.el,
+      replaySlot,
     ),
   );
   resultsBody.hidden = true;
@@ -624,6 +640,7 @@ export function startApp(root: HTMLElement): void {
       writeUrl();
     }
     const moveFocus = focusFollowsRun();
+    void ensureReplay().catch(() => undefined);
     running = true;
     lastCancelled = false;
     lastElapsedMs = null;
@@ -687,7 +704,7 @@ export function startApp(root: HTMLElement): void {
       renderProgress();
       renderCostNote();
       // An open tour leaves its results preview once results exist (also for runs it did not start).
-      tour.refresh();
+      tour?.refresh();
     }
   }
 
@@ -700,13 +717,13 @@ export function startApp(root: HTMLElement): void {
     replayState = { kind, run, loading: true };
     renderReplayInfo();
     try {
-      const trace = await pool.replay(result.config, run);
+      const [trace, replay] = await Promise.all([pool.replay(result.config, run), ensureReplay()]);
       if (token !== replayToken) return;
       replayState = { kind, run, loading: false };
       renderReplayInfo();
       const heavy = HEAVY_SPECIES[result.config.heavySpecies];
-      replayView.load(trace, true, {
-        heavyLengthM: heavyLengthForRadius(heavy.ranges.bodyRadius.mode),
+      replayView?.load(trace, true, {
+        heavyLengthM: replay.heavyLengthForRadius(heavy.ranges.bodyRadius.mode),
       });
     } catch (err) {
       if (err instanceof CancelledError || token !== replayToken) return;
@@ -951,7 +968,7 @@ export function startApp(root: HTMLElement): void {
     renderProgress();
     // Charts repaint once, after the new text is on screen (not twice in the same task).
     renderResults({ deferCharts: true });
-    replayView.refresh();
+    replayView?.refresh();
   });
 
   window.addEventListener('hashchange', () => {
@@ -971,7 +988,11 @@ export function startApp(root: HTMLElement): void {
   });
 
   // ---------- guided tour ----------
-  const tour = createTour({
+  // The tour loads on its first start (#80); the first-visit offer is a small startup module.
+  let tour: Tour | null = null;
+  let tourModule: Promise<Tour> | null = null;
+  let offer: ReturnType<typeof createTourOffer> = null;
+  const tourHost = {
     hasResults: () => result !== null,
     isRunning: () => running,
     runDemo: async () => {
@@ -982,12 +1003,30 @@ export function startApp(root: HTMLElement): void {
       updateStale();
       return run();
     },
-  });
+  };
+  const loadTour = (): Promise<Tour> =>
+    (tourModule ??= import('./tour').then(
+      (m) => (tour = m.createTour(tourHost)),
+      (err: unknown) => {
+        tourModule = null;
+        throw err;
+      },
+    ));
+  const startTour = (): void => {
+    offer?.remove();
+    offer = null;
+    void loadTour().then(
+      (t) => t.start(),
+      () => undefined,
+    );
+  };
   tourBtn.addEventListener('click', () => {
     // The tour walks through the classic form and results.
     setMode('classic');
-    tour.start();
+    startTour();
   });
+  // Warm the tour on intent, so a click opens it without a visible wait.
+  tourBtn.addEventListener('pointerenter', () => void loadTour().catch(() => undefined));
   // Static tour links (`a[data-tour-start]`, e.g. in the intro) start the tour in place instead of
   // reloading the page through `?tour=1`.
   document.addEventListener('click', (e) => {
@@ -995,12 +1034,12 @@ export function startApp(root: HTMLElement): void {
     if (!a || !(e instanceof MouseEvent) || e.button !== 0) return;
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
-    tour.start();
+    startTour();
   });
 
   // Canvas text does not reflow when a web font arrives; redraw once Pretendard is ready.
   void document.fonts?.ready.then(() => {
-    replayView.refresh();
+    replayView?.refresh();
     redrawAllCharts();
   });
 
@@ -1011,9 +1050,11 @@ export function startApp(root: HTMLElement): void {
     // Consume the deep link so a reload or a copied link does not restart the tour.
     const url = `${location.pathname}${withoutTourParam(location.search)}${location.hash}`;
     history.replaceState(history.state, '', url);
-    tour.start();
+    startTour();
   } else {
-    const offer = tour.createOffer();
-    if (offer) header.after(offer);
+    offer = createTourOffer(startTour, () =>
+      document.querySelector<HTMLElement>('[data-tour="tour"]')?.focus({ preventScroll: true }),
+    );
+    if (offer) header.after(offer.el);
   }
 }

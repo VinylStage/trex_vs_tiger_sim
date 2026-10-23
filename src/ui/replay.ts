@@ -27,6 +27,8 @@ import {
 import { World } from './replay/world';
 
 export { SPEEDS } from './replay/timeline';
+// For the app, which loads this module on demand (#80) and sizes the heavy glyph per species.
+export { heavyLengthForRadius } from './replay/glyphs';
 
 /** View modes: 0 = auto (follow the fight), 1 = whole arena, n > 1 = n× on the heavy centroid. */
 const ZOOMS: readonly { value: number; key: MsgKey }[] = [
