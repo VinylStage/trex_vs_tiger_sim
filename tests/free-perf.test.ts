@@ -3,11 +3,11 @@ import { sanitizeConfig, workEstimate } from '../src/sim/config';
 import { DT, simulateBattle } from '../src/sim/engine';
 import {
   FREE_WORK_WEIGHT_BUFF,
-  buildFreeDesign,
   freeWorkEstimate,
   freeWorkWeight,
   sanitizeFreeConfig,
 } from '../src/sim/free/config';
+import { buildFreeDesign } from '../src/sim/free/design';
 import { simulateFreeBattle } from '../src/sim/free/engine';
 import { buildDesign, designRow } from '../src/sim/sampling';
 

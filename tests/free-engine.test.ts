@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FREE_PARAM_INDEX, buildFreeDesign, sanitizeFreeConfig } from '../src/sim/free/config';
+import { FREE_PARAM_INDEX, sanitizeFreeConfig } from '../src/sim/free/config';
+import { buildFreeDesign } from '../src/sim/free/design';
 import {
   FREE_FRAME_STRIDE,
   FreeOutcome,

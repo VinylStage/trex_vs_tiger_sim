@@ -102,6 +102,16 @@ export const shareKo = {
   'meta.title': '{matchup} — {winner} {pct}',
   'meta.description':
     '{runs}회 몬테카를로 시뮬레이션 스냅샷 · {tier} · 기본 대결 대비 {diff}. 같은 설정으로 직접 실행해 보세요.',
+  'meta.descriptionFree':
+    '{runs}회 몬테카를로 시뮬레이션 스냅샷 · {tier} · {context}. 같은 설정으로 직접 실행해 보세요.',
+
+  'free.sideName': '{name} {side}',
+  'free.context': '자유 대결 · 잠정 모델',
+  'free.contextMirror': '같은 종 대결 · 자유 대결 · 잠정 모델',
+  'free.fled': '{side} 평균 도주',
+  'free.buff': '{side} 무리 버프 활성',
+  'free.buffValue': '개체·시간의 {pct} · 중앙값 {t}',
+  'free.cardBuff': '무리 버프 {list}',
 } as const;
 
 export type ShareMsgKey = keyof typeof shareKo;

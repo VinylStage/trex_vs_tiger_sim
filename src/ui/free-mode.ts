@@ -16,6 +16,7 @@ import { h } from './dom';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import { getLang, speciesCounter, speciesName, t, teamLabel, type MsgKey } from './i18n';
 import { CancelledError, type PoolProgress, type SimPool } from './pool';
+import { createFreeReproduceCheck, createFreeResultShare } from './result-share';
 import { formatBound, formatShare } from './verdict';
 import {
   sideBuffState,
@@ -54,6 +55,8 @@ export interface FreeModeOptions {
   /** Called after every config change (the app writes the URL). */
   onChange: (c: FreeConfig) => void;
   showToast: (text: string) => void;
+  /** The location hash the page opened with, read for a reproduction check (`&chk=`). */
+  startHash?: string;
 }
 
 interface FreeResult {
@@ -83,6 +86,9 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   let statusKey: { key: MsgKey; vars?: Record<string, string | number>; error?: boolean } | null =
     null;
   let lastProgress: PoolProgress | null = null;
+  // "Share result" for finished runs and the check of a free "Run it yourself" link.
+  const resultShare = createFreeResultShare();
+  const repro = createFreeReproduceCheck(opts.startHash ?? '', cfg);
 
   // ---------- config panel ----------
   const formEl = h('form', { class: 'config-form free-form', attrs: { novalidate: '' } });
@@ -130,6 +136,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     h('div', { class: 'run-buttons' }, runBtn, cancelBtn),
     progress,
     statusEl,
+    repro.el,
   );
   const configTitle = h('h2', { id: nextId('free-config-title') });
   const switchSlot = h('div', { class: 'free-mode-switch' });
@@ -170,6 +177,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       basisEl,
     ),
     cardsEl,
+    resultShare.el,
     replayNote,
   );
   resultsBody.hidden = true;
@@ -519,6 +527,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       // In a worker, like the classic aggregate: no long task on the main thread (#24).
       const agg = await pool.aggregateFree(runCfg, summaries);
       result = { config: runCfg, agg, elapsedMs: performance.now() - t0 };
+      repro.afterRun(runCfg, agg);
       setStatus(null);
       renderResults();
       resultsTitle.focus({ preventScroll: true });
@@ -581,6 +590,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     emptyEl.hidden = result !== null;
     resultsBody.hidden = result === null;
     updateStale();
+    resultShare.update(result ? { config: result.config, agg: result.agg } : null);
     if (!result) return;
     const { agg, config: c } = result;
     caveatLink.href = pagePath('model', getLang());
