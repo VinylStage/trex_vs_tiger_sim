@@ -136,6 +136,20 @@ Language layer (#67, #79): the words live in `src/i18n/ko.ts`, `src/i18n/en.ts` 
 
 Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run inside workers. The same holds for the sharing core (`src/share/config-code.ts`, `result-codec.ts`, `result-text.ts`), which the app, the `/r/` page and the Pages Function all import, so they accept exactly the same links ([SHARING.md](docs/SHARING.md)).
 
+Testing rule (#61): every module with branching logic has a test that imports it. These modules are intentional **DOM shells**: they wire the DOM, events and timers around logic that lives in a tested module (in brackets), and are checked with Playwright instead of unit tests:
+
+| DOM shell                                                    | Tested logic                                                                                        |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
+| `src/ui/app.ts`                                              | `app-model.ts`, `chunks.ts`, `cost.ts`, `verdict.ts`, `share.ts`, the charts' table and hit helpers |
+| `src/ui/free-mode.ts`                                        | `src/sim/free/*`, `share-free.ts`                                                                   |
+| `src/ui/replay.ts`, `replay/legend.ts`, `replay/strip.ts`    | `replay/prepare.ts`, `world.ts`, `camera.ts`, `timeline.ts`, `effects.ts`, `glyphs.ts`              |
+| `src/ui/tour.ts`, `tour-offer.ts`                            | `tour-model.ts`                                                                                     |
+| `src/ui/version.ts`                                          | `version-model.ts`                                                                                  |
+| `src/ui/config-transfer.ts`                                  | `src/share/config-code.ts`                                                                          |
+| `src/share/result-page.ts`                                   | `result-codec.ts`, `result-text.ts`                                                                 |
+| `src/ui/dom.ts`, `src/ui/announce.ts`                        | (element factory and live region; no decisions)                                                     |
+| `src/main*.ts`, `src/share/result-page-*.ts`, `src/reset.ts` | (entries: register the words, start the page)                                                       |
+
 ### Entry points (multi-page build)
 
 `vite.pages.ts` `findHtmlEntries()` turns every `index.html` in the repository into a build input, so a new page needs no config change ([docs/PAGES.md](docs/PAGES.md)).
