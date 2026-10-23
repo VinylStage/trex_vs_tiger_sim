@@ -59,6 +59,29 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.14',
+    date: '2026-10-23',
+    title: {
+      ko: '필요할 때만 꺼내 쓰기 🎒',
+      en: 'Packed light, unpacked on demand 🎒',
+    },
+    prs: [106],
+    items: [
+      {
+        cat: 'improved',
+        refs: [80],
+        ko: '리플레이와 튜토리얼은 실제로 쓸 때만 불러옵니다. 첫 화면 스크립트가 v0.2.12보다 약 3분의 1 가벼워졌어요(74 KB → 50 KB).',
+        en: 'The replay and the tutorial now load only when you actually use them. The first-load script is about a third lighter than in v0.2.12 (74 KB → 50 KB).',
+      },
+      {
+        cat: 'improved',
+        refs: [80],
+        ko: '처음 오신 분께 보이는 ‘둘러보기’ 안내는 그대로 바로 뜨고, 버튼에 마우스를 올리면 튜토리얼을 미리 준비해 둡니다.',
+        en: 'The first-visit tour offer still appears right away, and hovering the button gets the tutorial ready before you click.',
+      },
+    ],
+  },
+  {
     version: '0.2.13',
     date: '2026-10-23',
     title: {
