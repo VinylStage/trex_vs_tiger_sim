@@ -21,6 +21,7 @@ Status (issue #26): all three stages of the rollout (ANIMATION.md §8, steps 1�
 - [11. Reduced motion, accessibility and DPR](#11-reduced-motion-accessibility-and-dpr)
 - [12. Tests and measurements](#12-tests-and-measurements)
 - [13. How to add a glyph](#13-how-to-add-a-glyph)
+- [14. Free matchups](#14-free-matchups)
 
 ## 1. Architecture
 
@@ -366,3 +367,16 @@ Stage 2 browser check, before trails and effects (headless Chromium, software ra
 4. **Stage.** Feed it in `StagePainter.draw` (or `collectEffects` in `effects.ts` for an event effect, timed in real seconds, under the per-frame cap and, if it fills, the flash rule), and decide its LOD form.
 5. **Legend.** Add a row to `LEGEND_ITEMS` with a `replay.*` (or `state.*`) key in both dictionaries (`src/i18n/ko.ts`, `src/i18n/en.ts`).
 6. Check it in light and dark, and under deuteranopia, protanopia and achromatopsia emulation.
+
+## 14. Free matchups
+
+Free matchups (#50, [design §6](design/FREE-MATCHUPS.md#6-ui-and-transparency)) have their own, smaller replay: `src/ui/replay/free-world.ts` (pure model) and `src/ui/free-replay.ts` (`FreeReplayView`). The free engine writes trace v3 (`FreeTrace`: per agent x, y, heading, HP fraction and state every ≥ 0.5 s, plus a per-agent pack-buff flag per frame) and no event log, so the classic `prepare`/`World`/timeline machinery does not apply. The replay worker answers a `replay-free` request with the trace of one run (`SimPool.replayFree`); free mode loads the representative run after each batch and offers a random run, like the classic results.
+
+- **Glyphs.** Abstract only, coloured by side: A in `--replay-heavy` (blue), B in `--replay-pack` (orange), the same colour pair as the classic sides. Shape follows size, not role: a side whose body radius is ≥ 1 m (`FREE_TRIANGLE_RADIUS`) is drawn as heading triangles of length `heavyLengthForRadius(radius)` (at least 11 px), any other side as dots of the body radius (at least 2.2 px). Fighting = filled, recovering = outline, fled = grey (`--replay-out`), incapacitated = a grey ×; animals that left the arena are not drawn. A mirror matchup is told apart by colour only.
+- **Pack buff.** An animal whose buff is active gets a thin 1 px ring in its side colour at 70 % over the arena (pre-blended), radius 1.35 r + 2.5 px. The flag comes from the earlier frame, so a ring never appears before the buff did. The legend row "Ring = pack buff active" appears only when some animal of the trace is ever buffed.
+- **Motion and states.** Position and heading are interpolated linearly between the two frames around the replay time; state and buff flag are those of the earlier frame. The last frame is the end of the battle, so the final counts equal the run summary (`tests/free-replay.test.ts`).
+- **Performance rules kept from the classic replay.** One batched `Path2D` per paint and side (at most five fills or strokes per side per frame); LOD squares, grouped by paint and snapped to device pixels, when a reference 0.8 m radius is below 3 CSS px (the classic threshold, §6), with buff rings left out and the overlay hint saying so; triangles stay triangles (at least 6.6 px under LOD). The rAF loop runs only while playing or while the camera settles, and only while the stage is on screen (IntersectionObserver); playback pauses when the page is hidden. Backing-store density is capped at 3, or 2 above 2,000 animals. Under reduced motion nothing plays until Play is pressed, and a note says so. The 1:1 stage, the slider row and the LOD overlay reuse the classic reserved boxes, so loading a trace shifts nothing.
+- **Camera.** "Auto" frames the animals still fighting, trimmed per side (outer 2 % per axis for a side of ≥ 50), so a small side next to a large one is never cut away, padded and at least 24 m wide; it eases in log space at 3/s and snaps on a seek. "Whole arena" shows the arena. F toggles them.
+- **Controls.** Play/pause, speed (the classic speed table), view, slider; keys Space/K, ←/→ (Shift: 5 s), J/L, Home/End, [ ], F. There are no event markers or jumps: trace v3 has no event log (the `BuffOn`/`BuffOff` events of design P7 are not written yet).
+
+Measured in headless Chromium (software raster, production CSP with Trusted Types injected, `vite preview` build, DPR 2): 1 vs 1 tigers at 320 px, 8 wolves vs 1 brown bear at 1280 px and 2,500 wolves vs 30 elephants at 1280 px (backing store capped at DPR 2) all ran at 58–60 rAF callbacks per second while playing; under reduced motion there were 0 callbacks in the 2 s after the trace arrived and 60 in the second after Play. No console, CSP or page errors.

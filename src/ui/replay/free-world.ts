@@ -1,5 +1,4 @@
-import { FreeState, type FreeTrace } from '../../sim/free/engine';
-import { FREE_FRAME_STRIDE } from '../../sim/free/engine';
+import { FREE_FRAME_STRIDE, FreeState, type FreeTrace } from '../../sim/free/engine';
 import { GLYPH, heavyLengthForRadius } from './glyphs';
 import { frameIndex, lerp, lerpAngle } from './interp';
 
@@ -59,8 +58,8 @@ export class FreeWorld {
   readonly head: Float32Array;
   readonly state: Uint8Array;
   readonly buffed: Uint8Array;
-  /** Any agent of the trace is ever buffed (the legend then shows the ring). */
-  readonly anyBuff: boolean;
+  /** Per side: any of its agents is ever buffed (the legend then shows the ring). */
+  readonly buffSides: [boolean, boolean];
   private readonly trace: FreeTrace;
 
   constructor(trace: FreeTrace) {
@@ -76,7 +75,9 @@ export class FreeWorld {
     this.head = new Float32Array(this.n);
     this.state = new Uint8Array(this.n);
     this.buffed = new Uint8Array(this.n);
-    this.anyBuff = trace.frames.some((f) => f.buffed.some((b) => b !== 0));
+    const everBuffed = (from: number, to: number): boolean =>
+      trace.frames.some((f) => f.buffed.subarray(from, to).some((b) => b !== 0));
+    this.buffSides = [everBuffed(0, this.nA), everBuffed(this.nA, this.n)];
     this.update(0);
   }
 
@@ -127,25 +128,37 @@ export class FreeWorld {
   }
 
   /**
-   * Box around the agents still fighting (trimmed of the outer 2 % per axis when many), padded
+   * Box around the agents still fighting (each side trimmed of its outer 2 % per axis when it
+   * has many), padded
    * by 6 m and at least 24 m wide; the whole arena when nobody fights.
    */
   fightBox(): { cx: number; cy: number; size: number } {
-    const xs: number[] = [];
-    const ys: number[] = [];
-    for (let i = 0; i < this.n; i++) {
-      if ((this.state[i] as number) >= FreeState.Routed) continue;
-      xs.push(this.x[i] as number);
-      ys.push(this.y[i] as number);
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    let y0 = Infinity;
+    let y1 = -Infinity;
+    // Trimmed per side, so a small side is never cut away as an outlier of a large one.
+    for (const [from, to] of [
+      [0, this.nA],
+      [this.nA, this.n],
+    ] as const) {
+      const xs: number[] = [];
+      const ys: number[] = [];
+      for (let i = from; i < to; i++) {
+        if ((this.state[i] as number) >= FreeState.Routed) continue;
+        xs.push(this.x[i] as number);
+        ys.push(this.y[i] as number);
+      }
+      if (xs.length === 0) continue;
+      xs.sort((p, q) => p - q);
+      ys.sort((p, q) => p - q);
+      const trim = xs.length >= 50 ? Math.floor(xs.length * 0.02) : 0;
+      x0 = Math.min(x0, xs[trim] as number);
+      x1 = Math.max(x1, xs[xs.length - 1 - trim] as number);
+      y0 = Math.min(y0, ys[trim] as number);
+      y1 = Math.max(y1, ys[ys.length - 1 - trim] as number);
     }
-    if (xs.length === 0) return { cx: this.arena / 2, cy: this.arena / 2, size: this.arena };
-    xs.sort((p, q) => p - q);
-    ys.sort((p, q) => p - q);
-    const trim = xs.length >= 50 ? Math.floor(xs.length * 0.02) : 0;
-    const x0 = xs[trim] as number;
-    const x1 = xs[xs.length - 1 - trim] as number;
-    const y0 = ys[trim] as number;
-    const y1 = ys[ys.length - 1 - trim] as number;
+    if (x0 > x1) return { cx: this.arena / 2, cy: this.arena / 2, size: this.arena };
     const size = Math.min(this.arena, Math.max(24, x1 - x0 + 12, y1 - y0 + 12));
     return { cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, size };
   }

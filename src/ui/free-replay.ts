@@ -228,6 +228,12 @@ export class FreeReplayView {
     this.buildLegend();
   }
 
+  /** Side names for the legend (they follow the language). */
+  setSideNames(names: [string, string]): void {
+    this.sideNames = names;
+    this.buildLegend();
+  }
+
   get isPlaying(): boolean {
     return this.playing;
   }
@@ -389,7 +395,10 @@ export class FreeReplayView {
       this.theme = theme;
       this.paints = {
         side: [theme.heavy, theme.pack],
-        ring: [blend(theme.heavy, theme.arena, RING_ALPHA), blend(theme.pack, theme.arena, RING_ALPHA)],
+        ring: [
+          blend(theme.heavy, theme.arena, RING_ALPHA),
+          blend(theme.pack, theme.arena, RING_ALPHA),
+        ],
         out: theme.out,
         dead: theme.deadMark,
       };
@@ -637,15 +646,17 @@ export class FreeReplayView {
           },
         },
       );
-      if (w.anyBuff) {
+      if (w.buffSides[0] || w.buffSides[1]) {
+        // In the colour of the (first) side that is ever buffed.
+        const color = w.buffSides[0] ? theme.heavy : theme.pack;
         items.push({
           label: t('free.replay.ring'),
           paint: (ctx) => {
-            ctx.fillStyle = theme.pack;
+            ctx.fillStyle = color;
             ctx.beginPath();
             ctx.arc(15, 9, 3.4, 0, Math.PI * 2);
             ctx.fill();
-            ctx.strokeStyle = blend(theme.pack, theme.arena, RING_ALPHA);
+            ctx.strokeStyle = blend(color, theme.arena, RING_ALPHA);
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.arc(15, 9, 3.4 * RING_SCALE + RING_GAP, 0, Math.PI * 2);

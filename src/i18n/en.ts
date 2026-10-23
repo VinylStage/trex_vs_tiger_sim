@@ -532,7 +532,15 @@ export const en: Dictionary = {
   'free.stat.survivors': '{side} survivors (mean)',
   'free.stat.killed': '{side} incapacitated (mean)',
   'free.stat.routed': '{side} fled (mean)',
-  'free.replayLater': 'Replays for free matchups are coming soon.',
+  'free.replay.repNote':
+    'the battle with the most common outcome whose length is closest to its median',
+  'free.replay.canvasLabel':
+    'Free-matchup replay animation: side A in blue, side B in orange; large animals are triangles, small ones dots; a thin ring marks an active pack buff; fled animals are grey, incapacitated ones crosses',
+  'free.replay.ring': 'Ring = pack buff active',
+  'free.replay.lodNote':
+    'Zoomed out, small animals are squares and rings are hidden. Zoom in to see shapes and rings.',
+  'free.replay.reducedNote':
+    'Reduced motion is on, so the replay does not start by itself. Press Play to start it.',
   'free.copyCode': 'Copy settings code',
   'free.copied': 'Settings code copied.',
   'free.buff.title': 'Pack buff',
