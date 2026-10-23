@@ -4,7 +4,8 @@ import { simulateBattle } from '../src/sim/engine';
 import { aggregate, packSummaries, runChunk } from '../src/sim/montecarlo';
 import { buildDesign, designRow } from '../src/sim/sampling';
 import { aggregateFree } from '../src/sim/free/aggregate';
-import { buildFreeDesign, sanitizeFreeConfig } from '../src/sim/free/config';
+import { sanitizeFreeConfig } from '../src/sim/free/config';
+import { buildFreeDesign } from '../src/sim/free/design';
 import { packFreeSummaries, runFreeChunk, unpackFreeSummaries } from '../src/sim/free/montecarlo';
 import { traceTransferList, type WorkerResponse } from '../src/workers/protocol';
 

@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { buildFreeDesign, sanitizeFreeConfig } from '../src/sim/free/config';
+import { sanitizeFreeConfig } from '../src/sim/free/config';
+import { buildFreeDesign } from '../src/sim/free/design';
 import { simulateFreeBattle, type FreeRunSummary } from '../src/sim/free/engine';
 import { runAllFree } from '../src/sim/free/montecarlo';
 import { designRow } from '../src/sim/sampling';

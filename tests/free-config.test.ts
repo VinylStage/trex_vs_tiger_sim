@@ -8,7 +8,6 @@ import {
   GLOBALS,
   GLOBAL_IDS,
   PACK_BUFF_EFFECTS,
-  buildFreeDesign,
   defaultFreeConfig,
   freeRanges,
   freeWorkEstimate,
@@ -18,6 +17,7 @@ import {
   sanitizeFreeConfig,
   type FreeConfig,
 } from '../src/sim/free/config';
+import { buildFreeDesign } from '../src/sim/free/design';
 import { FREE_SPECIES, buffRanges, traitRanges } from '../src/sim/free/species';
 import {
   BUFF_TRAIT_IDS,
