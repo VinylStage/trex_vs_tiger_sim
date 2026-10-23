@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.13](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.12...trex-vs-tiger-sim-v0.2.13) (2026-10-23)
+
+
+### Features
+
+* **share:** result links, card and text share for free matchups ([#104](https://github.com/VinylStage/trex_vs_tiger_sim/issues/104)) ([274889d](https://github.com/VinylStage/trex_vs_tiger_sim/commit/274889d098b462a2f4c70e9f2f0972c3da5b742d))
+
+
+### Performance Improvements
+
+* **i18n:** ship one language's dictionary per page, split the i18n layer ([#102](https://github.com/VinylStage/trex_vs_tiger_sim/issues/102)) ([f4a1bf4](https://github.com/VinylStage/trex_vs_tiger_sim/commit/f4a1bf4683ec7c4e08fa10deb9e1cb2410bf7de2)), closes [#67](https://github.com/VinylStage/trex_vs_tiger_sim/issues/67) [#79](https://github.com/VinylStage/trex_vs_tiger_sim/issues/79)
+
 ## [0.2.12](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.11...trex-vs-tiger-sim-v0.2.12) (2026-10-20)
 
 

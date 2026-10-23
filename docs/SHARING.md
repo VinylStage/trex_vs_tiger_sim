@@ -28,7 +28,7 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 
 - **Settings link** `#s=` with payload **v3** and the mode marker `m: "free"`, e.g. `{"v":3,"m":"free","a":{"sp":"tiger","n":5},"b":{"sp":"lion","n":5},"runs":1000}`. Per side `sp` species and `n` count, then `p`/`bf` edited trait and pack-buff ranges, `buff` switches turned off and `g` edited global constants, diffed against the species presets and the free defaults. A v3 link opens the simulator in free mode; every other link opens classic, and v1/v2 payloads decode exactly as before (the goldens guard them).
 - **Settings code** `TVT3-<v3 payload>`. Pasting one (or a v3 link) into the classic import field switches to free mode and applies it; free mode has a "Copy settings code" button. `TVT2-` stays the classic code.
-- **Result links** (`/r/`), the result card and the text share are classic-only for now; free results get result format v2 in a follow-up.
+- **Result links** (`/r/`) of free results use result format **v2** with the v3 config; the result page, the card, the text share and the link preview handle both ([Free result links](#free-result-links)).
 
 ## Result links
 
@@ -52,6 +52,27 @@ Unknown keys, a wrong `v`, `r` over 4096 characters or outside the base64url alp
 The numbers are a **snapshot**: V8 and JavaScriptCore agree statistically but not run for run ([MODEL.md §2.2](MODEL.md)), so the page shows the shared numbers as they were and labels them so. **Run it yourself** opens `/#s=<config>&chk=<summary>`; after the person presses Run (never automatically) with unchanged settings, the app reports _exactly the same_, _reproduced within the 95 % CI_ (every shared rate inside the new run's Wilson interval) or _differs_. The `chk=` part is dropped from the address as soon as the app starts, so a reload does not repeat the check.
 
 In the simulator, **Share result** appears under the verdict after a run: Web Share where available, otherwise the link is copied (with the fallback dialog). **Open result page** opens the same link.
+
+### Free result links
+
+A free result ([design §2.5](design/FREE-MATCHUPS.md#25-settings-codes-and-result-links-51)) uses `/r/?r=<base64url(JSON { v: 2, c: { v: 3, m: "free", … }, s })>` (`src/share/free-result-codec.ts`). `c` is the same payload as a free `#s=` link. Version 1 links never reach the new code: a payload whose `c` is not a free payload goes to the unchanged `decodeResult`, so classic links decode, validate and render exactly as before. A free `c` under `v: 1` is a `version` error (the page still offers **Run it yourself**).
+
+| Key        | Meaning                                                                                          | Check                                 |
+| ---------- | ------------------------------------------------------------------------------------------------ | ------------------------------------- |
+| `n`        | runs                                                                                             | integer, 1 ≤ n ≤ 20,000               |
+| `a`, `b`   | side A wins, side B wins                                                                         | integers ≥ 0                          |
+| `d`        | draws                                                                                            | integer ≥ 0, and `a + b + d === n`    |
+| `t`        | mean engagement time (s), optional                                                               | finite, 0–3600                        |
+| `as`, `bs` | mean survivors per side, optional                                                                | finite, 0 – that side's count         |
+| `ak`, `bk` | mean incapacitated per side, optional                                                            | finite, 0 – that side's count         |
+| `ar`, `br` | mean fled per side, optional                                                                     | finite, 0 – that side's count         |
+| `ab`, `bb` | pack buff: mean buffed share of agent-time, only for a side whose buff applies, optional         | finite, 0–1                           |
+| `at`, `bt` | pack buff: median seconds with at least one buffed member, only where the buff applies, optional | finite, 0–3600                        |
+| `ci`       | 95 % Wilson intervals `[aLo, aHi, bLo, bHi, dLo, dHi]`, optional                                 | six finite numbers in [0, 1], lo ≤ hi |
+
+The buff applies to a side of a social species with two or more animals and at least one effect switched on; buff keys for any other side are rejected. **Run it yourself** opens `/#s=<v3>&chk=<summary>` in free mode, and free mode reports _same_ / _within the 95 % CI_ / _differs_ after the next Run, as for classic links.
+
+Wording: the sides are named by species ("호랑이 1 vs 사자 1 — 호랑이 54%"). In a mirror matchup both sides carry their letter ("호랑이 A", "Tigers B"). There is no default matchup to compare with, so the tier is never _upset_ and the line beside it names the free model ("자유 대결 · 잠정 모델", plus "같은 종 대결" for a mirror); the link preview description uses that line instead of the ± points. The card draws side A on the left and side B on the right in their side colours, shape by size as in design §6 (body radius ≥ 1 m: heading triangles, else dots), and adds the pack-buff share of each buffed side to the runs line.
 
 ## Result page
 

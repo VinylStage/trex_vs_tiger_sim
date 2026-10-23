@@ -104,4 +104,14 @@ export const shareEn: ShareDictionary = {
   'meta.title': '{matchup} — {winner} {pct}',
   'meta.description':
     'Snapshot of {runs} Monte Carlo runs · {tier} · {diff} vs the default matchup. Run the same settings yourself.',
+  'meta.descriptionFree':
+    'Snapshot of {runs} Monte Carlo runs · {tier} · {context}. Run the same settings yourself.',
+
+  'free.sideName': '{name} {side}',
+  'free.context': 'Free matchup · provisional model',
+  'free.contextMirror': 'Same-species match-up · free matchup · provisional model',
+  'free.fled': 'Mean {side} fled',
+  'free.buff': '{side} pack buff active',
+  'free.buffValue': '{pct} of agent-time · median {t}',
+  'free.cardBuff': 'Pack buff {list}',
 };

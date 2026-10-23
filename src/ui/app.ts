@@ -110,7 +110,8 @@ export function startApp(root: HTMLElement): void {
   document.title = t('app.documentTitle');
   const pool = new SimPool();
   // A v3 link (`#s=` with `m: "free"`) opens in free mode; everything else stays classic (D1).
-  const startFree = freeConfigFromHash(location.hash);
+  const startHash = location.hash;
+  const startFree = freeConfigFromHash(startHash);
   let mode: 'classic' | 'free' = startFree ? 'free' : 'classic';
   let config: ScenarioConfig =
     (startFree ? null : configFromHash(location.hash)) ?? defaultConfig();
@@ -472,6 +473,7 @@ export function startApp(root: HTMLElement): void {
     modeSwitch,
     onChange: () => writeUrl(),
     showToast,
+    startHash,
   });
 
   clear(root);

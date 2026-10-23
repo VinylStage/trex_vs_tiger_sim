@@ -1,10 +1,9 @@
-import type { ScenarioConfig } from '../sim/config.ts';
 import { sm } from '../share/messages.ts';
-import type { ResultSummary } from '../share/result-codec.ts';
 import {
   formatCount,
   formatSeconds,
   pct,
+  type Glyph,
   type ResultView,
   type Side,
 } from '../share/result-text.ts';
@@ -41,10 +40,14 @@ export const CARD_PALETTE = {
 export const CARD_FONT = '"Pretendard Variable", Pretendard, system-ui, sans-serif';
 const WEIGHTS = [500, 700, 800, 900] as const;
 
+/**
+ * What the card draws. The view carries both sides (classic: heavy and pack; free: side A and
+ * side B, see `freeResultView`), so classic and free results share every drawing routine.
+ */
 export interface CardInput {
   view: ResultView;
-  config: ScenarioConfig;
-  summary: ResultSummary;
+  /** Run count and mean duration of the snapshot. */
+  summary: { n: number; t?: number };
   /** Watermark domain, e.g. `trex-vs-tiger.vinylims.com`. */
   domain: string;
 }
@@ -60,7 +63,7 @@ export function cardTexts(input: CardInput): string[] {
     v.winLabel,
     pct(v.shares[v.winner]),
     v.tierLabel,
-    sm(lang, 'result.vsDefault', { diff: v.diffText }),
+    v.context,
     `${v.heavyName} ${pct(v.shares.heavy)}`,
     `${v.packName} ${pct(v.shares.pack)}`,
     `${sm(lang, 'result.draw')} ${pct(v.shares.draw)}`,
@@ -71,16 +74,20 @@ export function cardTexts(input: CardInput): string[] {
 }
 
 /** "🦖 T-Rex 1  vs  🐅 호랑이 100": emoji as text only. */
-export function matchupLine({ view: v, config: c }: CardInput): string {
+export function matchupLine({ view: v }: CardInput): string {
   const n = (x: number): string => formatCount(x, v.lang);
-  return `${v.heavyEmoji} ${v.heavyName} ${n(c.heavyCount)}  vs  ${v.packEmoji} ${v.packName} ${n(c.packCount)}`;
+  return `${v.heavyEmoji} ${v.heavyName} ${n(v.heavyCount)}  vs  ${v.packEmoji} ${v.packName} ${n(v.packCount)}`;
 }
 
-function runsLine({ view: v, summary: s }: CardInput): string {
+/** Runs and mean duration; for a free result also the pack-buff share of each buffed side. */
+export function runsLine({ view: v, summary: s }: CardInput): string {
   const n = formatCount(s.n, v.lang);
-  return s.t === undefined
-    ? sm(v.lang, 'card.runsNoT', { n })
-    : sm(v.lang, 'card.runs', { n, t: formatSeconds(s.t, v.lang) });
+  const runs =
+    s.t === undefined
+      ? sm(v.lang, 'card.runsNoT', { n })
+      : sm(v.lang, 'card.runs', { n, t: formatSeconds(s.t, v.lang) });
+  if (v.buffs.length === 0) return runs;
+  return `${runs} · ${sm(v.lang, 'free.cardBuff', { list: v.buffs.join(', ') })}`;
 }
 
 /**
@@ -132,11 +139,18 @@ function text(
   return ctx.measureText(value).width;
 }
 
-function triangle(ctx: CanvasRenderingContext2D, x: number, y: number, size: number): void {
+/** A heading triangle pointing right (`dir` 1) or left (`dir` −1). */
+function triangle(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  dir: 1 | -1 = 1,
+): void {
   ctx.beginPath();
-  ctx.moveTo(x + size * 0.62, y);
-  ctx.lineTo(x - size * 0.38, y - size * 0.36);
-  ctx.lineTo(x - size * 0.38, y + size * 0.36);
+  ctx.moveTo(x + dir * size * 0.62, y);
+  ctx.lineTo(x - dir * size * 0.38, y - size * 0.36);
+  ctx.lineTo(x - dir * size * 0.38, y + size * 0.36);
   ctx.closePath();
   ctx.fill();
 }
@@ -191,7 +205,7 @@ function glyphField(
   w: number,
   h: number,
 ): void {
-  const { config } = input;
+  const config = input.view;
   const rnd = prng(config.seed ^ (config.heavyCount * 7919) ^ config.packCount);
   ctx.strokeStyle = CARD_PALETTE.grid;
   ctx.lineWidth = 2;
@@ -215,6 +229,11 @@ function glyphField(
     ctx.moveTo(x, gy);
     ctx.lineTo(x + w, gy);
     ctx.stroke();
+  }
+  if (config.free) {
+    freeGlyphs(ctx, config, rnd, x, y, w, h);
+    ctx.restore();
+    return;
   }
   const nHeavy = Math.min(config.heavyCount, 16);
   const nPack = Math.min(config.packCount, 90);
@@ -243,6 +262,58 @@ function glyphField(
     dot(ctx, px, py, 8);
   }
   ctx.restore();
+}
+
+/**
+ * Free formation: side A on the left facing right, side B on the right facing left, each in its
+ * side colour. Shape follows size (design §6): large animals as a line of heading triangles
+ * (capped at 16), small ones as a loose cloud of dots (capped at 60) thickening toward the
+ * middle, so it never closes into an outline or a letter.
+ */
+function freeGlyphs(
+  ctx: CanvasRenderingContext2D,
+  v: ResultView,
+  rnd: () => number,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): void {
+  const sides = [
+    { glyph: v.heavyGlyph, count: v.heavyCount, color: CARD_PALETTE.heavy, dir: 1 as const },
+    { glyph: v.packGlyph, count: v.packCount, color: CARD_PALETTE.pack, dir: -1 as const },
+  ];
+  const cy = y + h / 2;
+  sides.forEach((side, i) => {
+    ctx.fillStyle = side.color;
+    // Half of the field, inner edge toward the middle.
+    const x0 = i === 0 ? x + 24 : x + w / 2 + 20;
+    const x1 = i === 0 ? x + w / 2 - 20 : x + w - 24;
+    if (side.glyph === 'triangle') {
+      const n = Math.min(side.count, 16);
+      const tri = Math.max(26, Math.min(44, h / (n + 2)));
+      const lineX = i === 0 ? x0 + (x1 - x0) * 0.55 : x1 - (x1 - x0) * 0.55;
+      for (let k = 0; k < n; k++) {
+        const f = n === 1 ? 0 : (k / (n - 1) - 0.5) * 2;
+        const ty = cy + f * (h / 2 - tri);
+        const tx = lineX + side.dir * (1 - f * f) * 30 + (rnd() - 0.5) * 12;
+        triangle(ctx, tx, ty, tri, side.dir);
+      }
+      return;
+    }
+    const n = Math.min(side.count, 60);
+    const span = x1 - x0;
+    const placed: [number, number][] = [];
+    for (let guard = 0; placed.length < n && guard < 6000; guard++) {
+      const toward = Math.pow(rnd(), 0.8);
+      const px = i === 0 ? x0 + toward * span : x1 - toward * span;
+      const py = y + 22 + rnd() * (h - 44);
+      if (rnd() > 0.35 + 0.65 * toward) continue;
+      if (placed.some(([qx, qy]) => Math.hypot(qx - px, qy - py) < 26)) continue;
+      placed.push([px, py]);
+      dot(ctx, px, py, 8);
+    }
+  });
 }
 
 /** The win bar: heavy, pack, draw segments with a small gap, rounded ends. */
@@ -302,8 +373,10 @@ function legend(
   for (const it of items) {
     ctx.fillStyle = SIDE_COLOR[it.side];
     const gy = y - s * 0.35;
-    if (it.side === 'heavy') triangle(ctx, at + glyph * scale * 0.4, gy, glyph * scale);
-    else if (it.side === 'pack') dot(ctx, at + glyph * scale * 0.45, gy, glyph * scale * 0.42);
+    const shape: Glyph | null =
+      it.side === 'heavy' ? view.heavyGlyph : it.side === 'pack' ? view.packGlyph : null;
+    if (shape === 'triangle') triangle(ctx, at + glyph * scale * 0.4, gy, glyph * scale);
+    else if (shape === 'dot') dot(ctx, at + glyph * scale * 0.45, gy, glyph * scale * 0.42);
     else
       ctx.fillRect(
         at + glyph * scale * 0.08,
@@ -454,7 +527,7 @@ export function drawResultCard(
   ctx.fillStyle = '#ffffff';
   ctx.textAlign = 'left';
   ctx.fillText(v.tierLabel, L.margin + 24, L.tierY);
-  text(ctx, sm(lang, 'result.vsDefault', { diff: v.diffText }), L.margin + chipW + 22, L.tierY, {
+  text(ctx, v.context, L.margin + chipW + 22, L.tierY, {
     weight: 600,
     size: 32,
     color: CARD_PALETTE.muted,
@@ -488,9 +561,10 @@ export interface RenderedCard {
 }
 
 export function cardFileName(input: CardInput, format: CardFormat): string {
-  const c = input.config;
+  const c = input.view;
   const id = (s: string): string => s.replace(/[^A-Za-z0-9]/g, '');
-  return `trex-vs-tiger-${id(c.heavySpecies)}${c.heavyCount}-vs-${id(c.packSpecies)}${c.packCount}-${format}.png`;
+  const kind = c.free ? 'free-' : '';
+  return `trex-vs-tiger-${kind}${id(c.heavySpecies)}${c.heavyCount}-vs-${id(c.packSpecies)}${c.packCount}-${format}.png`;
 }
 
 /** Draw the card off-screen and encode it once as a PNG blob and a data URL. */

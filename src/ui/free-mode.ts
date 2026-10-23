@@ -17,7 +17,8 @@ import { h } from './dom';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import { getLang, speciesCounter, speciesName, t, teamLabel, type MsgKey } from './i18n';
 import { CancelledError, type PoolProgress, type SimPool } from './pool';
-import { FreeReplayView } from './free-replay';
+import type { FreeReplayView } from './free-replay';
+import { createFreeReproduceCheck, createFreeResultShare } from './result-share';
 import { formatBound, formatShare } from './verdict';
 import {
   sideBuffState,
@@ -56,6 +57,8 @@ export interface FreeModeOptions {
   /** Called after every config change (the app writes the URL). */
   onChange: (c: FreeConfig) => void;
   showToast: (text: string) => void;
+  /** The location hash the page opened with, read for a reproduction check (`&chk=`). */
+  startHash?: string;
 }
 
 interface FreeResult {
@@ -86,6 +89,9 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   let statusKey: { key: MsgKey; vars?: Record<string, string | number>; error?: boolean } | null =
     null;
   let lastProgress: PoolProgress | null = null;
+  // "Share result" for finished runs and the check of a free "Run it yourself" link.
+  const resultShare = createFreeResultShare();
+  const repro = createFreeReproduceCheck(opts.startHash ?? '', cfg);
 
   // ---------- config panel ----------
   const formEl = h('form', { class: 'config-form free-form', attrs: { novalidate: '' } });
@@ -133,6 +139,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     h('div', { class: 'run-buttons' }, runBtn, cancelBtn),
     progress,
     statusEl,
+    repro.el,
   );
   const configTitle = h('h2', { id: nextId('free-config-title') });
   const switchSlot = h('div', { class: 'free-mode-switch' });
@@ -161,7 +168,9 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   const repBtn = h('button', { class: 'btn btn-small', attrs: { type: 'button' } });
   const randomBtn = h('button', { class: 'btn btn-small', attrs: { type: 'button' } });
   const replayInfo = h('p', { class: 'replay-info', attrs: { 'aria-live': 'polite' } });
-  const replayView = new FreeReplayView();
+  // The renderer is a lazy chunk (like the classic replay, #80): loaded with the first trace.
+  let replayView: FreeReplayView | null = null;
+  const replaySlot = h('div', { class: 'replay-slot' });
   const replaySection = h(
     'section',
     { class: 'replay-section free-replay-section', attrs: { 'aria-labelledby': replayTitle.id } },
@@ -172,7 +181,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       h('div', { class: 'replay-buttons' }, repBtn, randomBtn),
     ),
     replayInfo,
-    replayView.el,
+    replaySlot,
   );
   let replayState: {
     kind: 'representative' | 'random';
@@ -197,6 +206,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       basisEl,
     ),
     cardsEl,
+    resultShare.el,
     replaySection,
   );
   resultsBody.hidden = true;
@@ -546,6 +556,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       // In a worker, like the classic aggregate: no long task on the main thread (#24).
       const agg = await pool.aggregateFree(runCfg, summaries);
       result = { config: runCfg, agg, summaries, elapsedMs: performance.now() - t0 };
+      repro.afterRun(runCfg, agg);
       setStatus(null);
       renderResults();
       void loadReplay(agg.representativeRun, 'representative');
@@ -570,6 +581,17 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   }
   runBtn.addEventListener('click', () => void run());
 
+  /** The replay renderer, loaded on first use and mounted into its slot. */
+  async function ensureReplay(): Promise<FreeReplayView> {
+    if (replayView) return replayView;
+    const { FreeReplayView } = await import('./free-replay');
+    if (!replayView) {
+      replayView = new FreeReplayView();
+      replaySlot.replaceChildren(replayView.el);
+    }
+    return replayView;
+  }
+
   /** Re-simulate one run with its trace in the replay worker and show it. */
   async function loadReplay(run: number, kind: 'representative' | 'random'): Promise<void> {
     const res = result;
@@ -578,11 +600,13 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     replayState = { kind, run, loading: true };
     renderReplayInfo();
     try {
+      const view = ensureReplay();
       const trace = await pool.replayFree(res.config, run);
+      const v = await view;
       if (token !== replayToken) return;
       replayState = { kind, run, loading: false };
       renderReplayInfo();
-      replayView.load(trace, [team(res.config, 0), team(res.config, 1)]);
+      v.load(trace, [team(res.config, 0), team(res.config, 1)]);
     } catch (err) {
       if (err instanceof CancelledError || token !== replayToken) return;
       replayState = {
@@ -672,6 +696,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     emptyEl.hidden = result !== null;
     resultsBody.hidden = result === null;
     updateStale();
+    resultShare.update(result ? { config: result.config, agg: result.agg } : null);
     if (!result) return;
     const { agg, config: c } = result;
     caveatLink.href = pagePath('model', getLang());
@@ -779,8 +804,8 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     repBtn.textContent = t('replay.representative');
     randomBtn.textContent = t('replay.random');
     renderReplayInfo();
-    replayView.relocalize();
-    if (result) replayView.setSideNames([team(result.config, 0), team(result.config, 1)]);
+    replayView?.relocalize();
+    if (result) replayView?.setSideNames([team(result.config, 0), team(result.config, 1)]);
     switchSlot.replaceChildren(opts.modeSwitch());
     build();
     if (statusKey) setStatus(statusKey);
