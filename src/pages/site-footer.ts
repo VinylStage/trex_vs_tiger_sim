@@ -1,5 +1,7 @@
 import { escapeHtml } from '../seo/html.ts';
-import { DICTIONARIES, type Lang, type MsgKey } from '../ui/i18n.ts';
+import { DICTIONARIES } from '../i18n/dictionaries.ts';
+import type { MsgKey } from '../i18n/ko.ts';
+import type { Lang } from '../i18n/lang.ts';
 import { FOOTER_LINKS, RELEASES_URL, footerHref } from './routes.ts';
 
 /*

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DICTIONARIES, LANGS } from '../src/ui/i18n';
+import { DICTIONARIES } from '../src/i18n/dictionaries';
+import { LANGS } from '../src/ui/i18n';
 import {
   DEMO_RUNS,
   TOUR_PARAM,

@@ -1,4 +1,5 @@
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { DICTIONARIES } from '../src/i18n/dictionaries';
 import { renderSiteFooter, SITE_FOOTER_PLACEHOLDER } from '../src/pages/site-footer';
 import { escapeHtml } from '../src/seo/html';
 import { tmpdir } from 'node:os';
@@ -22,7 +23,7 @@ import {
   parsePagePath,
   switchedAppUrl,
 } from '../src/pages/routes';
-import { DICTIONARIES, LANGS } from '../src/ui/i18n';
+import { LANGS } from '../src/ui/i18n';
 import { NAV_LABEL_KEYS, footerItems, relocalizeLinks, siteNavItems } from '../src/ui/site-nav';
 import {
   APP_LOGO_PLACEHOLDER,

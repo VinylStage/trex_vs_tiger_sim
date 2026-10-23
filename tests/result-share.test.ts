@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
+import { SHARE_MESSAGES } from '../src/i18n/dictionaries';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -15,7 +16,7 @@ import {
   parseConfigInput,
   parsePayload,
 } from '../src/share/config-code';
-import { SHARE_MESSAGES } from '../src/share/messages';
+
 import {
   checkFromHash,
   decodeResult,
