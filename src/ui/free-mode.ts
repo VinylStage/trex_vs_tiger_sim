@@ -539,6 +539,8 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       opts.onChange(structuredClone(cfg));
     }
     running = true;
+    // Fetch the replay chunk while the batch runs (Run is a user input, so mounting is no shift).
+    void ensureReplay().catch(() => undefined);
     progress.hidden = false;
     progressTrack.focus();
     runBtn.disabled = true;
