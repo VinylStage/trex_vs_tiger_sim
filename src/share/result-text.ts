@@ -1,8 +1,10 @@
 import type { ScenarioConfig } from '../sim/config.ts';
+import type { FreeConfig } from '../sim/free/config.ts';
 import { DICTIONARIES, type Lang } from '../ui/i18n.ts';
 import { DEFAULT_BASELINE } from './baseline.ts';
+import { buffApplies, decodeAnyResultQuery, type FreeResultSummary } from './free-result-codec.ts';
 import { sm } from './messages.ts';
-import { decodeResultQuery, type ResultSummary } from './result-codec.ts';
+import type { ResultSummary } from './result-codec.ts';
 
 /*
  * Words and numbers derived from a result snapshot: winner, outcome tier, the difference to the
@@ -128,9 +130,22 @@ export function emojiBar(sh: Shares): string {
   return SIDES.map((s) => BAR_CELLS[s].repeat(c[s])).join('');
 }
 
-/** Everything a page, card or preview says about one result. */
+/** Abstract glyph of a side on the card: triangle (large animals) or dot. */
+export type Glyph = 'triangle' | 'dot';
+
+/**
+ * Body radius (m) from which a free side is drawn as triangles, like the classic heavy side
+ * (design §6: shape follows size, not role).
+ */
+export const TRIANGLE_RADIUS = 1;
+
+/**
+ * Everything a page, card or preview says about one result. For a free result (`free`) the
+ * `heavy*` fields describe side A and the `pack*` fields side B; the shares keep those keys.
+ */
 export interface ResultView {
   lang: Lang;
+  free: boolean;
   shares: Shares;
   winner: Side;
   tier: Tier;
@@ -139,8 +154,22 @@ export interface ResultView {
   diffText: string;
   heavyName: string;
   packName: string;
+  /** Names for one animal ("T-Rex", "Tiger", "Tiger A"), as in "{name} wins". */
+  heavyOne: string;
+  packOne: string;
   heavyEmoji: string;
   packEmoji: string;
+  heavySpecies: string;
+  heavyCount: number;
+  packSpecies: string;
+  packCount: number;
+  heavyGlyph: Glyph;
+  packGlyph: Glyph;
+  seed: number;
+  /** The line beside the tier: the difference to the default matchup, or the free-model note. */
+  context: string;
+  /** Free results: pack-buff share per side whose buff applies ("Wolf A 38%"), else empty. */
+  buffs: string[];
   /** "T-Rex 1 vs 호랑이 100". */
   matchup: string;
   /** Name of the winning side ("T-Rex", "무승부"). */
@@ -151,43 +180,126 @@ export interface ResultView {
   winLabel: string;
 }
 
-export function resultView(config: ScenarioConfig, s: ResultSummary, lang: Lang): ResultView {
-  const shares = sharesOf(s);
-  const winner = winnerOf(shares);
-  const tier = outcomeTier(shares);
-  const diff = diffVsBaseline(shares);
-  const heavyName = shortName(config.heavySpecies, config.heavyCount, lang);
-  const packName = shortName(config.packSpecies, config.packCount, lang);
+type ViewSides = Omit<
+  ResultView,
+  | 'lang'
+  | 'winner'
+  | 'tierLabel'
+  | 'diffText'
+  | 'heavyEmoji'
+  | 'packEmoji'
+  | 'matchup'
+  | 'winnerName'
+  | 'headline'
+  | 'winLabel'
+>;
+
+function viewOf(lang: Lang, x: ViewSides): ResultView {
+  const winner = winnerOf(x.shares);
   const winnerName =
-    winner === 'heavy'
-      ? shortName(config.heavySpecies, 1, lang)
-      : winner === 'pack'
-        ? shortName(config.packSpecies, 1, lang)
-        : sm(lang, 'result.draw');
-  const matchup = sm(lang, 'result.matchup', {
-    heavy: heavyName,
-    heavyCount: config.heavyCount,
-    pack: packName,
-    packCount: config.packCount,
-  });
+    winner === 'heavy' ? x.heavyOne : winner === 'pack' ? x.packOne : sm(lang, 'result.draw');
   return {
+    ...x,
     lang,
-    shares,
     winner,
-    tier,
-    tierLabel: sm(lang, `tier.${tier}`),
-    diff,
-    diffText: formatDiff(diff, lang),
-    heavyName,
-    packName,
-    heavyEmoji: speciesEmoji(config.heavySpecies, 'heavy'),
-    packEmoji: speciesEmoji(config.packSpecies, 'pack'),
-    matchup,
+    tierLabel: sm(lang, `tier.${x.tier}`),
+    diffText: formatDiff(x.diff, lang),
+    heavyEmoji: speciesEmoji(x.heavySpecies, 'heavy'),
+    packEmoji: speciesEmoji(x.packSpecies, 'pack'),
+    matchup: sm(lang, 'result.matchup', {
+      heavy: x.heavyName,
+      heavyCount: x.heavyCount,
+      pack: x.packName,
+      packCount: x.packCount,
+    }),
     winnerName,
-    headline: sm(lang, 'result.headline', { name: winnerName, pct: pct(shares[winner]) }),
+    headline: sm(lang, 'result.headline', { name: winnerName, pct: pct(x.shares[winner]) }),
     winLabel:
       winner === 'draw' ? sm(lang, 'result.drawWin') : sm(lang, 'result.win', { name: winnerName }),
   };
+}
+
+export function resultView(config: ScenarioConfig, s: ResultSummary, lang: Lang): ResultView {
+  const shares = sharesOf(s);
+  const diff = diffVsBaseline(shares);
+  return viewOf(lang, {
+    free: false,
+    shares,
+    tier: outcomeTier(shares),
+    diff,
+    heavyName: shortName(config.heavySpecies, config.heavyCount, lang),
+    packName: shortName(config.packSpecies, config.packCount, lang),
+    heavyOne: shortName(config.heavySpecies, 1, lang),
+    packOne: shortName(config.packSpecies, 1, lang),
+    heavySpecies: config.heavySpecies,
+    heavyCount: config.heavyCount,
+    packSpecies: config.packSpecies,
+    packCount: config.packCount,
+    heavyGlyph: 'triangle',
+    packGlyph: 'dot',
+    seed: config.seed,
+    context: sm(lang, 'result.vsDefault', { diff: formatDiff(diff, lang) }),
+    buffs: [],
+  });
+}
+
+/** Win shares of a free snapshot under the classic keys (side A → heavy, side B → pack). */
+export const freeSharesOf = (s: Pick<FreeResultSummary, 'n' | 'a' | 'b' | 'd'>): Shares => ({
+  heavy: s.a / s.n,
+  pack: s.b / s.n,
+  draw: s.d / s.n,
+});
+
+/** Whether a free config is a mirror (same-species) matchup. */
+export const isMirror = (config: FreeConfig): boolean =>
+  config.sides[0].species === config.sides[1].species;
+
+/**
+ * Name of a free side for `n` animals. In a mirror matchup both sides carry their side letter:
+ * "호랑이 A" / "Tigers B".
+ */
+export function freeSideName(config: FreeConfig, i: 0 | 1, n: number, lang: Lang): string {
+  const name = shortName(config.sides[i].species, n, lang);
+  if (!isMirror(config)) return name;
+  return sm(lang, 'free.sideName', { name, side: i === 0 ? 'A' : 'B' });
+}
+
+/**
+ * View of a free result. There is no baseline, so the tier never says "upset" and the context
+ * line names the free model (and the same-species match-up for a mirror).
+ */
+export function freeResultView(config: FreeConfig, s: FreeResultSummary, lang: Lang): ResultView {
+  const shares = freeSharesOf(s);
+  const [a, b] = config.sides;
+  const glyph = (i: 0 | 1): Glyph =>
+    config.sides[i].params.bodyRadius.mode >= TRIANGLE_RADIUS ? 'triangle' : 'dot';
+  const buffs: string[] = [];
+  for (const i of [0, 1] as const) {
+    const frac = i === 0 ? s.ab : s.bb;
+    if (frac !== undefined && buffApplies(config, i)) {
+      buffs.push(`${freeSideName(config, i, 1, lang)} ${pct(frac)}`);
+    }
+  }
+  return viewOf(lang, {
+    free: true,
+    shares,
+    // Compared with itself the winner is never an upset: free matchups have no baseline.
+    tier: outcomeTier(shares, shares),
+    diff: 0,
+    heavyName: freeSideName(config, 0, a.count, lang),
+    packName: freeSideName(config, 1, b.count, lang),
+    heavyOne: freeSideName(config, 0, 1, lang),
+    packOne: freeSideName(config, 1, 1, lang),
+    heavySpecies: a.species,
+    heavyCount: a.count,
+    packSpecies: b.species,
+    packCount: b.count,
+    heavyGlyph: glyph(0),
+    packGlyph: glyph(1),
+    seed: config.seed,
+    context: sm(lang, isMirror(config) ? 'free.contextMirror' : 'free.context'),
+    buffs,
+  });
 }
 
 /** Mean duration for cards and the result page: "43초", "3분 05초" / "43 s", "3 min 05 s". */
@@ -212,15 +324,29 @@ export function shareText(
   lang: Lang,
   url: string,
 ): string {
-  const v = resultView(config, s, lang);
-  const head = sm(lang, 'text.head', {
-    heavy: `${v.heavyEmoji} ${v.heavyName} ${config.heavyCount}`,
-    pack: `${v.packEmoji} ${v.packName} ${config.packCount}`,
-    runs: formatCount(s.n, lang),
+  return viewShareText(resultView(config, s, lang), s.n, url);
+}
+
+/** Text share of a free result: `🐅 호랑이 A 1 vs 🐅 호랑이 B 1 — 500회`, bar, shares, link. */
+export function freeShareText(
+  config: FreeConfig,
+  s: FreeResultSummary,
+  lang: Lang,
+  url: string,
+): string {
+  return viewShareText(freeResultView(config, s, lang), s.n, url);
+}
+
+/** Text share of a view: head, the 10-cell bar, the three percentages and the link. */
+export function viewShareText(v: ResultView, runs: number, url: string): string {
+  const head = sm(v.lang, 'text.head', {
+    heavy: `${v.heavyEmoji} ${v.heavyName} ${v.heavyCount}`,
+    pack: `${v.packEmoji} ${v.packName} ${v.packCount}`,
+    runs: formatCount(runs, v.lang),
   });
-  const pcts = sm(lang, 'text.pcts', {
-    heavyName: shortName(config.heavySpecies, 1, lang),
-    packName: shortName(config.packSpecies, 1, lang),
+  const pcts = sm(v.lang, 'text.pcts', {
+    heavyName: v.heavyOne,
+    packName: v.packOne,
     h: pct(v.shares.heavy),
     p: pct(v.shares.pack),
     d: pct(v.shares.draw),
@@ -241,23 +367,25 @@ export interface ResultMeta {
 }
 
 /**
- * Meta strings for a result URL's query (`?r=…`) in `lang`, or null when the link does not
- * validate (the page is then served unchanged). Used by the Pages Function.
+ * Meta strings for a result URL's query (`?r=…`, classic or free) in `lang`, or null when the
+ * link does not validate (the page is then served unchanged). Used by the Pages Function.
  */
 export function buildMeta(search: string, lang: Lang): ResultMeta | null {
-  const res = decodeResultQuery(search);
+  const res = decodeAnyResultQuery(search);
   if (!res.ok) return null;
-  const v = resultView(res.config, res.summary, lang);
+  const v =
+    res.kind === 'free'
+      ? freeResultView(res.config, res.summary, lang)
+      : resultView(res.config, res.summary, lang);
+  const runs = formatCount(res.summary.n, lang);
   return {
     title: sm(lang, 'meta.title', {
       matchup: v.matchup,
       winner: v.winnerName,
       pct: pct(v.shares[v.winner]),
     }),
-    description: sm(lang, 'meta.description', {
-      runs: formatCount(res.summary.n, lang),
-      tier: v.tierLabel,
-      diff: v.diffText,
-    }),
+    description: v.free
+      ? sm(lang, 'meta.descriptionFree', { runs, tier: v.tierLabel, context: v.context })
+      : sm(lang, 'meta.description', { runs, tier: v.tierLabel, diff: v.diffText }),
   };
 }

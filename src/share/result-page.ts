@@ -2,6 +2,7 @@
 import '../pages/site.ts';
 import { pagePath, resultPageLang, resultPagePath, SITE_ORIGIN } from '../pages/routes.ts';
 import type { ScenarioConfig } from '../sim/config.ts';
+import type { FreeConfig } from '../sim/free/config.ts';
 import type { Lang } from '../ui/i18n.ts';
 import {
   renderCard,
@@ -10,20 +11,22 @@ import {
   type RenderedCard,
 } from '../ui/result-card.ts';
 import { encodeConfig } from '../ui/share.ts';
-import { sm, type ShareMsgKey } from './messages.ts';
+import { hashFromFreeConfig } from '../ui/share-free.ts';
 import {
-  decodeResultQuery,
-  reproduceHash,
-  type ResultError,
-  type ResultSummary,
-} from './result-codec.ts';
+  decodeAnyResultQuery,
+  reproduceFreeHash,
+  type FreeResultSummary,
+} from './free-result-codec.ts';
+import { sm, type ShareMsgKey } from './messages.ts';
+import { reproduceHash, type ResultError, type ResultSummary } from './result-codec.ts';
 import {
   formatCount,
   formatSeconds,
+  freeResultView,
   pct,
   pct1,
   resultView,
-  shareText,
+  viewShareText,
   xIntentUrl,
   type ResultView,
   type Side,
@@ -92,14 +95,16 @@ const ERROR_KEY: Readonly<Record<ResultError, ShareMsgKey>> = {
   summary: 'result.invalid',
 };
 
-function renderError(error: ResultError, config: ScenarioConfig | null): void {
+const isFree = (c: ScenarioConfig | FreeConfig): c is FreeConfig =>
+  (c as Partial<FreeConfig>).mode === 'free';
+
+function renderError(error: ResultError, config: ScenarioConfig | FreeConfig | null): void {
   if (!root) return;
   const actions = el('div', 'rp-actions');
   if (config) {
-    const payload = encodeConfig(config);
-    actions.append(
-      link(t('result.runIt'), simulatorUrl(payload ? `#s=${payload}` : ''), 'rp-btn rp-primary'),
-    );
+    const payload = isFree(config) ? null : encodeConfig(config);
+    const hash = isFree(config) ? hashFromFreeConfig(config) : payload ? `#s=${payload}` : '';
+    actions.append(link(t('result.runIt'), simulatorUrl(hash), 'rp-btn rp-primary'));
   }
   actions.append(link(t('result.tryOwn'), pagePath('simulator', lang)));
   root.replaceChildren(
@@ -133,7 +138,7 @@ function sideName(v: ResultView, side: Side): string {
   return side === 'heavy' ? v.heavyName : side === 'pack' ? v.packName : t('result.draw');
 }
 
-function legend(v: ResultView, s: ResultSummary): HTMLElement {
+function legend(v: ResultView, s: { ci?: readonly number[] }): HTMLElement {
   const list = el('ul', 'rp-legend');
   (['heavy', 'pack', 'draw'] as const).forEach((side, i) => {
     const ci = s.ci;
@@ -157,8 +162,10 @@ function legend(v: ResultView, s: ResultSummary): HTMLElement {
   return list;
 }
 
-function stats(v: ResultView, s: ResultSummary): HTMLElement | null {
-  const items: [string, string][] = [];
+type StatItem = [string, string];
+
+function classicStats(v: ResultView, s: ResultSummary): StatItem[] {
+  const items: StatItem[] = [];
   if (s.t !== undefined) items.push([t('result.duration'), formatSeconds(s.t, lang)]);
   if (s.hs !== undefined) {
     items.push([t('result.survivors', { heavy: v.heavyName }), s.hs.toLocaleString(lang)]);
@@ -166,15 +173,58 @@ function stats(v: ResultView, s: ResultSummary): HTMLElement | null {
   if (s.pk !== undefined) {
     items.push([t('result.incapacitated', { pack: v.packName }), s.pk.toLocaleString(lang)]);
   }
+  return items;
+}
+
+/** Per side: survivors, incapacitated, fled and, where the pack buff applies, its active time. */
+function freeStats(v: ResultView, s: FreeResultSummary): StatItem[] {
+  const items: StatItem[] = [];
+  if (s.t !== undefined) items.push([t('result.duration'), formatSeconds(s.t, lang)]);
+  const num = (x: number): string => x.toLocaleString(lang);
+  const sides = [
+    { name: v.heavyName, sv: s.as, k: s.ak, r: s.ar, b: s.ab, bt: s.at },
+    { name: v.packName, sv: s.bs, k: s.bk, r: s.br, b: s.bb, bt: s.bt },
+  ];
+  for (const x of sides) {
+    if (x.sv !== undefined) items.push([t('result.survivors', { heavy: x.name }), num(x.sv)]);
+    if (x.k !== undefined) items.push([t('result.incapacitated', { pack: x.name }), num(x.k)]);
+    if (x.r !== undefined) items.push([t('free.fled', { side: x.name }), num(x.r)]);
+    if (x.b !== undefined) {
+      const time = x.bt === undefined ? '' : formatSeconds(x.bt, lang);
+      items.push([
+        t('free.buff', { side: x.name }),
+        t('free.buffValue', { pct: pct(x.b), t: time }),
+      ]);
+    }
+  }
+  return items;
+}
+
+function stats(items: readonly StatItem[]): HTMLElement | null {
   if (items.length === 0) return null;
   const dl = el('dl', 'rp-stats');
   for (const [k, val] of items) dl.append(el('div', '', el('dt', '', k), el('dd', '', val)));
   return dl;
 }
 
-function renderResult(config: ScenarioConfig, s: ResultSummary): void {
+/** What the page shows of one decoded result, classic or free. */
+interface Shown {
+  view: ResultView;
+  summary: { n: number; t?: number; ci?: readonly number[] };
+  stats: StatItem[];
+  /** Simulator fragment of "Run it yourself" (config and reproduction check). */
+  runIt: string;
+  seed: number;
+}
+
+function renderResult({
+  view: v,
+  summary: s,
+  stats: statItems,
+  runIt: runHash,
+  seed,
+}: Shown): void {
   if (!root) return;
-  const v = resultView(config, s, lang);
   const winnerPct = pct(v.shares[v.winner]);
   document.title = t('result.documentTitle', { headline: `${v.matchup} — ${v.headline}` });
   if (title) {
@@ -189,21 +239,21 @@ function renderResult(config: ScenarioConfig, s: ResultSummary): void {
     'p',
     'rp-tags',
     el('span', `rp-tier ${SIDE_CLASS[v.winner]}`, v.tierLabel),
-    el('span', 'rp-diff', t('result.vsDefault', { diff: v.diffText })),
+    el('span', 'rp-diff', v.context),
   );
   const matchup = el(
     'p',
     'rp-matchup',
-    `${v.heavyEmoji} ${v.heavyName} ${formatCount(config.heavyCount, lang)} vs ${v.packEmoji} ${v.packName} ${formatCount(config.packCount, lang)}`,
+    `${v.heavyEmoji} ${v.heavyName} ${formatCount(v.heavyCount, lang)} vs ${v.packEmoji} ${v.packName} ${formatCount(v.packCount, lang)}`,
   );
   const runs = el(
     'p',
     'rp-runs',
-    t('result.runs', { n: formatCount(s.n, lang), seed: String(config.seed) }),
+    t('result.runs', { n: formatCount(s.n, lang), seed: String(seed) }),
   );
 
   // ---- card ----
-  const cardInput: CardInput = { view: v, config, summary: s, domain: DOMAIN };
+  const cardInput: CardInput = { view: v, summary: s, domain: DOMAIN };
   let format: CardFormat = 'story';
   let card: RenderedCard | null = null;
   let token = 0;
@@ -251,7 +301,7 @@ function renderResult(config: ScenarioConfig, s: ResultSummary): void {
   }
 
   const imageOf = (c: RenderedCard) => ({ ...c, alt: preview.alt });
-  const text = shareText(config, s, lang, shareUrl);
+  const text = viewShareText(v, s.n, shareUrl);
 
   saveBtn.addEventListener('click', () => {
     if (!card) return;
@@ -291,14 +341,10 @@ function renderResult(config: ScenarioConfig, s: ResultSummary): void {
     })();
   });
 
-  const runIt = link(
-    t('result.runIt'),
-    simulatorUrl(reproduceHash(config, s)),
-    'rp-btn rp-primary',
-  );
+  const runIt = link(t('result.runIt'), simulatorUrl(runHash), 'rp-btn rp-primary');
   const tryOwn = link(t('result.tryOwn'), pagePath('simulator', lang));
 
-  const statsEl = stats(v, s);
+  const statsEl = stats(statItems);
   root.replaceChildren(
     tags,
     matchup,
@@ -321,6 +367,24 @@ function renderResult(config: ScenarioConfig, s: ResultSummary): void {
   void prepare();
 }
 
-const decoded = decodeResultQuery(location.search);
-if (decoded.ok) renderResult(decoded.config, decoded.summary);
-else renderError(decoded.error, decoded.config);
+const decoded = decodeAnyResultQuery(location.search);
+if (!decoded.ok) renderError(decoded.error, decoded.config);
+else if (decoded.kind === 'free') {
+  const view = freeResultView(decoded.config, decoded.summary, lang);
+  renderResult({
+    view,
+    summary: decoded.summary,
+    stats: freeStats(view, decoded.summary),
+    runIt: reproduceFreeHash(decoded.config, decoded.summary),
+    seed: decoded.config.seed,
+  });
+} else {
+  const view = resultView(decoded.config, decoded.summary, lang);
+  renderResult({
+    view,
+    summary: decoded.summary,
+    stats: classicStats(view, decoded.summary),
+    runIt: reproduceHash(decoded.config, decoded.summary),
+    seed: decoded.config.seed,
+  });
+}
