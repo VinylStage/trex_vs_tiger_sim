@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.14](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.13...trex-vs-tiger-sim-v0.2.14) (2026-10-23)
+
+
+### Performance Improvements
+
+* **ui:** lazy-load the replay and the tour ([#106](https://github.com/VinylStage/trex_vs_tiger_sim/issues/106)) ([9f70a11](https://github.com/VinylStage/trex_vs_tiger_sim/commit/9f70a1177f3c8eb9530c15c149ec33001f159d4e)), closes [#80](https://github.com/VinylStage/trex_vs_tiger_sim/issues/80)
+
 ## [0.2.13](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.12...trex-vs-tiger-sim-v0.2.13) (2026-10-23)
 
 
