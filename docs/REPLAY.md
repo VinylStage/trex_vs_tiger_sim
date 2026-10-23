@@ -364,5 +364,5 @@ Stage 2 browser check, before trails and effects (headless Chromium, software ra
 2. **Paint.** Add a bucket to `PAINTS` (fill or stroke, colour role, width; `alpha` only for paint that must show what is underneath) and put it in `BUCKET_ORDER` at its layer. New colours go in `REPLAY_TOKENS` / `FALLBACK_COLORS` and both theme blocks of `styles.css` (`--replay-*`), or in `BLEND` if they are a pre-blended tone of an existing token.
 3. **State.** If it shows a tiger state, extend `tigerGlyph`; the stage, the legend and the V1 test all go through it. Add the state to the `STATES` list in `tests/replay-glyphs.test.ts` and keep every pairwise IoU below 0.6.
 4. **Stage.** Feed it in `StagePainter.draw` (or `collectEffects` in `effects.ts` for an event effect, timed in real seconds, under the per-frame cap and, if it fills, the flash rule), and decide its LOD form.
-5. **Legend.** Add a row to `LEGEND_ITEMS` with a `replay.*` (or `state.*`) key in both dictionaries of `src/ui/i18n.ts`.
+5. **Legend.** Add a row to `LEGEND_ITEMS` with a `replay.*` (or `state.*`) key in both dictionaries (`src/i18n/ko.ts`, `src/i18n/en.ts`).
 6. Check it in light and dark, and under deuteranopia, protanopia and achromatopsia emulation.

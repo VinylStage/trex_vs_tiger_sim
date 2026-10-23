@@ -1,12 +1,17 @@
 import { FOOTER_LINKS, NAV_LABEL_KEYS, footerHref, pagePath, type PageId } from '../pages/routes';
-import { siteNavItems } from '../pages/site-header';
+import { navItems, type SiteNavItem } from '../pages/site-shell';
 import { h } from './dom';
-import { DICTIONARIES, type Lang } from './i18n';
+import { words, type Lang } from './i18n';
 import './site-nav.css';
 
 // The nav items come from the shared header module, so the app and the static pages agree.
-export { NAV_LABEL_KEYS, siteNavItems };
-export type { SiteNavItem } from '../pages/site-header';
+export { NAV_LABEL_KEYS };
+export type { SiteNavItem };
+
+/** Links of the shared site navigation in `lang` (loaded), `current` marked (null: none). */
+export function siteNavItems(lang: Lang, current: PageId | null = 'simulator'): SiteNavItem[] {
+  return navItems(lang, current, words(lang));
+}
 
 /**
  * `<nav>` linking the simulator and the content pages for `lang`, with `current` marked
@@ -27,7 +32,7 @@ export function createSiteNav(lang: Lang, current: PageId = 'simulator'): HTMLEl
   }
   return h(
     'nav',
-    { class: 'site-nav', attrs: { 'aria-label': DICTIONARIES[lang]['nav.label'], lang } },
+    { class: 'site-nav', attrs: { 'aria-label': words(lang)['nav.label'], lang } },
     list,
   );
 }
@@ -44,7 +49,7 @@ export function footerItems(lang: Lang): FooterItem[] {
   return FOOTER_LINKS.map((link) => ({
     id: link.id,
     href: footerHref(link, lang),
-    label: DICTIONARIES[lang][link.label],
+    label: words(lang)[link.label],
     rel: link.rel ?? null,
   }));
 }

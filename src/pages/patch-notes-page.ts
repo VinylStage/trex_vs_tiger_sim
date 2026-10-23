@@ -6,7 +6,7 @@ import {
   type PatchNote,
 } from '../content/patch-notes.ts';
 import { escapeHtml } from '../seo/html.ts';
-import type { Lang } from '../ui/i18n.ts';
+import type { Lang } from '../i18n/lang.ts';
 import { REPO_URL, RELEASES_URL } from './routes.ts';
 import type { HeaderRoute } from './site-header.ts';
 

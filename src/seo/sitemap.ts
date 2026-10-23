@@ -1,5 +1,5 @@
 import { canonicalUrl, type PageId } from '../pages/routes.ts';
-import type { Lang } from '../ui/i18n.ts';
+import type { Lang } from '../i18n/lang.ts';
 import { escapeHtml } from './html.ts';
 import { INDEXABLE_ROUTES, alternates } from './site.ts';
 

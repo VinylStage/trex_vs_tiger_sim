@@ -5,7 +5,8 @@ import {
   canonicalUrl,
   type PageId,
 } from '../pages/routes.ts';
-import { DICTIONARIES, LANGS, type Lang } from '../ui/i18n.ts';
+import { DICTIONARIES } from '../i18n/dictionaries.ts';
+import { LANGS, type Lang } from '../i18n/lang.ts';
 import type { PageFacts } from './extract.ts';
 import { decodeEntities, elementById, firstElement, textOf } from './html.ts';
 import { INDEXABLE_PAGES, PERSON, SITE_NAME } from './site.ts';

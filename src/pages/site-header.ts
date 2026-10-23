@@ -1,8 +1,7 @@
 import { escapeHtml } from '../seo/html.ts';
-import { DICTIONARIES, type Lang } from '../ui/i18n.ts';
+import { DICTIONARIES } from '../i18n/dictionaries.ts';
+import type { Lang } from '../i18n/lang.ts';
 import {
-  NAV_LABEL_KEYS,
-  NAV_PAGES,
   notFoundLang,
   otherLang,
   pagePath,
@@ -11,25 +10,17 @@ import {
   type PageId,
 } from './routes.ts';
 import { renderSiteFooter, SITE_FOOTER_PLACEHOLDER } from './site-footer.ts';
+import { logoAttrs, navItems, type SiteNavItem } from './site-shell.ts';
+
+export { logoAttrs, SITE_LOGO, type SiteNavItem } from './site-shell.ts';
 
 /*
  * The site header, in one place (docs/PAGES.md#site-header). DOM-free and pure, so the same code
  * renders the static header of every content page and 404 page at build time (vite.pages.ts, also
- * in dev), gives the app its logo (src/ui/app.ts, the static head of index.html / en/index.html)
- * and the site nav its items (src/ui/site-nav.ts), and lets the tests compare against it.
- * Never import this from src/pages/site.ts: it pulls in the dictionaries.
+ * in dev) and the logo in the static head of index.html / en/index.html, and lets the tests
+ * compare against it. It holds both dictionaries, so never import it from browser code: the app's
+ * logo and site nav use src/pages/site-shell.ts (#79).
  */
-
-/**
- * The header logo of every page: the original icon the owner chose (docs/BRANDING.md#assets).
- * The app header shows it at 40 px, the content-page header at 32 px; `alt` is empty because the
- * brand text or the app title sits next to it.
- */
-export const SITE_LOGO = {
-  src: '/header-logo.svg',
-  alt: '',
-  size: { app: 40, page: 32 },
-} as const;
 
 /** Dictionary key of the brand text next to the logo in the content-page header. */
 export const BRAND_TEXT_KEY = 'app.shortTitle';
@@ -39,27 +30,9 @@ export const SITE_HEADER_PLACEHOLDER = '<!-- site-header -->';
 /** Placeholder in the static head of index.html / en/index.html, replaced by {@link renderAppLogo}. */
 export const APP_LOGO_PLACEHOLDER = '<!-- app-logo -->';
 
-export interface SiteNavItem {
-  page: PageId;
-  href: string;
-  label: string;
-  current: boolean;
-}
-
 /** Links of the shared site navigation in `lang`, `current` marked (null: none, e.g. a 404). */
 export function siteNavItems(lang: Lang, current: PageId | null = 'simulator'): SiteNavItem[] {
-  return NAV_PAGES.map((page) => ({
-    page,
-    href: pagePath(page, lang),
-    label: DICTIONARIES[lang][NAV_LABEL_KEYS[page]],
-    current: page === current,
-  }));
-}
-
-/** `<img>` attributes of the logo in the app header or the content-page header. */
-export function logoAttrs(where: keyof typeof SITE_LOGO.size): Record<string, string> {
-  const size = String(SITE_LOGO.size[where]);
-  return { src: SITE_LOGO.src, alt: SITE_LOGO.alt, width: size, height: size };
+  return navItems(lang, current, DICTIONARIES[lang]);
 }
 
 const attrs = (a: Record<string, string>): string =>

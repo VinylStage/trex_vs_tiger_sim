@@ -6,7 +6,8 @@ import {
   canonicalUrl,
   type PageId,
 } from '../pages/routes.ts';
-import { DICTIONARIES, LANGS, type Lang } from '../ui/i18n.ts';
+import { DICTIONARIES } from '../i18n/dictionaries.ts';
+import { LANGS, type Lang } from '../i18n/lang.ts';
 
 /*
  * The one registry behind every generated SEO artefact (docs/SEO.md): head tags and JSON-LD

@@ -1,4 +1,4 @@
-import type { Lang } from '../ui/i18n.ts';
+import type { Lang } from '../i18n/lang.ts';
 import { sm } from './messages.ts';
 import './share-ui.css';
 

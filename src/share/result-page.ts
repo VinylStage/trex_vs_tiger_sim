@@ -2,7 +2,7 @@
 import '../pages/site.ts';
 import { pagePath, resultPageLang, resultPagePath, SITE_ORIGIN } from '../pages/routes.ts';
 import type { ScenarioConfig } from '../sim/config.ts';
-import type { Lang } from '../ui/i18n.ts';
+import type { Lang } from '../i18n/lang.ts';
 import {
   renderCard,
   type CardFormat,
@@ -321,6 +321,9 @@ function renderResult(config: ScenarioConfig, s: ResultSummary): void {
   void prepare();
 }
 
-const decoded = decodeResultQuery(location.search);
-if (decoded.ok) renderResult(decoded.config, decoded.summary);
-else renderError(decoded.error, decoded.config);
+/** Render the page; its entry (result-page-ko.ts / -en.ts) registers the words first (#79). */
+export function startResultPage(): void {
+  const decoded = decodeResultQuery(location.search);
+  if (decoded.ok) renderResult(decoded.config, decoded.summary);
+  else renderError(decoded.error, decoded.config);
+}
