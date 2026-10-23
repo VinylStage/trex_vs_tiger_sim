@@ -1,5 +1,5 @@
 import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/config';
-import { Outcome, type RunSummary } from '../sim/engine';
+import type { RunSummary } from '../sim/engine';
 import type { AggregateResult } from '../sim/montecarlo';
 import type { ParamId } from '../sim/params';
 import { HEAVY_SPECIES, type SpeciesId } from '../sim/species';
@@ -16,6 +16,14 @@ import {
   type HistogramOptions,
 } from './charts';
 import { announce } from './announce';
+import {
+  exchangeCard,
+  isStale,
+  outcomeKey,
+  progressNote,
+  tornadoHeight,
+  type Message,
+} from './app-model';
 import { clear, h } from './dom';
 import { costSummary, isCostOk } from './cost';
 import { createConfigForm, matchupBadge, matchupNote, qualifiedParamLabel } from './form';
@@ -34,7 +42,6 @@ import {
   teamLabel,
   type Lang,
   type MsgKey,
-  type Vars,
 } from './i18n';
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import type { ReplayView } from './replay';
@@ -70,12 +77,6 @@ interface RunResult {
   elapsedMs: number;
 }
 
-interface Message {
-  key: MsgKey;
-  vars?: Vars;
-  error?: boolean;
-}
-
 /**
  * What the results panel shows while there are no results yet: the skeleton of a running first
  * run, or that run's cancellation or failure. The skeleton has the final block sizes, so results
@@ -88,19 +89,6 @@ interface ReplayState {
   run: number;
   loading: boolean;
   error?: string;
-}
-
-/** CSS height of the sensitivity chart for `rows` bars (styles.css reserves it for 10). */
-function tornadoHeight(rows: number): number {
-  return Math.max(120, 24 + rows * 28);
-}
-
-function outcomeKey(o: number): MsgKey {
-  return o === Outcome.Heavy
-    ? 'outcome.heavy'
-    : o === Outcome.Pack
-      ? 'outcome.pack'
-      : 'outcome.draw';
 }
 
 export function startApp(root: HTMLElement): void {
@@ -537,7 +525,7 @@ export function startApp(root: HTMLElement): void {
   }
 
   function updateStale(): void {
-    staleEl.hidden = !result || JSON.stringify(result.config) === JSON.stringify(config);
+    staleEl.hidden = !isStale(result?.config ?? null, config);
   }
 
   function setStatus(msg: Message | null): void {
@@ -596,18 +584,20 @@ export function startApp(root: HTMLElement): void {
       pct: formatPct(frac, 0),
     });
     progress.classList.toggle('is-cancelled', !running && lastCancelled);
-    if (!running) {
-      progressEta.textContent = lastCancelled
-        ? t('progress.cancelled')
-        : lastElapsedMs === null
-          ? ''
-          : t('progress.done', { elapsed: formatDuration(lastElapsedMs / 1000) });
-    } else {
-      progressEta.textContent =
-        p.etaMs === null
-          ? t('progress.etaPending')
-          : t('progress.eta', { eta: formatDuration(p.etaMs / 1000, 0) });
-    }
+    const note = progressNote({
+      running,
+      cancelled: lastCancelled,
+      elapsedMs: lastElapsedMs,
+      etaMs: p.etaMs,
+    });
+    progressEta.textContent =
+      note === null
+        ? ''
+        : note.ms === undefined
+          ? t(note.key)
+          : running
+            ? t(note.key, { eta: formatDuration(note.ms / 1000, 0) })
+            : t(note.key, { elapsed: formatDuration(note.ms / 1000) });
   }
 
   /**
@@ -811,12 +801,8 @@ export function startApp(root: HTMLElement): void {
         );
     let exchange: [string, string] = [blank, none];
     if (agg) {
-      const r = agg.exchangeRatio;
-      exchange = Number.isFinite(r)
-        ? [formatNum(r, 1), t('stat.exchangeSub')]
-        : Number.isNaN(r)
-          ? ['—', t('stat.exchangeNone')]
-          : ['—', t('stat.exchangeInf')];
+      const ex = exchangeCard(agg.exchangeRatio);
+      exchange = [ex.value === null ? '—' : formatNum(ex.value, 1), t(ex.sub)];
     }
     cardsEl.replaceChildren(
       ...shares,
