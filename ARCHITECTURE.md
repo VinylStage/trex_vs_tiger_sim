@@ -56,11 +56,11 @@ flowchart LR
         share@{ shape: rect, label: "share.ts<br/>URL codec" }
         i18n@{ shape: rect, label: "i18n.ts<br/>runtime: t(), setLang" }
         charts@{ shape: rect, label: "charts.ts<br/>canvas charts" }
-        replay@{ shape: rect, label: "replay.ts + replay/*<br/>v2 renderer (prepare, world,<br/>draw, camera, timeline)" }
+        replay@{ shape: rect, label: "replay.ts + replay/* (lazy)<br/>v2 renderer (prepare, world,<br/>draw, camera, timeline)" }
         pool@{ shape: rect, label: "pool.ts<br/>worker pool" }
         helpers@{ shape: rect, label: "chunks.ts · cost.ts<br/>dom.ts · format.ts" }
         nav@{ shape: rect, label: "site-nav.ts<br/>header nav" }
-        tour@{ shape: rect, label: "tour.ts · tour-model.ts<br/>guided tour" }
+        tour@{ shape: rect, label: "tour.ts (lazy) · tour-offer.ts · tour-model.ts<br/>guided tour" }
         version@{ shape: rect, label: "version.ts · version-model.ts<br/>badge, update check" }
         sitedata@{ shape: rect, label: "site-data.ts<br/>cache / storage reset" }
         xfer@{ shape: rect, label: "config-transfer.ts · result-share.ts<br/>export/import, share result" }
