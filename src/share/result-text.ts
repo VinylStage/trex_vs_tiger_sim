@@ -1,6 +1,7 @@
 import type { ScenarioConfig } from '../sim/config.ts';
 import type { FreeConfig } from '../sim/free/config.ts';
-import { DICTIONARIES, type Lang } from '../ui/i18n.ts';
+import type { Lang } from '../i18n/lang.ts';
+import { dictionary } from '../i18n/registry.ts';
 import { DEFAULT_BASELINE } from './baseline.ts';
 import { buffApplies, decodeAnyResultQuery, type FreeResultSummary } from './free-result-codec.ts';
 import { sm } from './messages.ts';
@@ -47,7 +48,7 @@ const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1)
 /** Short species name for `n` animals in `lang`, capitalised ("T-Rex", "Tigers", "호랑이"). */
 export function shortName(id: string, n: number, lang: Lang): string {
   const form = lang === 'en' && n !== 1 ? 'other' : 'one';
-  const dict = DICTIONARIES[lang] as Readonly<Record<string, string>>;
+  const dict = dictionary(lang) as Readonly<Record<string, string>>;
   return capitalize(dict[`species.${id}.${form}`] ?? id);
 }
 

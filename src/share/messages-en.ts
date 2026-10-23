@@ -1,0 +1,117 @@
+import type { ShareDictionary } from './messages-ko.ts';
+
+/* English words of the sharing features (src/share/messages.ts, #79). */
+
+export const shareEn: ShareDictionary = {
+  'xfer.title': 'Export · import settings',
+  'xfer.codeLabel': 'Settings code',
+  'xfer.codeHelp':
+    'Move settings as a code, a share link (#s=…) or a .json file. The seed is included, so results reproduce.',
+  'xfer.copyCode': 'Copy code',
+  'xfer.saveFile': 'Save .json',
+  'xfer.pasteLabel': 'Paste a code or link',
+  'xfer.pastePlaceholder': 'TVT2-… or https://…#s=…',
+  'xfer.check': 'Check',
+  'xfer.loadFile': 'Load .json',
+  'xfer.previewTitle': 'Settings to import',
+  'xfer.apply': 'Apply these settings',
+  'xfer.cancel': 'Cancel',
+  'xfer.applied': 'Settings applied. Press Run to start.',
+  'xfer.codeCopied': 'Settings code copied.',
+  'xfer.saved': 'Settings file saved.',
+  'xfer.summary': '{heavy} {heavyCount} vs {pack} {packCount} · {runs} runs · seed {seed}',
+  'xfer.summaryParams': '{n} edited parameter ranges',
+  'xfer.summaryDefaultParams': 'Parameter ranges at species defaults',
+  'xfer.err.empty': 'Enter a code or link.',
+  'xfer.err.length': 'The input is too long.',
+  'xfer.err.alphabet': 'The code contains characters it cannot have.',
+  'xfer.err.json': 'Could not read the code. Check that nothing was cut off.',
+  'xfer.err.shape': 'This is not a settings payload.',
+  'xfer.err.noPayload': 'This link carries no settings (#s=…).',
+  'xfer.err.app': 'This is not a settings file exported by this simulator.',
+  'xfer.err.file': 'Could not read the file.',
+
+  'copy.fallbackTitle': 'Copy the text below',
+  'copy.close': 'Close',
+
+  'rs.share': 'Share result',
+  'rs.shareHint': 'Creates a link with a snapshot of this result and its settings.',
+  'rs.open': 'Open result page',
+  'rs.copied': 'Result link copied.',
+  'rs.failed': 'Could not create the result link.',
+
+  'repro.pending': 'Checking a shared result. Press Run without changing the settings.',
+  'repro.same': 'Exactly the same result as the shared one.',
+  'repro.within': 'Reproduced: the shared rates are inside this run’s 95% confidence intervals.',
+  'repro.outside': 'Differs: some shared rates are outside this run’s 95% confidence intervals.',
+  'repro.changed': 'The settings differ from the shared result, so it was not checked.',
+
+  'result.documentTitle': '{headline} – shared simulation result',
+  'result.eyebrow': 'Shared simulation result',
+  'result.win': '{name} wins',
+  'result.drawWin': 'Draw',
+  'result.headline': '{name} {pct}',
+  'result.vsDefault': '{diff} vs the default matchup (10 T-Rex vs 100 tigers)',
+  'result.matchup': '{heavy} {heavyCount} vs {pack} {packCount}',
+  'result.runs': '{n} simulated runs · seed {seed}',
+  'result.runsShort': '{n} runs',
+  'result.ci': '95% CI {lo}–{hi}',
+  'result.duration': 'Mean engagement time',
+  'result.survivors': 'Mean {heavy} still standing',
+  'result.incapacitated': 'Mean {pack} incapacitated',
+  'result.draw': 'Draw',
+  'result.snapshot':
+    'Snapshot: these numbers were computed in the sharer’s browser when the link was made. Individual runs can differ between browser engines, but the statistics agree. Use “Run it yourself” to check.',
+  'result.disclaimer':
+    'An educational Monte Carlo model. Results depend on assumptions and do not predict a real fight.',
+  'result.format': 'Image format',
+  'result.formatStory': 'Story (9:16)',
+  'result.formatSquare': 'Square (1:1)',
+  'result.saveImage': 'Save image',
+  'result.share': 'Share',
+  'result.copyLink': 'Copy link',
+  'result.textShare': 'Share as text',
+  'result.runIt': 'Run it yourself',
+  'result.tryOwn': 'Try your own',
+  'result.linkCopied': 'Link copied.',
+  'result.textCopied': 'Result text copied.',
+  'result.imageSaved': 'Image saved.',
+  'result.preparing': 'Preparing the image…',
+  'result.previewAlt': 'Result card preview: {headline}',
+  'result.invalid': 'Could not read this result link. It may be cut off or damaged.',
+  'result.invalidConfig':
+    'The result numbers cannot be verified, but you can run the settings in the link yourself.',
+  'result.missing':
+    'This result link has no result. Run the simulator and press “Share result” to make one.',
+  'result.overlayHint': 'Long-press the image to save it',
+  'result.overlayClose': 'Close',
+  'result.shareTitle': 'T-Rex vs Tiger simulation result',
+
+  'tier.landslide': 'Landslide',
+  'tier.clear': 'Clear edge',
+  'tier.close': 'Close fight',
+  'tier.upset': 'Upset',
+  'tier.stalemate': 'Stalemate',
+
+  'text.head': '{heavy} vs {pack} — {runs} runs',
+  'text.pcts': '{heavyName} {h} · {packName} {p} · Draw {d}',
+
+  'card.brand': 'T-Rex vs Tiger simulator',
+  'card.watermark': 'Simulation · depends on assumptions',
+  'card.runs': '{n} simulated runs · mean {t}',
+  'card.runsNoT': '{n} simulated runs',
+
+  'meta.title': '{matchup} — {winner} {pct}',
+  'meta.description':
+    'Snapshot of {runs} Monte Carlo runs · {tier} · {diff} vs the default matchup. Run the same settings yourself.',
+  'meta.descriptionFree':
+    'Snapshot of {runs} Monte Carlo runs · {tier} · {context}. Run the same settings yourself.',
+
+  'free.sideName': '{name} {side}',
+  'free.context': 'Free matchup · provisional model',
+  'free.contextMirror': 'Same-species match-up · free matchup · provisional model',
+  'free.fled': 'Mean {side} fled',
+  'free.buff': '{side} pack buff active',
+  'free.buffValue': '{pct} of agent-time · median {t}',
+  'free.cardBuff': 'Pack buff {list}',
+};

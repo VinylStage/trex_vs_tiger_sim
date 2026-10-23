@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { DICTIONARIES } from '../src/i18n/dictionaries';
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
@@ -32,7 +33,7 @@ import {
   pageSource,
 } from '../src/seo/site';
 import { pageLastmod, sitemapXml, visibleDateIsStale } from '../src/seo/sitemap';
-import { DICTIONARIES, LANGS, type Lang } from '../src/ui/i18n';
+import { LANGS, type Lang } from '../src/ui/i18n';
 import { findHtmlEntries } from '../vite.pages';
 import {
   absolutizeUrls,

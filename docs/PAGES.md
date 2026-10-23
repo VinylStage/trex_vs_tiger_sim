@@ -2,8 +2,8 @@
 
 > **한국어 요약**
 >
-> - 시뮬레이터는 한국어 `/`, 영어 `/en/` 두 주소로 제공됩니다(같은 `src/main.ts`, 언어는 URL로 결정, 저장하지 않음). 그 밖에 검색엔진이 읽을 수 있는 정적 안내 페이지 6종을 한국어(`/<page>/`)와 영어(`/en/<page>/`)로 제공합니다: 사용 방법, 모델 설명, 파라미터 설명, 소개 · 문의, 개인정보처리방침, 라이선스.
-> - 시뮬레이터 페이지에는 `#app` 바깥에 정적 소개 · FAQ가 있고, 모든 페이지에 같은 정적 푸터(면책 문구, 소개 · 개인정보처리방침 · 라이선스 · GitHub · 블로그 · Linktree, 버전)가 있습니다. 문구는 `src/ui/i18n.ts`와 글자 하나까지 같아야 하며 테스트가 확인합니다.
+> - 시뮬레이터는 한국어 `/`, 영어 `/en/` 두 주소로 제공됩니다(같은 앱 `src/main.ts`, 페이지마다 그 언어 사전만 포함, 언어는 URL로 결정, 저장하지 않음). 그 밖에 검색엔진이 읽을 수 있는 정적 안내 페이지 6종을 한국어(`/<page>/`)와 영어(`/en/<page>/`)로 제공합니다: 사용 방법, 모델 설명, 파라미터 설명, 소개 · 문의, 개인정보처리방침, 라이선스.
+> - 시뮬레이터 페이지에는 `#app` 바깥에 정적 소개 · FAQ가 있고, 모든 페이지에 같은 정적 푸터(면책 문구, 소개 · 개인정보처리방침 · 라이선스 · GitHub · 블로그 · Linktree, 버전)가 있습니다. 문구는 `src/i18n/ko.ts` · `src/i18n/en.ts`와 글자 하나까지 같아야 하며 테스트가 확인합니다.
 > - 페이지는 손으로 쓴 HTML입니다(`<page>/index.html`, `en/<page>/index.html`). Vite가 저장소 안의 모든 `index.html`을 자동으로 찾아 빌드하므로, 새 페이지는 설정 변경 없이 폴더와 `index.html`만 추가하면 됩니다.
 > - 공통 스타일은 `src/pages/site.css`(앱과 같은 색 토큰, 다크 모드, 인쇄용), 공통 스크립트는 `src/pages/site.ts`(현재 메뉴 표시, 언어 링크 유지, 푸터 버전 표시)입니다. 인라인 스크립트·스타일은 쓰지 않습니다(CSP).
 > - 글꼴은 앱과 같은 자체 호스팅 Pretendard입니다. `site.ts`가 앱과 같은 `@font-face` 스타일시트를 불러오므로 빌드 결과에서 앱과 페이지가 파일 하나를 함께 씁니다. 웹 글꼴이 오기 전에는 Pretendard와 글자 폭·줄 높이를 맞춘 대체 글꼴(`Pretendard Fallback`)로 그려서, 글꼴이 바뀔 때 레이아웃이 거의 움직이지 않습니다.
@@ -50,7 +50,7 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 
 ## URL scheme and languages
 
-- Korean is the default language: `/<page>/`. English lives under `/en/<page>/`. The simulator is `/` (Korean) and `/en/` (English): two static entries, `index.html` and `en/index.html`, that load the same `src/main.ts`.
+- Korean is the default language: `/<page>/`. English lives under `/en/<page>/`. The simulator is `/` (Korean) and `/en/` (English): two static entries, `index.html` and `en/index.html`, with one script each (`src/main-ko.ts`, `src/main-en.ts`): both start the same app (`src/main.ts`), and each bundles only its own language's words (#79).
 - **The URL decides the language.** Every page has a static `<html lang>`; the app reads its language with `pageLang(location.pathname, <html lang>)` (`src/pages/routes.ts`). Nothing is stored (there is no language key in `localStorage`), and visitors are never redirected by browser language.
 - **In-place switch in the app.** The header language button translates the UI (`applyI18n`, also covering the static intro and footer through their `data-i18n` keys), rebuilds the site nav and the footer links, re-points the intro links (`a[data-page]`, `relocalizeLinks`), sets `<html lang>` and `document.title` (the other language's static `<title>`, `app.documentTitle`) and rewrites the URL with `history.replaceState` to `switchedAppUrl(lang, search, hash)`: `/#s=…` ↔ `/en/#s=…`, query and fragment kept. Results, the replay and form state stay. Reloading `/en/` shows English.
 - Every page carries `<link rel="canonical">` to its own URL on the production domain `https://trex-vs-tiger.vinylims.com`, so `*.pages.dev` copies (production alias and previews) consolidate onto it.
@@ -89,7 +89,7 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 
 **A content page in both languages** (e.g. a FAQ; `license` was added this way):
 
-1. Add its id to `CONTENT_PAGES` and `NAV_LABEL_KEYS` in `src/pages/routes.ts`, a `nav.<id>` key to both dictionaries in `src/ui/i18n.ts` (it names the page in breadcrumbs and `llms.txt`), and its schema.org type to `PAGE_TYPE` in `src/seo/site.ts`. If it belongs in the header, also add it to `NAV_PAGES`; every page's header nav follows, because the header is generated ([Site header](#site-header)).
+1. Add its id to `CONTENT_PAGES` and `NAV_LABEL_KEYS` in `src/pages/routes.ts`, a `nav.<id>` key to both dictionaries (`src/i18n/ko.ts`, `src/i18n/en.ts`) (it names the page in breadcrumbs and `llms.txt`), and its schema.org type to `PAGE_TYPE` in `src/seo/site.ts`. If it belongs in the header, also add it to `NAV_PAGES`; every page's header nav follows, because the header is generated ([Site header](#site-header)).
 2. Copy an existing pair (for example `about/index.html` and `en/about/index.html`) to `<id>/index.html` and `en/<id>/index.html`. Update `<title>`, the meta description and the content. Keep section ids identical in both languages, keep the `<!-- site-header -->` and `<!-- site-footer -->` lines (the build turns them into this page's header, language link included, and footer). Do not write canonical, hreflang, `og:*`, `twitter:*` or JSON-LD: the build generates them, and the sitemap and `llms.txt` pick the page up from the registry.
 3. Run `npm run check`. `tests/pages.test.ts` and `tests/seo.test.ts` list anything missing or inconsistent.
 

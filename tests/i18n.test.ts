@@ -1,15 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { DICTIONARIES } from '../src/i18n/dictionaries';
 import { PARAM_IDS } from '../src/sim/params';
-import {
-  DICTIONARIES,
-  LANGS,
-  getLang,
-  initLang,
-  interpolate,
-  onLangChange,
-  setLang,
-  t,
-} from '../src/ui/i18n';
+import { LANGS, getLang, initLang, interpolate, onLangChange, setLang, t } from '../src/ui/i18n';
 
 const placeholders = (s: string): string[] =>
   [...s.matchAll(/\{(\w+)\}/g)].map((m) => m[1] ?? '').sort();
@@ -60,12 +52,12 @@ describe('t / interpolate', () => {
     expect(interpolate('{a} + {b} = {c}', { a: 1, b: '2' })).toBe('1 + 2 = {c}');
   });
 
-  it('switches language without a DOM or storage', () => {
+  it('switches language without a DOM or storage', async () => {
     expect(getLang()).toBe('ko');
     expect(t('run.start')).toBe(DICTIONARIES.ko['run.start']);
-    setLang('en');
+    await setLang('en');
     expect(t('progress.text', { done: 1, total: 2, pct: '50%' })).toBe('1 / 2 runs (50%)');
-    setLang('ko');
+    await setLang('ko');
     expect(getLang()).toBe('ko');
   });
 });
@@ -82,7 +74,7 @@ describe('language state', () => {
     expect(initLang()).toBe('ko');
   });
 
-  it('never reads or writes localStorage', () => {
+  it('never reads or writes localStorage', async () => {
     const touched: string[] = [];
     const spy = new Proxy(
       {},
@@ -97,9 +89,9 @@ describe('language state', () => {
     initLang('ko');
     const seen: string[] = [];
     const off = onLangChange((l) => seen.push(l));
-    setLang('en');
-    setLang('en');
-    setLang('ko');
+    await setLang('en');
+    await setLang('en');
+    await setLang('ko');
     off();
     expect(seen).toEqual(['en', 'ko']);
     expect(touched).toEqual([]);

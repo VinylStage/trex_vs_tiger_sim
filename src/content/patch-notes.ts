@@ -1,4 +1,4 @@
-import type { Lang } from '../ui/i18n.ts';
+import type { Lang } from '../i18n/lang.ts';
 
 /*
  * The patch notes board (/patch-notes/, /en/patch-notes/, docs/PAGES.md#patch-notes): one entry

@@ -11,7 +11,7 @@ Issue #51. Three ways to hand something on, all generated in the browser:
 | Text share             | Wordle-style emoji text                                                    | snapshot + result link   | `src/share/result-text.ts`                                                            |
 | Link preview (crawler) | rewritten `og:*` / `twitter:*` text on `/r/`                               | snapshot text            | `src/share/result-function.ts`, [ADR-0006](adr/0006-pages-function-share-previews.md) |
 
-The DOM-free core (`config-code.ts`, `result-codec.ts`, `result-text.ts`, `messages.ts`, `baseline.ts`) is shared by the simulator, the result page and the Pages Function, so all three accept and describe exactly the same links. Strings for these features live in `src/share/messages.ts` (ko/en), not in `src/ui/i18n.ts`, so the Function and the result page get only what they need; species names still come from the main dictionaries.
+The DOM-free core (`config-code.ts`, `result-codec.ts`, `result-text.ts`, `messages.ts`, `baseline.ts`) is shared by the simulator, the result page and the Pages Function, so all three accept and describe exactly the same links. Strings for these features live in `src/share/messages-ko.ts` and `messages-en.ts` (read through `sm()` in `src/share/messages.ts`), not in the app dictionaries, so the Function and the result page get only what they need; species names still come from the app dictionaries (`src/i18n/ko.ts`, `en.ts`). Each result page bundles only its own language (`src/share/result-page-ko.ts`, `-en.ts`, #79); the Function registers both.
 
 ## Config code
 

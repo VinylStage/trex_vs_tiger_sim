@@ -24,7 +24,9 @@ import {
   applyI18n,
   getLang,
   initLang,
+  loadLang,
   onLangChange,
+  otherLang as otherLangOf,
   setLang,
   setNamePair,
   t,
@@ -45,7 +47,7 @@ import { copyText } from '../share/share-ui';
 import { createConfigTransfer } from './config-transfer';
 import { createReproduceCheck, createResultShare } from './result-share';
 import { pageLang, pagePath, switchedAppUrl } from '../pages/routes';
-import { logoAttrs } from '../pages/site-header';
+import { logoAttrs } from '../pages/site-shell';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
 import './site-footer.css';
 import { createTour } from './tour';
@@ -141,10 +143,20 @@ export function startApp(root: HTMLElement): void {
     i18n: 'tour.start',
     attrs: { type: 'button', 'data-tour': 'tour' },
   });
-  const otherLang = (): Lang => (getLang() === 'ko' ? 'en' : 'ko');
+  const otherLang = (): Lang => otherLangOf(getLang());
   // The button is labelled in the language it switches to.
   langBtn.lang = otherLang();
-  langBtn.addEventListener('click', () => setLang(otherLang()));
+  // The page bundles only its own words; fetch the other language's early (#79). If they cannot
+  // be loaded, open that language's page instead.
+  const warmLang = (): void => void loadLang(otherLang()).catch(() => undefined);
+  langBtn.addEventListener('pointerenter', warmLang);
+  langBtn.addEventListener('focus', warmLang);
+  langBtn.addEventListener('click', () => {
+    const next = otherLang();
+    setLang(next).catch(() =>
+      location.assign(switchedAppUrl(next, location.search, location.hash)),
+    );
+  });
   const shareBtn = h('button', {
     class: 'btn',
     i18n: 'share.copy',

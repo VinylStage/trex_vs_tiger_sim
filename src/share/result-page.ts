@@ -3,7 +3,7 @@ import '../pages/site.ts';
 import { pagePath, resultPageLang, resultPagePath, SITE_ORIGIN } from '../pages/routes.ts';
 import type { ScenarioConfig } from '../sim/config.ts';
 import type { FreeConfig } from '../sim/free/config.ts';
-import type { Lang } from '../ui/i18n.ts';
+import type { Lang } from '../i18n/lang.ts';
 import {
   renderCard,
   type CardFormat,
@@ -367,18 +367,24 @@ function renderResult({
   void prepare();
 }
 
-const decoded = decodeAnyResultQuery(location.search);
-if (!decoded.ok) renderError(decoded.error, decoded.config);
-else if (decoded.kind === 'free') {
-  const view = freeResultView(decoded.config, decoded.summary, lang);
-  renderResult({
-    view,
-    summary: decoded.summary,
-    stats: freeStats(view, decoded.summary),
-    runIt: reproduceFreeHash(decoded.config, decoded.summary),
-    seed: decoded.config.seed,
-  });
-} else {
+/** Render the page; its entry (result-page-ko.ts / -en.ts) registers the words first (#79). */
+export function startResultPage(): void {
+  const decoded = decodeAnyResultQuery(location.search);
+  if (!decoded.ok) {
+    renderError(decoded.error, decoded.config);
+    return;
+  }
+  if (decoded.kind === 'free') {
+    const view = freeResultView(decoded.config, decoded.summary, lang);
+    renderResult({
+      view,
+      summary: decoded.summary,
+      stats: freeStats(view, decoded.summary),
+      runIt: reproduceFreeHash(decoded.config, decoded.summary),
+      seed: decoded.config.seed,
+    });
+    return;
+  }
   const view = resultView(decoded.config, decoded.summary, lang);
   renderResult({
     view,

@@ -54,7 +54,7 @@ flowchart LR
         app@{ shape: rect, label: "app.ts<br/>wiring" }
         form@{ shape: rect, label: "form.ts<br/>config editor" }
         share@{ shape: rect, label: "share.ts<br/>URL codec" }
-        i18n@{ shape: rect, label: "i18n.ts<br/>ko / en" }
+        i18n@{ shape: rect, label: "i18n.ts<br/>runtime: t(), setLang" }
         charts@{ shape: rect, label: "charts.ts<br/>canvas charts" }
         replay@{ shape: rect, label: "replay.ts + replay/*<br/>v2 renderer (prepare, world,<br/>draw, camera, timeline)" }
         pool@{ shape: rect, label: "pool.ts<br/>worker pool" }
@@ -72,6 +72,10 @@ flowchart LR
         rpage@{ shape: rect, label: "result-page.ts<br/>/r/ page" }
         rfn@{ shape: rect, label: "result-function.ts<br/>HTMLRewriter glue" }
         shareui@{ shape: rect, label: "share-ui.ts<br/>clipboard, save, overlay" }
+    end
+    subgraph WORDS["src/i18n (language layer, no DOM)"]
+        words@{ shape: doc, label: "ko.ts · en.ts<br/>dictionaries" }
+        reg@{ shape: rect, label: "lang.ts · registry.ts · load.ts<br/>loaded words, import() on switch" }
     end
     subgraph FN["functions/ (Cloudflare Pages)"]
         fnr@{ shape: hex, label: "r/[[path]].ts · en/r/[[path]].ts" }
@@ -122,9 +126,13 @@ flowchart LR
     rtext --> codec
     codec --> share
     fnr --> rfn
+    i18n & rtext --> reg
+    seo & site --> words
     rfn --> rtext
     e1@{ animate: true }
 ```
+
+Language layer (#67, #79): the words live in `src/i18n/ko.ts`, `src/i18n/en.ts` and `src/share/messages-<lang>.ts`; `src/i18n/lang.ts` (`Lang`, `interpolate`, `otherLang`) and `src/i18n/registry.ts` (the loaded words) import nothing from `src/ui`, so `src/seo`, `src/pages` and `src/share` depend on `src/i18n` instead of the app's runtime `src/ui/i18n.ts`. Browser code reads words only through the registry; a page entry registers its own language before it starts (`src/main-ko.ts`, `src/main-en.ts`, `src/share/result-page-ko.ts`, `-en.ts`), and the language switch loads the other one with `import()`. Build-time code (`src/seo`, `src/pages/site-header.ts`, `site-footer.ts`) and the tests use `src/i18n/dictionaries.ts` with both languages; the app's logo and nav items come from `src/pages/site-shell.ts`, which holds no words. Remaining cross-directory edges: `src/share` uses the config URL codec `src/ui/share.ts` and the canvas card `src/ui/result-card.ts`, and `src/ui` uses the sharing core; no module import cycle runs between `src/share` and `src/ui`.
 
 Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run inside workers. The same holds for the sharing core (`src/share/config-code.ts`, `result-codec.ts`, `result-text.ts`), which the app, the `/r/` page and the Pages Function all import, so they accept exactly the same links ([SHARING.md](docs/SHARING.md)).
 
@@ -132,15 +140,15 @@ Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run insi
 
 `vite.pages.ts` `findHtmlEntries()` turns every `index.html` in the repository into a build input, so a new page needs no config change ([docs/PAGES.md](docs/PAGES.md)).
 
-| Entry                                                 | Script                          | Purpose                                                                                                                                    |
-| ----------------------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `index.html`, `en/index.html`                         | `src/main.ts` → `src/ui/app.ts` | The simulator in Korean (`/`) and English (`/en/`); language comes from the URL ([SEO.md](docs/SEO.md))                                    |
-| `<page>/index.html`, `en/<page>/index.html`           | `src/pages/site.ts`             | Static, crawlable guide, model, parameters, about and privacy pages in Korean and English ([PAGES.md](docs/PAGES.md))                      |
-| `patch-notes/index.html`, `en/patch-notes/index.html` | `src/pages/site.ts`             | Patch notes board: one card per release, generated at build time from `src/content/patch-notes.ts` ([PAGES.md](docs/PAGES.md#patch-notes)) |
-| `reset/index.html`                                    | `src/reset.ts`                  | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                                      |
-| `license/index.html`, `en/license/index.html`         | `src/pages/site.ts`             | MIT text and third-party notices                                                                                                           |
-| `404.html`, `en/404.html`                             | `src/pages/site.ts`             | Real 404 pages (disable the Pages SPA fallback)                                                                                            |
-| `r/index.html`, `en/r/index.html`                     | `src/share/result-page.ts`      | Shared-result pages (`?r=`): noindex, not in the sitemap, never load the simulator ([SHARING.md](docs/SHARING.md))                         |
+| Entry                                                 | Script                                                                | Purpose                                                                                                                                    |
+| ----------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `index.html`, `en/index.html`                         | `src/main-ko.ts` / `src/main-en.ts` → `src/main.ts` → `src/ui/app.ts` | The simulator in Korean (`/`) and English (`/en/`); language comes from the URL ([SEO.md](docs/SEO.md))                                    |
+| `<page>/index.html`, `en/<page>/index.html`           | `src/pages/site.ts`                                                   | Static, crawlable guide, model, parameters, about and privacy pages in Korean and English ([PAGES.md](docs/PAGES.md))                      |
+| `patch-notes/index.html`, `en/patch-notes/index.html` | `src/pages/site.ts`                                                   | Patch notes board: one card per release, generated at build time from `src/content/patch-notes.ts` ([PAGES.md](docs/PAGES.md#patch-notes)) |
+| `reset/index.html`                                    | `src/reset.ts`                                                        | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                                      |
+| `license/index.html`, `en/license/index.html`         | `src/pages/site.ts`                                                   | MIT text and third-party notices                                                                                                           |
+| `404.html`, `en/404.html`                             | `src/pages/site.ts`                                                   | Real 404 pages (disable the Pages SPA fallback)                                                                                            |
+| `r/index.html`, `en/r/index.html`                     | `src/share/result-page.ts`                                            | Shared-result pages (`?r=`): noindex, not in the sitemap, never load the simulator ([SHARING.md](docs/SHARING.md))                         |
 
 At build time `vite.seo.ts` (code in `src/seo/`) writes the head tags, JSON-LD, `sitemap.xml`, `robots.txt` and `llms*.txt` from the page registry ([SEO.md](docs/SEO.md)). Species presets and bounds live in `src/sim/species.ts` ([SPECIES.md](docs/SPECIES.md)); the replay renderer and its event log are described in [REPLAY.md](docs/REPLAY.md) and MODEL.md §2.6.
 

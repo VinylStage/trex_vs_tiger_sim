@@ -5,7 +5,8 @@ import {
   pagePath,
   type PageId,
 } from '../pages/routes.ts';
-import { DICTIONARIES, LANGS, type Lang } from '../ui/i18n.ts';
+import { DICTIONARIES } from '../i18n/dictionaries.ts';
+import { LANGS, type Lang } from '../i18n/lang.ts';
 import type { PageFacts } from './extract.ts';
 import { escapeHtml } from './html.ts';
 import {

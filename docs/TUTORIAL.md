@@ -7,7 +7,7 @@
 > - “실행” 단계에서 **빠른 데모(100회)**를 돌리면 결과가 나온 뒤 자동으로 결과 설명 단계로 넘어갑니다. 이미 결과가 있으면 데모 버튼은 나오지 않습니다.
 > - 키보드: ← → 이동, Esc 닫기, Tab은 안내 상자 안에서만 순환합니다. 닫으면 투어를 시작한 버튼으로 포커스가 돌아갑니다. 동작 줄이기(prefers-reduced-motion) 설정을 따릅니다.
 > - 첫 방문 배너는 `localStorage`의 `trexsim.tour` 값이 없을 때만 보입니다. 배너를 닫거나 투어를 시작 · 완료하면 다시 나오지 않습니다.
-> - 단계 문구는 `src/ui/i18n.ts`의 `tour.*` 키(한국어 · 영어)에 있고, 단계 목록은 `src/ui/tour-model.ts`의 `TOUR_STEPS`에 있습니다.
+> - 단계 문구는 `src/i18n/ko.ts` · `src/i18n/en.ts`의 `tour.*` 키(한국어 · 영어)에 있고, 단계 목록은 `src/ui/tour-model.ts`의 `TOUR_STEPS`에 있습니다.
 
 ## Contents
 
@@ -55,18 +55,18 @@ Steps are shown in this order. "Anchor" is the `data-tour` id the step spotlight
 
 ## Files
 
-| File                              | Role                                                                                                                                                                                                   |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `src/ui/tour-model.ts`            | DOM-free logic: `TOUR_STEPS`, step filtering and navigation, `n / N` counter, rectangle helpers, popover placement, the storage flag, the deep link, `guideHref`. Unit-tested in `tests/tour.test.ts`. |
-| `src/ui/tour.ts`                  | DOM layer: the `<dialog>`, SVG spotlight, popover, keyboard and focus handling, the first-visit offer. Imports `tour.css`.                                                                             |
-| `src/ui/tour.css`                 | Tour styles. Uses the colour tokens from `styles.css`, so light and dark mode follow automatically.                                                                                                    |
-| `src/ui/i18n.ts`                  | All tour text under `tour.*` (Korean and English).                                                                                                                                                     |
-| `src/ui/app.ts`, `src/ui/form.ts` | Carry the `data-tour` anchors, the header button, and the demo hook (`runDemo`).                                                                                                                       |
+| File                               | Role                                                                                                                                                                                                   |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `src/ui/tour-model.ts`             | DOM-free logic: `TOUR_STEPS`, step filtering and navigation, `n / N` counter, rectangle helpers, popover placement, the storage flag, the deep link, `guideHref`. Unit-tested in `tests/tour.test.ts`. |
+| `src/ui/tour.ts`                   | DOM layer: the `<dialog>`, SVG spotlight, popover, keyboard and focus handling, the first-visit offer. Imports `tour.css`.                                                                             |
+| `src/ui/tour.css`                  | Tour styles. Uses the colour tokens from `styles.css`, so light and dark mode follow automatically.                                                                                                    |
+| `src/i18n/ko.ts`, `src/i18n/en.ts` | All tour text under `tour.*` (Korean and English).                                                                                                                                                     |
+| `src/ui/app.ts`, `src/ui/form.ts`  | Carry the `data-tour` anchors, the header button, and the demo hook (`runDemo`).                                                                                                                       |
 
 ## Adding or editing a step
 
 1. **Anchor.** Add `data-tour="<id>"` to the element to highlight. With `h()` use `attrs: { 'data-tour': '<id>' }`; on an existing element use `el.dataset.tour = '<id>'`. Several elements may share one id; each visible one is spotlighted, and neighbours closer than 24 px share one hole.
-2. **Text.** Add `tour.<step>.title` and `tour.<step>.body` to **both** dictionaries in `src/ui/i18n.ts`. `tests/i18n.test.ts` fails if the key sets or placeholders differ.
+2. **Text.** Add `tour.<step>.title` and `tour.<step>.body` to **both** dictionaries (`src/i18n/ko.ts`, `src/i18n/en.ts`). `tests/i18n.test.ts` fails if the key sets or placeholders differ.
 3. **Step.** Add an entry to `TOUR_STEPS` in `src/ui/tour-model.ts` at the position where it should appear:
 
    ```ts

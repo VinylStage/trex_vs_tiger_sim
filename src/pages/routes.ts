@@ -1,4 +1,5 @@
-import type { Lang, MsgKey } from '../ui/i18n.ts';
+import type { MsgKey } from '../i18n/ko.ts';
+import { otherLang, type Lang } from '../i18n/lang.ts';
 
 /** Production origin used for canonical URLs, hreflang alternates and the sitemap. */
 export const SITE_ORIGIN = 'https://trex-vs-tiger.vinylims.com';
@@ -52,8 +53,7 @@ export const NAV_LABEL_KEYS: Readonly<Record<PageId, MsgKey>> = {
   license: 'nav.license',
 };
 
-/** The other of the two languages. */
-export const otherLang = (lang: Lang): Lang => (lang === 'ko' ? 'en' : 'ko');
+export { otherLang };
 
 /** Root-relative path of a page in a language. */
 export function pagePath(page: PageId, lang: Lang): string {
