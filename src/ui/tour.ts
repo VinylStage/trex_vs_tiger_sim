@@ -14,7 +14,6 @@ import {
   placePopover,
   readTourFlag,
   resolveStep,
-  shouldOfferTour,
   stepCounter,
   unionRect,
   writeTourFlag,
@@ -40,8 +39,6 @@ export interface Tour {
    * or moves on when that step is no longer available (the results preview once results exist).
    */
   refresh(): void;
-  /** The first-visit offer, or null when the visitor already started, declined or finished it. */
-  createOffer(): HTMLElement | null;
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -122,7 +119,6 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
   const storage = localStorageOrNull();
   /** Fallback when localStorage is unavailable: remember the choice for this page load. */
   let sessionFlag: TourFlag | null = null;
-  let offerEl: HTMLElement | null = null;
 
   let open = false;
   let index = -1;
@@ -573,7 +569,6 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
     if (open) return;
     const first = findStep(steps, isVisible, -1, 1);
     if (first < 0) return;
-    removeOffer();
     if (currentFlag() === null) remember('dismissed');
     const active = document.activeElement;
     returnFocus = active instanceof HTMLElement && active !== document.body ? active : null;
@@ -608,44 +603,5 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
     target?.focus({ preventScroll: true });
   }
 
-  // ---------- first-visit offer ----------
-  function removeOffer(): void {
-    offerEl?.remove();
-    offerEl = null;
-  }
-
-  function createOffer(): HTMLElement | null {
-    if (offerEl || !shouldOfferTour(currentFlag())) return null;
-    const titleId = uniqueId('tour-offer');
-    const startBtn = h('button', {
-      class: 'btn btn-primary btn-small',
-      i18n: 'tour.offer.start',
-      attrs: { type: 'button' },
-    });
-    const dismissBtn = h('button', {
-      class: 'btn btn-ghost btn-small',
-      i18n: 'tour.offer.dismiss',
-      attrs: { type: 'button' },
-    });
-    startBtn.addEventListener('click', () => start());
-    dismissBtn.addEventListener('click', () => {
-      remember('dismissed');
-      removeOffer();
-      tourElements('tour')[0]?.focus({ preventScroll: true });
-    });
-    offerEl = h(
-      'aside',
-      { class: 'tour-offer', attrs: { 'aria-labelledby': titleId } },
-      h(
-        'div',
-        { class: 'tour-offer-text' },
-        h('p', { class: 'tour-offer-title', id: titleId, i18n: 'tour.offer.title' }),
-        h('p', { class: 'tour-offer-body', i18n: 'tour.offer.body' }),
-      ),
-      h('div', { class: 'tour-offer-actions' }, startBtn, dismissBtn),
-    );
-    return offerEl;
-  }
-
-  return { start, isOpen: () => open, refresh, createOffer };
+  return { start, isOpen: () => open, refresh };
 }

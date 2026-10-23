@@ -96,17 +96,19 @@ Together these cut the longest start-up task from 441 to 235 ms and the start-up
 
 The startup JavaScript of a page is every script in its built HTML plus their static imports (`import()` excluded), compressed with brotli quality 11 (gzip level 9 in brackets). Measured with `vite build` at d442cab (v0.2.12) and on the branch.
 
-| Page              | Before (v0.2.12)  | One language per page (#79) |
-| ----------------- | ----------------- | --------------------------- |
-| `/`               | 74.0 KB (86.7 KB) | 66.9 KB (76.7 KB)           |
-| `/en/`            | 74.0 KB (86.7 KB) | 65.2 KB (75.0 KB)           |
-| `/r/`             | 32.1 KB (38.2 KB) | 24.2 KB (27.3 KB)           |
-| `/en/r/`          | 32.1 KB (38.2 KB) | 22.4 KB (25.7 KB)           |
-| content pages[^1] | 1.0 KB (1.2 KB)   | 1.1 KB (1.2 KB)             |
+| Page              | Before (v0.2.12)  | One language per page (#79) | Plus lazy replay and tour (#80) |
+| ----------------- | ----------------- | --------------------------- | ------------------------------- |
+| `/`               | 74.0 KB (86.7 KB) | 66.9 KB (76.7 KB)           | 50.0 KB (56.6 KB)               |
+| `/en/`            | 74.0 KB (86.7 KB) | 65.2 KB (75.0 KB)           | 48.2 KB (55.0 KB)               |
+| `/r/`             | 32.1 KB (38.2 KB) | 24.2 KB (27.3 KB)           | 24.5 KB (27.7 KB)               |
+| `/en/r/`          | 32.1 KB (38.2 KB) | 22.4 KB (25.7 KB)           | 22.8 KB (26.0 KB)               |
+| content pages[^1] | 1.0 KB (1.2 KB)   | 1.1 KB (1.2 KB)             | 1.1 KB (1.2 KB)                 |
 
 [^1]: `/guide/`, `/patch-notes/` and the other content pages load only `routes` and `site`, no dictionary.
 
 **One language per page (#79, #67).** Both dictionaries used to sit in a chunk shared by the app and the `/r/` page, so every page downloaded the other language for nothing. The words now live in `src/i18n/ko.ts`, `src/i18n/en.ts` and `src/share/messages-<lang>.ts`; each page has its own entry (`src/main-ko.ts`, `src/main-en.ts`, `src/share/result-page-ko.ts`, `-en.ts`) that bundles only its language and registers it (`src/i18n/registry.ts`) before the page starts. The language button loads the other language with `import()` (`src/i18n/load.ts`; two chunks, about 9 KB br), warmed on hover or focus; if it cannot be loaded, the button opens the other language's URL instead. `tests/i18n-bundle.test.ts` fails if an entry's static import graph reaches the other language. The switch itself (relabelling, one chart repaint) is unchanged; with the Playwright harness at 4x CPU it measured 184–300 ms (`/`) and 355–507 ms (`/en/`) both before and after, so the load adds no measurable time once warmed.
+
+**Lazy replay and tour (#80).** The replay renderer (`src/ui/replay.ts` and `replay/*`, 16.8 KB br) loads with `import()` when Run is pressed and mounts into `.replay-slot`; the tour (`src/ui/tour.ts`, 3.2 KB br plus 0.8 KB CSS) loads on its first start and is warmed when the pointer enters its button. The first-visit offer moved to `src/ui/tour-offer.ts` so it still renders with the page. Loading `/` requests neither chunk. CLS while the replay mounts is unchanged against v0.2.12: 0.0169 at 1366×900 and 0.0002 at 390×800 on both builds (Playwright, layout shifts without recent input).
 
 ## Free engine (#50)
 

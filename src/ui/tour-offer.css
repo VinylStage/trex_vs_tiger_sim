@@ -1,0 +1,46 @@
+/* First-visit tour offer (src/ui/tour-offer.ts); loaded at startup, unlike tour.css (#80). */
+
+.tour-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 16px;
+  width: calc(100% - 48px);
+  max-width: calc(1360px - 48px);
+  margin: 8px auto 0;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+}
+
+.tour-offer-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tour-offer-title {
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.tour-offer-body {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.tour-offer-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .tour-offer {
+    width: calc(100% - 24px);
+    margin-top: 6px;
+  }
+}
