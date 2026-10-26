@@ -1,5 +1,5 @@
 import { LIMITS, SAMPLING_METHODS } from '../sim/config';
-import type { FreeAggregate } from '../sim/free/aggregate';
+import { routNotice, type FreeAggregate } from '../sim/free/aggregate';
 import { FreeOutcome, type FreeRunSummary } from '../sim/free/engine';
 import {
   FREE_LIMITS,
@@ -159,6 +159,9 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   const provisionalEl = h('p', { class: 'free-provisional' });
   const verdictEl = h('p', { class: 'verdict' });
   const precisionEl = h('p', { class: 'verdict-precision' });
+  // Rout notice (design §3.2, #42): a rout should read as a rout, not as a bug.
+  const routEl = h('p', { class: 'free-rout-notice' });
+  routEl.hidden = true;
   const caveatLink = h('a', {});
   const caveatEl = h('p', { class: 'verdict-caveat' });
   const basisEl = h('p', { class: 'verdict-basis' });
@@ -202,6 +205,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       provisionalEl,
       verdictEl,
       precisionEl,
+      routEl,
       caveatEl,
       basisEl,
     ),
@@ -730,18 +734,39 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       seed: String(c.seed),
       elapsed: formatDuration(result.elapsedMs / 1000),
     });
-    const of = (i: SideIndex): string =>
-      t('stat.ofN', {
+    const notice = routNotice(c, agg, result.summaries);
+    routEl.hidden = notice === null;
+    if (notice) {
+      const whyLink = h('a', {
+        attrs: { href: `${pagePath('model', getLang())}#morale` },
+        text: t('free.rout.why'),
+      });
+      routEl.replaceChildren(
+        h('span', {
+          text: t('free.rout.notice', {
+            side: t(sideKey(notice.side)),
+            team: teamLabel(c.sides[notice.side].species, c.sides[notice.side].count),
+            pct: formatPct(notice.share, 0),
+          }),
+        }),
+        ' ',
+        whyLink,
+      );
+    }
+    // Still standing / fled / incapacitated per side (#42): the three add up to the side's count.
+    const part = (i: SideIndex, mean: number): string =>
+      t('free.stat.part', {
         n: formatInt(c.sides[i].count),
         counter: speciesCounter(c.sides[i].species),
+        pct: formatPct(mean / c.sides[i].count, 0),
       });
     const sideCards = (i: SideIndex): HTMLElement[] => {
       const s = i === 0 ? agg.a : agg.b;
       const side = t(sideKey(i));
       const out = [
-        card(t('free.stat.survivors', { side }), formatNum(s.survivors, 2), of(i)),
-        card(t('free.stat.killed', { side }), formatNum(s.killed, 1), of(i)),
-        card(t('free.stat.routed', { side }), formatNum(s.routed, 1), of(i)),
+        card(t('free.stat.standing', { side }), formatNum(s.active, 1), part(i, s.active)),
+        card(t('free.stat.routed', { side }), formatNum(s.routed, 1), part(i, s.routed)),
+        card(t('free.stat.killed', { side }), formatNum(s.killed, 1), part(i, s.killed)),
       ];
       // Pack buff (design §6): only where it could apply, a social side of two or more.
       if (sideBuffState(c, i, FREE_SPECIES[c.sides[i].species].social) === 'active') {

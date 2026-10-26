@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aggregateFree, routShare } from '../src/sim/free/aggregate';
+import { ROUT_NOTICE_SHARE, aggregateFree, routNotice, routShare } from '../src/sim/free/aggregate';
 import { defaultSide, sanitizeFreeConfig } from '../src/sim/free/config';
 import { FreeOutcome, emptyBuffStats, type FreeRunSummary } from '../src/sim/free/engine';
 import { runAllFree } from '../src/sim/free/montecarlo';
@@ -89,5 +89,44 @@ describe('still standing / fled / incapacitated', () => {
     for (const side of [agg.a, agg.b]) {
       expect(side.active + side.routed + side.killed).toBeCloseTo(5, 9);
     }
+  });
+});
+
+describe('routNotice', () => {
+  const config = (na: number, nb: number) => {
+    const c = sanitizeFreeConfig({});
+    c.sides = [defaultSide('lion', na), defaultSide('elephant', nb)];
+    return sanitizeFreeConfig(c);
+  };
+  /** Side B wins every run; side A (30) loses with `fled` fled and the rest incapacitated. */
+  const lostA = (fled: number): FreeRunSummary[] => [
+    run(FreeOutcome.B, [30 - fled, fled, 0], [0, 0, 5]),
+    run(FreeOutcome.B, [30 - fled, fled, 0], [0, 0, 5]),
+  ];
+
+  it('points out the losing group from the documented share on', () => {
+    expect(ROUT_NOTICE_SHARE).toBe(0.8);
+    expect(routNotice(config(30, 5), { aWins: 0, bWins: 2 }, lostA(24))).toEqual({
+      side: 0,
+      share: 0.8,
+    });
+    expect(routNotice(config(30, 5), { aWins: 0, bWins: 2 }, lostA(23))).toBeNull();
+  });
+
+  it('says nothing for a side of one, on equal wins, or without a lost run', () => {
+    const duel = [run(FreeOutcome.B, [0, 1, 0], [0, 0, 1])];
+    expect(routNotice(config(1, 1), { aWins: 0, bWins: 1 }, duel)).toBeNull();
+    expect(routNotice(config(30, 5), { aWins: 1, bWins: 1 }, lostA(30))).toBeNull();
+    expect(routNotice(config(30, 5), { aWins: 0, bWins: 0 }, [])).toBeNull();
+    expect(routNotice(config(30, 5), { aWins: 2, bWins: 0 }, lostA(30))).toBeNull();
+  });
+
+  it('fires for 30 lions against 5 elephants, the case the smoke test opens', () => {
+    const c = sanitizeFreeConfig({ runs: 40 });
+    c.sides = [defaultSide('lion', 30), defaultSide('elephant', 5)];
+    const cfg = sanitizeFreeConfig(c);
+    const { summaries } = runAllFree(cfg);
+    const agg = aggregateFree(cfg, summaries);
+    expect(routNotice(cfg, agg, summaries)?.side).toBe(0);
   });
 });

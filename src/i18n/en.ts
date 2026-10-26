@@ -529,9 +529,13 @@ export const en: Dictionary = {
   'free.verdict': 'In {n} simulated battles under this model, {team} won {k} ({pct}).',
   'free.basis': '{a} vs {b} · {n} runs · seed {seed} · {elapsed}',
   'free.win': '{side} victory',
-  'free.stat.survivors': '{side} survivors (mean)',
+  'free.stat.standing': '{side} still standing (mean)',
   'free.stat.killed': '{side} incapacitated (mean)',
   'free.stat.routed': '{side} fled (mean)',
+  'free.stat.part': '{pct} of {n}{counter}',
+  'free.rout.notice':
+    'The group’s morale broke all at once. When {team} ({side}) lost, {pct} of them fled instead of being incapacitated.',
+  'free.rout.why': 'Why?',
   'free.replay.repNote':
     'the battle with the most common outcome whose length is closest to its median',
   'free.replay.canvasLabel':

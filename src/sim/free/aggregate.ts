@@ -63,6 +63,26 @@ export function routShare(summaries: readonly FreeRunSummary[], side?: 0 | 1): n
   return out > 0 ? fled / out : NaN;
 }
 
+/** Rout share of the losing side from which free results show a rout notice (**S**, design §3.2). */
+export const ROUT_NOTICE_SHARE = 0.8;
+
+/**
+ * The rout a free result points out (design §3.2, #42): the side that won fewer runs, when it
+ * fielded a group and at least `ROUT_NOTICE_SHARE` of it fled in the runs it lost. A lone animal
+ * that withdraws is no group rout, so a side of one never gets the notice.
+ */
+export function routNotice(
+  config: FreeConfig,
+  agg: Pick<FreeAggregate, 'aWins' | 'bWins'>,
+  summaries: readonly FreeRunSummary[],
+): { side: 0 | 1; share: number } | null {
+  if (agg.aWins === agg.bWins) return null;
+  const side = agg.aWins < agg.bWins ? 0 : 1;
+  if (config.sides[side].count < 2) return null;
+  const share = routShare(summaries, side);
+  return share >= ROUT_NOTICE_SHARE ? { side, share } : null;
+}
+
 export function aggregateFree(
   _config: FreeConfig,
   summaries: readonly FreeRunSummary[],
