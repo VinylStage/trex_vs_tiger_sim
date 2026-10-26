@@ -8,7 +8,7 @@
 > - 빌드 설정: 프레임워크 프리셋 `None`, 빌드 명령 `npm run build`, 출력 디렉터리 `dist`, 루트 디렉터리 비움. Node 버전은 `.node-version`(24)에서 읽습니다.
 > - 보안/캐시 헤더는 `public/_headers`에 있습니다. 이 파일에는 주석을 넣지 않으므로 각 줄의 의미는 [아래 표](#_headers-explained)에서 설명합니다.
 > - `vinylims.com` 존의 Bot Fight Mode가 HTML에 인라인 스크립트(JavaScript Detections)를 주입하면 엄격한 CSP와 충돌합니다. 그래서 HTML 응답에 `Cache-Control: no-cache, no-transform`을 지정해 주입을 끕니다([설명](#bot-fight-mode-and-javascript-detections)).
-> - 무료 플랜 한도(월 500회 빌드, 파일 20,000개, 파일당 25 MiB) 대비 사용량은 매우 작습니다. Workers 요청 한도(하루 100,000회)는 `/r/`·`/en/r/` 요청만 소비하며, 한도를 넘으면 Fail open 설정일 때 정적 `/r/` 페이지가 응답합니다([아래](#pages-function-r-previews)).
+> - 무료 플랜 한도(월 500회 빌드, 파일 20,000개, 파일당 25 MiB) 대비 사용량은 매우 작습니다. `/r/`·`/en/r/` 요청만 Workers 요청 한도(하루 100,000회)를 소비하며, 한도를 넘으면 Fail open 설정일 때 정적 `/r/` 페이지가 응답합니다([아래](#pages-function-r-previews)).
 > - 배포 확인: `curl -sI https://trex-vs-tiger.vinylims.com/ | grep -i content-security`. 롤백: 대시보드 → Deployments → 이전 배포 → **Rollback to this deployment**.
 
 ## Contents

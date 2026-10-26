@@ -108,10 +108,11 @@ Startup JavaScript (brotli) fell from 74.0 KB at v0.2.12 to 50.0 KB on `/` and 4
 
 Open items for the owner:
 
-- #57: a branch ruleset on `main` that requires a pull request and the `check` status and blocks force pushes and deletion, and optionally the setting that requires actions pinned to a full-length commit SHA ([docs/CONFIGURATION.md](docs/CONFIGURATION.md)). Epic #82 stays open for this.
-- #69: confirm the announcements with a real screen reader (NVDA with Chrome, VoiceOver with Safari). So far they were verified with Playwright only.
-- Coverage tool: adding `@vitest/coverage-v8` as a dev dependency (#61) is an owner decision; it is not installed.
-- Language switch: #79's target of under 200 ms at 4x CPU is not met. The switch measured 184–300 ms on `/` and 355–507 ms on `/en/`, before and after the split. The time goes into relabelling; in-place label updates are listed as open in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+- #57: add a branch ruleset on `main` that requires a pull request and the `check` status and blocks force pushes and deletion, and optionally turn on the setting that requires actions pinned to a full-length commit SHA ([docs/CONFIGURATION.md](docs/CONFIGURATION.md)). Epic #82 stays open until then.
+- #69: confirm the announcements with a real screen reader (NVDA with Chrome, VoiceOver with Safari). So far only Playwright has checked them.
+- #61: decide whether to add `@vitest/coverage-v8` as a dev dependency. It is not installed.
+
+The language switch still misses #79's target of under 200 ms at 4x CPU. It measured 184–300 ms on `/` and 355–507 ms on `/en/`, before and after the split; the time goes into relabelling, and in-place label updates are listed as open in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
 
 ## Known gaps
 
