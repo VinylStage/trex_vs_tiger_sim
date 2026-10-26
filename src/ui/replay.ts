@@ -11,6 +11,7 @@ import { QualityGovernor, TIERS } from './replay/quality';
 import { TimelineStrip } from './replay/strip';
 import { readReplayTheme, type ReplayTheme } from './replay/theme';
 import {
+  AutoPause,
   DEFAULT_SPEED,
   SPEEDS,
   buildTimeline,
@@ -136,6 +137,7 @@ export class ReplayView {
   };
   private time = 0;
   private playing = false;
+  private readonly autoPause = new AutoPause();
   private speed: number = DEFAULT_SPEED;
   private zoom = ZOOM_AUTO;
   /** Reduced motion: no autoplay, no effects or trails, overview until the viewer acts. */
@@ -171,8 +173,9 @@ export class ReplayView {
   private fillTimes: Float64Array = new Float64Array(0);
 
   private readonly onVisibility = (): void => {
-    // Pause while the page is hidden (Page Visibility); the viewer resumes with Play.
-    if (document.hidden && this.playing) this.setPlaying(false);
+    // Pause while the page is hidden (Page Visibility); resume when it is visible again.
+    const on = this.autoPause.change(document.hidden, this.playing);
+    if (on !== null) this.setPlaying(on);
     this.schedule();
   };
   private readonly onScheme = (): void => {
@@ -188,6 +191,7 @@ export class ReplayView {
   };
   private readonly onMotion = (): void => {
     this.reducedMotion = this.motionQuery.matches;
+    if (this.reducedMotion) this.autoPause.release();
     if (this.reducedMotion && this.playing) this.setPlaying(false);
     this.applyMotionPrefs();
     this.draw();
@@ -403,6 +407,7 @@ export class ReplayView {
     this.slider.max = String(end);
     this.slider.value = '0';
     this.overview = this.reducedMotion;
+    this.autoPause.release();
     this.playing = autoplay && !this.reducedMotion && end > 0;
     this.lastTs = 0;
     this.lastValueSecond = -1;
@@ -420,6 +425,7 @@ export class ReplayView {
     this.model = null;
     this.camTarget = null;
     this.strip.setModel(null);
+    this.autoPause.release();
     this.playing = false;
     this.overview = false;
     this.updateLabels();
@@ -484,6 +490,7 @@ export class ReplayView {
   }
 
   private toggle(): void {
+    this.autoPause.release();
     this.setPlaying(!this.playing);
   }
 
@@ -491,6 +498,7 @@ export class ReplayView {
   private seek(time: number): void {
     if (!this.prep) return;
     const t0 = performance.now();
+    this.autoPause.release();
     this.time = Math.min(this.duration(), Math.max(0, time));
     this.overview = false;
     this.lastTs = 0;

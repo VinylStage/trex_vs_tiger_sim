@@ -5,6 +5,7 @@ import { frameIndex } from '../src/ui/replay/interp';
 import { OVERVIEW, buildOverview, overviewCamera } from '../src/ui/replay/overview';
 import { prepare } from '../src/ui/replay/prepare';
 import {
+  AutoPause,
   CH,
   CHANNELS,
   CLUSTER_GAP_S,
@@ -78,6 +79,28 @@ describe('keyboard map', () => {
     expect(keyAction('KeyI', 'c', false)).toEqual({ kind: 'contact' });
     expect(keyAction('KeyF', 'F', true)).toEqual({ kind: 'view' });
     expect(keyAction('KeyC', 'Process', false)).toEqual({ kind: 'contact' });
+  });
+});
+
+describe('page visibility', () => {
+  it('resumes on visible after pausing for a hidden page', () => {
+    const p = new AutoPause();
+    expect(p.change(true, true)).toBe(false);
+    expect(p.change(true, false)).toBeNull();
+    expect(p.change(false, false)).toBe(true);
+    // Once: the next visible page leaves playback alone.
+    expect(p.change(false, true)).toBeNull();
+  });
+
+  it('stays paused on visible after the viewer paused', () => {
+    const p = new AutoPause();
+    // Paused before the page was hidden.
+    expect(p.change(true, false)).toBeNull();
+    expect(p.change(false, false)).toBeNull();
+    // Paused (or played, or seeked) while the page was hidden.
+    expect(p.change(true, true)).toBe(false);
+    p.release();
+    expect(p.change(false, false)).toBeNull();
   });
 });
 

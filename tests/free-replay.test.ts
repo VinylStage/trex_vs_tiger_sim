@@ -10,6 +10,7 @@ import {
 } from '../src/sim/free/engine';
 import type { FreeSpeciesId } from '../src/sim/free/species';
 import { designRow } from '../src/sim/sampling';
+import { freeKeyAction } from '../src/ui/free-replay';
 import {
   FREE_TRIANGLE_RADIUS,
   FreeWorld,
@@ -133,5 +134,31 @@ describe('free replay camera', () => {
       expect(Math.abs((w.x[i] as number) - box.cx)).toBeLessThanOrEqual(box.size / 2);
       expect(Math.abs((w.y[i] as number) - box.cy)).toBeLessThanOrEqual(box.size / 2);
     }
+  });
+});
+
+describe('free replay keys', () => {
+  it('toggles play from the physical K key while a Korean IME is on', () => {
+    expect(freeKeyAction('KeyK', 'ㅏ', false)).toEqual({ kind: 'toggle' });
+    expect(freeKeyAction('KeyK', 'Process', false)).toEqual({ kind: 'toggle' });
+    expect(freeKeyAction('KeyJ', 'ㅓ', false)).toEqual({ kind: 'seekBy', seconds: -5 });
+    expect(freeKeyAction('KeyL', 'ㅣ', false)).toEqual({ kind: 'seekBy', seconds: 5 });
+    expect(freeKeyAction('KeyF', 'ㄹ', false)).toEqual({ kind: 'view' });
+  });
+
+  it('keeps its own keys and leaves out the classic event keys', () => {
+    expect(freeKeyAction('Space', ' ', false)).toEqual({ kind: 'toggle' });
+    expect(freeKeyAction('KeyK', 'K', true)).toEqual({ kind: 'toggle' });
+    expect(freeKeyAction('ArrowLeft', 'ArrowLeft', true)).toEqual({ kind: 'seekBy', seconds: -5 });
+    expect(freeKeyAction('ArrowRight', 'ArrowRight', false)).toEqual({
+      kind: 'seekBy',
+      seconds: 1,
+    });
+    expect(freeKeyAction('Home', 'Home', false)).toEqual({ kind: 'seekTo', to: 'start' });
+    expect(freeKeyAction('End', 'End', false)).toEqual({ kind: 'seekTo', to: 'end' });
+    expect(freeKeyAction('BracketRight', ']', false)).toEqual({ kind: 'speed', dir: 1 });
+    expect(freeKeyAction('KeyC', 'ㅊ', false)).toBeNull();
+    expect(freeKeyAction('Comma', ',', false)).toBeNull();
+    expect(freeKeyAction('PageUp', 'PageUp', false)).toBeNull();
   });
 });

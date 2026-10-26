@@ -324,3 +324,29 @@ export function keyAction(code: string, key: string, shift: boolean): ReplayActi
       return null;
   }
 }
+
+/**
+ * Page Visibility, for both replays (docs/REPLAY.md §11): playback pauses while the page is
+ * hidden and resumes when it is visible again, unless the viewer played, paused or seeked in
+ * between (`release`). A replay that was not playing when the page was hidden stays as it was.
+ */
+export class AutoPause {
+  private held = false;
+
+  /** The page was hidden or shown: the play state to switch to, or null to leave it. */
+  change(hidden: boolean, playing: boolean): boolean | null {
+    if (hidden) {
+      if (!playing) return null;
+      this.held = true;
+      return false;
+    }
+    if (!this.held) return null;
+    this.held = false;
+    return true;
+  }
+
+  /** The viewer (or a new trace) decided the play state; nothing resumes on its own after it. */
+  release(): void {
+    this.held = false;
+  }
+}
