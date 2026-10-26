@@ -53,6 +53,7 @@ Node: see `.node-version` (24).
 | [docs/PAGES.md](docs/PAGES.md)                     | Static content pages, URL scheme, drift guard                             |
 | [docs/TUTORIAL.md](docs/TUTORIAL.md)               | Guided tour steps, accessibility, deep link                               |
 | [docs/SHARING.md](docs/SHARING.md)                 | Settings codes, result links and page, result card, text share, previews  |
+| [docs/STREAMING.md](docs/STREAMING.md)             | Streaming setup (Korean): OBS, legibility, viewer formats, checklist      |
 | [docs/VERSIONING.md](docs/VERSIONING.md)           | Version badge, update detection, cache/storage reset                      |
 | [docs/BRANDING.md](docs/BRANDING.md)               | Title, OG cards, icon set and how to re-render them                       |
 | [docs/ADSENSE.md](docs/ADSENSE.md)                 | AdSense readiness gates, owner actions, checklist                         |
