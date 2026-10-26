@@ -117,4 +117,4 @@ The language switch still misses #79's target of under 200 ms at 4x CPU. It meas
 ## Known gaps
 
 - Default parameters make T-Rex win ~100% for 10 vs 100 (tigers rout fast under morale; even without morale tiger damage is too low). This is a model outcome, not a bug; calibration rationale in docs/MODEL.md. Sensitivity is dominated by `pack.dps` (`tiger.dps` in v1 links).
-- Results are bit-identical only within the same JavaScript engine; `Math.atan2/sin/cos/log` are not required to be correctly rounded across engines.
+- Results are bit-identical only within the same JavaScript engine; `Math.atan2/sin/cos/log` are not required to be correctly rounded across engines. The legacy engine never calls `Math.hypot`; the free engine calls it in one place, the pack buff's shared-target search (docs/MODEL.md §2.2, #135).
