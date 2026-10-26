@@ -203,6 +203,7 @@ sequenceDiagram
 - Sampling design (LHS permutation matrix) is generated from `S` and rebuilt identically in every worker; run `i` uses row `i`.
 - Battle `i` uses PRNG seeded with `splitmix32(S ⊕ hash(i))`.
 - Therefore results are identical for a given URL regardless of the number of workers or chunk boundaries.
+- Free-model links also name the model version they run under (`mv`, absent means 1), so a link's results are identical per model version ([ADR-0008](docs/adr/0008-live-interventions-and-model-version.md), [SHARING.md](docs/SHARING.md#model-version-mv)).
 
 ## 4. Simulation model (summary)
 
