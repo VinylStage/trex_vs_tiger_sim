@@ -59,6 +59,41 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.16',
+    date: '2026-10-26',
+    title: {
+      ko: '방송 켠 채로 다시 보기 🎥',
+      en: 'Replays that keep up with your stream 🎥',
+    },
+    prs: [116, 120],
+    items: [
+      {
+        cat: 'fixed',
+        refs: [117],
+        ko: '자유 대결 리플레이 단축키(K, J, L, F)가 한글 입력 상태에서도 먹혀요. 한/영 키를 누를 필요가 없어졌습니다.',
+        en: 'Free-match replay shortcuts (K, J, L, F) now work with a Korean keyboard layout active. No more switching input modes first.',
+      },
+      {
+        cat: 'fixed',
+        refs: [117],
+        ko: '방송 장면을 바꾸거나 창을 내렸다가 돌아오면 리플레이가 멈췄던 자리부터 다시 흘러갑니다. 직접 일시정지한 경우와 끝까지 본 경우에는 그대로 멈춰 있어요.',
+        en: 'Switch scenes or minimise the window and the replay picks up where it left off when you come back. A replay you paused yourself, or one that already finished, stays put.',
+      },
+      {
+        cat: 'fixed',
+        refs: [117],
+        ko: 'AltGr나 Option으로 [ ]를 입력하는 자판에서도 재생 속도를 바꿀 수 있습니다. Ctrl+F는 브라우저 찾기에 그대로 양보합니다.',
+        en: "Keyboards that type [ and ] with AltGr or Option can change the replay speed too, and Ctrl+F is left to your browser's find.",
+      },
+      {
+        cat: 'new',
+        refs: [116],
+        ko: '스트리머용 방송 설정 가이드가 생겼어요. OBS 캡처 방식, 추천 배율(1080p는 125%), 30분 시청자 참여 진행 예시를 저장소의 docs/STREAMING.md에 정리했습니다.',
+        en: 'A streaming setup guide is out: OBS capture options, recommended zoom (125% on a 1080p canvas) and a 30-minute viewer-participation format, in docs/STREAMING.md in the repository.',
+      },
+    ],
+  },
+  {
     version: '0.2.15',
     date: '2026-10-26',
     title: {
