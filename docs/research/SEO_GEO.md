@@ -8,7 +8,7 @@
   - **[observed]**: my own live probe or local test on 2026-10-19.
   - **[secondary]**: third-party write-up.
   - **[inference]**: my reasoning. Test it before relying on it.
-- **Related user request:** "폰트는 pretendard로 통일해" (use Pretendard for all fonts). This report covers only the SEO and Core Web Vitals side of that change ([§1.7](#17-core-web-vitals-and-the-pretendard-switch)) and the OG image ([§3](#3-open-graph--twitter-cards--messenger-previews)). The font change itself belongs to another track.
+- **Related owner request:** "폰트는 pretendard로 통일해" (use Pretendard for all fonts). This report covers only the SEO and Core Web Vitals side of that change ([§1.7](#17-core-web-vitals-and-the-pretendard-switch)) and the OG image ([§3](#3-open-graph--twitter-cards--messenger-previews)). The font change itself belongs to another track.
 
 ---
 
@@ -83,7 +83,7 @@ Google and Naver both want a unique, descriptive title and description on every 
 
 - static `<title>`: "T-Rex vs Tiger Simulator";
 - JavaScript title: "티라노사우루스 vs 호랑이 시뮬레이터";
-- task brief: "티렉스 대 호랑이 / T-Rex vs Tiger".
+- owner's brief: "티렉스 대 호랑이 / T-Rex vs Tiger".
 
 The table below proposes one Korean name ("티렉스 대 호랑이") and one English name ("T-Rex vs Tiger"), with "티라노사우루스 vs 호랑이" as a Korean alternate name. These are recommendations, not sourced facts.
 
@@ -754,7 +754,7 @@ Proposed `/llms.txt`:
 - **Caveats [inference]:**
   - the test engines were 2023-era (a GPT-3.5-based generative engine and Perplexity);
   - Google states these tactics are not needed for its systems [S2].
-  - They do overlap with what Google rewards anyway: sourced, specific, non-commodity content. Use them because they are honest content improvements, not as hacks.
+  - They do overlap with what Google rewards anyway: sourced, specific, non-commodity content. Use them for that reason.
 
 **Applied to this site [inference]:**
 
@@ -939,7 +939,7 @@ The live probe shows Bot Fight Mode injecting its inline JSD script into HTML re
 
 ## 8. Owner-only actions (summary)
 
-These are listed in the structured output `owner_actions` as well. They are dashboard steps that code cannot perform.
+Dashboard steps that code cannot perform: the Cloudflare AI bot policy and AI Crawl Control (§0.2 item 1, §6.2), the `pages.dev` Bulk Redirect (§1.3), and Search Console, Naver, Daum and Bing registration (§4.1–§4.3, §4.5). The maintained checklist is [docs/SEO.md → Owner actions](../SEO.md#owner-actions).
 
 ---
 

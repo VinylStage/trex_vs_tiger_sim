@@ -11,17 +11,17 @@ A Monte Carlo, agent-based battle simulator: N _Tyrannosaurus rex_ vs M tigers o
 
 ## Features
 
-- Pick the species on each side (heavy: T. rex, elephant, buffalo, brown bear, woolly mammoth, Homo erectus; pack: tiger, lion, wolf, hyena, Homo erectus) or a matchup preset, then set the counts, the number of Monte Carlo runs, the seed, the arena size, the time limit and the pack tactic and morale options yourself
-- Edit every model parameter's `(min, mode, max)` range
+- Species choice on each side (heavy: T. rex, elephant, buffalo, brown bear, woolly mammoth, Homo erectus; pack: tiger, lion, wolf, hyena, Homo erectus) or a matchup preset, plus your own counts, number of Monte Carlo runs, seed, arena size, time limit, pack tactic and morale options
+- An editable `(min, mode, max)` range for every model parameter
 - Latin Hypercube or plain random sampling, plus per-individual variation
 - Results:
   - win / draw probabilities with Wilson 95% confidence intervals
   - histograms of battle duration and survivors
   - Spearman sensitivity (tornado chart) of each parameter
 - Animated replay of a single battle with abstract glyphs, an event timeline, skip-to-contact, speeds 0.25×–16× and a reduced-motion overview
-- Share any scenario as a URL; the seed is included, so results reproduce exactly in the same browser engine (and statistically across engines)
-- Export and import settings as a `TVT2-…` code or a `.json` file (previewed before applying)
-- Share a finished result: a `/r/` result page with a snapshot and "run it yourself" check, a story or square result card image, and a Wordle-style emoji text; link previews show the result through a tiny `/r/`-only Pages Function
+- Scenario sharing as a URL; the seed is included, so results reproduce exactly in the same browser engine (and statistically across engines)
+- Settings export and import as a `TVT2-…` code or a `.json` file (previewed before applying)
+- Result sharing: a `/r/` result page with a snapshot and "run it yourself" check, a story or square result card image, and a Wordle-style emoji text; link previews show the result through a tiny `/r/`-only Pages Function
 - Korean (`/`) and English (`/en/`) UI, plus static guide, model, parameter, about, patch notes, privacy and license pages in both languages; generated sitemap, robots.txt, llms.txt and structured data
 - Interactive guided tour (header **튜토리얼 / Tutorial** button or `?tour=1`)
 - Release version badge that detects newer deployments and can reload the latest version after clearing this site's cache and storage

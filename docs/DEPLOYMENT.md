@@ -2,13 +2,13 @@
 
 > **한국어 요약**
 >
-> - 이 사이트는 **정적 파일만** 배포합니다. 시뮬레이션은 방문자 브라우저의 Web Worker에서 실행되며 서버 코드(Pages Functions)는 없습니다.
+> - 이 사이트는 정적 파일을 배포합니다. 시뮬레이션은 방문자 브라우저의 Web Worker에서 실행됩니다. 서버 코드는 `/r/`·`/en/r/` 결과 링크의 미리보기 메타 태그를 고쳐 쓰는 Pages Function 하나뿐입니다([ADR-0006](adr/0006-pages-function-share-previews.md)).
 > - Cloudflare Pages **Git 연동**으로 `main` 브랜치에 push하면 프로덕션이, 그 외 브랜치/PR에 push하면 프리뷰가 자동 배포됩니다.
 > - 프로덕션 주소: **<https://trex-vs-tiger.vinylims.com/>** (커스텀 도메인, Cloudflare 관리 TLS). `https://trex-vs-tiger-sim.pages.dev`도 같은 배포를 제공합니다.
 > - 빌드 설정: 프레임워크 프리셋 `None`, 빌드 명령 `npm run build`, 출력 디렉터리 `dist`, 루트 디렉터리 비움. Node 버전은 `.node-version`(24)에서 읽습니다.
 > - 보안/캐시 헤더는 `public/_headers`에 있습니다. 이 파일에는 주석을 넣지 않으므로 각 줄의 의미는 [아래 표](#_headers-explained)에서 설명합니다.
 > - `vinylims.com` 존의 Bot Fight Mode가 HTML에 인라인 스크립트(JavaScript Detections)를 주입하면 엄격한 CSP와 충돌합니다. 그래서 HTML 응답에 `Cache-Control: no-cache, no-transform`을 지정해 주입을 끕니다([설명](#bot-fight-mode-and-javascript-detections)).
-> - 무료 플랜 한도(월 500회 빌드, 파일 20,000개, 파일당 25 MiB) 대비 사용량은 매우 작고, Functions가 없으므로 Workers 요청 한도도 소비하지 않습니다.
+> - 무료 플랜 한도(월 500회 빌드, 파일 20,000개, 파일당 25 MiB) 대비 사용량은 매우 작습니다. Workers 요청 한도(하루 100,000회)는 `/r/`·`/en/r/` 요청만 소비하며, 한도를 넘으면 Fail open 설정일 때 정적 `/r/` 페이지가 응답합니다([아래](#pages-function-r-previews)).
 > - 배포 확인: `curl -sI https://trex-vs-tiger.vinylims.com/ | grep -i content-security`. 롤백: 대시보드 → Deployments → 이전 배포 → **Rollback to this deployment**.
 
 ## Contents
@@ -95,7 +95,7 @@ After setup:
 - **Pull requests.** For PRs opened from this repository (not from forks), Cloudflare posts the preview URL as a PR comment and reports the build as a GitHub check run.
 - **Production.** Every push to `main` (the squash merge of a PR) builds and deploys to production. Production is served at `https://trex-vs-tiger.vinylims.com/` and at `https://trex-vs-tiger-sim.pages.dev`.
 - **Skipping a build.** Start the commit message with `[CI Skip]`, `[CI-Skip]`, `[Skip CI]`, `[Skip-CI]` or `[CF-Pages-Skip]`; the match is case-insensitive. Use this only on intermediate branch commits. The squash-merge title on `main` must stay a Conventional Commit so that release-please can parse it.
-- **CI does not gate the Pages build.** Pages builds independently of GitHub Actions. `main` is still protected because every change arrives through a PR, and CI must be green before squash-merge.
+- **CI and the Pages build.** Pages builds independently of GitHub Actions, so CI does not gate it. `main` is still protected because every change arrives through a PR, and CI must be green before squash-merge.
 
 ## Deploy pipeline
 
@@ -214,7 +214,7 @@ These paths run the result-preview Pages Function ([below](#pages-function-r-pre
 
 All other paths keep the Pages default `public, max-age=0, must-revalidate`. That includes the files in `public/` (icons, OG images, the manifest) and the generated `robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, which Pages already serves as `text/plain; charset=utf-8` and `application/xml` (checked on the branch preview), so no `Content-Type` rule is needed.
 
-Unknown paths: the build has a top-level `404.html`, so Pages no longer falls back to `index.html`. It serves the nearest `404.html` (`/en/…` → `en/404.html`) with status 404 and its own `Cache-Control: no-store`. Such a path matches only `/*` (or `/*/` when it ends in a slash), so a slash-less 404 response has no `no-transform`. On the custom domain Bot Fight Mode then injects its inline JavaScript Detections script and the CSP blocks it: one console error on a noindex page, nothing else breaks. A blanket `/*` `no-transform` is deliberately not added, because it would also switch off Cloudflare compression for every asset. Measurements and options: [SEO.md](SEO.md#404-pages).
+Unknown paths: the build has a top-level `404.html`, so Pages no longer falls back to `index.html`. It serves the nearest `404.html` (`/en/…` → `en/404.html`) with status 404 and its own `Cache-Control: no-store`. Every 404 response carries only that `no-store` (measured on production on 2026-10-26 for `/nope` and `/a/b/c/`), so it has no `no-transform`, even when the path ends in a slash and matches `/*/`. On the custom domain Bot Fight Mode then injects its inline JavaScript Detections script and the CSP blocks it: one console error on a noindex page, nothing else breaks. A blanket `/*` `no-transform` is deliberately not added, because it would also switch off Cloudflare compression for every asset. Measurements and options: [SEO.md](SEO.md#404-pages).
 
 ```mermaid
 ---

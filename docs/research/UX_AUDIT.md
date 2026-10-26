@@ -3,7 +3,7 @@
 - Track: **ux** (simulator page, results, replay; plus UX requirements for the help pages, tutorial, version display and ad-ready layout that the owner requested)
 - Date: 2026-10-19
 - Audited code: `origin/main` at `de8f4d2` (v0.1.0). The checkout moved to `6c84e0e` ("self-host Pretendard", #32) during the audit. That commit only changes the font, so the findings still apply; I re-ran the layout-shift tests on `6c84e0e`.
-- Author: research subagent. Nothing in the repo was modified.
+- Nothing in the repository was modified during the audit.
 
 ---
 

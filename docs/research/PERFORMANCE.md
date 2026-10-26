@@ -1,6 +1,6 @@
 # Performance research and profiling: T-Rex vs Tiger simulator
 
-Track: **perf** · Date: 2026-10-19 · Author: research subagent (measurements in a scratch copy; the repo was not modified)
+Track: **perf** · Date: 2026-10-19 · Measurements in a scratch copy; the repository was not modified
 
 ## TL;DR
 
@@ -20,18 +20,18 @@ Track: **perf** · Date: 2026-10-19 · Author: research subagent (measurements i
 
 ## 1. Environment and method
 
-| Item          | Value                                                                                                                                                                                            |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| CPU / RAM     | 4 vCPU Intel Xeon @ 2.80 GHz (AVX2, AVX-512), 15 GB, no cgroup CPU quota visible                                                                                                                 |
-| Node          | v22.22.0 (V8 12.4)                                                                                                                                                                               |
-| Browser       | Chromium 141.0.7390.37 (Playwright 1.56.1 `channel: 'chromium'`, new headless). **GPU = SwiftShader (software)**, so canvas raster numbers are pessimistic versus real GPUs                      |
-| Lighthouse    | 13.5.0 (`npx -y lighthouse@13.5.0`, `CHROME_PATH` = preinstalled Chromium)                                                                                                                       |
-| Code measured | `de8f4d2` (local `origin/main`, v0.1.0, no web font) **and** `21c02f5` (remote `main` = what production serves, adds Pretendard; the local build hash `index-BJdA2qYm.js` equals production's)   |
-| Copies        | `<local-workspace>/perf-copy` (clone of the repo), `perf-copy-main` (worktree of remote main), `perf-copy-lod` (replay LOD prototype). The repo at `/home/user/trex_vs_tiger_sim` was only read. |
+| Item          | Value                                                                                                                                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CPU / RAM     | 4 vCPU Intel Xeon @ 2.80 GHz (AVX2, AVX-512), 15 GB, no cgroup CPU quota visible                                                                                                               |
+| Node          | v22.22.0 (V8 12.4)                                                                                                                                                                             |
+| Browser       | Chromium 141.0.7390.37 (Playwright 1.56.1 `channel: 'chromium'`, new headless). **GPU = SwiftShader (software)**, so canvas raster numbers are pessimistic versus real GPUs                    |
+| Lighthouse    | 13.5.0 (`npx -y lighthouse@13.5.0`, `CHROME_PATH` = preinstalled Chromium)                                                                                                                     |
+| Code measured | `de8f4d2` (local `origin/main`, v0.1.0, no web font) **and** `21c02f5` (remote `main` = what production serves, adds Pretendard; the local build hash `index-BJdA2qYm.js` equals production's) |
+| Copies        | `<local-workspace>/perf-copy` (clone of the repo), `perf-copy-main` (worktree of remote main), `perf-copy-lod` (replay LOD prototype). The repository was only read.                           |
 
-Note for the orchestrator: the local `origin/main` ref is **behind** GitHub `main` by two commits (Pretendard #32 and release docs #19). `git ls-remote` showed `refs/heads/main = 21c02f5`.
+Note: during the measurements the local `origin/main` ref was **behind** GitHub `main` by two commits (Pretendard #32 and release docs #19). `git ls-remote` showed `refs/heads/main = 21c02f5`.
 
-Scripts (all in the scratchpad, reusable):
+Scripts (kept outside the repository, reusable):
 
 - Engine (Node): `perf-copy/perfbench/engine-bench.ts`, `node-main.ts`, `prof-main.ts` (+ `sumprof.cjs` for `--cpu-prof`), `cmp.ts` / `cmp2.ts` (A/B prototypes with an identity check), `aggopt.ts`, `out/wt2.mjs` / `out/chunks.mjs` (thread scaling and chunk size).
 - Browser (Playwright): `perfscripts/common.mjs` (init script with PerformanceObserver for `longtask`, `long-animation-frame`, `event`, `largest-contentful-paint`, `layout-shift`, a rAF timing wrapper and DOM phase marks), `mc.mjs` (MC wall time vs workers), `agg.mjs`, `replay.mjs`, `interact.mjs`, `load.mjs`, `trace.mjs`, `canvas.mjs` (+ `perf-copy/dist/canvas-bench.html`).
@@ -231,7 +231,7 @@ There were no LoAF entries during playback, so the main thread is not the bottle
 **Cross-track notes (affect perf decisions):**
 
 - **AdSense CSP.** AdSense says CSP is optional, but if used it supports **only strict CSP**: `script-src 'nonce-{random}' 'unsafe-inline' 'unsafe-eval' 'strict-dynamic' https: http:`, `object-src 'none'`, `base-uri 'none'`. Domain allowlists are explicitly unsupported ([AdSense Help 16283098](https://support.google.com/adsense/answer/16283098?hl=en)). A per-response nonce cannot come from a static `_headers` file. It needs a Pages Function or Worker (HTMLRewriter) on HTML responses, which adds a little TTFB and uses Workers quota (size of that cost **not measured**).
-- **Version reset feature (user request).** `Clear-Site-Data: "cache"` and `"storage"` are origin-scoped, but **`"cookies"` clears cookies for the whole registered domain including subdomains**, i.e. all of `vinylims.com`, which would include AdSense's first-party cookies ([MDN Clear-Site-Data](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Clear-Site-Data); Baseline since 2023-09, HTTPS only).
+- **Version reset feature (owner request).** `Clear-Site-Data: "cache"` and `"storage"` are origin-scoped, but **`"cookies"` clears cookies for the whole registered domain including subdomains**, i.e. all of `vinylims.com`, which would include AdSense's first-party cookies ([MDN Clear-Site-Data](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Clear-Site-Data); Baseline since 2023-09, HTTPS only).
   - A static `_headers` rule on a dedicated path (e.g. `/reset`) can send `"cache", "storage"` without JS.
   - HTML is already `no-cache` and assets are hashed and immutable, so a normal reload already picks up a new release. The version check only needs a tiny `version.json` fetched with `cache: 'no-store'`.
 - **Speed Brain.** Production sends Cloudflare's `Speculation-Rules` header, which conservatively prefetches likely next navigations ([Cloudflare docs](https://developers.cloudflare.com/speed/optimization/content/speed-brain/)). That will help once guide and tutorial pages exist.

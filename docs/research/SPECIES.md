@@ -1,7 +1,7 @@
 # Species roster for a multi-species engine
 
 > Research track: **species**. Prepared 2026-10-19 against `origin/main` at `6c84e0e` (read-only).
-> Status: proposal, ready to land as `docs/SPECIES.md`. Nothing in the repository was changed.
+> Status: proposal, ready to land as `docs/SPECIES.md`.
 >
 > **한국어 요약**
 >
@@ -513,7 +513,7 @@ Deferred-species checks: Spinosaurus × 1 vs tiger × 10: 91 / 9 / 1 %. Nile cro
 
 ### 8.1 Method
 
-- A scratch copy of `src/sim` at `6c84e0e`, compiled with the repo's `tsc` into the scratchpad. The repository itself was not touched.
+- A scratch copy of `src/sim` at `6c84e0e`, compiled with the repo's `tsc` outside the repository.
 - Only change: global bounds widened (`trex.mass` min 50, `trex.biteForce` min 0.1, `tiger.mass` 5–1,000), standing in for per-species bounds. Species ranges were mapped onto `trex.*`/`tiger.*`, and `CONSTANTS.tigerRadius` was set to each species' `packRadius`.
 - Defaults otherwise: seed 20261019, LHS, CV 0.08, 600 m arena, 1,200 s cap, `flank`, morale on. 200 runs per matchup (95 % CI about ±7 pp at mid probabilities) and 300 in the sweeps.
 - **Sanity check:** the default scenario (10 _T. rex_ vs 100 tigers, 100 runs) gave 100 % _T. rex_, median 26.9 s and 13.8 tigers killed, matching MODEL.md §6.

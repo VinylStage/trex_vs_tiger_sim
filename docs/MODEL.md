@@ -7,7 +7,7 @@
 > - 몬테카를로 설계는 두 층의 불확실성을 씁니다. 실행(run)마다 각 파라미터를 삼각분포 `(min, mode, max)`에서 LHS 또는 단순 무작위로 뽑고, 개체마다 `N(1, CV)`(구간 `[0.5, 1.5]`로 절단) 배율을 곱합니다.
 > - 체력(HP)은 두 종 모두 체중 1 kg당 1 HP입니다. T-Rex 한 번의 물기 피해는 `교합력(kN) × 치명도(HP/kN) × U(0.7, 1.3)`입니다. 호랑이는 T-Rex에 매달린(latched) 동안 초당 `dps`의 피해를 주고, 누적 상처에 비례해 T-Rex가 출혈합니다.
 > - 기본 가정(T-Rex 10 vs 호랑이 100, 사기 ON)에서는 T-Rex가 사실상 100% 이깁니다(전투 시간 중앙값 약 26초). 호랑이 약 14마리가 죽고 약 86마리가 도주합니다. 사기를 끄면(죽을 때까지 싸움) 전투가 140–330초로 길어지지만 T-Rex 승률은 여전히 약 99–100%입니다.
-> - 호랑이가 이기려면 사기를 끈 상태에서 dps를 기본값의 수 배로 올리거나, 출혈 계수를 크게 하거나, T-Rex 한 마리당 호랑이 수를 30마리 이상으로 늘려야 합니다. 이 결과는 예측이 아니라 **불확실한 가정에 대한 민감도**를 보여줍니다. UI에서 직접 범위를 바꿔 보세요.
+> - 호랑이가 이기려면 사기를 끈 상태에서 dps를 기본값의 수 배로 올리거나, 출혈 계수를 크게 하거나, T-Rex 한 마리당 호랑이 수를 30마리 이상으로 늘려야 합니다. 이 결과는 **불확실한 가정에 대한 민감도**를 보여 줄 뿐, 실제 싸움을 예측하지 않습니다. UI에서 직접 범위를 바꿔 보세요.
 
 Source of truth: `src/sim/engine.ts`, `params.ts`, `species.ts`, `config.ts`, `sampling.ts`, `distributions.ts`, `montecarlo.ts`, `stats.ts` and `rng.ts`. If this document and the code disagree, the code wins. Please open an issue in that case.
 
@@ -29,7 +29,7 @@ The simulator asks a playground question: _N_ _Tyrannosaurus rex_ against _M_ ti
 
 - _T. rex_ (Late Cretaceous, about 68–66 Ma) and tigers (Pleistocene to present) **never coexisted**. No fight between them has ever happened.
 - Every interaction rule is an assumption: latching, shake-off, bleeding, morale and group tactics. Section 5 marks each parameter as sourced or **[speculative]**.
-- Tigers are solitary ambush predators. **Coordinated attacks by many adult tigers are not documented**, so both tiger "tactics" in the model are hypothetical.
+- Tigers are solitary ambush predators. **Coordinated attacks by many adult tigers are not documented**, so both tiger tactics in the model (`flank`, `direct`) are hypothetical.
 - Match-ups with _Homo erectus_, an extinct human species, are a **thought experiment on physical capability**: unclothed, no tools, weapons, fire or trained skill. They do not depict or endorse real violence; no modern humans are modelled.
 - Treat the win probabilities as statements about the model under its assumptions. Changing the assumptions changes the answer, and the UI exists to explore exactly that.
 
@@ -573,7 +573,7 @@ Top Spearman ρ against `heavyAdvantage` (flank, 500 runs):
 
 With morale on, the remaining T-Rex HP is driven by how fast tigers are killed (bite force, accuracy, lethality) and how quickly the rest break (morale parameters). With morale off, the tiger damage rate dominates (ρ ≈ −0.5), followed by T-Rex killing efficiency. In a separate 100-run check, `pack.dps` reached ρ ≈ −0.6.
 
-**Bottom line: under the default assumptions, 10 T-Rex beat 100 tigers essentially every time.** This follows from the assumptions in §5, mainly the large mass and HP gap, a lethal bite and a modest tiger damage rate. It is not a forecast.
+**Under the default assumptions, 10 T-Rex beat 100 tigers essentially every time.** This follows from the assumptions in §5, mainly the large mass and HP gap, a lethal bite and a modest tiger damage rate. It is not a forecast.
 
 ## 7. What would make the tigers win?
 
