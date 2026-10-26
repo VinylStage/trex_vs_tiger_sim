@@ -86,7 +86,7 @@ export function parseHex(color: string): [number, number, number] | null {
   const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(color.trim());
   const hex = m?.[1];
   if (!hex) return null;
-  const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex;
+  const full = hex.length === 3 ? hex.replace(/./g, (c) => c + c) : hex;
   const n = parseInt(full, 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }

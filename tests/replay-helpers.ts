@@ -146,7 +146,7 @@ export function checkMotion(
       const fr = trace.frames;
       const k = frameIndex(p.frameT, t);
       const a = fr[k] as TraceFrame;
-      const b = (fr[k + 1] ?? a) as TraceFrame;
+      const b = fr[k + 1] ?? a;
       const f = b.t > a.t ? Math.min(1, Math.max(0, (t - a.t) / (b.t - a.t))) : 0;
       for (let j = 0; j < p.M; j++) {
         const s = a.pack[j * 3 + 2] as number;

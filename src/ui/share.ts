@@ -76,6 +76,13 @@ export function encodeConfig(config: ScenarioConfig): string {
   return base64UrlEncode(JSON.stringify({ v: SHARE_VERSION, ...diff }));
 }
 
+/** `[min, mode, max]` as a range object; the values are validated later (`sanitizeConfig`). */
+export const tupleRange = (t: readonly unknown[]): Record<string, unknown> => ({
+  min: t[0],
+  mode: t[1],
+  max: t[2],
+});
+
 /** Turn `[min, mode, max]` tuples back into objects; only known parameter ids are kept. */
 function expandParams(raw: unknown): Record<string, unknown> {
   const out: Record<string, unknown> = {};
@@ -84,7 +91,7 @@ function expandParams(raw: unknown): Record<string, unknown> {
   for (const p of PARAMS) {
     if (!Object.hasOwn(src, p.id)) continue;
     const v = src[p.id];
-    out[p.id] = Array.isArray(v) ? { min: v[0], mode: v[1], max: v[2] } : v;
+    out[p.id] = Array.isArray(v) ? tupleRange(v) : v;
   }
   return out;
 }

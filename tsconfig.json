@@ -18,5 +18,5 @@
     "skipLibCheck": true,
     "noEmit": true
   },
-  "include": ["src", "tests", "functions", "vite.config.ts", "eslint.config.js"]
+  "include": ["src", "tests", "functions", "vite.config.ts"]
 }

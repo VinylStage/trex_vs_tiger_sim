@@ -3,7 +3,7 @@
 ## Workflow (GitHub Flow, issue-driven)
 
 1. Open or pick an issue. Every change is tracked by an issue.
-2. Branch from `main`: `<type>/<issue-number>-<slug>` (e.g. `feat/3-sim-engine`).
+2. Branch from `main`: `<type>/<issue-number>-<slug>` (e.g. `feat/3-sim-engine`), with the same `<type>` as the PR title. Changes that need no issue (a docs-only fix, the patch notes entry before a release) use `<type>/<slug>` (e.g. `docs/patch-notes-0.2.14`) and say why in the PR description.
 3. Commit using [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `docs:`, `chore:`, `ci:`, `test:`, `refactor:`). Breaking changes use `!` or a `BREAKING CHANGE:` footer.
 4. Open a PR against `main` using the PR template and reference the issue (`Closes #N`).
 5. CI must be green. PRs are **squash-merged**; the PR title becomes the commit subject, so it must be a valid conventional commit.
@@ -37,7 +37,7 @@ Node version: see `.node-version`.
 ## Rules
 
 - Logic changes require unit tests (`tests/`).
-- Config files carry no comments; document them in `docs/CONFIGURATION.md`.
+- Declarative config (JSON, YAML, `_headers`, `_routes.json`, `tsconfig.json`, `vite.config.ts`, `eslint.config.js`) carries no comments; document it in `docs/CONFIGURATION.md`. The only exception is the `# vX.Y.Z` after a SHA-pinned action, which Dependabot maintains. Build code such as the Vite plugins (`vite.pages.ts`, `vite.seo.ts`) is code and is documented in place, like `src/`.
 - Model or parameter changes must cite sources in `docs/MODEL.md`.
 - Keep diffs minimal; no drive-by refactors.
 - Documentation (`ARCHITECTURE.md`, `ROADMAP.md`, `IMPLEMENTATION_AUDIT.md`) is updated in the same PR as the code.

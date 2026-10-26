@@ -152,7 +152,7 @@ export function validateFreeSummary(raw: unknown, config: FreeConfig): FreeResul
   if ('ci' in raw) {
     const ci = raw['ci'];
     if (!Array.isArray(ci) || ci.length !== 6 || !ci.every((x) => isIn(x, 0, 1))) return null;
-    const v = ci as number[];
+    const v = ci;
     for (let j = 0; j < 6; j += 2) if ((v[j] as number) > (v[j + 1] as number)) return null;
     s.ci = [v[0], v[1], v[2], v[3], v[4], v[5]] as Tuple6;
   }

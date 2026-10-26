@@ -42,6 +42,7 @@ export function noAttackParams(): ScenarioConfig['params'] {
 /** Run `fn` while counting every raw draw from any Rng. */
 export function countRng<T>(fn: () => T): { value: T; calls: number } {
   const proto = Rng.prototype;
+  // eslint-disable-next-line @typescript-eslint/unbound-method -- restored unbound after counting
   const original = proto.nextU32;
   let calls = 0;
   proto.nextU32 = function (this: Rng): number {

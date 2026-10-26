@@ -12,7 +12,7 @@ import {
 
 // The stylesheet as text. Vitest does not load CSS (a `?raw` import comes back empty), and this
 // branch has no Node type definitions, so `node:fs` is imported untyped.
-const fs = (await import(`node:${'fs'}`)) as {
+const fs = (await import(`node:fs`)) as {
   readFileSync: (path: URL, encoding: 'utf8') => string;
 };
 const css = fs.readFileSync(new URL('../src/ui/styles.css', import.meta.url), 'utf8');

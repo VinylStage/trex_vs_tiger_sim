@@ -312,8 +312,10 @@ describe('free link preview', () => {
     try {
       await onResultRequest({
         request: new Request(`https://x.test/r/?r=${r}`),
-        next: async () =>
-          new Response('<html></html>', { headers: { 'content-type': 'text/html' } }),
+        next: () =>
+          Promise.resolve(
+            new Response('<html></html>', { headers: { 'content-type': 'text/html' } }),
+          ),
       });
       expect(set['meta[property="og:title"]']).toBe('호랑이 1 vs 사자 1 — 호랑이 54%');
     } finally {

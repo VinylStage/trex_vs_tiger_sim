@@ -10,7 +10,7 @@ import {
 } from '../sim/free/config';
 import { FREE_SPECIES, FREE_SPECIES_IDS, type FreeSpeciesId } from '../sim/free/species';
 import type { Interval } from '../sim/stats';
-import { HEAVY_SPECIES, PACK_SPECIES, type Era, type SpeciesId } from '../sim/species';
+import { HEAVY_SPECIES, PACK_SPECIES, type Era } from '../sim/species';
 import { copyText } from '../share/share-ui';
 import { pagePath } from '../pages/routes';
 import { h } from './dom';
@@ -668,7 +668,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   const team = (c: FreeConfig, i: SideIndex): string =>
     t('free.sideTeam', {
       side: t(sideKey(i)),
-      team: teamLabel(c.sides[i].species as SpeciesId, c.sides[i].count),
+      team: teamLabel(c.sides[i].species, c.sides[i].count),
     });
 
   function card(label: string, value: string, sub: string, marker?: string): HTMLElement {
@@ -733,7 +733,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     const of = (i: SideIndex): string =>
       t('stat.ofN', {
         n: formatInt(c.sides[i].count),
-        counter: speciesCounter(c.sides[i].species as SpeciesId),
+        counter: speciesCounter(c.sides[i].species),
       });
     const sideCards = (i: SideIndex): HTMLElement[] => {
       const s = i === 0 ? agg.a : agg.b;
