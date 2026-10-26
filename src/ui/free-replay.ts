@@ -6,7 +6,15 @@ import { makeViewport, type Viewport } from './replay/draw';
 import { FreeWorld, freeLod, type FreeSideGlyph } from './replay/free-world';
 import { GLYPH, heavyTriangle } from './replay/glyphs';
 import { blend, readReplayTheme, type ReplayTheme } from './replay/theme';
-import { DEFAULT_SPEED, SPEEDS } from './replay/timeline';
+import {
+  AutoPause,
+  DEFAULT_SPEED,
+  SPEEDS,
+  isChord,
+  keyAction,
+  stepSpeed,
+  type ReplayAction,
+} from './replay/timeline';
 
 /*
  * Replay of one free-matchup battle (design §6, #50 item 3b). Abstract glyphs only, coloured by
@@ -33,6 +41,17 @@ const RING_GAP = 2.5;
 const RING_ALPHA = 0.7;
 
 type ViewMode = 'auto' | 'fit';
+
+type FreeKeyAction = Exclude<ReplayAction, { kind: 'seekFrac' | 'event' | 'contact' }>;
+
+/**
+ * The classic keyboard map (`keyAction`, docs/REPLAY.md §8), so the physical keys also work while
+ * a Korean IME is active, minus Page Up/Down, event jumps and skip-to-contact (§14).
+ */
+export function freeKeyAction(code: string, key: string, shift: boolean): FreeKeyAction | null {
+  const a = keyAction(code, key, shift);
+  return a && a.kind !== 'seekFrac' && a.kind !== 'event' && a.kind !== 'contact' ? a : null;
+}
 
 interface Paints {
   side: [string, string];
@@ -63,6 +82,7 @@ export class FreeReplayView {
   private sideNames: [string, string] = ['', ''];
   private time = 0;
   private playing = false;
+  private readonly autoPause = new AutoPause();
   private speed: number = DEFAULT_SPEED;
   private mode: ViewMode = 'auto';
   private cam = { cx: 0, cy: 0, size: 1 };
@@ -79,7 +99,9 @@ export class FreeReplayView {
   private readonly io: IntersectionObserver;
 
   private readonly onVisibility = (): void => {
-    if (document.hidden && this.playing) this.setPlaying(false);
+    const atEnd = !this.world || this.time >= this.world.duration;
+    const on = this.autoPause.change(document.hidden, this.playing, atEnd);
+    if (on !== null) this.setPlaying(on);
     this.schedule();
   };
   private readonly onScheme = (): void => {
@@ -87,6 +109,7 @@ export class FreeReplayView {
     this.draw();
   };
   private readonly onMotion = (): void => {
+    if (this.motionQuery.matches) this.autoPause.release();
     if (this.motionQuery.matches && this.playing) this.setPlaying(false);
     this.updateNote();
   };
@@ -201,6 +224,7 @@ export class FreeReplayView {
     this.slider.max = String(world.duration);
     this.slider.value = '0';
     this.snapCamera();
+    this.autoPause.release();
     this.playing = autoplay && !this.motionQuery.matches && world.duration > 0;
     this.lastTs = 0;
     this.relocalize();
@@ -210,6 +234,7 @@ export class FreeReplayView {
 
   clear(): void {
     this.world = null;
+    this.autoPause.release();
     this.setPlaying(false);
     this.relocalize();
     this.draw();
@@ -246,6 +271,7 @@ export class FreeReplayView {
 
   private toggle(): void {
     if (!this.world) return;
+    this.autoPause.release();
     if (!this.playing && this.time >= this.world.duration) this.seek(0);
     this.setPlaying(!this.playing);
   }
@@ -260,6 +286,7 @@ export class FreeReplayView {
   private seek(time: number): void {
     const w = this.world;
     if (!w) return;
+    this.autoPause.release();
     this.time = Math.min(w.duration, Math.max(0, time));
     w.update(this.time);
     this.snapCamera();
@@ -274,53 +301,33 @@ export class FreeReplayView {
     this.draw();
   }
 
+  /** As in the classic replay (docs/REPLAY.md §8): native keys and chords pass through. */
   private onKey(e: KeyboardEvent): void {
-    if (!this.world || e.target instanceof HTMLSelectElement) return;
-    const big = e.shiftKey ? 5 : 1;
-    let handled = true;
-    switch (e.key) {
-      case ' ':
-      case 'k':
-      case 'K':
-        if (e.target instanceof HTMLButtonElement) return;
+    if (!this.world || isChord(e)) return;
+    if (e.target instanceof HTMLSelectElement) return;
+    const native = e.code === 'Space' || e.key === ' ' || e.key === 'Enter';
+    if (e.target instanceof HTMLButtonElement && native) return;
+    const a = freeKeyAction(e.code, e.key, e.shiftKey);
+    if (!a) return;
+    e.preventDefault();
+    switch (a.kind) {
+      case 'toggle':
         this.toggle();
         break;
-      case 'ArrowLeft':
-        this.seek(this.time - big);
+      case 'seekBy':
+        this.seek(this.time + a.seconds);
         break;
-      case 'ArrowRight':
-        this.seek(this.time + big);
+      case 'seekTo':
+        this.seek(a.to === 'start' ? 0 : this.world.duration);
         break;
-      case 'j':
-      case 'J':
-        this.seek(this.time - 5);
-        break;
-      case 'l':
-      case 'L':
-        this.seek(this.time + 5);
-        break;
-      case 'Home':
-        this.seek(0);
-        break;
-      case 'End':
-        this.seek(this.world.duration);
-        break;
-      case 'f':
-      case 'F':
-        this.setMode(this.mode === 'auto' ? 'fit' : 'auto');
-        break;
-      case '[':
-      case ']': {
-        const i = SPEEDS.indexOf(this.speed as (typeof SPEEDS)[number]);
-        const next = SPEEDS[Math.min(SPEEDS.length - 1, Math.max(0, i + (e.key === ']' ? 1 : -1)))];
-        this.speed = next ?? DEFAULT_SPEED;
+      case 'speed':
+        this.speed = stepSpeed(this.speed, a.dir);
         this.speedSel.value = String(this.speed);
         break;
-      }
-      default:
-        handled = false;
+      case 'view':
+        this.setMode(this.mode === 'auto' ? 'fit' : 'auto');
+        break;
     }
-    if (handled) e.preventDefault();
   }
 
   /** rAF only while something moves and the stage is on screen (docs/REPLAY.md §11). */

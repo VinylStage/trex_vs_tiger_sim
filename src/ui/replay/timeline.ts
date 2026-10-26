@@ -324,3 +324,57 @@ export function keyAction(code: string, key: string, shift: boolean): ReplayActi
       return null;
   }
 }
+
+/** The parts of a KeyboardEvent that decide whether a key press is a chord. */
+export interface KeyModifiers {
+  readonly key: string;
+  readonly ctrlKey: boolean;
+  readonly altKey: boolean;
+  readonly metaKey: boolean;
+  getModifierState?(key: string): boolean;
+}
+
+/** Characters some layouts type with AltGr or Option, such as `[` on German or macOS keys. */
+const OPTION_CHARS: ReadonlySet<string> = new Set(['[', ']']);
+
+/**
+ * A browser or system chord (Ctrl+F, Cmd+F, Alt+←) that both replays leave to the browser
+ * (docs/REPLAY.md §8). AltGr (Chrome on Windows reports Ctrl+Alt) and Option typing `[` or `]`
+ * on macOS type a character, so they are not chords.
+ */
+export function isChord(e: KeyModifiers): boolean {
+  if (e.metaKey) return true;
+  if (!e.ctrlKey && !e.altKey) return false;
+  if (e.getModifierState?.('AltGraph')) return false;
+  return e.ctrlKey || !OPTION_CHARS.has(e.key);
+}
+
+/**
+ * Page Visibility, for both replays (docs/REPLAY.md §11): playback pauses while the page is
+ * hidden and resumes when it is visible again, unless the viewer played, paused or seeked in
+ * between (`release`). A replay that was not playing when the page was hidden stays as it was.
+ */
+export class AutoPause {
+  private held = false;
+
+  /**
+   * The page was hidden or shown: the play state to switch to, or null to leave it. At the end
+   * (`atEnd`) nothing is left to play, so nothing is held and nothing resumes: a resume there
+   * would start over from 0.
+   */
+  change(hidden: boolean, playing: boolean, atEnd: boolean): boolean | null {
+    if (hidden) {
+      if (!playing) return null;
+      this.held = !atEnd;
+      return false;
+    }
+    const resume = this.held && !atEnd;
+    this.held = false;
+    return resume ? true : null;
+  }
+
+  /** The viewer (or a new trace) decided the play state; nothing resumes on its own after it. */
+  release(): void {
+    this.held = false;
+  }
+}
