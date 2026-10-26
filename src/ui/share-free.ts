@@ -190,6 +190,16 @@ export function freeConfigFromHash(hash: string): FreeConfig | null {
   return raw === null ? null : freeConfigFromObject(raw);
 }
 
+/**
+ * Whether a `#s=` hash holds a free payload of a model version this build does not run. Such a
+ * link opens at the free defaults, and the app keeps the address as it came, so a reload or a
+ * copied address still carries the link (ADR-0008 §6).
+ */
+export function freeHashModelUnknown(hash: string): boolean {
+  const raw = freePayloadFromHash(hash);
+  return raw !== null && freeModelVersion(raw) === null;
+}
+
 /** The copy/paste settings code of a free config. */
 export function freeConfigCode(config: FreeConfig): string {
   return FREE_CODE_PREFIX + encodeFreeConfig(config);

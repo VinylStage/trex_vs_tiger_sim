@@ -8,6 +8,7 @@ import {
   type FreeResultSummary,
 } from '../src/share/free-result-codec';
 import { buildMeta } from '../src/share/result-text';
+import { defaultConfig } from '../src/sim/config';
 import {
   FREE_MODEL_VERSION,
   defaultFreeConfig,
@@ -19,9 +20,11 @@ import {
   freeConfigCode,
   freeConfigDiff,
   freeConfigFromHash,
+  freeHashModelUnknown,
   freeModelVersion,
   parseFreeConfigInput,
 } from '../src/ui/share-free';
+import { hashFromConfig } from '../src/ui/share';
 
 /*
  * Model version `mv` in free links (ADR-0008, docs/SHARING.md#model-version-mv, #124): absent
@@ -144,6 +147,37 @@ describe('a model version this build does not run', () => {
     );
     // Still a free link: it never falls through to the classic decoder.
     expect(freeConfigFromHash(`#s=${encode({ ...newer, mv: '2' })}`)).toEqual(defaultFreeConfig());
+  });
+
+  it('is found in a location hash, so the app keeps that address (freeHashModelUnknown)', () => {
+    const payload = encode(newer);
+    const chk = encode({ n: 200, a: 120, b: 70, d: 10 });
+    for (const hash of [
+      `#s=${payload}`,
+      `s=${payload}`,
+      `#s=${payload}&chk=${chk}`,
+      `#chk=${chk}&s=${payload}`,
+      `#s=${encode({ ...newer, mv: '2' })}`,
+    ]) {
+      expect(freeHashModelUnknown(hash), hash).toBe(true);
+    }
+    // A model this build runs, a classic link, no payload or a malformed one: the app writes the
+    // address as before.
+    for (const hash of [
+      `#s=${OLD.edited}`,
+      `#s=${encode({ ...json(OLD.edited), mv: 1 })}`,
+      `#s=${OLD.wolves}&chk=${chk}`,
+      hashFromConfig({ ...defaultConfig(), heavyCount: 3, seed: 7 }),
+      `#s=${encode({ v: 2, mv: FREE_MODEL_VERSION + 1 })}`,
+      `#s=${encode({ v: 3, mv: FREE_MODEL_VERSION + 1 })}`,
+      '',
+      '#',
+      '#s=',
+      '#s=%%',
+      '#tour',
+    ]) {
+      expect(freeHashModelUnknown(hash), hash).toBe(false);
+    }
   });
 
   it('rejects a result link as a version error without a config to rerun', () => {

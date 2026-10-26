@@ -543,6 +543,8 @@ export const en: Dictionary = {
     'Reduced motion is on, so the replay does not start by itself. Press Play to start it.',
   'free.copyCode': 'Copy settings code',
   'free.copied': 'Settings code copied.',
+  'free.newerModel':
+    'This link was made with a newer model version, so this page shows the default settings instead. Reload the page to open the link in the latest version.',
   'free.buff.title': 'Pack buff',
   'free.buff.help':
     'Applies only to social species with 2 or more on a side. Each effect can be switched off.',

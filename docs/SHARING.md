@@ -39,10 +39,11 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 - **The encoder omits `mv` while it is 1** and writes any other version right after `m`: `{"v":3,"m":"free","mv":2,"a":…}`. Writing `mv: 1` into every link was the alternative; it was rejected because it would change the bytes of every free link from now on. With the omission, a model 1 link made today is byte for byte the link the earlier encoder made, and every existing test and golden is unchanged.
 - **A version this build does not run** (a newer model, met in an older cached page, or anything that is not an integer from 1 to `FREE_MODEL_VERSION`) is never read under this build's model:
   - a settings link or `TVT3-` code opens free mode at the free defaults, without any of the payload's values (`freeConfigFromObject`); it never falls through to the classic decoder;
+  - the simulator keeps such a link in the address as it came (`freeHashModelUnknown`), whether the page opened with it or it arrived through `hashchange`, and shows a note under the mode switch (`free.newerModel`): the link was made with a newer model, and reloading opens it. **Copy settings link** copies that address. The first edit (a change in the free form, or a switch to classic) hides the note and writes the shown settings to the address as usual;
   - a **Run it yourself** fragment (`#s=…&chk=…`) of such a link opens the same way, and its `chk=` snapshot is dropped (`freeCheckFromHash`), so free mode shows no reproduction check and never compares that snapshot with a run of this build's model;
   - a free result link is a `version` error with no config, so the page shows the invalid-link message and **Try your own** but not **Run it yourself**, and the link preview keeps the static text.
 
-  Reloading loads the current build, which knows the version.
+  Reloading loads the current build, which knows the version, and the kept address opens the link there.
 
 - `freeModelVersion(raw)` in `src/ui/share-free.ts` reads `mv` from a payload; `tests/free-model-version.test.ts` holds payloads written by the encoder before `mv` existed and checks that they decode as model 1 and re-encode byte for byte.
 

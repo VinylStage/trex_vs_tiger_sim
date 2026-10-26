@@ -29,7 +29,7 @@ A v3 link (`#s=` with `m: "free"`) carries no model version. After any such chan
 6. **A page that does not know a link's `mv`** (a newer link opened in an older, cached page) never presents that link under its own model.
    - A free result link is rejected as a `version` error, without **Run it yourself**.
    - A settings link or `TVT3-` code opens the free model at its defaults; the link's settings are not applied. Values defined under an unknown model cannot be read safely, so the existing rule for settings payloads (malformed input yields the defaults) applies to the whole payload.
-   - Reloading the page loads the current build, which knows the version.
+   - The simulator keeps such a link in the address until the user edits something, and a note says that the link was made with a newer model and that reloading opens it. Reloading loads the current build, which knows the version, and the kept address opens the link there.
 7. **Live interventions are a free-engine feature.** The classic engine gets no live mode.
    - The log is a list of `[tick, card, side]` entries (at most 64, sorted by tick) in the link's optional `live` field. It is applied at the top of the tick loop, and trait effects are recomputed from base values on every start or expiry, never reverted.
    - No card draws random numbers in 1.0. Future randomized cards use a new stream. The branch hook for the live win chance reseeds only when it is set.
