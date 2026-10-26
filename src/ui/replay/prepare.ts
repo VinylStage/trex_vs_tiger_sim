@@ -233,7 +233,7 @@ export function prepare(trace: BattleTrace, options: PrepareOptions = {}): Prepa
       firstContact = step * dt;
     if (type === EventType.HeavyDeath) {
       const i = evA[k] as number;
-      if (i < N && step <= completeStep && !Number.isFinite(heavyDeathTime[i] as number))
+      if (i < N && step <= completeStep && !Number.isFinite(heavyDeathTime[i]))
         heavyDeathTime[i] = step * dt;
       continue;
     }
@@ -363,7 +363,7 @@ export function prepare(trace: BattleTrace, options: PrepareOptions = {}): Prepa
     const killedRiding =
       li >= (liOff[j] as number) &&
       liEnd[li] === s &&
-      Number.isFinite(liRide[li] as number) &&
+      Number.isFinite(liRide[li]) &&
       trState[(trOff[j + 1] as number) - 1] === DEAD;
     if (killedRiding) {
       heavyPose(prepared, liHost[li] as number, liDetach[li] as number, pose);

@@ -75,7 +75,7 @@ describe('sim.worker dispatch', () => {
   });
 
   it('run: sanitizes a hostile config before simulating', () => {
-    const config = { ...small(), runs: 3, heavyCount: -50, packCount: 1e12 } as ScenarioConfig;
+    const config = { ...small(), runs: 3, heavyCount: -50, packCount: 1e12 };
     const last = send({ type: 'run', jobId: 2, config, start: 0, end: 3 }).at(-1)?.msg;
     expect(last?.type).toBe('result');
     const safe = sanitizeConfig(config);

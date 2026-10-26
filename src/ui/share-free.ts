@@ -16,6 +16,7 @@ import {
   base64UrlDecode,
   base64UrlEncode,
   payloadFromHash,
+  tupleRange,
 } from './share';
 
 /*
@@ -109,7 +110,7 @@ function expandRanges(raw: unknown): Record<string, unknown> {
   if (!isObject(raw)) return out;
   for (const [k, v] of Object.entries(raw)) {
     if (k === '__proto__') continue;
-    out[k] = Array.isArray(v) ? { min: v[0], mode: v[1], max: v[2] } : v;
+    out[k] = Array.isArray(v) ? tupleRange(v) : v;
   }
   return out;
 }

@@ -117,7 +117,7 @@ describe('result codec', () => {
       t: 43.5,
       hs: 0.61,
       pk: 14.1,
-      ci: expect.any(Array),
+      ci: expect.any(Array) as unknown,
     });
     expect(summary.ci).toHaveLength(6);
   });
@@ -230,7 +230,7 @@ describe('result codec', () => {
     for (let i = 0; i < 2000; i++) {
       const len = Math.floor(rnd() * 300);
       let s = '';
-      for (let k = 0; k < len; k++) s += alphabet[Math.floor(rnd() * alphabet.length)];
+      for (let k = 0; k < len; k++) s += alphabet[Math.floor(rnd() * alphabet.length)] ?? '';
       const res = decodeResult(s);
       expect(res.ok).toBe(false);
     }
@@ -512,7 +512,7 @@ describe('link-preview meta (Pages Function)', () => {
 class FakeRewriter {
   handlers: [string, (el: { setAttribute(n: string, v: string): void }) => void][] = [];
   on(selector: string, h: { element(el: { setAttribute(n: string, v: string): void }): void }) {
-    this.handlers.push([selector, h.element]);
+    this.handlers.push([selector, (el) => h.element(el)]);
     return this;
   }
   transform(res: Response): Response {
@@ -527,7 +527,7 @@ describe('result Function', () => {
   const page = '<html><head><meta property="og:title" content="static" /></head></html>';
   const ctx = (url: string, type = 'text/html; charset=utf-8', status = 200) => ({
     request: new Request(url),
-    next: async () => new Response(page, { status, headers: { 'content-type': type } }),
+    next: () => Promise.resolve(new Response(page, { status, headers: { 'content-type': type } })),
   });
   const r = encodeResult(oneVsHundred(), { n: 500, h: 305, p: 175, d: 20 });
 

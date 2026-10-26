@@ -62,7 +62,7 @@ export function unpackFreeSummaries(packed: Float64Array): FreeRunSummary[] {
     const nb = FREE_BUFF_FIELDS.length;
     const s: Record<string, unknown> = {};
     FREE_SUMMARY_FIELDS.forEach((f, k) => {
-      s[f] = packed[o + k] as number;
+      s[f] = packed[o + k];
     });
     const buffA = emptyBuffStats();
     const buffB = emptyBuffStats();

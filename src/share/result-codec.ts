@@ -132,7 +132,7 @@ export function validateSummary(raw: unknown, config: ScenarioConfig): ResultSum
   if ('ci' in raw) {
     const ci = raw['ci'];
     if (!Array.isArray(ci) || ci.length !== 6 || !ci.every((x) => isIn(x, 0, 1))) return null;
-    const v = ci as number[];
+    const v = ci;
     for (let i = 0; i < 6; i += 2) if ((v[i] as number) > (v[i + 1] as number)) return null;
     s.ci = tuple6(v);
   }

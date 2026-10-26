@@ -479,7 +479,7 @@ export function simulateFreeBattle(
       f.counts[c] = (f.counts[c] as number) + 1;
     }
     if (!any) return;
-    const st = stats[s as 0 | 1] as BuffStats;
+    const st = stats[s as 0 | 1];
     for (let k = 0; k < cnt; k++) {
       const j = off + k;
       if (!buffed[j] || (state[j] as number) >= FreeState.Dead || nstate[j] === FreeState.Dead) {
@@ -566,11 +566,11 @@ export function simulateFreeBattle(
     (grids[e] as SpatialGrid).query(
       x[i] as number,
       y[i] as number,
-      d0 + (scratch[FOCUS_BONUS] as number),
+      d0 + scratch[FOCUS_BONUS],
       focusVisit,
     );
-    const nearScore = d0 - (scratch[FOCUS_BONUS] as number) * (buffEngaged[near] as number);
-    const pick = focusBest >= 0 && (scratch[FOCUS_SCORE] as number) < nearScore ? focusBest : near;
+    const nearScore = d0 - scratch[FOCUS_BONUS] * (buffEngaged[near] as number);
+    const pick = focusBest >= 0 && scratch[FOCUS_SCORE] < nearScore ? focusBest : near;
     if (pick !== near) (stats[s] as BuffStats).focus += 1;
     return pick;
   };
@@ -818,7 +818,7 @@ export function simulateFreeBattle(
           } else {
             gap = 0;
           }
-          if (gap > 0) (stats[s as 0 | 1] as BuffStats).coordinate += 1;
+          if (gap > 0) stats[s as 0 | 1].coordinate += 1;
         }
         if (gap <= 0) {
           steer(i, Math.atan2(dy, dx), 0);
@@ -909,7 +909,7 @@ export function simulateFreeBattle(
           (grids[e] as SpatialGrid).query(
             x[i] as number,
             y[i] as number,
-            (reach[i] as number) + (scratch[ENEMY_R] as number),
+            (reach[i] as number) + scratch[ENEMY_R],
             strikeVisit,
           );
           if (best >= 0) {
@@ -951,7 +951,7 @@ export function simulateFreeBattle(
             const k = buffRiders[t] as number;
             if (k > 0 && buffed[i] && sw.groupLatch) {
               p = Math.min(F.groupLatchCap * p, p * (1 + (groupGain[s] as number) * k));
-              (stats[s as 0 | 1] as BuffStats).groupLatch += 1;
+              stats[s as 0 | 1].groupLatch += 1;
             }
             if (rng.next() < p * crowd(i, t)) {
               nstate[i] = FreeState.Latched;
@@ -993,7 +993,7 @@ export function simulateFreeBattle(
             nstate[i] = FreeState.Recover;
             recTimer[i] = 0;
             reliefTarget[offOf(s) + k] = hst;
-            (stats[s as 0 | 1] as BuffStats).relief += 1;
+            stats[s as 0 | 1].relief += 1;
           }
         }
       }

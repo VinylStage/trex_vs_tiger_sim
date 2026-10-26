@@ -378,7 +378,7 @@ describe('real traces', () => {
           const err = Math.hypot(dx, dy);
           const lo = p.liOff[j] as number;
           const li = lastAtMost(p.liStart, lo, p.liOff[j + 1] as number, step);
-          const rides = li >= lo && Number.isFinite(p.liRide[li] as number);
+          const rides = li >= lo && Number.isFinite(p.liRide[li]);
           // The drawn ride position differs from the engine's by the quantised latch angle
           // (1/256 turn); a thrown tiger lands 3 m farther out on the same bearing.
           const quant = (p.attachR + 3) * (Math.PI / 256) + 1e-3;

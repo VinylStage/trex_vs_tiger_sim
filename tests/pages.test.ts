@@ -1101,7 +1101,7 @@ describe.each(LANGS)('guide page (%s)', (lang) => {
         const facts = Object.fromEntries(
           elements(r.inner, 'data').map((d) => {
             expect(shownNumber(d.inner)).toBe(Number(d.attrs['value']));
-            return [d.attrs['data-k'], Number(d.attrs['value'])];
+            return [d.attrs['data-k'] ?? '', Number(d.attrs['value'])] as const;
           }),
         );
         return {

@@ -412,7 +412,7 @@ describe('sitemap.xml', () => {
       alternates: Object.fromEntries(
         [
           ...body.matchAll(/<xhtml:link rel="alternate" hreflang="([^"]+)" href="([^"]+)" \/>/g),
-        ].map((a) => [a[1], a[2]]),
+        ].map((a) => [a[1] ?? '', a[2] ?? ''] as const),
       ),
     };
   });

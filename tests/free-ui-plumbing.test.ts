@@ -152,7 +152,7 @@ describe('share link v3', () => {
   it('carries v: 3 and the mode marker, and never an empty hash', () => {
     const json = JSON.parse(
       Buffer.from(encodeFreeConfig(defaultFreeConfig()), 'base64url').toString(),
-    );
+    ) as Record<string, unknown>;
     expect(json).toMatchObject({
       v: 3,
       m: 'free',
