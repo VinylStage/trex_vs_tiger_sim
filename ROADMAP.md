@@ -32,7 +32,7 @@ Epic: #20.
 | AdSense readiness plan and content framing rules                      | #27      | Done (#36) |
 | Header logo restored to the original icon                             | —        | Done (#41) |
 
-## v0.2.x — patch and feature releases after v0.2.0 (0.2.1–0.2.12 released 2026-10-20, 0.2.13–0.2.14 released 2026-10-23, 0.2.15 released 2026-10-26)
+## v0.2.x — patch and feature releases after v0.2.0 (0.2.1–0.2.12 released 2026-10-20, 0.2.13–0.2.14 released 2026-10-23, 0.2.15–0.2.16 released 2026-10-26)
 
 | Item                                                                     | Issue | Status                                                                                                                                                                                       |
 | ------------------------------------------------------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -44,6 +44,10 @@ Epic: #20.
 | Herd group defense for social herbivores                                 | #72   | Planned                                                                                                                                                                                      |
 | Rout (flee) rate in the results                                          | #42   | Planned                                                                                                                                                                                      |
 | Patch notes board (`/patch-notes/`), one playful entry per release       | —     | Done (#98, v0.2.11)                                                                                                                                                                          |
+
+## v1.0.0 — streamer-first renewal (proposed)
+
+Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md). It covers the play/learn split, Simple and Advanced modes, the streamer session loop with live variable cards, the new-animal batches, ads readiness and the milestones M1–M8. Live chat is tracked separately in #118 and does not gate 1.0. Work starts once the blocking owner decisions in §12 are answered.
 
 ## Later (candidates, not committed)
 
