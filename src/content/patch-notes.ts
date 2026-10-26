@@ -59,6 +59,41 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.15',
+    date: '2026-10-26',
+    title: {
+      ko: '자유 대결도 다시 보기 ⏪',
+      en: 'Free matches get a rewind button ⏪',
+    },
+    prs: [110, 112],
+    items: [
+      {
+        cat: 'new',
+        refs: [50],
+        ko: '자유 대결에도 리플레이가 생겼어요! 호랑이 대 호랑이든 늑대 떼 대 코끼리든, 대표 판을 처음부터 끝까지 다시 볼 수 있습니다. 랜덤 판 보기도 돼요.',
+        en: 'Free matchups now have a replay! Tiger vs tiger or a wolf pack vs elephants, watch the representative run from start to finish, or pick a random run.',
+      },
+      {
+        cat: 'new',
+        refs: [50],
+        ko: 'A팀은 파랑, B팀은 주황. 무리 버프가 켜진 동물에는 얇은 고리가 둘러져서 “지금 뭉쳐서 세지는 중”인 게 한눈에 보입니다.',
+        en: 'Side A is blue, side B is orange. Animals with the pack buff active get a thin ring, so you can see the moment a group starts punching above its weight.',
+      },
+      {
+        cat: 'improved',
+        refs: [50],
+        ko: '자동 카메라가 아직 싸우는 동물들을 따라가요. 2,500 대 30 같은 대규모 판도 부드럽게 재생되고, 리플레이 코드는 실행 버튼을 누를 때만 불러옵니다.',
+        en: 'The auto camera follows whoever is still fighting. Huge matches like 2,500 vs 30 play smoothly, and the replay code loads only when you press Run.',
+      },
+      {
+        cat: 'improved',
+        refs: [82],
+        ko: '보이지 않는 곳 대청소: 오래된 이름표와 테스트 전용 코드를 정리했어요. 겉보기엔 그대로지만 속은 한결 깔끔해졌습니다.',
+        en: 'Behind-the-scenes tidy-up: old labels and test-only code are gone. Nothing looks different, but the insides are a lot cleaner.',
+      },
+    ],
+  },
+  {
     version: '0.2.14',
     date: '2026-10-23',
     title: {
