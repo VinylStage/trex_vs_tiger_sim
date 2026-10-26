@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.15](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.14...trex-vs-tiger-sim-v0.2.15) (2026-10-26)
+
+
+### Features
+
+* **replay:** replay for free matchups ([#110](https://github.com/VinylStage/trex_vs_tiger_sim/issues/110)) ([9f8b654](https://github.com/VinylStage/trex_vs_tiger_sim/commit/9f8b65458d18156a48b0392c9d97020064cc2a55))
+
 ## [0.2.14](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.13...trex-vs-tiger-sim-v0.2.14) (2026-10-23)
 
 
