@@ -1,5 +1,6 @@
 import { LIMITS, SAMPLING_METHODS } from '../sim/config';
 import type { FreeAggregate } from '../sim/free/aggregate';
+import { FreeOutcome, type FreeRunSummary } from '../sim/free/engine';
 import {
   FREE_LIMITS,
   GLOBALS,
@@ -16,6 +17,7 @@ import { h } from './dom';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import { getLang, speciesCounter, speciesName, t, teamLabel, type MsgKey } from './i18n';
 import { CancelledError, type PoolProgress, type SimPool } from './pool';
+import type { FreeReplayView } from './free-replay';
 import { createFreeReproduceCheck, createFreeResultShare } from './result-share';
 import { formatBound, formatShare } from './verdict';
 import {
@@ -33,7 +35,7 @@ import './free-mode.css';
  * Free matchups in the simulator (docs/design/FREE-MATCHUPS.md §6, issue #50): any species on
  * either side, mirror matchups included, run on the free engine through the same worker pool.
  * Self-contained so the classic form and results (src/ui/app.ts, form.ts) stay untouched; the
- * app only swaps panels and routes the share link. Pack-buff controls and the replay follow.
+ * app only swaps panels and routes the share link. The replay is src/ui/free-replay.ts.
  */
 
 export interface FreeMode {
@@ -62,6 +64,7 @@ export interface FreeModeOptions {
 interface FreeResult {
   config: FreeConfig;
   agg: FreeAggregate;
+  summaries: FreeRunSummary[];
   elapsedMs: number;
 }
 
@@ -160,7 +163,33 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   const caveatEl = h('p', { class: 'verdict-caveat' });
   const basisEl = h('p', { class: 'verdict-basis' });
   const cardsEl = h('div', { class: 'stat-cards' });
-  const replayNote = h('p', { class: 'replay-info' });
+  // ---------- replay (design §6) ----------
+  const replayTitle = h('h3', { id: nextId('free-replay-title') });
+  const repBtn = h('button', { class: 'btn btn-small', attrs: { type: 'button' } });
+  const randomBtn = h('button', { class: 'btn btn-small', attrs: { type: 'button' } });
+  const replayInfo = h('p', { class: 'replay-info', attrs: { 'aria-live': 'polite' } });
+  // The renderer is a lazy chunk (like the classic replay, #80): loaded with the first trace.
+  let replayView: FreeReplayView | null = null;
+  const replaySlot = h('div', { class: 'replay-slot' });
+  const replaySection = h(
+    'section',
+    { class: 'replay-section free-replay-section', attrs: { 'aria-labelledby': replayTitle.id } },
+    h(
+      'div',
+      { class: 'replay-head' },
+      replayTitle,
+      h('div', { class: 'replay-buttons' }, repBtn, randomBtn),
+    ),
+    replayInfo,
+    replaySlot,
+  );
+  let replayState: {
+    kind: 'representative' | 'random';
+    run: number;
+    loading: boolean;
+    error?: string;
+  } | null = null;
+  let replayToken = 0;
   const staleEl = h('p', { class: 'stale-banner' });
   staleEl.hidden = true;
   const resultsBody = h(
@@ -178,7 +207,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     ),
     cardsEl,
     resultShare.el,
-    replayNote,
+    replaySection,
   );
   resultsBody.hidden = true;
   const resultsPanel = h(
@@ -510,6 +539,8 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       opts.onChange(structuredClone(cfg));
     }
     running = true;
+    // Fetch the replay chunk while the batch runs (Run is a user input, so mounting is no shift).
+    void ensureReplay().catch(() => undefined);
     progress.hidden = false;
     progressTrack.focus();
     runBtn.disabled = true;
@@ -526,10 +557,11 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       setStatus({ key: 'run.aggregating' });
       // In a worker, like the classic aggregate: no long task on the main thread (#24).
       const agg = await pool.aggregateFree(runCfg, summaries);
-      result = { config: runCfg, agg, elapsedMs: performance.now() - t0 };
+      result = { config: runCfg, agg, summaries, elapsedMs: performance.now() - t0 };
       repro.afterRun(runCfg, agg);
       setStatus(null);
       renderResults();
+      void loadReplay(agg.representativeRun, 'representative');
       resultsTitle.focus({ preventScroll: true });
       if (matchMedia('(max-width: 999px)').matches) {
         resultsPanel.scrollIntoView({ block: 'start' });
@@ -550,6 +582,82 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     }
   }
   runBtn.addEventListener('click', () => void run());
+
+  /** The replay renderer, loaded on first use and mounted into its slot. */
+  async function ensureReplay(): Promise<FreeReplayView> {
+    if (replayView) return replayView;
+    const { FreeReplayView } = await import('./free-replay');
+    if (!replayView) {
+      replayView = new FreeReplayView();
+      replaySlot.replaceChildren(replayView.el);
+    }
+    return replayView;
+  }
+
+  /** Re-simulate one run with its trace in the replay worker and show it. */
+  async function loadReplay(run: number, kind: 'representative' | 'random'): Promise<void> {
+    const res = result;
+    if (!res) return;
+    const token = ++replayToken;
+    replayState = { kind, run, loading: true };
+    renderReplayInfo();
+    try {
+      const view = ensureReplay();
+      const trace = await pool.replayFree(res.config, run);
+      const v = await view;
+      if (token !== replayToken) return;
+      replayState = { kind, run, loading: false };
+      renderReplayInfo();
+      v.load(trace, [team(res.config, 0), team(res.config, 1)]);
+    } catch (err) {
+      if (err instanceof CancelledError || token !== replayToken) return;
+      replayState = {
+        kind,
+        run,
+        loading: false,
+        error: err instanceof Error ? err.message : String(err),
+      };
+      renderReplayInfo();
+    }
+  }
+
+  function renderReplayInfo(): void {
+    const st = replayState;
+    replayInfo.classList.toggle('is-error', !!st?.error);
+    if (!st || !result) {
+      replayInfo.textContent = '';
+      return;
+    }
+    if (st.error) {
+      replayInfo.textContent = t('replay.failed', { msg: st.error });
+      return;
+    }
+    if (st.loading) {
+      replayInfo.textContent = t('replay.loading');
+      return;
+    }
+    const c = result.config;
+    const s = result.summaries.find((x) => x.run === st.run);
+    const note = t(st.kind === 'representative' ? 'free.replay.repNote' : 'replay.randomNote');
+    const outcome = !s
+      ? ''
+      : s.outcome === FreeOutcome.Draw
+        ? t('outcome.draw')
+        : t('free.win', { side: team(c, s.outcome === FreeOutcome.A ? 0 : 1) });
+    const info = s
+      ? t('replay.runInfo', { run: st.run + 1, outcome, duration: formatDuration(s.duration) })
+      : '';
+    replayInfo.textContent = `${info} — ${note}`;
+  }
+
+  repBtn.addEventListener('click', () => {
+    if (result) void loadReplay(result.agg.representativeRun, 'representative');
+  });
+  randomBtn.addEventListener('click', () => {
+    if (!result || result.summaries.length === 0) return;
+    const pick = result.summaries[Math.floor(Math.random() * result.summaries.length)];
+    if (pick) void loadReplay(pick.run, 'random');
+  });
   cancelBtn.addEventListener('click', () => pool.cancel());
 
   // ---------- results ----------
@@ -694,7 +802,12 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     caveatLink.textContent = t('verdict.caveatLink');
     caveatLink.href = pagePath('model', getLang());
     caveatEl.replaceChildren(h('span', { text: t('verdict.caveat') }), ' ', caveatLink);
-    replayNote.textContent = t('free.replayLater');
+    replayTitle.textContent = t('replay.title');
+    repBtn.textContent = t('replay.representative');
+    randomBtn.textContent = t('replay.random');
+    renderReplayInfo();
+    replayView?.relocalize();
+    if (result) replayView?.setSideNames([team(result.config, 0), team(result.config, 1)]);
     switchSlot.replaceChildren(opts.modeSwitch());
     build();
     if (statusKey) setStatus(statusKey);

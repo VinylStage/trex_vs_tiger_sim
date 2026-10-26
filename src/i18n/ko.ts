@@ -528,7 +528,14 @@ export const ko = {
   'free.stat.survivors': '{side} 생존 (평균)',
   'free.stat.killed': '{side} 전투 불능 (평균)',
   'free.stat.routed': '{side} 도주 (평균)',
-  'free.replayLater': '자유 대결의 리플레이는 곧 추가됩니다.',
+  'free.replay.repNote': '가장 흔한 결과 가운데 교전 시간이 중앙값에 가장 가까운 전투',
+  'free.replay.canvasLabel':
+    '자유 대결 재생 애니메이션: A 진영은 파란색, B 진영은 주황색입니다. 큰 동물은 삼각형, 작은 동물은 점, 무리 버프가 적용된 개체는 얇은 고리, 도주는 회색, 전투 불능은 ×로 표시합니다',
+  'free.replay.ring': '고리 = 무리 버프 적용',
+  'free.replay.lodNote':
+    '멀리서는 작은 동물을 사각형으로 그리고 고리를 생략합니다. 확대하면 모양과 고리가 보입니다.',
+  'free.replay.reducedNote':
+    '동작 줄이기 설정이 켜져 있어 자동으로 재생하지 않습니다. 재생을 누르면 시작합니다.',
   'free.copyCode': '설정 코드 복사',
   'free.copied': '설정 코드를 복사했습니다.',
   'free.buff.title': '무리 버프',

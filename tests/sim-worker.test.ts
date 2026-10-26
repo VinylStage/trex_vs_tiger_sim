@@ -7,7 +7,12 @@ import { aggregateFree } from '../src/sim/free/aggregate';
 import { sanitizeFreeConfig } from '../src/sim/free/config';
 import { buildFreeDesign } from '../src/sim/free/design';
 import { packFreeSummaries, runFreeChunk, unpackFreeSummaries } from '../src/sim/free/montecarlo';
-import { traceTransferList, type WorkerResponse } from '../src/workers/protocol';
+import {
+  freeTraceTransferList,
+  traceTransferList,
+  type WorkerResponse,
+} from '../src/workers/protocol';
+import { simulateFreeBattle } from '../src/sim/free/engine';
 
 /*
  * Message dispatch of src/workers/sim.worker.ts (#61), run in Node: the module installs
@@ -119,6 +124,27 @@ describe('sim.worker dispatch', () => {
     const { trace } = simulateBattle(config, designRow(buildDesign(config), 5), 5, true);
     expect(p.msg.trace.events).toEqual(trace?.events);
     expect(p.transfer).toEqual(traceTransferList(p.msg.trace));
+  });
+
+  it('replay-free: sends the free trace of the requested run and transfers its buffers', () => {
+    const config = sanitizeFreeConfig({
+      runs: 4,
+      sides: [
+        { species: 'wolf', count: 6 },
+        { species: 'tiger', count: 1 },
+      ],
+    });
+    const out = send({ type: 'replay-free', jobId: 5, config, run: 99 });
+    expect(out).toHaveLength(1);
+    const p = out[0];
+    expect(p?.msg.type).toBe('replay-free');
+    if (p?.msg.type !== 'replay-free') return;
+    // run 99 is clamped to the last run
+    const { trace } = simulateFreeBattle(config, designRow(buildFreeDesign(config), 3), 3, true);
+    expect(p.msg.trace.frames.length).toBe(trace?.frames.length);
+    expect(p.msg.trace.frames.at(-1)?.agents).toEqual(trace?.frames.at(-1)?.agents);
+    expect(p.transfer).toEqual(freeTraceTransferList(p.msg.trace));
+    expect(new Set(p.transfer).size).toBe(p.transfer?.length);
   });
 
   it('reports a failure as an error message with the job id (or −1 without one)', () => {

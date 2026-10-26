@@ -1,12 +1,19 @@
 import { sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { simulateBattle } from '../sim/engine';
+import type { FreeConfig } from '../sim/free/config';
+import { simulateFreeBattle } from '../sim/free/engine';
 import { aggregate, runChunk, unpackSummaries } from '../sim/montecarlo';
 import { buildDesign, designRow, type Design } from '../sim/sampling';
 import { sanitizeFreeConfig } from '../sim/free/config';
 import { buildFreeDesign } from '../sim/free/design';
 import { runFreeChunk, unpackFreeSummaries } from '../sim/free/montecarlo';
 import { aggregateFree } from '../sim/free/aggregate';
-import { traceTransferList, type WorkerRequest, type WorkerResponse } from './protocol';
+import {
+  freeTraceTransferList,
+  traceTransferList,
+  type WorkerRequest,
+  type WorkerResponse,
+} from './protocol';
 
 // tsconfig `lib` is DOM-only, so type the worker global locally.
 const ctx = self as unknown as {
@@ -32,18 +39,23 @@ function designFor(config: ScenarioConfig): Design {
 let cachedFreeKey = '';
 let cachedFreeDesign: Design | null = null;
 
-/** A free-model run chunk (`mode: 'free'`), sanitized like every other payload. */
-function handleFree(msg: Extract<WorkerRequest, { type: 'run' }>): void {
-  const config = sanitizeFreeConfig(msg.config);
+function freeDesignFor(config: FreeConfig): Design {
   const key = JSON.stringify(config);
   if (cachedFreeDesign === null || key !== cachedFreeKey) {
     cachedFreeDesign = buildFreeDesign(config);
     cachedFreeKey = key;
   }
+  return cachedFreeDesign;
+}
+
+/** A free-model run chunk (`mode: 'free'`), sanitized like every other payload. */
+function handleFree(msg: Extract<WorkerRequest, { type: 'run' }>): void {
+  const config = sanitizeFreeConfig(msg.config);
+  const design = freeDesignFor(config);
   const start = Math.max(0, Math.min(config.runs, Math.floor(msg.start)));
   const end = Math.max(start, Math.min(config.runs, Math.floor(msg.end)));
   let last = performance.now();
-  const summaries = runFreeChunk(config, cachedFreeDesign, start, end, (done) => {
+  const summaries = runFreeChunk(config, design, start, end, (done) => {
     const now = performance.now();
     if (now - last >= PROGRESS_INTERVAL_MS) {
       last = now;
@@ -62,6 +74,14 @@ function handle(msg: WorkerRequest): void {
     const config = sanitizeFreeConfig(msg.config);
     const agg = aggregateFree(config, unpackFreeSummaries(msg.summaries));
     ctx.postMessage({ type: 'aggregate-free', jobId: msg.jobId, agg });
+    return;
+  }
+  if (msg.type === 'replay-free') {
+    const config = sanitizeFreeConfig(msg.config);
+    const run = Math.max(0, Math.min(config.runs - 1, Math.floor(msg.run)));
+    const { trace } = simulateFreeBattle(config, designRow(freeDesignFor(config), run), run, true);
+    if (!trace) throw new Error('engine returned no trace');
+    ctx.postMessage({ type: 'replay-free', jobId: msg.jobId, trace }, freeTraceTransferList(trace));
     return;
   }
   if (msg.type === 'run' && isFreePayload(msg.config)) {
