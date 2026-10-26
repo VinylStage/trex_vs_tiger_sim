@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.16](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.15...trex-vs-tiger-sim-v0.2.16) (2026-10-26)
+
+
+### Bug Fixes
+
+* **replay:** accept physical keys in the free replay and resume after the page is visible again ([#120](https://github.com/VinylStage/trex_vs_tiger_sim/issues/120)) ([fb12775](https://github.com/VinylStage/trex_vs_tiger_sim/commit/fb12775dba55abbe5c4a79dd2655a0704cba7c6e))
+
 ## [0.2.15](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.14...trex-vs-tiger-sim-v0.2.15) (2026-10-26)
 
 
