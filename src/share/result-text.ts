@@ -1,5 +1,6 @@
 import type { ScenarioConfig } from '../sim/config.ts';
 import type { FreeConfig } from '../sim/free/config.ts';
+import type { FreeSpeciesId } from '../sim/free/species.ts';
 import type { Lang } from '../i18n/lang.ts';
 import { dictionary } from '../i18n/registry.ts';
 import { DEFAULT_BASELINE } from './baseline.ts';
@@ -19,8 +20,9 @@ export type Tier = 'landslide' | 'clear' | 'close' | 'upset' | 'stalemate';
 /**
  * Cartoon emoji per species for the text share and the card text (owner decision, #51). Drawn
  * graphics stay abstract; emoji appear only as text. Species without an entry use the fallback.
+ * Keyed by free species id, which covers every classic id too.
  */
-export const SPECIES_EMOJI: Readonly<Record<string, string>> = {
+export const SPECIES_EMOJI: Readonly<Partial<Record<FreeSpeciesId, string>>> = {
   trex: '🦖',
   elephant: '🐘',
   buffalo: '🐃',
@@ -36,7 +38,9 @@ export const FALLBACK_EMOJI: Readonly<Record<'heavy' | 'pack', string>> = {
 };
 
 export function speciesEmoji(id: string, role: 'heavy' | 'pack'): string {
-  return Object.hasOwn(SPECIES_EMOJI, id) ? (SPECIES_EMOJI[id] as string) : FALLBACK_EMOJI[role];
+  return Object.hasOwn(SPECIES_EMOJI, id)
+    ? (SPECIES_EMOJI[id as FreeSpeciesId] as string)
+    : FALLBACK_EMOJI[role];
 }
 
 /** Emoji cells of the text-share bar. */

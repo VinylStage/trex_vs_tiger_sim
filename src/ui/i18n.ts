@@ -7,6 +7,7 @@ import {
   type SpeciesId,
   type Weapon,
 } from '../sim/species.ts';
+import type { FreeSpeciesId } from '../sim/free/species.ts';
 
 import { DEFAULT_LANG, interpolate, type Lang, type Vars } from '../i18n/lang.ts';
 import type { Dictionary, MsgKey } from '../i18n/ko.ts';
@@ -52,9 +53,15 @@ export function setNamePair(pair: NamePair): void {
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
+/**
+ * A species of either registry. Names and counters are keyed by it, so a species that exists only
+ * in the free model needs its words (`species.<id>`, `.one`, `.other`) in both dictionaries.
+ */
+export type AnySpeciesId = SpeciesId | FreeSpeciesId;
+
 /** Short species name, singular (`one`) or plural (`other`), in the current language. */
 export function speciesShort(
-  id: SpeciesId,
+  id: AnySpeciesId,
   form: 'one' | 'other' = 'one',
   lang: Lang = current,
 ): string {
@@ -62,7 +69,7 @@ export function speciesShort(
 }
 
 /** Full species name (pickers, table headings). */
-export function speciesName(id: SpeciesId): string {
+export function speciesName(id: AnySpeciesId): string {
   return dictionary(current)[`species.${id}`];
 }
 
@@ -93,14 +100,14 @@ export function speciesVars(pair: NamePair = names, lang: Lang = current): Recor
  * Korean counter word for a species: 명 for the hominin, 마리 for animals. English has none, so
  * the `{counter}` placeholders in English messages are empty.
  */
-const KO_COUNTERS: Partial<Record<SpeciesId, string>> = { homoErectus: '명' };
+const KO_COUNTERS: Partial<Record<AnySpeciesId, string>> = { homoErectus: '명' };
 
-export function speciesCounter(id: SpeciesId, lang: Lang = current): string {
+export function speciesCounter(id: AnySpeciesId, lang: Lang = current): string {
   return lang === 'ko' ? (KO_COUNTERS[id] ?? '마리') : '';
 }
 
 /** "10 T-Rex" / "T-Rex 10마리" / "호모 에렉투스 100명": a head count with the right forms. */
-export function teamLabel(id: SpeciesId, n: number): string {
+export function teamLabel(id: AnySpeciesId, n: number): string {
   const rule = new Intl.PluralRules(locale()).select(n) === 'one' ? 'one' : 'other';
   return t(`team.${rule}`, {
     n: n.toLocaleString(locale()),

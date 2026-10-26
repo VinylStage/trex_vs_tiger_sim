@@ -3,9 +3,12 @@ import {
   FREE_SPECIES,
   FREE_SPECIES_IDS,
   buffRanges,
+  defineFreeSpecies,
   isFreeSpecies,
   traitRanges,
   type FreeSpeciesId,
+  type FreeSpeciesSheet,
+  type TraitPreset,
 } from '../src/sim/free/species';
 import {
   BUFF_TRAITS,
@@ -17,7 +20,15 @@ import {
   TRAIT_BOUNDS,
   TRAIT_IDS,
 } from '../src/sim/free/traits';
-import { EVIDENCE, HEAVY_SPECIES, HEAVY_SPECIES_IDS, PACK_SPECIES } from '../src/sim/species';
+import {
+  EVIDENCE,
+  HEAVY_SPECIES,
+  HEAVY_SPECIES_IDS,
+  PACK_SPECIES,
+  isHeavySpecies,
+  isPackSpecies,
+  type Evidence,
+} from '../src/sim/species';
 
 /** Unified trait presets of the free model (docs/design/FREE-MATCHUPS.md §2, SPECIES.md §11). */
 
@@ -205,5 +216,84 @@ describe('mapping from the legacy registry', () => {
     const b = buffRanges('wolf');
     b.cohesionRadius.mode = -1;
     expect(buffRanges('wolf').cohesionRadius.mode).toBe(60);
+  });
+});
+
+describe('era and ad safety (read from the legacy registry)', () => {
+  it.each(FREE_SPECIES_IDS)('%s carries the era and adSafe flag of its legacy entries', (id) => {
+    const legacy = [
+      isHeavySpecies(id) ? HEAVY_SPECIES[id] : null,
+      isPackSpecies(id) ? PACK_SPECIES[id] : null,
+    ].filter((x) => x !== null);
+    expect(legacy.length).toBeGreaterThan(0);
+    for (const l of legacy) expect(FREE_SPECIES[id].era).toEqual(l.era);
+    expect(FREE_SPECIES[id].adSafe).toBe(legacy.every((l) => l.adSafe));
+  });
+
+  it('keeps the extinct group of the species pickers', () => {
+    expect(FREE_SPECIES_IDS.filter((id) => FREE_SPECIES[id].era !== 'extant')).toEqual([
+      'trex',
+      'mammoth',
+      'homoErectus',
+    ]);
+  });
+});
+
+/** A registry entry written back as the source sheet a species without a legacy entry uses. */
+function sheetOf(id: FreeSpeciesId): FreeSpeciesSheet {
+  const s = FREE_SPECIES[id];
+  const rowOf = (p: TraitPreset): readonly [number, number, number, Evidence] => [
+    p.range.min,
+    p.range.mode,
+    p.range.max,
+    p.evidence ?? 'S',
+  ];
+  const latch = LATCH_TRAIT_IDS as readonly string[];
+  const traits = Object.fromEntries(
+    TRAIT_IDS.filter((k) => s.canLatch || !latch.includes(k)).map((k) => [k, rowOf(s.traits[k])]),
+  );
+  const buff = s.social
+    ? Object.fromEntries(BUFF_TRAIT_IDS.map((k) => [k, rowOf(s.buff[k])]))
+    : null;
+  return {
+    era: s.era,
+    adSafe: s.adSafe,
+    social: s.social,
+    canLatch: s.canLatch,
+    constants: { ...s.constants },
+    traits: traits as FreeSpeciesSheet['traits'],
+    buff: buff as FreeSpeciesSheet['buff'],
+  };
+}
+
+describe('standalone constructor', () => {
+  it.each(FREE_SPECIES_IDS)('rebuilds %s from its own sheet, without the legacy registry', (id) => {
+    const built = defineFreeSpecies(id, sheetOf(id));
+    expect(built).toEqual(FREE_SPECIES[id]);
+    expect(Object.keys(built.traits)).toEqual([...TRAIT_IDS]);
+    expect(Object.keys(built.buff)).toEqual([...BUFF_TRAIT_IDS]);
+  });
+
+  it('copies the sheet, so editing it later changes nothing', () => {
+    const sheet = sheetOf('lion');
+    const built = defineFreeSpecies('lion', sheet);
+    (sheet.constants as { hide: number }).hide = 9;
+    (sheet.traits.mass as unknown as number[])[1] = -1;
+    expect(built.constants.hide).toBe(1);
+    expect(built.traits.mass.range).toEqual(FREE_SPECIES.lion.traits.mass.range);
+  });
+
+  it('rejects a sheet whose rows do not match its flags', () => {
+    const trex = sheetOf('trex');
+    const lion = sheetOf('lion');
+    expect(() =>
+      defineFreeSpecies('trex', { ...trex, traits: { ...trex.traits, latchDps: [1, 2, 3, 'S'] } }),
+    ).toThrow(/cannot latch/);
+    expect(() => defineFreeSpecies('trex', { ...trex, buff: lion.buff })).toThrow(/pack-buff/);
+    expect(() => defineFreeSpecies('lion', { ...lion, buff: null })).toThrow(/pack-buff/);
+    const traits = Object.fromEntries(
+      Object.entries(lion.traits).filter(([k]) => k !== 'latchDps'),
+    ) as FreeSpeciesSheet['traits'];
+    expect(() => defineFreeSpecies('lion', { ...lion, traits })).toThrow(/missing trait latchDps/);
   });
 });

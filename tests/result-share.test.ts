@@ -44,11 +44,13 @@ import {
   formatDiff,
   outcomeTier,
   shareText,
+  SPECIES_EMOJI,
   speciesEmoji,
   winnerOf,
   xIntentUrl,
 } from '../src/share/result-text';
 import { defaultConfig, type ScenarioConfig } from '../src/sim/config';
+import { FREE_SPECIES_IDS, isFreeSpecies } from '../src/sim/free/species';
 import { aggregate, runAll } from '../src/sim/montecarlo';
 import { wilson } from '../src/sim/stats';
 import { CARD_SIZE, cardLayout, STORY_SAFE } from '../src/ui/result-card';
@@ -466,6 +468,16 @@ describe('text share', () => {
     expect(speciesEmoji('mammoth', 'heavy')).toBe('🔷');
     expect(speciesEmoji('dhole', 'pack')).toBe('🔶');
     expect(speciesEmoji('__proto__', 'pack')).toBe('🔶');
+  });
+
+  it('keys the text-share symbols by free species id', () => {
+    for (const id of Object.keys(SPECIES_EMOJI)) expect(isFreeSpecies(id), id).toBe(true);
+    const withFallback = FREE_SPECIES_IDS.filter((id) => !Object.hasOwn(SPECIES_EMOJI, id));
+    expect(withFallback).toEqual(['mammoth', 'homoErectus']);
+    for (const id of withFallback) {
+      expect(speciesEmoji(id, 'heavy')).toBe('🔷');
+      expect(speciesEmoji(id, 'pack')).toBe('🔶');
+    }
   });
 
   it('builds the X intent', () => {
