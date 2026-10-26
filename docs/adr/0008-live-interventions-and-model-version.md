@@ -1,6 +1,6 @@
 # ADR-0008: Live interventions and model version
 
-- Status: Accepted (owner, 2026-10-26: the 1.0 renewal design and its decision record, [RENEWAL-1.0.md §12](../design/RENEWAL-1.0.md#12-owner-decisions))
+- Status: Accepted. The owner accepted the 1.0 renewal design and its decisions on 2026-10-26 ([RENEWAL-1.0.md §12](../design/RENEWAL-1.0.md#12-owner-decisions)). The compatibility rule in §6 (a page meeting a link of a model version it does not run) was added during implementation (#124) and is not part of that decision record.
 - Date: 2026-10-26
 - Issue: #124
 - Design: [docs/design/RENEWAL-1.0.md §10.1–§10.4](../design/RENEWAL-1.0.md#10-technical-plan)
@@ -26,10 +26,11 @@ A v3 link (`#s=` with `m: "free"`) carries no model version. After any such chan
    - A constant-only retune keeps a constants table per `mv`, so old links run with their own constants.
    - The variable-card catalogue is keyed by `mv` (`CARDS_BY_MV`). The intervention log stores card codes, not raw effects. Card codes are append-only indices. Retuning a card is a new `mv` with the old catalogue kept.
    - A structural change that cannot keep the old behaviour opens old links with a "made with model vN" note. Links that carry a summary are also flagged by the existing `chk=` check.
-6. **A page that does not know a link's `mv`** (a newer link opened in an older, cached page) never presents that link under its own model.
+6. **A page built from this ADR on that does not know a link's `mv`** (a newer link opened in an older, cached page) never presents that link under its own model.
    - A free result link is rejected as a `version` error, without **Run it yourself**.
    - A settings link or `TVT3-` code opens the free model at its defaults; the link's settings are not applied. Values defined under an unknown model cannot be read safely, so the existing rule for settings payloads (malformed input yields the defaults) applies to the whole payload.
    - The simulator keeps such a link in the address until the user edits something, and a note says that the link was made with a newer model and that reloading opens it. Reloading loads the current build, which knows the version, and the kept address opens the link there.
+   - Builds up to v0.2.16 predate this rule: they ignore `mv` and run such a link under model 1 with its settings, and accept a newer free result link as valid. Pages already in a cache cannot be changed.
 7. **Live interventions are a free-engine feature.** The classic engine gets no live mode.
    - The log is a list of `[tick, card, side]` entries (at most 64, sorted by tick) in the link's optional `live` field. It is applied at the top of the tick loop, and trait effects are recomputed from base values on every start or expiry, never reverted.
    - No card draws random numbers in 1.0. Future randomized cards use a new stream. The branch hook for the live win chance reseeds only when it is set.
@@ -46,5 +47,5 @@ A v3 link (`#s=` with `m: "free"`) carries no model version. After any such chan
 
 - Every existing free link keeps decoding and reproducing exactly as before.
 - A change that alters free results costs a version bump and, where possible, the old constants or catalogue kept beside the new ones. Reviews check the free goldens to decide whether a bump is due.
-- An older cached page cannot open a link from a newer model. It shows the free defaults or the invalid-link message instead of different numbers.
+- An older cached page built from this ADR on cannot open a link from a newer model. It shows the free defaults with a note, or the invalid-link message, instead of different numbers. A page built up to v0.2.16 ignores `mv` and shows such a link's numbers under model 1.
 - Viewer names are never encoded in links (owner decision R9).

@@ -1138,6 +1138,7 @@ simulateFreeBattle(config, row, run, trace, opts?: { interventions?: readonly In
 **Other rules.**
 
 - Unknown keys are already ignored (`share-free.ts:139-147`), so old cached clients degrade gracefully.
+  - Note (#124): this describes builds up to v0.2.16, which ignore `mv` and run a newer link under model 1. Builds from #124 on never read an unknown `mv` as their own; [ADR-0008 §6](../adr/0008-live-interventions-and-model-version.md#decision) defines what they do.
 - **Model-version policy** (ADR-0008, new):
   - `mv` increments whenever a free-engine change, or a card-catalogue change, alters any result.
   - For constant-only retunes, a per-`mv` constants table (and card catalogue) keeps old links reproducible.
