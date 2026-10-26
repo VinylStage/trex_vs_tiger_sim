@@ -9,7 +9,7 @@
 > - **UI:** 양쪽 모두 "모든 종" 선택, 진영마다 "무리 버프 적용 / Pack buff active" 배지와 규칙 팝오버, 결과에 버프 활성 시간, 리플레이에서는 버프 받은 개체에 추상적인 고리 표시만 붙입니다.
 > - 단계별 PR 계획(P0–P8)은 §8에 있습니다. 소유자가 2026-10-20에 설계를 승인했고, 결정 사항(엔진 두 갈래, 기본 화면은 P8 보정 전까지 기존 모델, 무리 초식동물의 집단 방어는 #72로 분리, 진영당 한 종, 나머지는 권장 기본값)은 §9에 정리했습니다.
 
-Status: **Accepted** by the owner on 2026-10-20 (§9). Implementation follows §8. Issue: [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50) and its owner comment. Decision record: [ADR-0007](../adr/0007-symmetric-sides.md). Base: `main` at v0.2.2 (includes #24 and #47).
+Status: **Accepted** by the owner on 2026-10-20 (§9). Implemented and deployed: engine #83, UI #90, pack buff #100, share #104, replay #110. P8 in §8 (the free-model section of docs/MODEL.md) is still open. Issue: [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50) and its owner comment. Decision record: [ADR-0007](../adr/0007-symmetric-sides.md). Base: `main` at v0.2.2 (includes #24 and #47).
 
 Evidence tags follow [SPECIES.md §3](../SPECIES.md#3-evidence-tags-and-formulas): **L** literature, **D** derived, **S** speculative / assumption, **U** unverified popular figure. Every new number in this document is either cited or tagged **S** with a sensitivity range, and every **S** number becomes a sampled triangular range (so it shows up in the tornado chart) unless noted.
 

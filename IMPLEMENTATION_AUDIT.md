@@ -90,7 +90,7 @@ Each PR carries a comment with the head SHA and the commands. The `main` CI runs
 
 ## Audit 2026-10-20 (epic #82)
 
-The 2026-10-20 code audit of `main` at `1e06e68` (v0.2.2) covered security, performance, conventions and standards (WCAG 2.2 AA, HTML, SEO, web platform) and reported 0 high, 7 medium and 11 low findings ([#82](https://github.com/VinylStage/trex_vs_tiger_sim/issues/82)). `main` had moved by the time the fixes started, so each finding was re-verified on `main` before its fix (comments on each issue). The verification of each step is in the status matrix above.
+The 2026-10-20 code audit of `main` at `1e06e68` (v0.2.2) covered security, performance, conventions and standards (WCAG 2.2 AA, HTML, SEO, web platform) and reported 0 high, 7 medium and 11 low findings ([#82](https://github.com/VinylStage/trex_vs_tiger_sim/issues/82)). `main` had moved by the time the fixes started, so each finding was re-verified on `main` before its fix (comments on each issue). The status matrix above records how steps 1–6 were verified; the perf-gate fix is described in #99.
 
 | Step                                    | Issues                    | PRs       | State                          | Outcome                                                                                                                                                                         |
 | --------------------------------------- | ------------------------- | --------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -112,7 +112,7 @@ Open items for the owner:
 - #69: confirm the announcements with a real screen reader (NVDA with Chrome, VoiceOver with Safari). So far only Playwright has checked them.
 - #61: decide whether to add `@vitest/coverage-v8` as a dev dependency. It is not installed.
 
-The language switch still misses #79's target of under 200 ms at 4x CPU. It measured 184–300 ms on `/` and 355–507 ms on `/en/`, before and after the split; the time goes into relabelling, and in-place label updates are listed as open in [docs/PERFORMANCE.md](docs/PERFORMANCE.md).
+The language switch still misses #79's target of under 200 ms at 4x CPU. It measured 184–300 ms on `/` and 355–507 ms on `/en/`, before and after the split; the time goes into relabelling, and in-place label updates are listed as open in [docs/PERFORMANCE.md](docs/PERFORMANCE.md). Two axe findings stay accepted as they are: `p-as-heading` (experimental) and `landmark-complementary-is-top-level` (best practice).
 
 ## Known gaps
 
