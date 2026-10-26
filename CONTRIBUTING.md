@@ -11,7 +11,7 @@
 
 ## Release cadence
 
-Releasing is part of every work cycle, not a separate milestone:
+Every work cycle includes a release:
 
 1. After each merged `feat` or `fix` PR (or a small batch merged together), check the open release-please PR.
 2. Make sure `main` has the patch notes entry for the version it proposes (see below); add it in a small PR first if it is missing, so the release PR picks it up.

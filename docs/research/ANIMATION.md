@@ -1,14 +1,14 @@
 # Replay animation: audit, research and design proposal
 
-Track: animation · Project: T-Rex vs Tiger Monte Carlo simulator (`/home/user/trex_vs_tiger_sim`, origin/main `6c84e0e`) · Date: 2026-10-19
+Track: animation · Project: T-Rex vs Tiger Monte Carlo simulator (origin/main `6c84e0e`) · Date: 2026-10-19
 
-Hard constraint respected throughout: agents remain abstract glyphs (triangles, dots, diamonds, rings, arrows, wedges, lines). No animal or character drawings are proposed anywhere in this document.
+Constraint: agents remain abstract glyphs (triangles, dots, diamonds, rings, arrows, wedges, lines); this document proposes no animal or character drawings.
 
 ---
 
 ## 0. Summary
 
-**What is wrong today (measured, not guessed)**
+**What is wrong today (measured)**
 
 1. **The trace stores states only as 0.5 s samples and records no events.** Between 2.4% and 7.7% of latches are never visible in the default-size scenarios, because no frame sample falls inside them. In 500v5000 the figure is 39.5%. State changes appear on average 0.16–0.22 s (sim time) late. Bites, throws and kills cannot be shown at all.
 2. **Colour is the only cue separating three tiger states.** Approaching, latched and routed tigers are all filled dots of near-identical size. Under simulated deuteranopia, approach vs latched collapses from ΔE2000 59 to 17, and latched vs routed falls to ΔE 8.3 (6.8 in dark mode, with only 0.3 L* difference). In the light theme the approach and latched colours are 2.93:1 and 2.58:1 against the arena, below the WCAG 3:1 non-text minimum.
@@ -27,7 +27,7 @@ Hard constraint respected throughout: agents remain abstract glyphs (triangles, 
   - The prototype holds **56–60 fps for 500v5000 and 60 fps for 10v100 and 50v1000** in a deliberately pessimistic environment: headless Chromium with software-only canvas.
   - Draw JS p95 is ≤ 10 ms; trace preparation is ≤ 8.4 ms.
 
-A working prototype (scratchpad only, not in the repo) is at `<local-workspace>/anim-proto/` (see Appendix C).
+A working prototype (kept outside the repository) is at `<local-workspace>/anim-proto/` (see Appendix C).
 
 ---
 
@@ -610,7 +610,7 @@ None of these are cited.
 - Density micro-benchmark: `anim-proto/bench/bench.jsonl` (DPR 1, 2 and 3; 1k, 5k and 20k glyphs).
 - CVD and contrast: `anim-research/bin/cvd.py`, run against `anim-research/pages2/cvd.py`.
 
-## Appendix C. Prototype files (scratchpad, not in the repo)
+## Appendix C. Prototype files (kept outside the repository)
 
 All paths are under `<local-workspace>/anim-proto/`.
 

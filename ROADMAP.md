@@ -32,18 +32,18 @@ Epic: #20.
 | AdSense readiness plan and content framing rules                      | #27      | Done (#36) |
 | Header logo restored to the original icon                             | —        | Done (#41) |
 
-## v0.2.x — patch and feature releases after v0.2.0 (0.2.1–0.2.7 released 2026-10-20)
+## v0.2.x — patch and feature releases after v0.2.0 (0.2.1–0.2.12 released 2026-10-20, 0.2.13–0.2.14 released 2026-10-23, 0.2.15 released 2026-10-26)
 
-| Item                                                                     | Issue | Status                                                                                                            |
-| ------------------------------------------------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------- |
-| UX and performance pass, mobile fixes                                    | #24   | Done (#52, v0.2.1)                                                                                                |
-| Homo erectus and woolly mammoth                                          | #47   | Done (#54, v0.2.2)                                                                                                |
-| Config export/import, result share links, result card, `/r/` pages       | #51   | Done (#56, v0.2.3)                                                                                                |
-| Any species on either side (role-free matchups)                          | #50   | In progress: design and ADR-0007 (#74), trait presets (#75), free config (#77), free engine (#83) merged; UI next |
-| Code audit 2026-10-20: security, accessibility, docs, tests, performance | #82   | In progress: step 1 done (#85, v0.2.7)                                                                            |
-| Herd group defense for social herbivores                                 | #72   | Planned                                                                                                           |
-| Rout (flee) rate in the results                                          | #42   | Planned                                                                                                           |
-| Patch notes board (`/patch-notes/`), one playful entry per release       | —     | In review                                                                                                         |
+| Item                                                                     | Issue | Status                                                                                                                                                                                       |
+| ------------------------------------------------------------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UX and performance pass, mobile fixes                                    | #24   | Done (#52, v0.2.1)                                                                                                                                                                           |
+| Homo erectus and woolly mammoth                                          | #47   | Done (#54, v0.2.2)                                                                                                                                                                           |
+| Config export/import, result share links, result card, `/r/` pages       | #51   | Done (#56, v0.2.3)                                                                                                                                                                           |
+| Any species on either side (role-free matchups)                          | #50   | Done: design and ADR-0007 (#74), trait presets (#75), free config (#77), free engine (#83), UI (#90, v0.2.9), pack buff (#100, v0.2.12), share links (#104, v0.2.13), replay (#110, v0.2.15) |
+| Code audit 2026-10-20: security, accessibility, docs, tests, performance | #82   | In progress (epic open for the #57 owner action): steps 1–6 merged (#85, #88, #91, #92, #95, #99, #102, #106, #109, #112, #114)                                                              |
+| Herd group defense for social herbivores                                 | #72   | Planned                                                                                                                                                                                      |
+| Rout (flee) rate in the results                                          | #42   | Planned                                                                                                                                                                                      |
+| Patch notes board (`/patch-notes/`), one playful entry per release       | —     | Done (#98, v0.2.11)                                                                                                                                                                          |
 
 ## Later (candidates, not committed)
 

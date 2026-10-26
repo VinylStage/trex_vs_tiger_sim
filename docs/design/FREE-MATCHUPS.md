@@ -2,14 +2,14 @@
 
 > **한국어 요약**
 >
-> - 이슈 [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50)의 설계 문서입니다. 구현은 아직 없습니다. 목표는 양쪽 진영 모두 어떤 종이든 고를 수 있게 하는 것입니다. 티라노 대 티라노 같은 같은 종 대결도 됩니다.
-> - **권장 방식: 엔진을 두 갈래로 둡니다.** 지금의 대형/무리 엔진(`engine.ts`)은 "기존 모델"로 그대로 얼려 두고, v1/v2 링크와 기존 대결은 계속 이 엔진으로 돌립니다(골든 테스트가 비트 단위로 그대로 통과). 새 대칭 엔진(`engine-free.ts`)은 공유 링크 v3에서만 씁니다. 하나의 일반화 엔진으로 기존 결과를 비트 단위로 재현하는 방법도 검토했지만, 난수 호출 순서와 부동소수점 연산 순서까지 맞추려면 결국 `if (legacy)` 분기투성이가 되어 권하지 않습니다.
+> - 이슈 [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50)의 설계 문서입니다. 자유 대결 모드는 구현되어 배포되었습니다(엔진 #83, UI #90, 무리 버프 #100, 공유 #104, 리플레이 #110). 구현 중 정한 세부 사항은 §4.8과 §5.7에 있습니다. 목표는 양쪽 진영 모두 어떤 종이든 고를 수 있게 하는 것입니다. 티라노 대 티라노 같은 같은 종 대결도 됩니다.
+> - **권장 방식: 엔진을 두 갈래로 둡니다.** 지금의 대형/무리 엔진(`engine.ts`)은 "기존 모델"로 그대로 얼려 두고, v1/v2 링크와 기존 대결은 계속 이 엔진으로 돌립니다(골든 테스트가 비트 단위로 그대로 통과). 새 대칭 엔진(`src/sim/free/engine.ts`)은 공유 링크 v3에서만 씁니다. 하나의 일반화 엔진으로 기존 결과를 비트 단위로 재현하는 방법도 검토했지만, 난수 호출 순서와 부동소수점 연산 순서까지 맞추려면 결국 `if (legacy)` 분기투성이가 되어 권하지 않습니다.
 > - **대칭 모델:** 모든 개체가 같은 행동 모델(이동, 스태미나, 정면 공격, 떨쳐내기, 사기)을 쓰고, 값만 종마다 다릅니다. **매달리기**는 매달릴 수 있는 종이고 상대가 자기보다 3배 이상 무거울 때만 가능합니다(가정, 민감도 2–5배). 그렇지 않으면 정면 타격으로 싸웁니다. 맞으면 물러나는지는 몸무게 비율로 정하고, 맞을 때 잃는 사기는 받은 피해에 비례합니다.
 > - **무리 버프:** `social` 종(사자, 늑대, 점박이하이에나, 호모 에렉투스)만 받습니다. 같은 진영에 살아 있는 동료가 결속 반경 안에 1마리 이상 있으면 켜지고, 그 조건이 2초 넘게 깨지면 꺼집니다. 효과 다섯 가지(협동 접근·포위, 공동 목표, 집단 매달리기, 사기 지원·전염, 교대)는 각각 따로 끌 수 있고 크기에 상한이 있습니다. 모든 수치는 출처를 달거나 가정(S)으로 표시하고 민감도 범위를 줍니다. 비사회성 종(호랑이, 불곰, 티라노 등)은 수가 많아도 이 효과가 전혀 없고, 같은 목표에 몰리면 서로 방해합니다.
 > - **UI:** 양쪽 모두 "모든 종" 선택, 진영마다 "무리 버프 적용 / Pack buff active" 배지와 규칙 팝오버, 결과에 버프 활성 시간, 리플레이에서는 버프 받은 개체에 추상적인 고리 표시만 붙입니다.
 > - 단계별 PR 계획(P0–P8)은 §8에 있습니다. 소유자가 2026-10-20에 설계를 승인했고, 결정 사항(엔진 두 갈래, 기본 화면은 P8 보정 전까지 기존 모델, 무리 초식동물의 집단 방어는 #72로 분리, 진영당 한 종, 나머지는 권장 기본값)은 §9에 정리했습니다.
 
-Status: **Accepted** by the owner on 2026-10-20 (§9). Implementation follows §8. Issue: [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50) and its owner comment. Decision record: [ADR-0007](../adr/0007-symmetric-sides.md). Base: `main` at v0.2.2 (includes #24 and #47).
+Status: **Accepted** by the owner on 2026-10-20 (§9). Implemented and deployed: engine #83, UI #90, pack buff #100, share #104, replay #110. P8 in §8 (the free-model section of docs/MODEL.md) is still open. Issue: [#50](https://github.com/VinylStage/trex_vs_tiger_sim/issues/50) and its owner comment. Decision record: [ADR-0007](../adr/0007-symmetric-sides.md). Base: `main` at v0.2.2 (includes #24 and #47).
 
 Evidence tags follow [SPECIES.md §3](../SPECIES.md#3-evidence-tags-and-formulas): **L** literature, **D** derived, **S** speculative / assumption, **U** unverified popular figure. Every new number in this document is either cited or tagged **S** with a sensitivity range, and every **S** number becomes a sampled triangular range (so it shows up in the tornado chart) unless noted.
 
@@ -103,7 +103,7 @@ One species per side (decision D4, §9; mixed sides are deferred). Both sides ma
 
 ### 2.2 Unified trait set
 
-Every species carries one full set of **individual traits**. The 22 legacy role parameters map onto it; traits that a role never needed get new presets (tagged honestly, mostly **S** or **D**).
+Every species carries one full set of **individual traits**. The 22 legacy role parameters map onto it; traits that a role never needed get new presets (each with an evidence tag, mostly **S** or **D**).
 
 | Trait id          | Unit  | Ind. | Legacy heavy source   | Legacy pack source                                | New presets needed for                                                    |
 | ----------------- | ----- | :--: | --------------------- | ------------------------------------------------- | ------------------------------------------------------------------------- |

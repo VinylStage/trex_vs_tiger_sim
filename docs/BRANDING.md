@@ -155,7 +155,7 @@ PLAYWRIGHT_MODULE=/path/to/node_modules/playwright/index.mjs node brand/render.m
 3. **Layout.** The title lines, subtitle, legend and domain must:
    - stay inside the 560 px text column, at least 24 px clear of the replay panel and above the bottom band;
    - have their ink start at x = 76 ± 0.75 px.
-4. **Honest HUD.** The replay frame must contain exactly 10 T-Rex and 100 tigers, the counts it prints.
+4. **HUD counts.** The replay frame must contain exactly 10 T-Rex and 100 tigers, the counts it prints.
 5. **Packing.** Each OG PNG must be 300 KB or smaller, and `favicon.ico` must have exactly the 16, 32 and 48 px frames.
 
 ## Do and don't
@@ -180,5 +180,5 @@ PLAYWRIGHT_MODULE=/path/to/node_modules/playwright/index.mjs node brand/render.m
 ## Decisions
 
 - **No numbers on the card.** An earlier draft showed a win-probability bar with an invented 50 % estimate and 95 % CI. That bar was removed. A made-up result undermines an educational simulator. A real result depends on the model version and the run count, so it would go stale on a static image. The two-segment rule and the bottom band carry the team colours instead.
-- **Glyphs, not animals.** The site applies for Google AdSense and is meant to be scientific and playful. Abstract replay glyphs keep the brand clear of violent imagery, and they match what the visitor sees in the app.
+- **Abstract glyphs only.** The site applies for Google AdSense and is meant to be scientific and playful. Abstract replay glyphs keep the brand clear of violent imagery, and they match what the visitor sees in the app.
 - **Small icon variant.** At 16 px, five dots merge into one blob. The small variant uses three snapped dots instead, so "blue triangles vs an orange group" still reads.
