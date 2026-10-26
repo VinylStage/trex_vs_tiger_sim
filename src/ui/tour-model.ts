@@ -111,13 +111,6 @@ export function availableIndices(steps: readonly TourStep[], isVisible: VisibleF
   return out;
 }
 
-/** Clamp an index into `[0, length - 1]`; non-finite input gives 0, an empty list gives -1. */
-export function clampIndex(index: number, length: number): number {
-  if (length <= 0) return -1;
-  if (!Number.isFinite(index)) return 0;
-  return Math.min(length - 1, Math.max(0, Math.trunc(index)));
-}
-
 /**
  * Index of the nearest available step after (`dir = 1`) or before (`dir = -1`) `from`, or -1 when
  * there is none. `from` may be -1 (or `steps.length`) to search from the start (or the end).

@@ -10,6 +10,8 @@ import { PARAMS, type ParamDef, type ParamId, type Role, type Triangular } from 
 import {
   HEAVY_SPECIES,
   HEAVY_SPECIES_IDS,
+  isHeavySpecies,
+  isPackSpecies,
   PACK_SPECIES,
   PACK_SPECIES_IDS,
   matchupAnchor,
@@ -23,6 +25,7 @@ import {
   type HeavySpeciesId,
   type MatchupClass,
   type PackSpeciesId,
+  type SpeciesId,
 } from '../sim/species';
 import { pagePath } from '../pages/routes';
 import { announce } from './announce';
@@ -189,8 +192,14 @@ export function roleEdited(c: ScenarioConfig, role?: Role): boolean {
  */
 export function withSpecies(c: ScenarioConfig, role: Role, id: string): ScenarioConfig {
   const next: ScenarioConfig = structuredClone(c);
-  if (role === 'heavy') next.heavySpecies = id as HeavySpeciesId;
-  else next.packSpecies = id as PackSpeciesId;
+  // Unknown ids (never offered by the pickers) leave the config as it is.
+  if (role === 'heavy') {
+    if (!isHeavySpecies(id)) return c;
+    next.heavySpecies = id;
+  } else {
+    if (!isPackSpecies(id)) return c;
+    next.packSpecies = id;
+  }
   const presets = speciesRanges(next.heavySpecies, next.packSpecies);
   for (const p of PARAMS) if (p.role === role) next.params[p.id] = presets[p.id];
   return next;
@@ -499,28 +508,22 @@ export function createConfigForm(
   function speciesField(role: Role): HTMLElement {
     const id = uniqueId(`f-${role}-species`);
     const el = h('select', { id, class: 'species-select' });
-    const ids: readonly string[] = role === 'heavy' ? HEAVY_SPECIES_IDS : PACK_SPECIES_IDS;
-    const eraOf = (s: string): Era =>
+    const options: readonly { id: SpeciesId; era: Era }[] =
       role === 'heavy'
-        ? HEAVY_SPECIES[s as HeavySpeciesId].era
-        : PACK_SPECIES[s as PackSpeciesId].era;
+        ? HEAVY_SPECIES_IDS.map((s) => ({ id: s, era: HEAVY_SPECIES[s].era }))
+        : PACK_SPECIES_IDS.map((s) => ({ id: s, era: PACK_SPECIES[s].era }));
     for (const group of ['extant', 'extinct'] as const) {
-      const members = ids.filter((s) => (eraOf(s) === 'extant') === (group === 'extant'));
+      const members = options.filter((o) => (o.era === 'extant') === (group === 'extant'));
       if (members.length === 0) continue;
       const og = h('optgroup', { attrs: { label: t(`species.group.${group}`) } });
-      for (const s of members) {
-        og.append(
-          h('option', {
-            attrs: { value: s },
-            text: speciesName(s as HeavySpeciesId | PackSpeciesId),
-          }),
-        );
+      for (const o of members) {
+        og.append(h('option', { attrs: { value: o.id }, text: speciesName(o.id) }));
       }
       el.append(og);
     }
     el.value = role === 'heavy' ? cfg.heavySpecies : cfg.packSpecies;
     el.addEventListener('change', () => {
-      if (!ids.includes(el.value)) return;
+      if (!options.some((o) => o.id === el.value)) return;
       const previous = structuredClone(cfg);
       const edited = roleEdited(previous, role);
       const next = withSpecies(previous, role, el.value);

@@ -19,7 +19,7 @@ import { dictionary } from '../i18n/registry.ts';
  * its own language, and `setLang` loads the other one before switching (#79).
  */
 
-export { DEFAULT_LANG, LANGS, interpolate, isLang, otherLang } from '../i18n/lang.ts';
+export { DEFAULT_LANG, LANGS, interpolate, otherLang } from '../i18n/lang.ts';
 export type { Lang, Vars } from '../i18n/lang.ts';
 export type { Dictionary, MsgKey } from '../i18n/ko.ts';
 export { loadLang } from '../i18n/load.ts';
@@ -48,10 +48,6 @@ let names: NamePair = { heavySpecies: DEFAULT_HEAVY, packSpecies: DEFAULT_PACK }
  */
 export function setNamePair(pair: NamePair): void {
   names = { heavySpecies: pair.heavySpecies, packSpecies: pair.packSpecies };
-}
-
-export function getNamePair(): NamePair {
-  return { ...names };
 }
 
 const capitalize = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);

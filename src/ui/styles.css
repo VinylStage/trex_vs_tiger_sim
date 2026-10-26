@@ -967,14 +967,11 @@ input.param-input {
   border-radius: 3px;
 }
 
-/* .mk-trex / .mk-tiger: old names, still used by app.ts and free-mode.ts until they switch (#62). */
-.mk-heavy,
-.mk-trex {
+.mk-heavy {
   background: var(--c-heavy);
 }
 
-.mk-pack,
-.mk-tiger {
+.mk-pack {
   background: var(--c-pack);
 }
 

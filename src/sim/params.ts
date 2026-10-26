@@ -84,7 +84,3 @@ export const PARAMS: readonly ParamDef[] = [
   def('pack.morale', '0-1', 0.01),
   def('pack.moraleLoss', '0-1', 0.01),
 ];
-
-export function paramDef(id: ParamId): ParamDef {
-  return PARAMS[PARAM_INDEX[id]] as ParamDef;
-}

@@ -156,5 +156,5 @@ The tour runs under the production CSP (`style-src 'self'`, `script-src 'self'`)
 
 ## Testing
 
-- **Unit tests:** `tests/tour.test.ts` covers the step data, filtering, navigation and counter, leaving a step that became unavailable (`resolveStep`), `clampIndex`, the rectangle helpers, `placePopover`, the storage flag (including missing and throwing storage), the deep link and `guideHref`.
+- **Unit tests:** `tests/tour.test.ts` covers the step data, filtering, navigation and counter, leaving a step that became unavailable (`resolveStep`), the rectangle helpers, `placePopover`, the storage flag (including missing and throwing storage), the deep link and `guideHref`.
 - **Browser check (manual or Playwright):** with the production CSP injected, at 1366 px and 390 px, in light and dark mode: start from the header button, go forward and back with the keyboard and the mouse, check that focus stays inside the popover, run the demo (focus stays on the demo button, a second Enter does nothing, the tour lands on `7 / 13` even if Next was pressed during the run, a blocked worker is announced as a failure), check at 320 × 256 that the focused **Next** is inside the popover, close with Esc and check that focus returns, confirm the offer appears once, and check that there are no console or CSP errors and no horizontal overflow.

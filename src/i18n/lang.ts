@@ -7,10 +7,6 @@ export type Lang = 'ko' | 'en';
 export const LANGS: readonly Lang[] = ['ko', 'en'];
 export const DEFAULT_LANG: Lang = 'ko';
 
-export function isLang(v: unknown): v is Lang {
-  return typeof v === 'string' && (LANGS as readonly string[]).includes(v);
-}
-
 /** The other of the two languages. */
 export const otherLang = (lang: Lang): Lang => (lang === 'ko' ? 'en' : 'ko');
 
