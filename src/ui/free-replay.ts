@@ -10,6 +10,7 @@ import {
   AutoPause,
   DEFAULT_SPEED,
   SPEEDS,
+  isChord,
   keyAction,
   stepSpeed,
   type ReplayAction,
@@ -98,7 +99,8 @@ export class FreeReplayView {
   private readonly io: IntersectionObserver;
 
   private readonly onVisibility = (): void => {
-    const on = this.autoPause.change(document.hidden, this.playing);
+    const atEnd = !this.world || this.time >= this.world.duration;
+    const on = this.autoPause.change(document.hidden, this.playing, atEnd);
     if (on !== null) this.setPlaying(on);
     this.schedule();
   };
@@ -299,9 +301,9 @@ export class FreeReplayView {
     this.draw();
   }
 
-  /** As in the classic replay (docs/REPLAY.md §8): native keys and Ctrl/Alt/Meta pass through. */
+  /** As in the classic replay (docs/REPLAY.md §8): native keys and chords pass through. */
   private onKey(e: KeyboardEvent): void {
-    if (!this.world || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!this.world || isChord(e)) return;
     if (e.target instanceof HTMLSelectElement) return;
     const native = e.code === 'Space' || e.key === ' ' || e.key === 'Enter';
     if (e.target instanceof HTMLButtonElement && native) return;

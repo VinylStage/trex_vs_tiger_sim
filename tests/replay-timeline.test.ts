@@ -17,6 +17,7 @@ import {
   contactSeekTime,
   eventStops,
   extractMarkers,
+  isChord,
   keyAction,
   nextStop,
   prevStop,
@@ -80,27 +81,70 @@ describe('keyboard map', () => {
     expect(keyAction('KeyF', 'F', true)).toEqual({ kind: 'view' });
     expect(keyAction('KeyC', 'Process', false)).toEqual({ kind: 'contact' });
   });
+
+  it('takes [ and ] typed with AltGr or Option, and leaves Ctrl, Alt and Meta chords alone', () => {
+    const press = (key: string, mods: string, altGraph = false): boolean =>
+      isChord({
+        key,
+        ctrlKey: mods.includes('c'),
+        altKey: mods.includes('a'),
+        metaKey: mods.includes('m'),
+        getModifierState: (k) => k === 'AltGraph' && altGraph,
+      });
+    // AltGr on German/French layouts; Chrome on Windows reports Ctrl+Alt with it.
+    expect(press(']', 'ca', true)).toBe(false);
+    expect(press('[', '', true)).toBe(false);
+    expect(keyAction('Digit9', ']', false)).toEqual({ kind: 'speed', dir: 1 });
+    expect(keyAction('Digit8', '[', false)).toEqual({ kind: 'speed', dir: -1 });
+    // Option+5 / Option+6 on a German Mac.
+    expect(press('[', 'a')).toBe(false);
+    expect(press(']', 'a')).toBe(false);
+    expect(keyAction('Digit5', '[', false)).toEqual({ kind: 'speed', dir: -1 });
+    // Chords stay with the browser.
+    expect(press('f', 'c')).toBe(true);
+    expect(press('f', 'm')).toBe(true);
+    expect(press(']', 'm')).toBe(true);
+    expect(press(']', 'ca')).toBe(true);
+    expect(press('k', 'a')).toBe(true);
+    expect(press('ArrowLeft', 'a')).toBe(true);
+    expect(press('k', '')).toBe(false);
+    // A browser without getModifierState.
+    expect(isChord({ key: ']', ctrlKey: true, altKey: true, metaKey: false })).toBe(true);
+    expect(isChord({ key: '[', ctrlKey: false, altKey: true, metaKey: false })).toBe(false);
+  });
 });
 
 describe('page visibility', () => {
   it('resumes on visible after pausing for a hidden page', () => {
     const p = new AutoPause();
-    expect(p.change(true, true)).toBe(false);
-    expect(p.change(true, false)).toBeNull();
-    expect(p.change(false, false)).toBe(true);
+    expect(p.change(true, true, false)).toBe(false);
+    expect(p.change(true, false, false)).toBeNull();
+    expect(p.change(false, false, false)).toBe(true);
     // Once: the next visible page leaves playback alone.
-    expect(p.change(false, true)).toBeNull();
+    expect(p.change(false, true, false)).toBeNull();
   });
 
   it('stays paused on visible after the viewer paused', () => {
     const p = new AutoPause();
     // Paused before the page was hidden.
-    expect(p.change(true, false)).toBeNull();
-    expect(p.change(false, false)).toBeNull();
+    expect(p.change(true, false, false)).toBeNull();
+    expect(p.change(false, false, false)).toBeNull();
     // Paused (or played, or seeked) while the page was hidden.
-    expect(p.change(true, true)).toBe(false);
+    expect(p.change(true, true, false)).toBe(false);
     p.release();
-    expect(p.change(false, false)).toBeNull();
+    expect(p.change(false, false, false)).toBeNull();
+  });
+
+  it('never resumes at the end, where a resume would start over from 0', () => {
+    const p = new AutoPause();
+    // Still "playing" at the end: End was pressed while the stage was scrolled away, so no
+    // frame ran to stop playback. The hidden page pauses it and holds nothing.
+    expect(p.change(true, true, true)).toBe(false);
+    expect(p.change(false, false, true)).toBeNull();
+    // Held before the end, at the end once visible (defensive): no resume either.
+    expect(p.change(true, true, false)).toBe(false);
+    expect(p.change(false, false, true)).toBeNull();
+    expect(p.change(false, false, false)).toBeNull();
   });
 });
 

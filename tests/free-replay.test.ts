@@ -18,6 +18,7 @@ import {
   freeSideGlyph,
 } from '../src/ui/replay/free-world';
 import { GLYPH, heavyLengthForRadius } from '../src/ui/replay/glyphs';
+import { isChord } from '../src/ui/replay/timeline';
 
 /*
  * The free-matchup replay model (#50 item 3b, design §6): glyph by size, interpolation between
@@ -160,5 +161,19 @@ describe('free replay keys', () => {
     expect(freeKeyAction('KeyC', 'ㅊ', false)).toBeNull();
     expect(freeKeyAction('Comma', ',', false)).toBeNull();
     expect(freeKeyAction('PageUp', 'PageUp', false)).toBeNull();
+  });
+
+  it('changes speed from [ and ] typed with AltGr or Option, and leaves Ctrl+F to the browser', () => {
+    const altGr = (k: string): boolean => k === 'AltGraph';
+    // AltGr+9 on a German layout, as Chrome on Windows reports it (Ctrl+Alt plus AltGraph).
+    const de = { key: ']', ctrlKey: true, altKey: true, metaKey: false, getModifierState: altGr };
+    expect(isChord(de)).toBe(false);
+    expect(freeKeyAction('Digit9', ']', false)).toEqual({ kind: 'speed', dir: 1 });
+    // Option+5 on a German Mac.
+    expect(isChord({ key: '[', ctrlKey: false, altKey: true, metaKey: false })).toBe(false);
+    expect(freeKeyAction('Digit5', '[', false)).toEqual({ kind: 'speed', dir: -1 });
+    // Ctrl+F and Cmd+F find in page, not the view toggle.
+    expect(isChord({ key: 'f', ctrlKey: true, altKey: false, metaKey: false })).toBe(true);
+    expect(isChord({ key: 'f', ctrlKey: false, altKey: false, metaKey: true })).toBe(true);
   });
 });

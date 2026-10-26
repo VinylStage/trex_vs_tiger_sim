@@ -16,6 +16,7 @@ import {
   SPEEDS,
   buildTimeline,
   contactSeekTime,
+  isChord,
   keyAction,
   nextStop,
   prevStop,
@@ -174,7 +175,7 @@ export class ReplayView {
 
   private readonly onVisibility = (): void => {
     // Pause while the page is hidden (Page Visibility); resume when it is visible again.
-    const on = this.autoPause.change(document.hidden, this.playing);
+    const on = this.autoPause.change(document.hidden, this.playing, this.time >= this.duration());
     if (on !== null) this.setPlaying(on);
     this.schedule();
   };
@@ -587,7 +588,7 @@ export class ReplayView {
 
   /** Shortcuts work while focus is anywhere inside the replay, except where a key is native. */
   private onKey(e: KeyboardEvent): void {
-    if (!this.prep || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!this.prep || isChord(e)) return;
     const target = e.target as HTMLElement | null;
     const tag = target?.tagName;
     if (tag === 'SELECT' || tag === 'SUMMARY') return;
