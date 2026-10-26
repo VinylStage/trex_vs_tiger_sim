@@ -13,7 +13,7 @@
 > - 일반명사 규칙을 넓힙니다. 기능, 프리셋, 카드 이름뿐 아니라 "왜?" 근거 문구, 방송 도구 문구, 캡션, 블로그 글에도 상표, 작품명, 다른 도구 이름을 쓰지 않습니다. 영어 화면에서는 "odds" 대신 "win chance"를 씁니다.
 > - 라이브 채팅은 1.x에서 진행합니다(#118). 3D는 1.x에 선택형 베타로 미룹니다.
 
-Status: **Proposed**, revision 2, draft for owner review, 2026-10-26.
+Status: **Accepted** by the owner on 2026-10-26 (decision record in §12), revision 2.
 Base: `main` at `d9bb961` (v0.2.16, release #121; includes #119–#122, with the patch-notes entry at `5136bb6`). Every code line reference was re-checked against `d9bb961`. Most cited files are unchanged since `d0cc260`. Two moved:
 
 - `src/ui/free-replay.ts`: 87 lines changed in #120. `load()` is now at 218–233.
@@ -1430,6 +1430,22 @@ Acceptance: the §1.4 checklist is met.
 | R23 privacy officer                                       | M7, release            | **blocking**                                       |
 | R3, R5, R6, R8, R10, R11, R13, R16–R20, R22, R24, R26–R34 | –                      | the recommendation below                           |
 | R25 GRAC advice                                           | release                | an owner action, not a choice: required before 1.0 |
+
+**Decision record (owner, 2026-10-26).** Every blocking decision was answered, each with the recommended option. The non-blocking decisions take their recommended defaults.
+
+| Decision            | Answer                                                                                                                                                               |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1 default engine   | (a) Simple mode on the free engine, after the minimum P8 pass                                                                                                        |
+| R2 document split   | (a) `/` lobby and `/play/` app                                                                                                                                       |
+| R4 mass rout        | (b) Keep the model for 1.0 and contain the cascade; a retune comes later with sign-off                                                                               |
+| R7 cup decider      | (a) one live battle by default, with (d) opinion pick as a selectable format                                                                                         |
+| R9 viewer names     | Allowed as text labels next to glyphs, with a filter and a hide toggle, never in links                                                                               |
+| R12 pilot           | The owner runs the test broadcasts personally, so the fallback applies: 3 owner-run dry runs with recordings and session logs ([docs/STREAMING.md](../STREAMING.md)) |
+| R14 gorilla         | (a) Batch B, neutral naming, no meme preset                                                                                                                          |
+| R15 what-if species | (a) Main roster with a visible "what-if" tag                                                                                                                         |
+| R21 CSP             | A, hash-based, with A′ as the fallback                                                                                                                               |
+| R23 privacy officer | Use the identity the owner already publishes on the blog: the operator name and the public contact email shown on vinylims.com                                       |
+| R25 GRAC advice     | Owner action, still required before 1.0                                                                                                                              |
 
 Each line below gives the options and our recommendation.
 

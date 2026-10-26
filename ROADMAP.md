@@ -45,9 +45,9 @@ Epic: #20.
 | Rout (flee) rate in the results                                          | #42   | Planned                                                                                                                                                                                      |
 | Patch notes board (`/patch-notes/`), one playful entry per release       | —     | Done (#98, v0.2.11)                                                                                                                                                                          |
 
-## v1.0.0 — streamer-first renewal (proposed)
+## v1.0.0 — streamer-first renewal (accepted 2026-10-26)
 
-Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md). It covers the play/learn split, Simple and Advanced modes, the streamer session loop with live variable cards, the new-animal batches, ads readiness and the milestones M1–M8. Live chat is tracked separately in #118 and does not gate 1.0. Work starts once the blocking owner decisions in §12 are answered.
+Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md). It covers the play/learn split, Simple and Advanced modes, the streamer session loop with live variable cards, the new-animal batches, ads readiness and the milestones M1–M8. Live chat is tracked separately in #118 and does not gate 1.0. The owner answered the blocking decisions on 2026-10-26 (§12 decision record); milestone issues track the work.
 
 ## Later (candidates, not committed)
 
