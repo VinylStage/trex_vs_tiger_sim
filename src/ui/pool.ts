@@ -108,7 +108,11 @@ export class SimPool {
   private replayJob: ReplayJob | null = null;
   private aggJob: AggregateJob | null = null;
 
-  constructor(size = poolSize(globalThis.navigator?.hardwareConcurrency)) {
+  /** `spawn` creates one worker; the tests pass a fake (tests/pool.test.ts). */
+  constructor(
+    size = poolSize(globalThis.navigator?.hardwareConcurrency),
+    private readonly spawn: () => Worker = spawnWorker,
+  ) {
     this.size = size;
   }
 
@@ -236,7 +240,7 @@ export class SimPool {
   }
 
   private createRunWorker(): Worker {
-    const w = spawnWorker();
+    const w = this.spawn();
     w.onmessage = (e: MessageEvent<WorkerResponse>) => this.onRunMessage(w, e.data);
     w.onerror = (e) => {
       e.preventDefault();
@@ -246,7 +250,7 @@ export class SimPool {
   }
 
   private createReplayWorker(): Worker {
-    const w = spawnWorker();
+    const w = this.spawn();
     w.onmessage = (e: MessageEvent<WorkerResponse>) => {
       const msg = e.data;
       const job = this.replayJob;
