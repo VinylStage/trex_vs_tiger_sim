@@ -18,6 +18,7 @@ import {
   type BuffTraitId,
   type TraitId,
 } from './traits.ts';
+import type { FreeConfig } from './config.ts';
 
 /**
  * Unified species registry of the free model (docs/design/FREE-MATCHUPS.md §2, docs/SPECIES.md
@@ -61,7 +62,7 @@ export interface FreeSpecies {
   readonly id: FreeSpeciesId;
   /** Geological time, or alive today: the extant and extinct groups of the species pickers. */
   readonly era: Era;
-  /** Whether a matchup with it may carry ads (docs/ADSENSE.md §6). */
+  /** Whether a matchup with it may carry ads; read through `freeMatchupAdSafe` (ADSENSE.md §6). */
   readonly adSafe: boolean;
   /** Cooperative group hunter or fighter: gets the pack buff in groups (design §2.3). */
   readonly social: boolean;
@@ -419,6 +420,16 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
 
 export const isFreeSpecies = (v: unknown): v is FreeSpeciesId =>
   typeof v === 'string' && (FREE_SPECIES_IDS as readonly string[]).includes(v);
+
+/**
+ * Whether ads may load for a free matchup (docs/ADSENSE.md §6), the free-model twin of
+ * `matchupAdSafe` in src/sim/species.ts: true only when every side's species is ad-safe. An
+ * unknown species counts as not ad-safe. It lives here, next to the flag it reads, because
+ * src/sim/species.ts must not import this module (this module reads it at load time). Pure.
+ */
+export function freeMatchupAdSafe(c: Pick<FreeConfig, 'sides'>): boolean {
+  return c.sides.every((s) => isFreeSpecies(s.species) && FREE_SPECIES[s.species].adSafe);
+}
 
 /** Preset triangles of a species' individual traits, in `TRAIT_IDS` order (fresh objects). */
 export function traitRanges(id: FreeSpeciesId): Record<TraitId, Triangular> {

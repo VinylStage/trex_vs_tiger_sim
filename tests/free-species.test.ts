@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
+import { defaultFreeConfig, defaultSide, type FreeConfig } from '../src/sim/free/config';
 import {
   FREE_SPECIES,
   FREE_SPECIES_IDS,
   buffRanges,
   defineFreeSpecies,
+  freeMatchupAdSafe,
   isFreeSpecies,
   traitRanges,
+  type FreeSpecies,
   type FreeSpeciesId,
   type FreeSpeciesSheet,
   type TraitPreset,
@@ -25,8 +28,10 @@ import {
   HEAVY_SPECIES,
   HEAVY_SPECIES_IDS,
   PACK_SPECIES,
+  PACK_SPECIES_IDS,
   isHeavySpecies,
   isPackSpecies,
+  matchupAdSafe,
   type Evidence,
 } from '../src/sim/species';
 
@@ -295,5 +300,51 @@ describe('standalone constructor', () => {
       Object.entries(lion.traits).filter(([k]) => k !== 'latchDps'),
     ) as FreeSpeciesSheet['traits'];
     expect(() => defineFreeSpecies('lion', { ...lion, traits })).toThrow(/missing trait latchDps/);
+  });
+});
+
+describe('ad safety of free matchups', () => {
+  const matchup = (a: FreeSpeciesId, b: FreeSpeciesId): FreeConfig => ({
+    ...defaultFreeConfig(),
+    sides: [defaultSide(a), defaultSide(b)],
+  });
+
+  it('marks every pairing ad-safe, mirror matchups included', () => {
+    for (const a of FREE_SPECIES_IDS) {
+      for (const b of FREE_SPECIES_IDS) {
+        expect(freeMatchupAdSafe(matchup(a, b)), `${a}/${b}`).toBe(true);
+      }
+    }
+  });
+
+  it('agrees with matchupAdSafe on every classic pairing', () => {
+    for (const h of HEAVY_SPECIES_IDS) {
+      for (const p of PACK_SPECIES_IDS) {
+        expect(freeMatchupAdSafe(matchup(h, p)), `${h}/${p}`).toBe(
+          matchupAdSafe({ heavySpecies: h, packSpecies: p }),
+        );
+      }
+    }
+  });
+
+  it('is false as soon as either side is not ad-safe', () => {
+    const registry = FREE_SPECIES as Record<FreeSpeciesId, FreeSpecies>;
+    const saved = registry.wolf;
+    registry.wolf = { ...saved, adSafe: false };
+    try {
+      expect(freeMatchupAdSafe(matchup('wolf', 'trex'))).toBe(false);
+      expect(freeMatchupAdSafe(matchup('trex', 'wolf'))).toBe(false);
+      expect(freeMatchupAdSafe(matchup('wolf', 'wolf'))).toBe(false);
+      expect(freeMatchupAdSafe(matchup('trex', 'lion'))).toBe(true);
+    } finally {
+      registry.wolf = saved;
+    }
+  });
+
+  it('counts an unknown species as not ad-safe', () => {
+    const [a, b] = matchup('trex', 'tiger').sides;
+    const dragon = { ...b, species: 'dragon' as FreeSpeciesId };
+    expect(freeMatchupAdSafe({ sides: [a, dragon] })).toBe(false);
+    expect(freeMatchupAdSafe({ sides: [dragon, a] })).toBe(false);
   });
 });

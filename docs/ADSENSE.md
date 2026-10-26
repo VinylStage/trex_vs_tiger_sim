@@ -5,7 +5,7 @@
 > - 이 사이트(`trex-vs-tiger.vinylims.com`)는 루트 도메인 `vinylims.com`(퍼블리셔 `pub-8355379467698162`)의 AdSense 승인과 설정을 그대로 씁니다. 새 계정이나 하위 도메인 `ads.txt`를 만들지 않습니다.
 > - 광고 코드는 아래 **게이트 G1–G4**를 모두 통과한 뒤에만 넣습니다. G1(콘텐츠)은 완료됐고, G2(크롤링 위생)는 `*.pages.dev` 리디렉션과 Lighthouse 재측정, G3(개인정보)는 광고 조항, G4(strict CSP)는 전체가 남아 있습니다.
 > - CSP는 빌드 시 해시를 계산하는 **정적 strict CSP(옵션 A)**로 옮깁니다. 광고 없이 먼저 배포해 검증하고, 그다음 광고 PR을 엽니다.
-> - 종 레지스트리의 `adSafe` 플래그와 `matchupAdSafe(config)`가 `false`를 돌려주는 대결에서는 앞으로 넣을 광고 로더가 광고를 싣지 않습니다. 지금은 모든 종이 `true`이고(멸종 인류 호모 에렉투스 포함), 현생 인류 같은 종을 추가하면 `false`가 됩니다.
+> - 종 레지스트리의 `adSafe` 플래그와 `matchupAdSafe(config)`(클래식 대결), `freeMatchupAdSafe(config)`(자유 대결)가 `false`를 돌려주는 대결에서는 앞으로 넣을 광고 로더가 광고를 싣지 않습니다. 지금은 모든 종이 `true`이고(멸종 인류 호모 에렉투스 포함), 현생 인류 같은 종을 추가하면 `false`가 됩니다.
 > - 표현 규칙(추상 도형만, 유혈·고어 금지, 반려·가축 동물과 현생 인류 금지, 중립적 용어)은 [CONTRIBUTING.md](../CONTRIBUTING.md#content-framing-rules)에 있으며 모든 PR에 적용됩니다.
 > - `vinylims.com`은 2026-10-20부터 AdSense 심사 상태가 준비 중입니다. 하위 도메인은 별도 사이트로 등록할 수 없어 이 사이트의 광고는 루트 승인 뒤에만 가능합니다. 심사 중에는 블로그를 하위 도메인으로 옮기거나 루트를 소개 페이지로 바꾸지 않습니다([조사 §13](research/ADSENSE.md#13-update-2026-10-26-subdomains-review-status-site-structure)).
 > - 근거와 출처는 [docs/research/ADSENSE.md](research/ADSENSE.md)에 있습니다. 이 문서는 실행 계획과 진행 상태만 관리합니다.
@@ -24,7 +24,7 @@ This document is the operational plan. Every claim about Google or Cloudflare po
 | Use AdSense **Privacy & messaging** (Google CMP) for EEA/UK/CH consent. No Consent Mode unless GA4 or Google Ads tags are added.                                       | Google-certified CMP, free, writes TCF v2.3 strings.                                                                                                     | §7.1     |
 | Place manual ad units on `/`; allow Auto ads only on long-form content pages, if at all.                                                                               | The simulator UI is dense; anchors and vignettes can cover controls or interrupt the tutorial.                                                           | §8.2     |
 | Keep the presentation abstract and non-gory; model no domestic animals, pets or living humans; use neutral vocabulary.                                                 | Animal-cruelty policy and the shocking-content restriction. Also the owner's rule against character-like animal shapes.                                  | §3.3     |
-| Gate ads per matchup with the registry flag `adSafe` and `matchupAdSafe(config)` (§6).                                                                                 | Violence against people is flagged as shocking content; a matchup with a living human must never carry ads.                                              | §3.3     |
+| Gate ads per matchup with the registry flag `adSafe`, `matchupAdSafe(config)` and `freeMatchupAdSafe(config)` (§6).                                                    | Violence against people is flagged as shocking content; a matchup with a living human must never carry ads.                                              | §3.3     |
 | Keep the blog at the root of `vinylims.com` until it is Ready; afterwards prefer an introduction home page with the blog left at `/blog/…` over a move to a subdomain. | Subdomains cannot be registered on their own, and a thin root with redirects during review matches the rejection criteria.                               | §13.3    |
 
 ## 2. Gates
@@ -87,7 +87,7 @@ Ads PR (after G1–G4)
 - [ ] Reserved, labelled slots with fixed per-breakpoint sizes (zero CLS, research §8.3). Labels: "광고" / "Advertisements" only, or no label (research §13.4).
 - [ ] Simulator page: at most two manual units — S1 above the footer (all viewports), S2 in the desktop left column below the scenario card with ≥ 150 px from Run/Cancel. Never inside result cards, chart legends, presets, replay canvas or controls, progress states, modals or the tutorial overlay. Never refresh ads on Run.
 - [ ] No ads on `/privacy/`, `/en/privacy/` or the 404 page.
-- [ ] The loader calls `matchupAdSafe(config)` (`src/sim/species.ts`) for the scenario on screen and skips or removes ad units whenever it returns `false`, including after the species pickers change or a share link loads (§6).
+- [ ] The loader calls `matchupAdSafe(config)` (`src/sim/species.ts`) for a classic scenario on screen, or `freeMatchupAdSafe(config)` (`src/sim/free/species.ts`) for a free one, and skips or removes ad units whenever it returns `false`, including after the species pickers change or a share link loads (§6).
 
 ## 5. Ongoing maintenance rules
 
@@ -101,6 +101,8 @@ Re-check this plan whenever a PR adds a page type, an animal, a visual effect or
 
 Every species in `src/sim/species.ts` carries `adSafe: boolean`. The pure helper `matchupAdSafe({ heavySpecies, packSpecies })` returns `true` only when both sides are ad-safe. The future ad loader must call it for the scenario on screen and **load no ads when it returns `false`**; this applies to the simulator page, the results and any page that renders a shared scenario.
 
+Free matchups (any species on either side, [ADR-0007](adr/0007-symmetric-sides.md)) use the free registry instead. Every entry of `FREE_SPECIES` in `src/sim/free/species.ts` carries the same `adSafe` flag: read from the legacy registry for every species that has a legacy entry (_Homo erectus_ only when both of its entries are ad-safe), and set on the source sheet for a species added to the free model alone ([SPECIES.md §11.5](SPECIES.md#115-species-without-a-legacy-entry)). The pure helper `freeMatchupAdSafe(config)` takes a `FreeConfig` and returns `true` only when every side's species is ad-safe; a species id it does not know counts as not ad-safe. The loader calls it for any free scenario on screen, by the same rule as above. It lives next to the flag it reads rather than beside `matchupAdSafe`: `src/sim/free/species.ts` reads the legacy registry while it loads, so `src/sim/species.ts` cannot import it without an import cycle.
+
 - Today every species is `adSafe: true`, including the extinct hominin _Homo erectus_ ([#47](https://github.com/VinylStage/trex_vs_tiger_sim/issues/47)), which is framed like _T. rex_: a long-extinct species, scientific name, no tools or weapons, abstract glyphs, neutral wording and the thought-experiment note on its matchup badge, the model page and the parameter pages.
 - A **living-human species** (for example _Homo sapiens_) would be `adSafe: false`: AdSense review treats depictions of violence against people as shocking content, so such matchups must never carry ads. Adding one also needs the content rules in [CONTRIBUTING.md](../CONTRIBUTING.md#content-framing-rules) to be revisited.
-- `tests/species.test.ts` checks the flag for every pairing, so changing a species' flag is a reviewed change.
+- `tests/species.test.ts` checks the flag for every classic pairing and `tests/free-species.test.ts` for every free pairing, mirror matchups included, so changing a species' flag is a reviewed change. The free tests also check that a side that is not ad-safe, on either side, turns the result to `false`.
