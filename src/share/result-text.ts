@@ -303,6 +303,42 @@ export function freeResultView(config: FreeConfig, s: FreeResultSummary, lang: L
   });
 }
 
+/**
+ * The means the result page lists for a free snapshot: per side still standing, incapacitated,
+ * fled and, where the pack buff applies, its active time. The snapshot keeps survivors (`as`/`bs`,
+ * still standing or fled, two decimals) beside fled (`ar`/`br`, one decimal), so still standing is
+ * their difference to one decimal, the figure the app shows (#42); the rounding can take it just
+ * below 0, hence the clamp.
+ */
+export function freeStats(v: ResultView, s: FreeResultSummary): [string, string][] {
+  const { lang } = v;
+  const items: [string, string][] = [];
+  if (s.t !== undefined) items.push([sm(lang, 'result.duration'), formatSeconds(s.t, lang)]);
+  const num = (x: number): string => x.toLocaleString(lang);
+  const sides = [
+    { name: v.heavyName, sv: s.as, k: s.ak, r: s.ar, b: s.ab, bt: s.at },
+    { name: v.packName, sv: s.bs, k: s.bk, r: s.br, b: s.bb, bt: s.bt },
+  ];
+  for (const x of sides) {
+    if (x.sv !== undefined && x.r !== undefined) {
+      const standing = Math.round(Math.max(0, x.sv - x.r) * 10) / 10;
+      items.push([sm(lang, 'free.standing', { side: x.name }), num(standing)]);
+    }
+    if (x.k !== undefined) {
+      items.push([sm(lang, 'result.incapacitated', { pack: x.name }), num(x.k)]);
+    }
+    if (x.r !== undefined) items.push([sm(lang, 'free.fled', { side: x.name }), num(x.r)]);
+    if (x.b !== undefined) {
+      const time = x.bt === undefined ? '' : formatSeconds(x.bt, lang);
+      items.push([
+        sm(lang, 'free.buff', { side: x.name }),
+        sm(lang, 'free.buffValue', { pct: pct(x.b), t: time }),
+      ]);
+    }
+  }
+  return items;
+}
+
 /** Mean duration for cards and the result page: "43초", "3분 05초" / "43 s", "3 min 05 s". */
 export function formatSeconds(t: number, lang: Lang): string {
   const s = Math.max(0, Math.round(t));

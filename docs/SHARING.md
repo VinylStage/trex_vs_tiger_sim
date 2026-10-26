@@ -63,14 +63,14 @@ A free result ([design §2.5](design/FREE-MATCHUPS.md#25-settings-codes-and-resu
 | `a`, `b`   | side A wins, side B wins                                                                         | integers ≥ 0                          |
 | `d`        | draws                                                                                            | integer ≥ 0, and `a + b + d === n`    |
 | `t`        | mean engagement time (s), optional                                                               | finite, 0–3600                        |
-| `as`, `bs` | mean survivors per side, optional                                                                | finite, 0 – that side's count         |
+| `as`, `bs` | mean survivors per side (still standing or fled), optional                                       | finite, 0 – that side's count         |
 | `ak`, `bk` | mean incapacitated per side, optional                                                            | finite, 0 – that side's count         |
 | `ar`, `br` | mean fled per side, optional                                                                     | finite, 0 – that side's count         |
 | `ab`, `bb` | pack buff: mean buffed share of agent-time, only for a side whose buff applies, optional         | finite, 0–1                           |
 | `at`, `bt` | pack buff: median seconds with at least one buffed member, only where the buff applies, optional | finite, 0–3600                        |
 | `ci`       | 95 % Wilson intervals `[aLo, aHi, bLo, bHi, dLo, dHi]`, optional                                 | six finite numbers in [0, 1], lo ≤ hi |
 
-The buff applies to a side of a social species with two or more animals and at least one effect switched on; buff keys for any other side are rejected. **Run it yourself** opens `/#s=<v3>&chk=<summary>` in free mode, and free mode reports _same_ / _within the 95 % CI_ / _differs_ after the next Run, as for classic links.
+The buff applies to a side of a social species with two or more animals and at least one effect switched on; buff keys for any other side are rejected. The page lists per side the mean still standing, incapacitated and fled (`freeStats` in `result-text.ts`). The snapshot has no still-standing key, so the page shows `as − ar` (`bs − br`) to one decimal, clamped at 0 because `as` is rounded to two decimals and `ar` to one; that is the figure the app's still-standing card shows (#42), give or take 0.1. The format and its version stay as they are, so older links read the same way. **Run it yourself** opens `/#s=<v3>&chk=<summary>` in free mode, and free mode reports _same_ / _within the 95 % CI_ / _differs_ after the next Run, as for classic links.
 
 Wording: the sides are named by species ("호랑이 1 vs 사자 1 — 호랑이 54%"). In a mirror matchup both sides carry their letter ("호랑이 A", "Tigers B"). There is no default matchup to compare with, so the tier is never _upset_ and the line beside it names the free model ("자유 대결 · 잠정 모델", plus "같은 종 대결" for a mirror); the link preview description uses that line instead of the ± points. The card draws side A on the left and side B on the right in their side colours, shape by size as in design §6 (body radius ≥ 1 m: heading triangles, else dots), and adds the pack-buff share of each buffed side to the runs line.
 
