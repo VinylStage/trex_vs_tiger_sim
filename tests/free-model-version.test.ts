@@ -3,6 +3,7 @@ import {
   decodeAnyResult,
   decodeAnyResultQuery,
   encodeFreeResult,
+  freeCheckFromHash,
   reproduceFreeHash,
   type FreeResultSummary,
 } from '../src/share/free-result-codec';
@@ -153,5 +154,24 @@ describe('a model version this build does not run', () => {
     // The link preview keeps the static text.
     expect(buildMeta(`?r=${r}`, 'en')).toBeNull();
     expect(buildMeta(`?r=${OLD.result}`, 'en')).not.toBeNull();
+  });
+
+  it('drops the snapshot of a "Run it yourself" link, so no reproduction is reported', () => {
+    // The fragment an mv 2 result page writes: its settings and a snapshot that fits the defaults.
+    const chk = encode({ n: 200, a: 120, b: 70, d: 10 });
+    const sides = { a: { sp: 'tiger', n: 1 }, b: { sp: 'lion', n: 1 } };
+    const later = { v: 3, m: 'free', mv: FREE_MODEL_VERSION + 1, ...sides, runs: 200 };
+    const hash = `#s=${encode(later)}&chk=${chk}`;
+    const c = freeConfigFromHash(hash);
+    expect(c).toEqual(defaultFreeConfig());
+    if (!c) return;
+    expect(freeCheckFromHash(hash, c)).toBeNull();
+    expect(freeCheckFromHash(hash.slice(1), c)).toBeNull();
+    // The same snapshot under model 1 (absent or explicit) is still checked.
+    const own = (mv: object): string =>
+      `#s=${encode({ v: 3, m: 'free', ...mv, a: { sp: 'trex', n: 1 }, b: { sp: 'trex', n: 1 } })}&chk=${chk}`;
+    for (const mv of [{}, { mv: 1 }]) {
+      expect(freeCheckFromHash(own(mv), c)).toEqual({ n: 200, a: 120, b: 70, d: 10 });
+    }
   });
 });

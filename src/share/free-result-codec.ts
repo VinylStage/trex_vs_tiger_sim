@@ -8,6 +8,7 @@ import {
   freeConfigDiff,
   freeConfigFromObject,
   freeModelVersion,
+  freePayloadFromHash,
   hashFromFreeConfig,
   isFreePayload,
 } from '../ui/share-free.ts';
@@ -208,8 +209,14 @@ export function reproduceFreeHash(config: FreeConfig, summary: FreeResultSummary
   return `${hashFromFreeConfig(config)}&${CHECK_KEY}=${base64UrlEncode(JSON.stringify(summary))}`;
 }
 
-/** The shared free summary in a simulator fragment (`chk=`), validated against `config`. */
+/**
+ * The shared free summary in a simulator fragment (`chk=`), validated against `config`. Null when
+ * `s=` names a model version this build does not run: that snapshot was made under another model,
+ * so a run here neither reproduces nor contradicts it (ADR-0008).
+ */
 export function freeCheckFromHash(hash: string, config: FreeConfig): FreeResultSummary | null {
+  const raw = freePayloadFromHash(hash);
+  if (raw !== null && freeModelVersion(raw) === null) return null;
   const h = hash.startsWith('#') ? hash.slice(1) : hash;
   for (const part of h.split('&')) {
     if (!part.startsWith(`${CHECK_KEY}=`)) continue;

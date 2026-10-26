@@ -176,12 +176,18 @@ function parsePayloadObject(payload: string): unknown {
   }
 }
 
-/** Free config of a `#s=` hash, or null when the hash holds no free (v3) payload. */
-export function freeConfigFromHash(hash: string): FreeConfig | null {
+/** The free (v3) payload object of a `#s=` hash, or null when the hash holds none. */
+export function freePayloadFromHash(hash: string): Record<string, unknown> | null {
   const payload = payloadFromHash(hash);
   if (payload === null) return null;
   const raw = parsePayloadObject(payload);
-  return isFreePayload(raw) ? freeConfigFromObject(raw) : null;
+  return isFreePayload(raw) ? raw : null;
+}
+
+/** Free config of a `#s=` hash, or null when the hash holds no free (v3) payload. */
+export function freeConfigFromHash(hash: string): FreeConfig | null {
+  const raw = freePayloadFromHash(hash);
+  return raw === null ? null : freeConfigFromObject(raw);
 }
 
 /** The copy/paste settings code of a free config. */
