@@ -7,23 +7,25 @@
 > - CSP는 빌드 시 해시를 계산하는 **정적 strict CSP(옵션 A)**로 옮깁니다. 광고 없이 먼저 배포해 검증하고, 그다음 광고 PR을 엽니다.
 > - 종 레지스트리의 `adSafe` 플래그와 `matchupAdSafe(config)`가 `false`를 돌려주는 대결에서는 앞으로 넣을 광고 로더가 광고를 싣지 않습니다. 지금은 모든 종이 `true`이고(멸종 인류 호모 에렉투스 포함), 현생 인류 같은 종을 추가하면 `false`가 됩니다.
 > - 표현 규칙(추상 도형만, 유혈·고어 금지, 반려·가축 동물과 현생 인류 금지, 중립적 용어)은 [CONTRIBUTING.md](../CONTRIBUTING.md#content-framing-rules)에 있으며 모든 PR에 적용됩니다.
+> - `vinylims.com`은 2026-10-20부터 AdSense 심사 상태가 준비 중입니다. 하위 도메인은 별도 사이트로 등록할 수 없어 이 사이트의 광고는 루트 승인 뒤에만 가능합니다. 심사 중에는 블로그를 하위 도메인으로 옮기거나 루트를 소개 페이지로 바꾸지 않습니다([조사 §13](research/ADSENSE.md#13-update-2026-10-26-subdomains-review-status-site-structure)).
 > - 근거와 출처는 [docs/research/ADSENSE.md](research/ADSENSE.md)에 있습니다. 이 문서는 실행 계획과 진행 상태만 관리합니다.
 
-Status date: 2026-10-19. Tracking issue: [#27](https://github.com/VinylStage/trex_vs_tiger_sim/issues/27), epic [#20](https://github.com/VinylStage/trex_vs_tiger_sim/issues/20).
+Status date: 2026-10-26. Tracking issue: [#27](https://github.com/VinylStage/trex_vs_tiger_sim/issues/27), epic [#20](https://github.com/VinylStage/trex_vs_tiger_sim/issues/20).
 
 This document is the operational plan. Every claim about Google or Cloudflare policy, with its source, is in [docs/research/ADSENSE.md](research/ADSENSE.md); section numbers below (§) refer to that report.
 
 ## 1. Decisions
 
-| Decision                                                                                                                         | Why                                                                                                                                                      | Research |
-| -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| Use the existing AdSense account and the domain-level site `vinylims.com`. No new account, no subdomain `ads.txt`.               | Since March 2023 AdSense manages sites per domain; one account per publisher. The root `ads.txt` already lists `pub-8355379467698162`.                   | §1, §4   |
-| Ship content, crawl hygiene and privacy before any ad code.                                                                      | "Not enough unique content" is the main rejection class; a form-only, JS-rendered single screen is high risk.                                            | §3.2, §5 |
-| Migrate to a **hash-based strict CSP generated at build time** (option A) in its own PR without ads, then add ads.               | Google supports only strict CSP (nonce or hash + `'strict-dynamic'`). Static `_headers` cannot mint nonces; Pages Functions would consume Workers quota. | §6.1–6.2 |
-| Use AdSense **Privacy & messaging** (Google CMP) for EEA/UK/CH consent. No Consent Mode unless GA4 or Google Ads tags are added. | Google-certified CMP, free, writes TCF v2.3 strings.                                                                                                     | §7.1     |
-| Manual ad units on `/`; Auto ads only on long-form content pages, if at all.                                                     | The simulator UI is dense; anchors and vignettes can cover controls or interrupt the tutorial.                                                           | §8.2     |
-| Abstract, non-gory presentation; no domestic animals, pets or living humans; neutral vocabulary.                                 | Animal-cruelty policy and the shocking-content restriction. Also the owner's rule against character-like animal shapes.                                  | §3.3     |
-| Gate ads per matchup with the registry flag `adSafe` and `matchupAdSafe(config)` (§6).                                           | Violence against people is flagged as shocking content; a matchup with a living human must never carry ads.                                              | §3.3     |
+| Decision                                                                                                                                                               | Why                                                                                                                                                      | Research |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| Use the existing AdSense account and the domain-level site `vinylims.com`. No new account, no subdomain `ads.txt`.                                                     | Since March 2023 AdSense manages sites per domain; one account per publisher. The root `ads.txt` already lists `pub-8355379467698162`.                   | §1, §4   |
+| Ship content, crawl hygiene and privacy before any ad code.                                                                                                            | "Not enough unique content" is the main rejection class; a form-only, JS-rendered single screen is high risk.                                            | §3.2, §5 |
+| Migrate to a **hash-based strict CSP generated at build time** (option A) in its own PR without ads, then add ads.                                                     | Google supports only strict CSP (nonce or hash + `'strict-dynamic'`). Static `_headers` cannot mint nonces; Pages Functions would consume Workers quota. | §6.1–6.2 |
+| Use AdSense **Privacy & messaging** (Google CMP) for EEA/UK/CH consent. No Consent Mode unless GA4 or Google Ads tags are added.                                       | Google-certified CMP, free, writes TCF v2.3 strings.                                                                                                     | §7.1     |
+| Manual ad units on `/`; Auto ads only on long-form content pages, if at all.                                                                                           | The simulator UI is dense; anchors and vignettes can cover controls or interrupt the tutorial.                                                           | §8.2     |
+| Abstract, non-gory presentation; no domestic animals, pets or living humans; neutral vocabulary.                                                                       | Animal-cruelty policy and the shocking-content restriction. Also the owner's rule against character-like animal shapes.                                  | §3.3     |
+| Gate ads per matchup with the registry flag `adSafe` and `matchupAdSafe(config)` (§6).                                                                                 | Violence against people is flagged as shocking content; a matchup with a living human must never carry ads.                                              | §3.3     |
+| Keep the blog at the root of `vinylims.com` until it is Ready; afterwards prefer an introduction home page with the blog left at `/blog/…` over a move to a subdomain. | Subdomains cannot be registered on their own, and a thin root with redirects during review matches the rejection criteria.                               | §13.3    |
 
 ## 2. Gates
 
@@ -47,7 +49,7 @@ flowchart LR
 
 ## 3. Owner actions (cannot be done from the repository)
 
-1. AdSense → **Sites**: confirm `vinylims.com` shows **Ready** and the ads.txt column is "Authorized". If it shows "Getting ready" or "Requires review", the simulator's content now counts towards that review.
+1. AdSense → **Sites**: confirm `vinylims.com` shows **Ready** and the ads.txt column is "Authorized". On 2026-10-26 it showed **Getting ready** (since 2026-10-20) with ads.txt Authorized. While it is Getting ready, check the AdSense home page for pending setup tasks such as payment details, and do not remove and resubmit the site (research §13.2).
 2. AdSense → **Privacy & messaging**: check whether a European regulations message exists for `vinylims.com`; if not, create one before ads go live (test with `?fc=alwaysshow`).
 3. AdSense → **Blocking controls** and **Auto ads**: these are per domain and already apply to the blog. Decide whether to exclude `trex-vs-tiger.vinylims.com/` from Auto ads (research §5 step 8 notes that subdomain path exclusions are unverified).
 4. Cloudflare: keep Bot Fight Mode on unless the AdSense **crawler errors** report shows blocked fetches; then turn it off for the zone (free plan cannot allowlist verified bots).
@@ -82,7 +84,7 @@ Strict CSP (G4)
 Ads PR (after G1–G4)
 
 - [ ] Loader module gated to the production hostname (no ads on previews or `localhost`).
-- [ ] Reserved, labelled slots with fixed per-breakpoint sizes (zero CLS, research §8.3). Labels: "광고" / "Advertisement" only.
+- [ ] Reserved, labelled slots with fixed per-breakpoint sizes (zero CLS, research §8.3). Labels: "광고" / "Advertisements" only, or no label (research §13.4).
 - [ ] Simulator page: at most two manual units — S1 above the footer (all viewports), S2 in the desktop left column below the scenario card with ≥ 150 px from Run/Cancel. Never inside result cards, chart legends, presets, replay canvas or controls, progress states, modals or the tutorial overlay. Never refresh ads on Run.
 - [ ] No ads on `/privacy/`, `/en/privacy/` or the 404 page.
 - [ ] The loader calls `matchupAdSafe(config)` (`src/sim/species.ts`) for the scenario on screen and skips or removes ad units whenever it returns `false`, including after the species pickers change or a share link loads (§6).

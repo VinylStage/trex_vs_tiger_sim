@@ -26,6 +26,7 @@ Research date: 2026-10-19. Every external claim links to its source. Claims mark
 10. [Cloudflare-specific notes](#10-cloudflare-specific-notes)
 11. [Risks and open questions](#11-risks-and-open-questions)
 12. [Sources](#12-sources)
+13. [Update 2026-10-26: subdomains, review status, site structure](#13-update-2026-10-26-subdomains-review-status-site-structure)
 
 ---
 
@@ -603,3 +604,59 @@ Local evidence (this repo and production, 2026-10-19):
 - `curl -I https://trex-vs-tiger.vinylims.com/` → current header set (§2)
 - `curl https://trex-vs-tiger.vinylims.com/{robots.txt,ads.txt,privacy,sitemap.xml}` → 200 `text/html` (index.html)
 - Lighthouse 13.5.0 prod reports: `<local-workspace>/lh/lh-prod-mobile.json`, `lh-prod-desktop.json` (SEO fail: `robots-txt`)
+
+---
+
+## 13. Update 2026-10-26: subdomains, review status, site structure
+
+Research date: 2026-10-26.
+
+**Status.** The AdSense Sites page shows `vinylims.com` as **Getting ready**, last updated 2026-10-20, with ads.txt **Authorized** (owner's screenshot).
+
+**Method.** Official pages were fetched with curl and quoted. Three independent checkers then tried to refute each claim against the same pages. One claim was downgraded to an inference (13.4, row 1).
+
+The owner asked whether the blog could move to a subdomain, with `vinylims.com` becoming an introduction page above the blog and this simulator. The deciding question was whether AdSense can serve ads on separate subdomains.
+
+### 13.1 Subdomains
+
+| Question                                                                          | Finding                                                                                                                                                                                                                                                                                                                     | Source                                                                                                                                                                                                                                                                           | Confidence |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Can `trex-vs-tiger.vinylims.com` or `blog.vinylims.com` be added as its own site? | No. Only these can be added: domains, subdomains on Public Suffix List platforms (for example `site.appspot.com`), and sites run by AdSense platform partners (for example Blogger). `vinylims` is not on the PSL.                                                                                                          | [12170421](https://support.google.com/adsense/answer/12170421?hl=en), [PSL](https://publicsuffix.org/list/public_suffix_list.dat)                                                                                                                                                | High       |
+| Do ads serve on a subdomain once `vinylims.com` is Ready?                         | Yes, with no separate site review **(inference)**. Supporting text: "This will not impact ad serving or your earnings" (about removed subdomain entries), "You can only serve ads on a site after it has passed our review", and the Sites report covers "domains and subdomains". No official sentence states it outright. | [12170421](https://support.google.com/adsense/answer/12170421?hl=en), [12131223](https://support.google.com/adsense/answer/12131223?hl=en), [10075505](https://support.google.com/adsense/answer/10075505?hl=en)                                                                 | Medium     |
+| Does a subdomain need its own `ads.txt`?                                          | No. The root file covers subdomains. A subdomain file plus a `subdomain=` line in the root file is needed only when the seller or publisher ID differs. The 404 at `trex-vs-tiger.vinylims.com/ads.txt` is correct.                                                                                                         | [9785052](https://support.google.com/adsense/answer/9785052?hl=en), [IAB ads.txt 1.1 §5.5](https://github.com/InteractiveAdvertisingBureau/Supply-Chain-Validation/blob/main/ads.txt%20v1.1.md)                                                                                  | High       |
+| Can settings be split per subdomain?                                              | Reporting can: the Sites report, plus a different `data-ad-channel` value on each host. Blocking controls and Auto ads defaults are per domain. Page exclusions match URLs on the same host only.                                                                                                                           | [10075505](https://support.google.com/adsense/answer/10075505?hl=en), [10078316](https://support.google.com/adsense/answer/10078316?hl=en), [180609](https://support.google.com/adsense/answer/180609?hl=en), [7479535](https://support.google.com/adsense/answer/7479535?hl=en) | High       |
+| Is a subdomain exempt from policy because it skips site review?                   | No. Policy and blocking apply at the domain level, so a problem on the simulator can affect the `vinylims.com` entry **(inference)**.                                                                                                                                                                                       | [12170421](https://support.google.com/adsense/answer/12170421?hl=en)                                                                                                                                                                                                             | Medium     |
+
+### 13.2 Getting ready
+
+- **Meaning:** "We're running some checks on your site. The review process usually takes a few days, but in some cases can take 2-4 weeks." The same status also covers accounts with setup tasks still pending, such as payment details ([12170222](https://support.google.com/adsense/answer/12170222?hl=en)).
+- **Do not remove and resubmit:** "Make sure you don't remove your site and resubmit it because this can delay the process" ([12170222](https://support.google.com/adsense/answer/12170222?hl=en)).
+- **Scope of review:** "we may review all pages of your site, not just the sign-up URL where you placed the code" ([81904](https://support.google.com/adsense/answer/81904?hl=en)).
+- **Navigation problems:** the same page lists redirects and pages under construction among navigation problems.
+
+### 13.3 Site structure decision
+
+**Decision.** Keep the blog at the root until `vinylims.com` is Ready. After approval, prefer an introduction home page at `/` with the blog left at `/blog/…` over a move to `blog.vinylims.com`. The home page can be excluded from Auto ads ([7479535](https://support.google.com/adsense/answer/7479535?hl=en): "you might not want to show ads on your homepage").
+
+Reasons:
+
+- **No review gain from a move.** A subdomain cannot be registered on its own (13.1).
+- **Thin root while under review.** A move leaves the root as a short page plus redirects, which matches the rejection criteria: too little text, under construction, redirects as a navigation problem ([81904](https://support.google.com/adsense/answer/81904?hl=en), [10015918](https://support.google.com/adsense/answer/10015918?hl=en)) **(inference)**.
+- **One change at a time.** Google's site-move guide says to plan changes "one after the other, not everything at the same time" ([site move](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes)).
+- **Simpler variant after approval.** An introduction home page at `/` with the blog kept at `/blog/…` changes no URLs, so it needs no redirects and no re-indexing.
+
+If a subdomain move is ever needed, use per-URL 301 redirects and sitemaps, and keep the redirects for at least a year ([site move](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes)). Cloudflare Pages `_redirects` defaults to 302, so append `301` ([Pages redirects](https://developers.cloudflare.com/pages/configuration/redirects/)). The Search Console Change of Address tool does not fit a partial move:
+
+- It moves a domain-level property with "all paths under the domain".
+- It requires a 301 from the old home page, which here stays in place.
+
+([Change of Address](https://support.google.com/webmasters/answer/9370220?hl=en))
+
+### 13.4 Ad code and labels
+
+| Item                                                            | Finding                                                                                                                                                                                                                         | Source                                                                                                                                 |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| Placeholder slot ids on the blog (`HOME_FEED_1`, `POST_HEADER`) | Not ids issued by the account, which breaks the rule to implement code "exactly as it appears" in the account. Google does not document what such units do after approval, so do not rely on them ever filling **(inference)**. | [2708537](https://support.google.com/adsense/answer/2708537?hl=en)                                                                     |
+| Ad labels                                                       | Only "Advertisements" or "Sponsored Links" (ko: 광고 / 스폰서 링크); no label is also allowed. A bare "Sponsored" is not one of them.                                                                                           | [1346295](https://support.google.com/adsense/answer/1346295?hl=en)                                                                     |
+| Hiding unfilled units                                           | Allowed through `ins.adsbygoogle[data-ad-status="unfilled"]` CSS. Not for units that "Fill empty in-page ads" optimised (`unfill-optimized`), and never for units loaded hidden.                                                | [10762946](https://support.google.com/adsense/answer/10762946?hl=en)                                                                   |
+| Ads near the simulator controls                                 | No placement that causes accidental clicks: keep units at least 150 px from game play areas, or leave the game page ad-free. This matches the S2 rule in [docs/ADSENSE.md](../ADSENSE.md).                                      | [1346295](https://support.google.com/adsense/answer/1346295?hl=en), [2768340](https://support.google.com/adsense/answer/2768340?hl=en) |
