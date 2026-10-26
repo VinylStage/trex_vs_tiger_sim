@@ -44,6 +44,25 @@ export interface FreeAggregate {
   representativeRun: number;
 }
 
+/**
+ * Rout share of the losing side (docs/design/RENEWAL-1.0.md §3.2): over the decided runs, the
+ * loser's fled agents ÷ its fled + incapacitated agents, pooled. With `side` set, only the runs
+ * that side lost count. NaN when no such run exists.
+ */
+export function routShare(summaries: readonly FreeRunSummary[], side?: 0 | 1): number {
+  let fled = 0;
+  let out = 0;
+  for (const s of summaries) {
+    if (s.outcome === FreeOutcome.Draw) continue;
+    const loser = s.outcome === FreeOutcome.A ? 1 : 0;
+    if (side !== undefined && side !== loser) continue;
+    const routed = loser === 0 ? s.aRouted : s.bRouted;
+    fled += routed;
+    out += routed + (loser === 0 ? s.aKilled : s.bKilled);
+  }
+  return out > 0 ? fled / out : NaN;
+}
+
 export function aggregateFree(
   _config: FreeConfig,
   summaries: readonly FreeRunSummary[],

@@ -48,6 +48,7 @@ Node: see `.node-version` (24).
 | [docs/CONFIGURATION.md](docs/CONFIGURATION.md)     | Every config file explained                                               |
 | [docs/adr/](docs/adr/README.md)                    | Architecture Decision Records                                             |
 | [docs/SPECIES.md](docs/SPECIES.md)                 | Species roster, presets, bounds, sources, calibration                     |
+| [docs/PRESETS.md](docs/PRESETS.md)                 | Simple-mode matchup presets, measured fixture, rout check, banned words   |
 | [docs/REPLAY.md](docs/REPLAY.md)                   | Replay renderer v2: glyphs, camera, timeline, accessibility               |
 | [docs/SEO.md](docs/SEO.md)                         | URL languages, head tags, sitemap/robots/llms, IndexNow, owner actions    |
 | [docs/PAGES.md](docs/PAGES.md)                     | Static content pages, URL scheme, drift guard                             |
