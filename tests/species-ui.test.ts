@@ -13,7 +13,6 @@ import {
   withSpecies,
 } from '../src/ui/form';
 import {
-  getNamePair,
   initLang,
   paramLabel,
   setNamePair,
@@ -55,7 +54,7 @@ describe('species names in messages', () => {
   it('names the current pair by default and lets explicit vars win', () => {
     initLang('en');
     setNamePair({ heavySpecies: 'elephant', packSpecies: 'lion' });
-    expect(getNamePair()).toEqual({ heavySpecies: 'elephant', packSpecies: 'lion' });
+    expect(speciesVars()).toEqual(speciesVars({ heavySpecies: 'elephant', packSpecies: 'lion' }));
     expect(t('outcome.heavy')).toBe('Elephant victory');
     expect(t('stat.killed')).toBe('Lions incapacitated (mean)');
     expect(t('outcome.heavy', { Heavy: 'X' })).toBe('X victory');

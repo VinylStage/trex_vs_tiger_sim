@@ -772,8 +772,8 @@ export function startApp(root: HTMLElement): void {
   }
 
   const OUTCOME_CARD: Readonly<Record<OutcomeKind, { label: MsgKey; marker: string }>> = {
-    heavy: { label: 'outcome.heavy', marker: 'mk-trex' },
-    pack: { label: 'outcome.pack', marker: 'mk-tiger' },
+    heavy: { label: 'outcome.heavy', marker: 'mk-heavy' },
+    pack: { label: 'outcome.pack', marker: 'mk-pack' },
     draw: { label: 'outcome.draw', marker: 'mk-draw' },
   };
 

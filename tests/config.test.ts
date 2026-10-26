@@ -9,7 +9,7 @@ import {
   sanitizeConfig,
   workEstimate,
 } from '../src/sim/config';
-import { PARAMS, paramDef } from '../src/sim/params';
+import { PARAMS } from '../src/sim/params';
 import {
   HEAVY_SPECIES,
   HEAVY_SPECIES_IDS,
@@ -122,7 +122,7 @@ describe('parameter table', () => {
 
   it('keeps the parameter order and step metadata', () => {
     expect(PARAMS.map((p) => p.id)).toHaveLength(22);
-    expect(paramDef('pack.bleed').individual).toBe(false);
+    expect(PARAMS.find((p) => p.id === 'pack.bleed')?.individual).toBe(false);
   });
 });
 

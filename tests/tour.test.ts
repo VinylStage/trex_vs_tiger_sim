@@ -7,7 +7,6 @@ import {
   TOUR_STEPS,
   TOUR_STORAGE_KEY,
   availableIndices,
-  clampIndex,
   expandNow,
   findStep,
   guideHref,
@@ -204,21 +203,6 @@ describe('navigation', () => {
     expect(resolveStep(STEPS, vis, 3)).toBe(4);
     expect(resolveStep([step('A', []), step('B', ['b'])], vis, 1)).toBe(0);
     expect(resolveStep([step('B', ['b'])], vis, 0)).toBe(-1);
-  });
-});
-
-describe('clampIndex', () => {
-  it('clamps into range', () => {
-    expect(clampIndex(-3, 5)).toBe(0);
-    expect(clampIndex(2, 5)).toBe(2);
-    expect(clampIndex(9, 5)).toBe(4);
-    expect(clampIndex(2.7, 5)).toBe(2);
-  });
-
-  it('handles non-finite input and empty lists', () => {
-    expect(clampIndex(Number.NaN, 5)).toBe(0);
-    expect(clampIndex(Number.POSITIVE_INFINITY, 5)).toBe(0);
-    expect(clampIndex(0, 0)).toBe(-1);
   });
 });
 
