@@ -83,7 +83,7 @@ Every page (`index.html`, `en/index.html`, the content and license pages) has th
 </a>
 ```
 
-The link exists without JavaScript, so crawlers and no-JS visitors can reach the release notes. The number is filled in at run time from the same build `define`: the app calls `fillVersionFooter()` (`src/ui/version.ts`, `v<version> (<short sha>)`), the content pages run `src/pages/site.ts` (`v${__APP_VERSION__}`). `.version-footer-num` reserves `5ch` so filling it in does not reflow the line.
+The link exists without JavaScript, so crawlers and no-JS visitors can reach the release notes. The number is filled in at run time from the same build `define`: the app calls `fillVersionFooter()` (`src/ui/version.ts`, `v<version> (<short sha>)`), the content pages run `src/pages/site.ts` (`v${__APP_VERSION__}`). `.version-footer-num` reserves `2.98em`, 5ch of Pretendard, in `em` so the empty slot does not widen at the font swap (#138). The filled number is wider than that (at 13.6 px, `v0.2.16` is 47.5 px and the app's `v0.2.16 (0e5bfd8)` 113 px), so filling it in widens the link, which is the last item in the footer.
 
 ## Build-time version info
 
