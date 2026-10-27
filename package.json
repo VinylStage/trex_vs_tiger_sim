@@ -1,6 +1,6 @@
 {
   "name": "trex-vs-tiger-sim",
-  "version": "0.2.17",
+  "version": "0.2.18",
   "private": true,
   "description": "Monte Carlo agent-based battle simulator: Tyrannosaurus rex vs tigers on a 2D open field",
   "license": "MIT",

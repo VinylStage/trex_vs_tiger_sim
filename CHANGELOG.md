@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.18](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.17...trex-vs-tiger-sim-v0.2.18) (2026-10-27)
+
+
+### Features
+
+* **pages:** lobby at / and the app at /play/, with forwarding for every old link ([#142](https://github.com/VinylStage/trex_vs_tiger_sim/issues/142)) ([#143](https://github.com/VinylStage/trex_vs_tiger_sim/issues/143)) ([87a9d66](https://github.com/VinylStage/trex_vs_tiger_sim/commit/87a9d660e007e22bdddd0a93ffa0d7377accf70e))
+
 ## [0.2.17](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.16...trex-vs-tiger-sim-v0.2.17) (2026-10-27)
 
 
