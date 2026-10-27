@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ROUT_NOTICE_SHARE, aggregateFree, routNotice, routShare } from '../src/sim/free/aggregate';
-import { defaultSide, sanitizeFreeConfig } from '../src/sim/free/config';
+import { PACK_BUFF_EFFECTS, defaultSide, sanitizeFreeConfig } from '../src/sim/free/config';
 import { FreeOutcome, emptyBuffStats, type FreeRunSummary } from '../src/sim/free/engine';
 import { runAllFree } from '../src/sim/free/montecarlo';
+import { FREE_SPECIES, type FreeSpeciesId } from '../src/sim/free/species';
 
 /** Rout share and the still standing / fled / incapacitated breakdown of free results (#42). */
 
@@ -93,11 +94,12 @@ describe('still standing / fled / incapacitated', () => {
 });
 
 describe('routNotice', () => {
-  const config = (na: number, nb: number) => {
-    const c = sanitizeFreeConfig({});
-    c.sides = [defaultSide('lion', na), defaultSide('elephant', nb)];
+  const sides = (a: FreeSpeciesId, na: number, b: FreeSpeciesId, nb: number, runs?: number) => {
+    const c = sanitizeFreeConfig(runs === undefined ? {} : { runs });
+    c.sides = [defaultSide(a, na), defaultSide(b, nb)];
     return sanitizeFreeConfig(c);
   };
+  const config = (na: number, nb: number) => sides('lion', na, 'elephant', nb);
   /** Side B wins every run; side A (30) loses with `fled` fled and the rest incapacitated. */
   const lostA = (fled: number): FreeRunSummary[] => [
     run(FreeOutcome.B, [30 - fled, fled, 0], [0, 0, 5]),
@@ -128,5 +130,54 @@ describe('routNotice', () => {
     const { summaries } = runAllFree(cfg);
     const agg = aggregateFree(cfg, summaries);
     expect(routNotice(cfg, agg, summaries)?.side).toBe(0);
+  });
+
+  it('says nothing for solitary animals that each withdraw: tigers share no morale', () => {
+    const allFled: FreeRunSummary[] = [run(FreeOutcome.A, [0, 0, 5], [0, 5, 0])];
+    expect(FREE_SPECIES.tiger.social).toBe(false);
+    expect(routNotice(sides('lion', 5, 'tiger', 5), { aWins: 1, bWins: 0 }, allFled)).toBeNull();
+    const lionsFled: FreeRunSummary[] = [run(FreeOutcome.B, [0, 5, 0], [0, 0, 5])];
+    expect(routNotice(sides('lion', 5, 'tiger', 5), { aWins: 0, bWins: 1 }, lionsFled)).toEqual({
+      side: 0,
+      share: 1,
+    });
+  });
+
+  it('needs the morale contagion: off with morale or the pack buff morale effect off', () => {
+    const lost = { aWins: 0, bWins: 2 };
+    const noBuffMorale = config(30, 5);
+    noBuffMorale.packBuff.morale = false;
+    expect(routNotice(noBuffMorale, lost, lostA(30))).toBeNull();
+    const noMorale = config(30, 5);
+    noMorale.morale = false;
+    expect(routNotice(noMorale, lost, lostA(30))).toBeNull();
+    const onlyMorale = config(30, 5);
+    for (const e of PACK_BUFF_EFFECTS) onlyMorale.packBuff[e] = e === 'morale';
+    expect(routNotice(onlyMorale, lost, lostA(30))?.side).toBe(0);
+  });
+
+  it('5 lions vs 5 tigers: the tigers lose more runs and nearly all flee, with no notice', () => {
+    const cfg = sides('lion', 5, 'tiger', 5, 60);
+    const { summaries } = runAllFree(cfg);
+    const agg = aggregateFree(cfg, summaries);
+    expect(agg.bWins).toBeLessThan(agg.aWins);
+    expect(routShare(summaries, 1)).toBeGreaterThanOrEqual(ROUT_NOTICE_SHARE);
+    expect(routNotice(cfg, agg, summaries)).toBeNull();
+  });
+
+  it('3 lions vs 10 hyenas: the losing pride breaks, and only with the morale effect on', () => {
+    const cfg = sides('lion', 3, 'hyena', 10, 40);
+    const { summaries } = runAllFree(cfg);
+    const agg = aggregateFree(cfg, summaries);
+    const notice = routNotice(cfg, agg, summaries);
+    expect(notice?.side).toBe(0);
+    expect(notice?.share).toBe(routShare(summaries, 0));
+    // Without the contagion the lions still lose and flee, each on its own morale: no notice.
+    cfg.packBuff.morale = false;
+    const solo = runAllFree(cfg).summaries;
+    const soloAgg = aggregateFree(cfg, solo);
+    expect(soloAgg.aWins).toBeLessThan(soloAgg.bWins);
+    expect(routShare(solo, 0)).toBeGreaterThanOrEqual(ROUT_NOTICE_SHARE);
+    expect(routNotice(cfg, soloAgg, solo)).toBeNull();
   });
 });

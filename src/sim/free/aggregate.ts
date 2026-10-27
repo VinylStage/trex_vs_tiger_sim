@@ -1,6 +1,7 @@
 import { mean, quantileSorted, wilson, type Interval } from '../stats';
 import type { FreeConfig } from './config';
 import { FreeOutcome, emptyBuffStats, type BuffStats, type FreeRunSummary } from './engine';
+import { FREE_SPECIES } from './species';
 
 /**
  * Aggregate of a free-model batch (docs/design/FREE-MATCHUPS.md §6): win shares per side with
@@ -67,9 +68,20 @@ export function routShare(summaries: readonly FreeRunSummary[], side?: 0 | 1): n
 export const ROUT_NOTICE_SHARE = 0.8;
 
 /**
- * The rout a free result points out (design §3.2, #42): the side that won fewer runs, when it
- * fielded a group and at least `ROUT_NOTICE_SHARE` of it fled in the runs it lost. A lone animal
- * that withdraws is no group rout, so a side of one never gets the notice.
+ * Whether a side's members pass morale loss on to each other: the pack layer's contagion (E4b,
+ * FREE-MATCHUPS.md §4.5 and §5), which needs a social species of two or more with `morale` and
+ * the pack buff's morale effect on. Without it every agent routs on its own morale alone.
+ */
+function sharesMorale(config: FreeConfig, side: 0 | 1): boolean {
+  const s = config.sides[side];
+  return s.count >= 2 && FREE_SPECIES[s.species].social && config.morale && config.packBuff.morale;
+}
+
+/**
+ * The rout a free result points out (design §3.2, #42): the side that won fewer runs, when its
+ * members share morale and at least `ROUT_NOTICE_SHARE` of them fled in the runs it lost. Only
+ * then can a group's morale break at once. A lone animal that withdraws is no group rout, and
+ * neither are solitary animals (five tigers) that each withdraw, so neither gets the notice.
  */
 export function routNotice(
   config: FreeConfig,
@@ -78,7 +90,7 @@ export function routNotice(
 ): { side: 0 | 1; share: number } | null {
   if (agg.aWins === agg.bWins) return null;
   const side = agg.aWins < agg.bWins ? 0 : 1;
-  if (config.sides[side].count < 2) return null;
+  if (!sharesMorale(config, side)) return null;
   const share = routShare(summaries, side);
   return share >= ROUT_NOTICE_SHARE ? { side, share } : null;
 }
