@@ -8,9 +8,8 @@ import {
   sanitizeFreeConfig,
   type FreeConfig,
 } from '../sim/free/config';
-import { FREE_SPECIES, FREE_SPECIES_IDS, type FreeSpeciesId } from '../sim/free/species';
+import { FREE_SPECIES, FREE_SPECIES_IDS } from '../sim/free/species';
 import type { Interval } from '../sim/stats';
-import { HEAVY_SPECIES, PACK_SPECIES, type Era } from '../sim/species';
 import { copyText } from '../share/share-ui';
 import { pagePath } from '../pages/routes';
 import { h } from './dom';
@@ -73,12 +72,6 @@ interface FreeResult {
 type SideIndex = 0 | 1;
 
 const sideKey = (i: SideIndex): MsgKey => (i === 0 ? 'free.sideA' : 'free.sideB');
-
-/** Era of a species from whichever legacy registry holds it (both agree for _H. erectus_). */
-const eraOf = (id: FreeSpeciesId): Era =>
-  (HEAVY_SPECIES as Record<string, { era: Era }>)[id]?.era ??
-  (PACK_SPECIES as Record<string, { era: Era }>)[id]?.era ??
-  'extant';
 
 let uid = 0;
 const nextId = (base: string): string => `${base}-${++uid}`;
@@ -268,7 +261,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     for (const group of ['extant', 'extinct'] as const) {
       const og = h('optgroup', { attrs: { label: t(`species.group.${group}`) } });
       for (const s of FREE_SPECIES_IDS) {
-        if ((eraOf(s) === 'extant') !== (group === 'extant')) continue;
+        if ((FREE_SPECIES[s].era === 'extant') !== (group === 'extant')) continue;
         og.append(h('option', { attrs: { value: s }, text: speciesName(s) }));
       }
       el.append(og);

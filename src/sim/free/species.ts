@@ -2,6 +2,7 @@ import type { Triangular } from '../params.ts';
 import {
   HEAVY_SPECIES,
   PACK_SPECIES,
+  type Era,
   type Evidence,
   type HeavyKey,
   type HeavySpeciesId,
@@ -17,6 +18,7 @@ import {
   type BuffTraitId,
   type TraitId,
 } from './traits.ts';
+import type { FreeConfig } from './config.ts';
 
 /**
  * Unified species registry of the free model (docs/design/FREE-MATCHUPS.md §2, docs/SPECIES.md
@@ -28,6 +30,9 @@ import {
  * - Traits a role never had get new presets with an evidence tag; sources are in SPECIES.md §11.
  * - Inactive traits (latching for a species that cannot latch, the pack buff for a non-social
  *   species) hold the neutral values of `NEUTRAL` and evidence `null`.
+ * - `era` and `adSafe` are read from the legacy registry the same way.
+ * - A species added after the free model has no legacy entry and is built from its own source
+ *   sheet with `defineFreeSpecies` (docs/SPECIES.md §11.5).
  */
 
 export const FREE_SPECIES_IDS = [
@@ -55,6 +60,10 @@ export interface TraitPreset {
 
 export interface FreeSpecies {
   readonly id: FreeSpeciesId;
+  /** Geological time, or alive today: the extant and extinct groups of the species pickers. */
+  readonly era: Era;
+  /** Whether a matchup with it may carry ads; read through `freeMatchupAdSafe` (ADSENSE.md §6). */
+  readonly adSafe: boolean;
   /** Cooperative group hunter or fighter: gets the pack buff in groups (design §2.3). */
   readonly social: boolean;
   /** Can grab and ride a much larger target (design §4.2). */
@@ -185,6 +194,8 @@ function heavyBased(id: Exclude<HeavySpeciesId, 'homoErectus'>, extras: HeavyExt
   const h = HEAVY_SPECIES[id];
   return {
     id,
+    era: h.era,
+    adSafe: h.adSafe,
     social: false,
     canLatch: false,
     constants: { hide: h.constants.hide, intimidation: h.constants.intimidation },
@@ -199,13 +210,65 @@ function packBased(
   extras: PackExtras,
   buff: Readonly<Record<BuffTraitId, Row>> | null,
 ): FreeSpecies {
+  const p = PACK_SPECIES[id];
   return {
     id,
+    era: p.era,
+    adSafe: p.adSafe,
     social,
     canLatch: true,
     constants: { hide: 1, intimidation: 1 },
     traits: complete(id, { ...fromPack(id), ...mapRows(extras) }),
     buff: buff ? buffRows(buff) : NO_BUFF,
+  };
+}
+
+type LatchTraitId = (typeof LATCH_TRAIT_IDS)[number];
+
+/**
+ * The source sheet of a species with no legacy-registry entry (docs/SPECIES.md §11.5): every
+ * input of the free model, as preset rows `[min, mode, max, evidence]`.
+ */
+export interface FreeSpeciesSheet {
+  readonly era: Era;
+  readonly adSafe: boolean;
+  readonly social: boolean;
+  readonly canLatch: boolean;
+  readonly constants: FreeSpecies['constants'];
+  /** Every individual trait. Latch rows only when `canLatch`; they are neutral otherwise. */
+  readonly traits: Readonly<
+    Record<Exclude<TraitId, LatchTraitId>, Row> & Partial<Record<LatchTraitId, Row>>
+  >;
+  /** Pack-buff rows when `social`, null otherwise (neutral). */
+  readonly buff: Readonly<Record<BuffTraitId, Row>> | null;
+}
+
+/**
+ * Standalone constructor: a registry entry built from its own sheet, without reading the legacy
+ * registry, so a new species can join the free model alone. Everything is copied, so editing the
+ * sheet afterwards changes nothing. Throws on a sheet whose rows do not match its flags (caught
+ * by the tests).
+ */
+export function defineFreeSpecies(id: FreeSpeciesId, sheet: FreeSpeciesSheet): FreeSpecies {
+  if (!sheet.canLatch && LATCH_TRAIT_IDS.some((k) => Object.hasOwn(sheet.traits, k))) {
+    throw new Error(`free species ${id}: latch rows on a species that cannot latch`);
+  }
+  if (sheet.social !== (sheet.buff !== null)) {
+    throw new Error(`free species ${id}: pack-buff rows must be given exactly when social`);
+  }
+  const era = sheet.era;
+  return {
+    id,
+    era: era === 'extant' ? 'extant' : { fromMa: era.fromMa, toMa: era.toMa },
+    adSafe: sheet.adSafe,
+    social: sheet.social,
+    canLatch: sheet.canLatch,
+    constants: { hide: sheet.constants.hide, intimidation: sheet.constants.intimidation },
+    traits: complete(id, {
+      ...mapRows<Exclude<TraitId, LatchTraitId>>(sheet.traits),
+      ...(sheet.canLatch ? {} : NO_LATCH),
+    }),
+    buff: sheet.buff ? buffRows(sheet.buff) : NO_BUFF,
   };
 }
 
@@ -274,6 +337,8 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
   // running, stamina, grip (latch), bleed and morale from the pack row. Mass is identical.
   homoErectus: {
     id: 'homoErectus',
+    era: HEAVY_SPECIES.homoErectus.era,
+    adSafe: HEAVY_SPECIES.homoErectus.adSafe && PACK_SPECIES.homoErectus.adSafe,
     social: true,
     canLatch: true,
     constants: {
@@ -357,6 +422,16 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
 
 export const isFreeSpecies = (v: unknown): v is FreeSpeciesId =>
   typeof v === 'string' && (FREE_SPECIES_IDS as readonly string[]).includes(v);
+
+/**
+ * Whether ads may load for a free matchup (docs/ADSENSE.md §6), the free-model twin of
+ * `matchupAdSafe` in src/sim/species.ts: true only when every side's species is ad-safe. An
+ * unknown species counts as not ad-safe. It lives here, next to the flag it reads, because
+ * src/sim/species.ts must not import this module (this module reads it at load time). Pure.
+ */
+export function freeMatchupAdSafe(c: Pick<FreeConfig, 'sides'>): boolean {
+  return c.sides.every((s) => isFreeSpecies(s.species) && FREE_SPECIES[s.species].adSafe);
+}
 
 /** Preset triangles of a species' individual traits, in `TRAIT_IDS` order (fresh objects). */
 export function traitRanges(id: FreeSpeciesId): Record<TraitId, Triangular> {
