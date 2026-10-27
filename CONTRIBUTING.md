@@ -30,7 +30,10 @@ npm ci
 npm run dev       # Vite dev server
 npm run check     # typecheck + lint + format check + unit tests
 npm run build     # production build into dist/
+npm run test:coverage  # unit tests with a v8 coverage report in coverage/
 ```
+
+`npm run test:coverage` prints a text summary and writes an HTML report (`coverage/index.html`) and `coverage/lcov.info`. It covers `src/**/*.ts` and has no thresholds; the baseline is recorded in `IMPLEMENTATION_AUDIT.md`. It is not part of `npm run check` or CI because instrumentation makes the suite several times slower.
 
 Node version: see `.node-version`.
 

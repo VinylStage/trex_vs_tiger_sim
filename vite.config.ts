@@ -88,5 +88,11 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['tests/setup.ts'],
     testTimeout: 30_000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text-summary', 'html', 'lcov'],
+      include: ['src/**/*.ts'],
+      exclude: ['tests/**', '**/*.test.ts', '**/*.d.ts'],
+    },
   },
 });

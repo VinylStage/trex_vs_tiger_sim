@@ -117,7 +117,8 @@ Open items for the owner:
 
 - #57: add a branch ruleset on `main` that requires a pull request and the `check` status and blocks force pushes and deletion, and optionally turn on the setting that requires actions pinned to a full-length commit SHA ([docs/CONFIGURATION.md](docs/CONFIGURATION.md)). Epic #82 stays open until then.
 - #69: confirm the announcements with a real screen reader (NVDA with Chrome, VoiceOver with Safari). So far only Playwright has checked them.
-- #61: decide whether to add `@vitest/coverage-v8` as a dev dependency. It is not installed.
+
+Resolved: #61's coverage question. The owner approved `@vitest/coverage-v8` on 2026-10-27 (#149); `npm run test:coverage` reports it, with no thresholds yet. Baseline on main b6ff384 (`src/**/*.ts`): statements 54.61 % (5409/9904), branches 57.00 % (2714/4761), functions 55.50 % (807/1454), lines 54.20 % (4665/8606).
 
 The language switch still misses #79's target of under 200 ms at 4x CPU. It measured 184–300 ms on `/` and 355–507 ms on `/en/`, before and after the split; the time goes into relabelling, and in-place label updates are listed as open in [docs/PERFORMANCE.md](docs/PERFORMANCE.md). Two axe findings stay accepted as they are: `p-as-heading` (experimental) and `landmark-complementary-is-top-level` (best practice).
 
