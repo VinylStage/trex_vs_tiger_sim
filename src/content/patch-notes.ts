@@ -59,6 +59,41 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.17',
+    date: '2026-10-27',
+    title: {
+      ko: '도망친 녀석은 따로 셉니다 🏃',
+      en: 'Counting the ones who ran 🏃',
+    },
+    prs: [132, 133, 134, 139],
+    items: [
+      {
+        cat: 'improved',
+        refs: [134],
+        ko: '자유 대결 결과 카드가 끝까지 남은 수, 이탈한 수, 전투 불능 수를 따로 보여 줘요. 공유 링크 페이지도 같은 숫자를 씁니다.',
+        en: 'Free-match result cards now split each side into still standing, fled and incapacitated, and the shared result page shows the same numbers.',
+      },
+      {
+        cat: 'new',
+        refs: [134],
+        ko: '무리 생활을 하는 동물이 한꺼번에 사기가 꺾여 지면, 결과 아래에 무리가 무너졌다는 안내와 "왜?" 링크가 붙어요.',
+        en: 'When a social group loses because its morale broke all at once, the result gets a short note and a "Why?" link.',
+      },
+      {
+        cat: 'improved',
+        refs: [132],
+        ko: '자유 대결 링크에 모델 버전 자리를 마련했어요. 지금 링크는 한 글자도 바뀌지 않고, 나중에 모델이 바뀌어도 옛 링크가 엉뚱한 숫자를 보여 주지 않습니다.',
+        en: 'Free-match links now have room for a model version. Existing links stay byte for byte the same, and a future model change will not show old links with different numbers.',
+      },
+      {
+        cat: 'fixed',
+        refs: [138],
+        ko: '가이드와 모델 페이지에서 글꼴이 바뀌는 순간 본문 폭이 넓어지며 줄이 다시 감기던 문제를 고쳤어요. 화면 흔들림이 약 15분의 1로 줄었습니다.',
+        en: 'Guide and model pages no longer widen and re-wrap their text the moment the web font loads. Layout shift at the swap dropped to about a fifteenth.',
+      },
+    ],
+  },
+  {
     version: '0.2.16',
     date: '2026-10-26',
     title: {
