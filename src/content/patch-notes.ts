@@ -59,6 +59,35 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.18',
+    date: '2026-10-27',
+    title: {
+      ko: '입구가 생겼어요 🚪',
+      en: 'A front door 🚪',
+    },
+    prs: [143],
+    items: [
+      {
+        cat: 'new',
+        refs: [142],
+        ko: '첫 화면이 로비로 바뀌었어요. 큰 버튼 하나만 누르면 바로 시뮬레이터(/play/)로 들어갑니다.',
+        en: 'The home page is now a lobby. One big button takes you straight to the simulator at /play/.',
+      },
+      {
+        cat: 'improved',
+        refs: [142],
+        ko: '예전에 공유한 링크는 그대로 열려요. 설정과 결과를 담은 링크는 같은 판을 /play/에서 다시 보여 줍니다.',
+        en: 'Old shared links still work: any link that carries settings or a result opens the same match, now under /play/.',
+      },
+      {
+        cat: 'improved',
+        refs: [142],
+        ko: '시뮬레이터에서 만든 공유 링크도 메신저에 붙이면 미리보기 카드가 떠요.',
+        en: 'Links shared from the simulator still unfurl with a preview card in chat apps.',
+      },
+    ],
+  },
+  {
     version: '0.2.17',
     date: '2026-10-27',
     title: {
