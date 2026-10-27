@@ -4,10 +4,14 @@
     <meta charset="UTF-8" />
     <script>
       (function () {
-        var l = location;
-        if (/=|^#tvt\d-/i.test(l.hash) || /[?&]tour=/.test(l.search)) {
-          l.replace((/^\/en(\/|$)/.test(l.pathname) ? '/en' : '') + '/play/' + l.search + l.hash);
+        function forward() {
+          var l = location;
+          if (/=|^#tvt\d-/i.test(l.hash) || /[?&]tour(=|&|$)/.test(l.search)) {
+            l.replace((/^\/en(\/|$)/.test(l.pathname) ? '/en' : '') + '/play/' + l.search + l.hash);
+          }
         }
+        forward();
+        addEventListener('hashchange', forward);
       })();
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

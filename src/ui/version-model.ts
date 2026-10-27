@@ -257,17 +257,25 @@ const fragment = (hash: string): string => (hash.startsWith('#') ? hash : '');
 /** Query parameter of `/reset/` that names the app page to return to (`/play/` or `/en/play/`). */
 export const RETURN_PARAM = 'to';
 
-/** The paths a reset may return to: the play pages, and the lobbies older builds name. */
-const RETURN_PATHS: readonly string[] = ['/play/', '/en/play/', '/', '/en/'];
+/**
+ * The paths a reset may name, and the play page each returns to. `/` and `/en/` come from a tab
+ * of a build before the lobby (#142): they return to the play page of that language, so the app
+ * opens (and drops `?_r=`) instead of the lobby.
+ */
+const RETURN_PATHS: Readonly<Record<string, string>> = {
+  '/play/': '/play/',
+  '/en/play/': '/en/play/',
+  '/': '/play/',
+  '/en/': '/en/play/',
+};
 
 /**
- * The app path to come back to after the reset: one of {@link RETURN_PATHS}, `/play/` for
- * anything else (no `to`). Only these values are accepted, so the reset page never redirects
- * off-site. `/` and `/en/` come from a tab of a build before the lobby; the lobby forwards a
- * fragment that holds settings to the play page.
+ * The app path to come back to after the reset: the play page {@link RETURN_PATHS} maps the
+ * named path to, `/play/` for anything else (no `to`). Only these values are accepted, so the
+ * reset page never redirects off-site.
  */
 export function appReturnPath(path: string | null): string {
-  return path !== null && RETURN_PATHS.includes(path) ? path : '/play/';
+  return (path !== null && Object.hasOwn(RETURN_PATHS, path) && RETURN_PATHS[path]) || '/play/';
 }
 
 export function resetUrl(fromVersion: string, hash: string, appPath = '/play/'): string {

@@ -15,11 +15,11 @@ export function siteNavItems(lang: Lang, current: PageId | null = 'simulator'): 
 
 /**
  * `<nav>` linking the simulator and the content pages for `lang`, with `current` marked
- * `aria-current="page"`. Labels and hrefs depend on the language, so build a new nav (and
+ * `aria-current="page"` (null marks none: the play page is not a nav item). Labels and hrefs depend on the language, so build a new nav (and
  * replace the old one) when the language changes. Markup matches the static pages
  * (`.site-nav > ul.site-nav-list > li > a.site-nav-link[data-page]`).
  */
-export function createSiteNav(lang: Lang, current: PageId = 'simulator'): HTMLElement {
+export function createSiteNav(lang: Lang, current: PageId | null = 'simulator'): HTMLElement {
   const list = h('ul', { class: 'site-nav-list' });
   for (const item of siteNavItems(lang, current)) {
     const a = h('a', {

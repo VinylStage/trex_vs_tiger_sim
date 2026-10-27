@@ -213,7 +213,8 @@ export function startApp(root: HTMLElement): void {
     ),
     h('div', { class: 'header-actions' }, shareBtn, tourBtn, langBtn),
   );
-  let siteNav = createSiteNav(getLang());
+  // The play page is not a nav item: no link is the current page (not even the lobby's).
+  let siteNav = createSiteNav(getLang(), null);
   header.append(siteNav);
 
   // ---------- match-up mode (classic / free, #50) ----------
@@ -969,7 +970,7 @@ export function startApp(root: HTMLElement): void {
   // In-place language switch: results, replay and form state stay; the URL moves to the other
   // language's play page (`/play/` ↔ `/en/play/`) with the query and `#s=` fragment kept.
   onLangChange((lang) => {
-    const nextNav = createSiteNav(lang);
+    const nextNav = createSiteNav(lang, null);
     siteNav.replaceWith(nextNav);
     siteNav = nextNav;
     document.title = t('play.documentTitle');

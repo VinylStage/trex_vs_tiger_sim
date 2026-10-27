@@ -341,9 +341,14 @@ describe('reset URLs', () => {
   it('returns only to a play page, or to a lobby an older build names', () => {
     expect(returnPathFromSearch('?from=0.1.0&to=%2Fen%2Fplay%2F')).toBe('/en/play/');
     expect(returnPathFromSearch('?from=0.1.0')).toBe('/play/');
-    // A tab of a build before the lobby sends `to=/en/` (or nothing, meaning `/`).
-    expect(returnPathFromSearch('?from=0.1.0&to=%2Fen%2F')).toBe('/en/');
-    expect(returnPathFromSearch('?from=0.1.0&to=%2F')).toBe('/');
+    // A tab of a build before the lobby sends `to=/en/` (or nothing, meaning `/`): it returns to
+    // the play page of that language, not to the lobby (#142).
+    expect(returnPathFromSearch('?from=0.1.0&to=%2Fen%2F')).toBe('/en/play/');
+    expect(returnPathFromSearch('?from=0.1.0&to=%2F')).toBe('/play/');
+    expect(reloadUrl(1, '#s=x', '/en/')).toBe('/en/play/?_r=1#s=x');
+    for (const proto of ['__proto__', 'constructor', 'toString']) {
+      expect(appReturnPath(proto), proto).toBe('/play/');
+    }
     for (const to of ['//evil.example/', 'https://evil.example/', '/en', '/guide/', '/en/../x']) {
       expect(returnPathFromSearch(`?to=${encodeURIComponent(to)}`), to).toBe('/play/');
       expect(appReturnPath(to), to).toBe('/play/');

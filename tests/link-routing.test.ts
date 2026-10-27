@@ -24,26 +24,48 @@ const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const read = (rel: string): string => readFileSync(join(ROOT, rel), 'utf8');
 const ORIGIN = 'https://trex-vs-tiger.vinylims.com';
 
-/** The lobby's inline forwarder, run against a fake `location`: the URL it replaces to, or null. */
-function forwarder(file: string): (url: string) => string | null {
+/** A lobby tab running the real inline forwarder against a fake `location` and `window`. */
+interface LobbyTab {
+  /** Where the forwarder sent the tab with `location.replace`, or null. */
+  target: string | null;
+  /** Change the fragment in place, as pasting a link into the address bar does. */
+  setHash(hash: string): void;
+}
+
+function openLobby(file: string, url: string): LobbyTab {
   const body = /<script>([\s\S]*?)<\/script>/.exec(read(file))?.[1];
   if (body === undefined) throw new Error(`${file}: no inline forwarder`);
   // eslint-disable-next-line @typescript-eslint/no-implied-eval -- the page's own script, in a test
-  const run = new Function('location', body) as (loc: unknown) => void;
-  return (url) => {
-    const u = new URL(url);
-    let target: string | null = null;
-    run({
-      pathname: u.pathname,
-      search: u.search,
-      hash: u.hash,
-      replace: (to: string) => {
-        target = to;
-      },
-    });
-    return target;
+  const run = new Function('location', 'addEventListener', body) as (
+    loc: unknown,
+    on: (type: string, fn: () => void) => void,
+  ) => void;
+  const u = new URL(url);
+  const listeners: Record<string, (() => void)[]> = {};
+  const tab: LobbyTab = {
+    target: null,
+    setHash(hash) {
+      loc.hash = hash;
+      for (const fn of listeners['hashchange'] ?? []) fn();
+    },
   };
+  const loc = {
+    pathname: u.pathname,
+    search: u.search,
+    hash: u.hash,
+    replace: (to: string) => {
+      tab.target ??= to;
+    },
+  };
+  run(loc, (type, fn) => (listeners[type] ??= []).push(fn));
+  return tab;
 }
+
+/** The lobby's inline forwarder on first load: the URL it replaces to, or null. */
+const forwarder =
+  (file: string) =>
+  (url: string): string | null =>
+    openLobby(file, url).target;
 const FORWARD = { ko: forwarder('index.html'), en: forwarder('en/index.html') };
 
 const b64 = (obj: unknown): string => Buffer.from(JSON.stringify(obj)).toString('base64url');
@@ -160,6 +182,20 @@ const FIXTURES: readonly Fixture[] = [
     check: false,
   },
   {
+    name: 'bare tour deep link (?tour, no value)',
+    tail: '?tour',
+    mode: 'classic',
+    config: defaultConfig(),
+    check: false,
+  },
+  {
+    name: 'tour deep link after another parameter (?a=1&tour)',
+    tail: '?a=1&tour',
+    mode: 'classic',
+    config: defaultConfig(),
+    check: false,
+  },
+  {
     name: 'malformed settings payload (opens the defaults, as before)',
     tail: '#s=%%',
     mode: 'classic',
@@ -228,12 +264,27 @@ describe('the lobby itself', () => {
     ['/en/', '#faq'],
     ['/', '?utm_source=x'],
     ['/', '?_r=123'],
+    ['/', '?tourist=1'],
+    ['/', '?detour=1'],
   ])('%s%s stays on the lobby', (path, tail) => {
     const lang = path.startsWith('/en') ? 'en' : 'ko';
     const u = new URL(`${ORIGIN}${path}${tail}`);
     expect(FORWARD[lang](u.href)).toBeNull();
     expect(playForwardUrl(u.pathname, u.search, u.hash)).toBeNull();
   });
+
+  it.each(['index.html', 'en/index.html'])(
+    '%s forwards a settings link pasted into an open lobby tab (hashchange)',
+    (file) => {
+      const lobby = file === 'index.html' ? '/' : '/en/';
+      const tab = openLobby(file, `${ORIGIN}${lobby}`);
+      expect(tab.target).toBeNull();
+      tab.setHash('#faq');
+      expect(tab.target).toBeNull();
+      tab.setHash(V2_HASH);
+      expect(tab.target).toBe(`${lobby === '/' ? '/play/' : '/en/play/'}${V2_HASH}`);
+    },
+  );
 
   it('is the same script in both languages', () => {
     const body = (f: string): string | undefined =>

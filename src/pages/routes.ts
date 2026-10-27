@@ -125,13 +125,13 @@ export const playPagePath = (lang: Lang): string => (lang === 'en' ? '/en/play/'
  * Links made before the play page existed point at the lobby's path with the app's state in the
  * fragment (`#s=…`, `#s=…&chk=…`, `#chk=…`) or with the tour deep link (`?tour=1`). Any fragment
  * holding a `key=value` part, a fragment starting with a settings code (`#TVT2-…`, `#TVT3-…`) and a
- * `tour=` query go to the play page of the same language with query and fragment unchanged; plain
+ * `tour` query parameter (`?tour=1`, a bare `?tour`) go to the play page of the same language with query and fragment unchanged; plain
  * anchors (`#faq`) stay. The lobby runs the same rule as an inline script in its head
- * (`index.html`, `en/index.html`), before anything renders; tests/link-routing.test.ts runs
- * both over the same links.
+ * (`index.html`, `en/index.html`), before anything renders and again on `hashchange` (a settings
+ * link pasted into an open lobby tab); tests/link-routing.test.ts runs both over the same links.
  */
 export function playForwardUrl(pathname: string, search: string, hash: string): string | null {
-  if (!/=|^#tvt\d-/i.test(hash) && !/[?&]tour=/.test(search)) return null;
+  if (!/=|^#tvt\d-/i.test(hash) && !/[?&]tour(=|&|$)/.test(search)) return null;
   return `${playPagePath(/^\/en(\/|$)/.test(pathname) ? 'en' : 'ko')}${search}${hash}`;
 }
 

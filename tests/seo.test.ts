@@ -11,6 +11,7 @@ import {
   SITE_ORIGIN,
   canonicalUrl,
   parsePagePath,
+  playPagePath,
   type PageId,
 } from '../src/pages/routes';
 import { extractFaq, extractPageFacts, extractUpdated } from '../src/seo/extract';
@@ -42,6 +43,7 @@ import {
   gitLastmod,
   needsRootAbsoluteUrls,
   notFoundLang,
+  seo,
   unshallow,
 } from '../vite.seo';
 
@@ -771,5 +773,37 @@ describe('IndexNow', () => {
     expect(rp).toContain('uses: ./.github/workflows/indexnow.yml');
     expect(rp).toContain("if: needs.release-please.outputs.release_created == 'true'");
     expect(rp).toContain('version: ${{ needs.release-please.outputs.version }}');
+  });
+});
+
+// ---------- the play page: social tags only (noindex, #142) ----------
+
+describe.each(LANGS)('play page (%s) generated head', (lang) => {
+  const file = lang === 'ko' ? 'play/index.html' : 'en/play/index.html';
+  const html = read(file);
+  // Through the plugin's own hook, as the build and the dev server run it.
+  const hook = seo({ root: ROOT, version: VERSION, deepen: false }).transformIndexHtml as {
+    handler: (html: string, ctx: { path: string }) => string;
+  };
+  const built = hook.handler(html, { path: `/${file}` });
+  const facts = extractPageFacts(html);
+
+  it('unfurls shared settings links: the language’s card, title, description and URL', () => {
+    expect(oneMeta(built, 'property', 'og:image')).toBe(OG_IMAGE[lang].url);
+    expect(oneMeta(built, 'property', 'og:image:alt')).toBe(OG_IMAGE[lang].alt);
+    expect(oneMeta(built, 'property', 'og:url')).toBe(`${SITE_ORIGIN}${playPagePath(lang)}`);
+    expect(oneMeta(built, 'property', 'og:type')).toBe('website');
+    expect(oneMeta(built, 'property', 'og:title')).toBe(facts.title);
+    expect(oneMeta(built, 'property', 'og:description')).toBe(facts.description);
+    expect(oneMeta(built, 'name', 'twitter:card')).toBe('summary_large_image');
+    expect(oneMeta(built, 'name', 'twitter:image')).toBe(OG_IMAGE[lang].url);
+  });
+
+  it('stays out of the index: noindex, no canonical, hreflang or JSON-LD', () => {
+    expect(oneMeta(built, 'name', 'robots')).toBe('noindex, follow');
+    expect(
+      linkTags(built).filter((l) => l['rel'] === 'canonical' || l['rel'] === 'alternate'),
+    ).toEqual([]);
+    expect(scripts(built).filter((x) => x.attrs['type'] === 'application/ld+json')).toEqual([]);
   });
 });
