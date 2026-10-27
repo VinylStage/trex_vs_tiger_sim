@@ -20,8 +20,9 @@
   padding: 24px 24px 40px;
 }
 
+/* 72ch of Pretendard, in em so the width does not change at the font swap (#138). */
 .site-footer p {
-  max-width: 72ch;
+  max-width: 42.89em;
   margin: 0;
 }
 
@@ -52,7 +53,7 @@
   color: var(--fg);
 }
 
-/* One row on wide screens (no 72ch cap); items wrap whole on narrow ones. */
+/* One row on wide screens (no width cap); items wrap whole on narrow ones. */
 .site-footer .footer-meta {
   display: flex;
   flex-wrap: wrap;
@@ -68,10 +69,14 @@
   white-space: nowrap;
 }
 
-/* An inline-block does not take its link's underline; inherit it so the number reads as link. */
+/*
+ * An inline-block does not take its link's underline; inherit it so the number reads as link.
+ * The reserved width is 5ch of Pretendard, in em: an empty slot (no JavaScript) must not widen
+ * at the font swap.
+ */
 .version-footer-num {
   display: inline-block;
-  min-width: 5ch;
+  min-width: 2.98em;
   font-variant-numeric: tabular-nums;
   text-decoration: inherit;
 }

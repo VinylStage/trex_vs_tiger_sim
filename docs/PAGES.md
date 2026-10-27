@@ -209,6 +209,8 @@ Each `@font-face` rule covers a `unicode-range`, so a browser downloads only the
 
 To keep that first swap from reflowing the page, `--font-sans` lists a metric-matched local family, `Pretendard Fallback`, right after Pretendard. `src/assets/fonts/pretendard-fallback.css` (imported by `src/main.ts` and `site.ts`, so it lands in the same shared CSS file) maps it to Arial, Helvetica or Liberation Sans for Latin text and to Noto Sans CJK KR, Source Han Sans or WenQuanYi Zen Hei for Hangul, with `size-adjust` and ascent/descent overrides measured against Pretendard Variable, and separate bold faces above weight 550. Where none of those fonts is installed, the face is skipped and the system stack (`-apple-system`, `system-ui`, `Apple SD Gothic Neo`, `Noto Sans KR`, `Malgun Gothic`, …) applies with its own metrics. Measured font-swap CLS: [PERFORMANCE.md](PERFORMANCE.md#font-swap).
 
+Text widths are set in `em`, not `ch`. `ch` is the width of "0" in the font in use, so a `ch` column widens when Pretendard replaces the fallback and its text re-wraps (#138). The prose column (`.page-body p`, `.page-body li`) is `41.7em`, which is 70ch of Pretendard; [PERFORMANCE.md](PERFORMANCE.md#text-widths-in-em-138) lists the other widths. `tests/css-units.test.ts` fails on a `ch` width in any stylesheet under `src/`.
+
 ## SEO
 
 - Unique, descriptive `<title>` (`<topic> – <site name>`, at most 60 characters) and meta description (50–165 characters) per page, the two simulator pages included; the tests enforce length and uniqueness. Names, titles and descriptions: [SEO.md](SEO.md).

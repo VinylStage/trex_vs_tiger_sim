@@ -1426,8 +1426,9 @@ input.param-input {
   line-height: 1.4;
 }
 
+/* 80ch of Pretendard, in em so the width does not change at the font swap (#138). */
 .intro-lead {
-  max-width: 80ch;
+  max-width: 47.66em;
   color: var(--muted);
 }
 
@@ -1466,8 +1467,9 @@ input.param-input {
   gap: 16px 28px;
 }
 
+/* 72ch of Pretendard, in em (see .intro-lead). */
 .faq-item p {
-  max-width: 72ch;
+  max-width: 42.89em;
   color: var(--muted);
 }
 
