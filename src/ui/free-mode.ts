@@ -18,6 +18,8 @@ import { getLang, speciesCounter, speciesName, t, teamLabel, type MsgKey } from 
 import { CancelledError, type PoolProgress, type SimPool } from './pool';
 import type { FreeReplayView } from './free-replay';
 import { createFreeReproduceCheck, createFreeResultShare } from './result-share';
+import { createSimpleView } from './simple-mode';
+import { freshSeed, simpleRunConfig } from './simple-model';
 import { formatBound, formatShare } from './verdict';
 import {
   sideBuffState,
@@ -35,7 +37,13 @@ import './free-mode.css';
  * either side, mirror matchups included, run on the free engine through the same worker pool.
  * Self-contained so the classic form and results (src/ui/app.ts, form.ts) stay untouched; the
  * app only swaps panels and routes the share link. The replay is src/ui/free-replay.ts.
+ *
+ * Two views over the same config (#146): `full`, the free form of Advanced mode, and `simple`,
+ * Simple mode (src/ui/simple-mode.ts), which shows only presets, species and counts and runs
+ * everything else at its defaults with a fresh seed per Run.
  */
+
+export type FreeView = 'simple' | 'full';
 
 export interface FreeMode {
   configPanel: HTMLElement;
@@ -46,6 +54,8 @@ export interface FreeMode {
   relocalize(): void;
   /** Whether a run is in progress. */
   isRunning(): boolean;
+  /** Show Simple mode or the full free form (same config, same results). */
+  setView(v: FreeView): void;
 }
 
 export interface FreeModeOptions {
@@ -60,6 +70,10 @@ export interface FreeModeOptions {
   startHash?: string;
   /** A note the app shows under the mode switch (a link of a newer model, ADR-0008 §6). */
   notice?: HTMLElement;
+  /** The view to start in (default `full`). */
+  view?: FreeView;
+  /** Called with the config of every run as it starts (the app writes the URL after a Simple run). */
+  onRun?: (c: FreeConfig) => void;
 }
 
 interface FreeResult {
@@ -79,6 +93,7 @@ const nextId = (base: string): string => `${base}-${++uid}`;
 export function createFreeMode(opts: FreeModeOptions): FreeMode {
   const { pool } = opts;
   let cfg: FreeConfig = sanitizeFreeConfig(opts.initial);
+  let view: FreeView = opts.view ?? 'full';
   let result: FreeResult | null = null;
   let running = false;
   let statusKey: { key: MsgKey; vars?: Record<string, string | number>; error?: boolean } | null =
@@ -136,6 +151,14 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     statusEl,
     repro.el,
   );
+  const simple = createSimpleView({
+    update: (c, focusKey) => {
+      cfg = c;
+      commit(undefined, focusKey);
+    },
+    run: () => void run(),
+  });
+  const freeTools = h('div', { class: 'free-tools' }, copyBtn);
   const configTitle = h('h2', { id: nextId('free-config-title') });
   const switchSlot = h('div', { class: 'free-mode-switch' });
   const configPanel = h(
@@ -144,9 +167,10 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     configTitle,
     switchSlot,
     opts.notice,
+    simple.form,
     formEl,
     runBar,
-    h('div', { class: 'free-tools' }, copyBtn),
+    freeTools,
   );
 
   // ---------- results panel ----------
@@ -162,6 +186,10 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   const caveatEl = h('p', { class: 'verdict-caveat' });
   const basisEl = h('p', { class: 'verdict-basis' });
   const cardsEl = h('div', { class: 'stat-cards' });
+  // Simple mode keeps the cards (and the basis line) behind a "Details" disclosure (design §3.2).
+  const cardsSlot = h('div', { class: 'free-cards-slot' }, cardsEl);
+  const detailsSummary = h('summary', {});
+  const detailsEl = h('details', { class: 'simple-details' }, detailsSummary);
   // ---------- replay (design §6) ----------
   const replayTitle = h('h3', { id: nextId('free-replay-title') });
   const repBtn = h('button', { class: 'btn btn-small', attrs: { type: 'button' } });
@@ -199,13 +227,16 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       'div',
       { class: 'verdict-box', attrs: { 'aria-live': 'polite', 'aria-atomic': 'true' } },
       provisionalEl,
+      simple.bar,
       verdictEl,
       precisionEl,
       routEl,
       caveatEl,
       basisEl,
     ),
-    cardsEl,
+    simple.breakdown,
+    cardsSlot,
+    detailsEl,
     resultShare.el,
     replaySection,
   );
@@ -500,14 +531,38 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     }
   }
 
-  function commit(focusId?: string): void {
+  function commit(focusId?: string, simpleFocus?: string): void {
     const active = document.activeElement;
     const keep =
       focusId ?? (active instanceof HTMLElement && formEl.contains(active) ? active.id : undefined);
     cfg = sanitizeFreeConfig(cfg);
-    build(keep);
+    if (view === 'simple') simple.render(cfg, simpleFocus);
+    else build(keep);
     updateStale();
     opts.onChange(structuredClone(cfg));
+  }
+
+  /** Rebuild the form of the current view. */
+  function buildView(): void {
+    if (view === 'simple') simple.render(cfg);
+    else build();
+  }
+
+  /** Show the parts of the current view; the other view's form is emptied, not kept in sync. */
+  function applyView(): void {
+    const isSimple = view === 'simple';
+    simple.form.hidden = !isSimple;
+    formEl.hidden = isSimple;
+    freeTools.hidden = isSimple;
+    resultsPanel.classList.toggle('is-simple', isSimple);
+    detailsEl.hidden = !isSimple;
+    if (isSimple) detailsEl.append(basisEl, cardsEl);
+    else {
+      cardsSlot.append(cardsEl);
+      caveatEl.after(basisEl);
+    }
+    switchSlot.replaceChildren(opts.modeSwitch());
+    buildView();
   }
 
   // ---------- running ----------
@@ -532,12 +587,18 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   }
 
   async function run(): Promise<void> {
+    if (running) return;
+    // Simple mode: the shown species and counts, everything else at its defaults, and a fresh
+    // seed for every Run (R3); the app writes it into the address (onRun).
+    if (view === 'simple') cfg = simpleRunConfig(cfg, freshSeed());
     const runCfg = sanitizeFreeConfig(structuredClone(cfg));
-    if (runCfg.runs !== cfg.runs) {
+    if (view === 'simple' || runCfg.runs !== cfg.runs) {
       cfg = runCfg;
-      build();
+      buildView();
+      updateStale();
       opts.onChange(structuredClone(cfg));
     }
+    opts.onRun?.(structuredClone(runCfg));
     running = true;
     // Fetch the replay chunk while the batch runs (Run is a user input, so mounting is no shift).
     void ensureReplay().catch(() => undefined);
@@ -699,6 +760,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     resultsBody.hidden = result === null;
     updateStale();
     resultShare.update(result ? { config: result.config, agg: result.agg } : null);
+    simple.renderResult(view === 'simple' ? result : null);
     if (!result) return;
     const { agg, config: c } = result;
     caveatLink.href = pagePath('model', getLang());
@@ -829,8 +891,8 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     renderReplayInfo();
     replayView?.relocalize();
     if (result) replayView?.setSideNames([team(result.config, 0), team(result.config, 1)]);
-    switchSlot.replaceChildren(opts.modeSwitch());
-    build();
+    detailsSummary.textContent = t('simple.details');
+    applyView();
     if (statusKey) setStatus(statusKey);
     renderProgress();
     renderResults();
@@ -844,10 +906,15 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     getConfig: () => structuredClone(cfg),
     setConfig: (c) => {
       cfg = sanitizeFreeConfig(c);
-      build();
+      buildView();
       updateStale();
     },
     relocalize,
     isRunning: () => running,
+    setView: (v) => {
+      view = v;
+      applyView();
+      renderResults();
+    },
   };
 }

@@ -1,0 +1,193 @@
+/* Simple mode and the Advanced switch (src/ui/simple-mode.ts, src/ui/app.ts, #146). Tokens come from styles.css. */
+
+.matchup-switches {
+  margin: 0 0 16px;
+}
+
+.view-switch {
+  margin: 0 0 12px;
+}
+
+.view-switch-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 600;
+  max-width: 100%;
+}
+
+.view-switch-label:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--surface-2);
+}
+
+.view-switch-label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.view-switch-label input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.view-switch .hint {
+  display: block;
+  margin-top: 6px;
+}
+
+.simple-section {
+  margin: 0 0 12px;
+}
+
+.simple-heading {
+  font-size: 1rem;
+  margin: 0 0 8px;
+}
+
+.simple-why {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.simple-why strong {
+  color: var(--fg);
+}
+
+.simple-form .btn-chip[aria-pressed='true'] {
+  border-color: var(--accent-fill);
+  background: var(--accent-fill);
+  color: var(--accent-fill-fg);
+}
+
+.simple-side .field + .field {
+  margin-top: 10px;
+}
+
+.simple-side legend .marker {
+  vertical-align: baseline;
+}
+
+.simple-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.simple-bar {
+  margin: 0 0 10px;
+}
+
+.simple-bar-labels {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin: 0 0 6px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.simple-bar-b {
+  margin-left: auto;
+  text-align: right;
+}
+
+.simple-bar-track {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.simple-bar-seg {
+  flex: 0 0 auto;
+  flex-basis: 0;
+  min-width: 2px;
+}
+
+.simple-breakdown {
+  margin: 0 0 16px;
+}
+
+.simple-breakdown-title {
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.simple-breakdown-sides {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+}
+
+.simple-breakdown-side {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
+  padding: 10px 12px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.simple-breakdown-a {
+  border-left: 4px solid var(--accent);
+}
+
+.simple-breakdown-b {
+  border-left: 4px solid var(--muted);
+}
+
+.simple-breakdown-side h4 {
+  margin: 0 0 6px;
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.simple-breakdown-side ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.simple-breakdown-side li {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2px 12px;
+  padding: 3px 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.simple-part-label {
+  color: var(--muted);
+}
+
+.simple-again {
+  margin-top: 10px;
+}
+
+.simple-details {
+  margin: 0 0 16px;
+}
+
+.simple-details > summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 0;
+}
+
+.simple-details .verdict-basis {
+  margin-top: 0;
+}

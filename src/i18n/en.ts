@@ -584,4 +584,26 @@ export const en: Dictionary = {
     'Non-social species (tiger, brown bear, T. rex and others) never get these effects, however many there are, and get in each other’s way at the same target.',
   'free.stat.buff': '{side} pack buff active (mean)',
   'free.stat.buffSub': 'Median time with a buffed member: {t}',
+  // Simple mode and the Advanced switch (#146, docs/design/RENEWAL-1.0.md §3.2)
+  'view.advanced': 'Advanced',
+  'view.advancedOff':
+    'Turn on for trait ranges, runs, seed and the other settings, and for the classic model (large vs group).',
+  'view.advancedOn': 'Turn off to go back to Simple mode: just species and counts.',
+  'simple.presets': 'Presets',
+  'simple.why': 'Background:',
+  'simple.quickCounts': 'Quick picks',
+  'simple.socialChips':
+    'For a group-living species the quick picks stop at {n}; type a larger number in the field.',
+  'simple.hiddenEdits':
+    'Values changed under Advanced are not used here: a Run in Simple mode uses the defaults for everything except species and counts.',
+  'simple.seedNote':
+    'Every Run uses a new seed. The seed goes into the address, so a shared link reproduces the result.',
+  'simple.barLabel': 'Win shares: {a} {pa}, draw {pd}, {b} {pb}',
+  'simple.breakdown': 'At the end of a battle (mean)',
+  'simple.standing': 'Still standing',
+  'simple.fled': 'Fled',
+  'simple.out': 'Incapacitated',
+  'simple.part': '{mean} ({pct} of {n}{counter})',
+  'simple.again': 'Run again (new seed)',
+  'simple.details': 'Details',
 };

@@ -578,6 +578,28 @@ export const ko = {
     '비사회성 종(호랑이, 불곰, 티라노 등)은 수가 많아도 이 효과가 없고, 같은 상대에게 몰리면 서로 방해합니다.',
   'free.stat.buff': '{side} 무리 버프 활성 (평균)',
   'free.stat.buffSub': '버프 받은 개체가 있던 시간 (중앙값) {t}',
+  // Simple mode and the Advanced switch (#146, docs/design/RENEWAL-1.0.md §3.2)
+  'view.advanced': '고급 설정',
+  'view.advancedOff':
+    '켜면 종 특성 범위, 실행 횟수, 시드 같은 세부 설정과 클래식 모델(대형 vs 무리)을 쓸 수 있습니다.',
+  'view.advancedOn': '끄면 종과 수만 고르는 간단 모드로 돌아갑니다.',
+  'simple.presets': '추천 대결',
+  'simple.why': '배경:',
+  'simple.quickCounts': '빠른 선택',
+  'simple.socialChips':
+    '무리 생활 종은 빠른 선택이 {n}까지입니다. 더 많이는 숫자를 직접 입력하세요.',
+  'simple.hiddenEdits':
+    '고급 설정에서 바꾼 값은 간단 모드에서 쓰지 않습니다. 여기서 실행하면 종과 수 말고는 모두 기본값으로 계산합니다.',
+  'simple.seedNote':
+    '실행할 때마다 새 시드로 계산합니다. 시드는 주소에 담기므로 링크를 공유하면 같은 결과가 재현됩니다.',
+  'simple.barLabel': '승률: {a} {pa}, 무승부 {pd}, {b} {pb}',
+  'simple.breakdown': '한 판이 끝났을 때 (평균)',
+  'simple.standing': '끝까지 남음',
+  'simple.fled': '이탈',
+  'simple.out': '전투 불능',
+  'simple.part': '{mean} ({n}{counter} 중 {pct})',
+  'simple.again': '다시 (새 판)',
+  'simple.details': '자세히',
 } as const;
 
 export type MsgKey = keyof typeof ko;
