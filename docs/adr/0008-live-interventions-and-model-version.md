@@ -1,6 +1,6 @@
 # ADR-0008: Live interventions and model version
 
-- Status: Accepted. The owner accepted the 1.0 renewal design and its decisions on 2026-10-26 ([RENEWAL-1.0.md §12](../design/RENEWAL-1.0.md#12-owner-decisions)). The compatibility rule in §6 (a page meeting a link of a model version it does not run) was added during implementation (#124) and is not part of that decision record.
+- Status: Accepted, except §6 (Proposed, pending owner confirmation). The owner accepted the 1.0 renewal design and its decisions on 2026-10-26 ([RENEWAL-1.0.md §12](../design/RENEWAL-1.0.md#12-owner-decisions)). The compatibility rule in §6 (a page meeting a link of a model version it does not run) was added during implementation (#124) and is not part of that decision record. Until the owner confirms it, §6 can still change in this file; once confirmed, the status becomes Accepted and §6 is immutable like the rest.
 - Date: 2026-10-26
 - Issue: #124
 - Design: [docs/design/RENEWAL-1.0.md §10.1–§10.4](../design/RENEWAL-1.0.md#10-technical-plan)
