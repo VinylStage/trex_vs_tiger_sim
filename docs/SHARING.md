@@ -52,13 +52,13 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 
 ## Link routing
 
-Issue #142, design R2 ([RENEWAL-1.0.md §3.1](design/RENEWAL-1.0.md#31-surfaces-and-urls)). The simulator app moved from `/` and `/en/` to the play pages `/play/` and `/en/play/`, and `/` became the lobby. Every link made before that points at `/` or `/en/`, and each one still opens exactly what it opened before.
+Issue #142, design R2 ([RENEWAL-1.0.md §3.1](design/RENEWAL-1.0.md#31-surfaces-and-urls)). The simulator app moved from `/` and `/en/` to the play pages `/play/` and `/en/play/`, and `/` became the lobby. Every link made before that points at `/` or `/en/`. A link that carries app state (the kinds listed below) now ends on the play page, after one extra `location.replace`, and opens the same mode, config and reproduction check as it did on `/`; the fixture tests and a browser comparison with `main` check this per link type. Two things are not the same as before. The address the app shows is `/play/…` instead of `/…`. And a lobby address without app state (no `key=value` fragment, no settings code, no `tour` parameter) now shows the lobby, where `/` used to show the app with its defaults. That covers a bare `/`, plain anchors such as `/#faq` and a `/?_r=…` reload marker without a fragment.
 
-**Step 1: the lobby forwards.** The first thing in the lobby's `<head>` is a small inline script, identical in both languages. If the address holds app state, it calls `location.replace` to the play page of the same language with the query and fragment byte for byte unchanged. This runs before anything renders and adds no history entry. An address holds app state when:
+**Step 1: the lobby forwards.** The first thing in the lobby's `<head>` is a small inline script, identical in both languages. If the address holds app state, it calls `location.replace` to the play page of the same language with the query and fragment byte for byte unchanged. It runs before anything renders and adds no history entry. It runs again on `hashchange`, so a settings link pasted into the address bar of an open lobby tab (which changes only the fragment and does not reload) is forwarded too. An address holds app state when:
 
 - the fragment holds a `key=value` part. This covers `#s=…` (classic v1 and v2, free v3, any model version), `#s=…&chk=…` and `#chk=…` ("Run it yourself"), and any key a later link adds;
 - the fragment starts with a settings code (`#TVT2-…`, `#TVT3-…`, any case). The app never read codes from the fragment, so it opens the defaults, as it did on `/`;
-- the query holds the tour deep link (`?tour=1`).
+- the query holds the tour deep link: a `tour` parameter with or without a value (`?tour=1`, a bare `?tour`, `?a=1&tour`), as the app's `tourRequested` accepts it. `?tourist=` and `?detour=` do not count.
 
 Plain anchors such as `#faq` and other queries (`?utm_…`, the `?_r=` reload marker without a fragment) stay on the lobby. `playForwardUrl(pathname, search, hash)` in `src/pages/routes.ts` states the same rule in TypeScript. `tests/link-routing.test.ts` runs the real inline script from both lobbies and that function over every fixture link and requires them to agree. The script is allowed by its SHA-256 in the CSP ([DEPLOYMENT.md](DEPLOYMENT.md#rule--every-response)).
 
@@ -93,7 +93,7 @@ For each, the test checks four things:
 
 The golden fixtures are untouched: a fragment that reaches `/play/` unchanged decodes and runs bit for bit as it did on `/`.
 
-**What does not move.** Result links stay on `/r/?r=…` and `/en/r/?r=…`, with their Pages Function. Only their **Run it yourself** and **Try your own** links now point at the play page. A result page cached before #142 still links `/#s=…&chk=…`, which the lobby forwards. Settings codes pasted into the import field and `.json` files are unaffected. The app's language switch moves between `/play/` and `/en/play/` (`switchedAppUrl`), and `/reset/` returns to the play page (`appReturnPath`). A tab of an older build that names `/` or `/en/` is still accepted, and the lobby forwards its fragment.
+**What does not move.** Result links stay on `/r/?r=…` and `/en/r/?r=…`, with their Pages Function. Only their **Run it yourself** and **Try your own** links now point at the play page. A result page cached before #142 still links `/#s=…&chk=…`, which the lobby forwards. Settings codes pasted into the import field and `.json` files are unaffected. The app's language switch moves between `/play/` and `/en/play/` (`switchedAppUrl`), and `/reset/` returns to the play page (`appReturnPath`). A tab of an older build names `/` or `/en/` as its return path; the reset maps those to `/play/` and `/en/play/`, so the app opens and drops its `?_r=` marker.
 
 ## Result links
 

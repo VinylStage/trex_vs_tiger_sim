@@ -143,7 +143,7 @@ Append **`?tour=1`** to the play page URL, for example `https://trex-vs-tiger.vi
 - The query parameter is used instead of a hash parameter because the URL fragment already carries the shared scenario (`#s=…`, see [ADR-0003](adr/0003-no-backend-url-sharing.md)). Both can be combined: `/play/?tour=1#s=…`.
 - On load the parameter is removed with `history.replaceState`, so reloading or copying the link afterwards does not restart the tour. Other query parameters and the fragment are kept.
 - The deep link is not a page for search engines: the play page is `noindex` and not in the sitemap ([SEO.md](SEO.md#urls-and-languages)).
-- Links made before #142 point at `/?tour=1` and `/en/?tour=1`. The lobby forwards them to the play page with the query kept ([SHARING.md](SHARING.md#link-routing)).
+- Links made before #142 point at `/?tour=1` and `/en/?tour=1` (or a bare `/?tour`). The lobby forwards any `tour` parameter, with or without a value, to the play page with the query kept ([SHARING.md](SHARING.md#link-routing)).
 - The Korean guide links to `/play/?tour=1`, the English guide to `/en/play/?tour=1`. The tour runs in the language of the URL (`/play/` Korean, `/en/play/` English); nothing about the language is stored.
 - The intro on the lobby (`index.html`, `en/index.html`) has a **1분 튜토리얼 시작 / Take the one-minute tour** link to the same deep link. The lobby does not run the app, so the link opens the play page, and the tour starts there.
 
