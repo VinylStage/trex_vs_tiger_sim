@@ -32,13 +32,13 @@ architecture-beta
     ui:B --> T:workers
 ```
 
-| Concern         | Where                              | Why                                                                                                         |
-| --------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Compute         | Browser Web Workers                | Workers Free = 10 ms CPU/request; infeasible server-side ([ADR-0001](docs/adr/0001-client-side-compute.md)) |
-| Hosting         | Cloudflare Pages (Git integration) | Free, unlimited static requests ([ADR-0002](docs/adr/0002-cloudflare-pages-git-integration.md))             |
-| State / sharing | URL fragment `#s=`                 | No backend ([ADR-0003](docs/adr/0003-no-backend-url-sharing.md))                                            |
-| Result previews | Pages Function on `/r/*` only      | Meta rewrite for crawlers, no storage ([ADR-0006](docs/adr/0006-pages-function-share-previews.md))          |
-| Runtime deps    | None                               | [ADR-0004](docs/adr/0004-no-runtime-dependencies.md)                                                        |
+| Concern         | Where                              | Why                                                                                                                                     |
+| --------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Compute         | Browser Web Workers                | Workers Free = 10 ms CPU/request; infeasible server-side ([ADR-0001](docs/adr/0001-client-side-compute.md))                             |
+| Hosting         | Cloudflare Pages (Git integration) | Free, unlimited static requests ([ADR-0002](docs/adr/0002-cloudflare-pages-git-integration.md))                                         |
+| State / sharing | URL fragment `#s=` on `/play/`     | No backend ([ADR-0003](docs/adr/0003-no-backend-url-sharing.md)); old `/#s=` links forward ([SHARING.md](docs/SHARING.md#link-routing)) |
+| Result previews | Pages Function on `/r/*` only      | Meta rewrite for crawlers, no storage ([ADR-0006](docs/adr/0006-pages-function-share-previews.md))                                      |
+| Runtime deps    | None                               | [ADR-0004](docs/adr/0004-no-runtime-dependencies.md)                                                                                    |
 
 ## 2. Module structure
 
@@ -53,7 +53,7 @@ flowchart LR
     subgraph UI["src/ui (main thread)"]
         app@{ shape: rect, label: "app.ts<br/>wiring" }
         form@{ shape: rect, label: "form.ts<br/>config editor" }
-        share@{ shape: rect, label: "share.ts<br/>URL codec" }
+        share@{ shape: rect, label: "share.ts · link-route.ts<br/>URL codec, link routing" }
         i18n@{ shape: rect, label: "i18n.ts<br/>runtime: t(), setLang" }
         charts@{ shape: rect, label: "charts.ts<br/>canvas charts" }
         replay@{ shape: rect, label: "replay.ts + replay/* (lazy)<br/>v2 renderer (prepare, world,<br/>draw, camera, timeline)" }
@@ -138,31 +138,32 @@ Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run insi
 
 Testing rule (#61): every module with branching logic has a test that imports it. These modules are intentional **DOM shells**: they wire the DOM, events and timers around logic that lives in a tested module (in brackets), and are checked with Playwright instead of unit tests:
 
-| DOM shell                                                    | Tested logic                                                                                                         |
-| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
-| `src/ui/app.ts`                                              | `app-model.ts`, `chunks.ts`, `cost.ts`, `verdict.ts`, `share.ts`, `share-free.ts`, the charts' table and hit helpers |
-| `src/ui/free-mode.ts`                                        | `src/sim/free/*`, `share-free.ts`                                                                                    |
-| `src/ui/replay.ts`, `replay/legend.ts`, `replay/strip.ts`    | `replay/prepare.ts`, `world.ts`, `camera.ts`, `timeline.ts`, `effects.ts`, `glyphs.ts`                               |
-| `src/ui/tour.ts`, `tour-offer.ts`                            | `tour-model.ts`                                                                                                      |
-| `src/ui/version.ts`                                          | `version-model.ts`                                                                                                   |
-| `src/ui/config-transfer.ts`                                  | `src/share/config-code.ts`                                                                                           |
-| `src/share/result-page.ts`                                   | `result-codec.ts`, `result-text.ts`                                                                                  |
-| `src/ui/dom.ts`, `src/ui/announce.ts`                        | (element factory and live region; no decisions)                                                                      |
-| `src/main*.ts`, `src/share/result-page-*.ts`, `src/reset.ts` | (entries: register the words, start the page)                                                                        |
+| DOM shell                                                    | Tested logic                                                                                                                          |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/ui/app.ts`                                              | `app-model.ts`, `chunks.ts`, `cost.ts`, `verdict.ts`, `share.ts`, `share-free.ts`, `link-route.ts`, the charts' table and hit helpers |
+| `src/ui/free-mode.ts`                                        | `src/sim/free/*`, `share-free.ts`                                                                                                     |
+| `src/ui/replay.ts`, `replay/legend.ts`, `replay/strip.ts`    | `replay/prepare.ts`, `world.ts`, `camera.ts`, `timeline.ts`, `effects.ts`, `glyphs.ts`                                                |
+| `src/ui/tour.ts`, `tour-offer.ts`                            | `tour-model.ts`                                                                                                                       |
+| `src/ui/version.ts`                                          | `version-model.ts`                                                                                                                    |
+| `src/ui/config-transfer.ts`                                  | `src/share/config-code.ts`                                                                                                            |
+| `src/share/result-page.ts`                                   | `result-codec.ts`, `result-text.ts`                                                                                                   |
+| `src/ui/dom.ts`, `src/ui/announce.ts`                        | (element factory and live region; no decisions)                                                                                       |
+| `src/main*.ts`, `src/share/result-page-*.ts`, `src/reset.ts` | (entries: register the words, start the page)                                                                                         |
 
 ### Entry points (multi-page build)
 
 `vite.pages.ts` `findHtmlEntries()` turns every `index.html` in the repository into a build input, so a new page needs no config change ([docs/PAGES.md](docs/PAGES.md)).
 
-| Entry                                                 | Script                                                                | Purpose                                                                                                                                    |
-| ----------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `index.html`, `en/index.html`                         | `src/main-ko.ts` / `src/main-en.ts` → `src/main.ts` → `src/ui/app.ts` | The simulator in Korean (`/`) and English (`/en/`); language comes from the URL ([SEO.md](docs/SEO.md))                                    |
-| `<page>/index.html`, `en/<page>/index.html`           | `src/pages/site.ts`                                                   | Static, crawlable guide, model, parameters, about and privacy pages in Korean and English ([PAGES.md](docs/PAGES.md))                      |
-| `patch-notes/index.html`, `en/patch-notes/index.html` | `src/pages/site.ts`                                                   | Patch notes board: one card per release, generated at build time from `src/content/patch-notes.ts` ([PAGES.md](docs/PAGES.md#patch-notes)) |
-| `reset/index.html`                                    | `src/reset.ts`                                                        | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                                      |
-| `license/index.html`, `en/license/index.html`         | `src/pages/site.ts`                                                   | MIT text and third-party notices                                                                                                           |
-| `404.html`, `en/404.html`                             | `src/pages/site.ts`                                                   | Real 404 pages (disable the Pages SPA fallback)                                                                                            |
-| `r/index.html`, `en/r/index.html`                     | `src/share/result-page.ts`                                            | Shared-result pages (`?r=`): noindex, not in the sitemap, never load the simulator ([SHARING.md](docs/SHARING.md))                         |
+| Entry                                                 | Script                                                                | Purpose                                                                                                                                                                                                                              |
+| ----------------------------------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `index.html`, `en/index.html`                         | inline forwarder, then `src/pages/site.ts`                            | The lobby in Korean (`/`) and English (`/en/`): play-first hero, crawlable intro and FAQ; forwards old links to the play page before rendering ([PAGES.md](docs/PAGES.md#the-lobby--en), [SHARING.md](docs/SHARING.md#link-routing)) |
+| `play/index.html`, `en/play/index.html`               | `src/main-ko.ts` / `src/main-en.ts` → `src/main.ts` → `src/ui/app.ts` | The simulator app in Korean (`/play/`) and English (`/en/play/`), `noindex`; language comes from the URL ([PAGES.md](docs/PAGES.md#the-play-pages-play-enplay))                                                                      |
+| `<page>/index.html`, `en/<page>/index.html`           | `src/pages/site.ts`                                                   | Static, crawlable guide, model, parameters, about and privacy pages in Korean and English ([PAGES.md](docs/PAGES.md))                                                                                                                |
+| `patch-notes/index.html`, `en/patch-notes/index.html` | `src/pages/site.ts`                                                   | Patch notes board: one card per release, generated at build time from `src/content/patch-notes.ts` ([PAGES.md](docs/PAGES.md#patch-notes))                                                                                           |
+| `reset/index.html`                                    | `src/reset.ts`                                                        | Cache and storage reset hand-off, served with `Clear-Site-Data` ([VERSIONING.md](docs/VERSIONING.md))                                                                                                                                |
+| `license/index.html`, `en/license/index.html`         | `src/pages/site.ts`                                                   | MIT text and third-party notices                                                                                                                                                                                                     |
+| `404.html`, `en/404.html`                             | `src/pages/site.ts`                                                   | Real 404 pages (disable the Pages SPA fallback)                                                                                                                                                                                      |
+| `r/index.html`, `en/r/index.html`                     | `src/share/result-page.ts`                                            | Shared-result pages (`?r=`): noindex, not in the sitemap, never load the simulator ([SHARING.md](docs/SHARING.md))                                                                                                                   |
 
 At build time `vite.seo.ts` (code in `src/seo/`) writes the head tags, JSON-LD, `sitemap.xml`, `robots.txt` and `llms*.txt` from the page registry ([SEO.md](docs/SEO.md)). Species presets and bounds live in `src/sim/species.ts` ([SPECIES.md](docs/SPECIES.md)); the free model's registry, `src/sim/free/species.ts`, reads them and adds the free traits, `era`, `adSafe` and a standalone constructor for species without a legacy entry (SPECIES.md §11); the replay renderer and its event log are described in [REPLAY.md](docs/REPLAY.md) and MODEL.md §2.6.
 
@@ -278,7 +279,7 @@ flowchart LR
 ## 6. Security
 
 - Static site; no secrets, no cookies of its own and no third-party requests. `localStorage` holds only the tour-seen flag (language comes from the URL); the version check fetches the same-origin `/version.json`.
-- CSP in `public/_headers`: `default-src 'self'`, no inline scripts, `worker-src 'self'`, `frame-ancestors 'none'`. HTML responses carry `Cache-Control: no-cache, no-transform` so Cloudflare Bot Fight Mode does not inject an inline script (this also disables Cloudflare's compression of HTML; see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
+- CSP in `public/_headers`: `default-src 'self'`; `script-src 'self'` plus the SHA-256 of one inline script, the lobby's link forwarder ([SHARING.md](docs/SHARING.md#link-routing)), and no other inline script; `worker-src 'self'`; `frame-ancestors 'none'`; Trusted Types with the single `sim-worker` policy. HTML responses carry `Cache-Control: no-cache, no-transform` so Cloudflare Bot Fight Mode does not inject an inline script (this also disables Cloudflare's compression of HTML; see [DEPLOYMENT.md](docs/DEPLOYMENT.md)).
 - The reset page uses `Clear-Site-Data: "cache", "storage"` but never `"cookies"`, which would clear cookies for every `*.vinylims.com` site ([VERSIONING.md](docs/VERSIONING.md)).
 - Result links (`/r/?r=`) are untrusted too: length cap 4096, base64url alphabet, `JSON.parse`, then a strict summary validator (integer counts, `h + p + d === n`, finite values in range). The Pages Function on `/r/*` uses the same validator, sets the page's security headers itself and stores and logs nothing ([ADR-0006](docs/adr/0006-pages-function-share-previews.md)).
 - URL fragment input is untrusted → `JSON.parse` only, schema check, numeric clamping, unknown keys dropped (`src/sim/config.ts`).

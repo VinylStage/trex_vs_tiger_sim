@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { DICTIONARIES } from '../src/i18n/dictionaries';
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -10,6 +11,7 @@ import {
   SITE_ORIGIN,
   canonicalUrl,
   parsePagePath,
+  playPagePath,
   type PageId,
 } from '../src/pages/routes';
 import { extractFaq, extractPageFacts, extractUpdated } from '../src/seo/extract';
@@ -41,6 +43,7 @@ import {
   gitLastmod,
   needsRootAbsoluteUrls,
   notFoundLang,
+  seo,
   unshallow,
 } from '../vite.seo';
 
@@ -87,6 +90,14 @@ const oneMeta = (html: string, attr: 'name' | 'property', key: string): string =
   expect(all, key).toHaveLength(1);
   return all[0] ?? '';
 };
+const sha256 = (text: string): string => createHash('sha256').update(text).digest('base64');
+
+/** The page CSP of `public/_headers`: its `/*` rule is the only one that sets one. */
+const PAGE_CSP =
+  /^\/\*\n(?:\s+.*\n)*?\s+Content-Security-Policy: (.*)$/m.exec(
+    readFileSync(join(ROOT, 'public/_headers'), 'utf8'),
+  )?.[1] ?? '';
+
 const scripts = (html: string): { attrs: Record<string, string>; body: string }[] =>
   [...html.matchAll(/<script(\s[^>]*)?>([\s\S]*?)<\/script>/g)].map((m) => ({
     attrs: attrsOf(m[1] ?? ''),
@@ -201,10 +212,16 @@ describe.each(ROUTES)('$file generated head', ({ page, lang, html, input, built 
     expect(built.indexOf('<link rel="canonical"')).toBeLessThan(built.indexOf('</head>'));
   });
 
-  it('allows only JSON-LD data blocks inline, and their JSON cannot close the element', () => {
+  it('allows only JSON-LD data blocks and the hashed lobby forwarder inline', () => {
     for (const s of scripts(built)) {
       if (s.attrs['src']) {
         expect(s.body.trim()).toBe('');
+        continue;
+      }
+      if (s.attrs['type'] === undefined) {
+        // The lobby's link forwarder (docs/SHARING.md#link-routing), allowed by its hash only.
+        expect(page, 'inline script outside the lobby').toBe('simulator');
+        expect(PAGE_CSP).toContain(`'sha256-${sha256(s.body)}'`);
         continue;
       }
       expect(s.attrs['type']).toBe('application/ld+json');
@@ -567,7 +584,7 @@ describe('llms.txt and llms-full.txt', () => {
     const ko = DICTIONARIES.ko;
     expect(full).toContain(`- [${ko['intro.link.guide']}](${canonicalUrl('guide', 'ko')})`);
     expect(full).toContain(`[${ko['intro.link.model']}](${canonicalUrl('model', 'ko')}#results)`);
-    expect(full).toContain(`[${ko['intro.link.tour']}](${SITE_ORIGIN}/?tour=1)`);
+    expect(full).toContain(`[${ko['intro.link.tour']}](${SITE_ORIGIN}/play/?tour=1)`);
     const links = [...full.matchAll(/\]\(([^)\s]+)\)/g)].map((m) => m[1] ?? '');
     expect(links.length).toBeGreaterThan(50);
     for (const href of links) expect(href).toMatch(/^https:\/\//);
@@ -756,5 +773,37 @@ describe('IndexNow', () => {
     expect(rp).toContain('uses: ./.github/workflows/indexnow.yml');
     expect(rp).toContain("if: needs.release-please.outputs.release_created == 'true'");
     expect(rp).toContain('version: ${{ needs.release-please.outputs.version }}');
+  });
+});
+
+// ---------- the play page: social tags only (noindex, #142) ----------
+
+describe.each(LANGS)('play page (%s) generated head', (lang) => {
+  const file = lang === 'ko' ? 'play/index.html' : 'en/play/index.html';
+  const html = read(file);
+  // Through the plugin's own hook, as the build and the dev server run it.
+  const hook = seo({ root: ROOT, version: VERSION, deepen: false }).transformIndexHtml as {
+    handler: (html: string, ctx: { path: string }) => string;
+  };
+  const built = hook.handler(html, { path: `/${file}` });
+  const facts = extractPageFacts(html);
+
+  it('unfurls shared settings links: the language’s card, title, description and URL', () => {
+    expect(oneMeta(built, 'property', 'og:image')).toBe(OG_IMAGE[lang].url);
+    expect(oneMeta(built, 'property', 'og:image:alt')).toBe(OG_IMAGE[lang].alt);
+    expect(oneMeta(built, 'property', 'og:url')).toBe(`${SITE_ORIGIN}${playPagePath(lang)}`);
+    expect(oneMeta(built, 'property', 'og:type')).toBe('website');
+    expect(oneMeta(built, 'property', 'og:title')).toBe(facts.title);
+    expect(oneMeta(built, 'property', 'og:description')).toBe(facts.description);
+    expect(oneMeta(built, 'name', 'twitter:card')).toBe('summary_large_image');
+    expect(oneMeta(built, 'name', 'twitter:image')).toBe(OG_IMAGE[lang].url);
+  });
+
+  it('stays out of the index: noindex, no canonical, hreflang or JSON-LD', () => {
+    expect(oneMeta(built, 'name', 'robots')).toBe('noindex, follow');
+    expect(
+      linkTags(built).filter((l) => l['rel'] === 'canonical' || l['rel'] === 'alternate'),
+    ).toEqual([]);
+    expect(scripts(built).filter((x) => x.attrs['type'] === 'application/ld+json')).toEqual([]);
   });
 });

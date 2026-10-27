@@ -2,14 +2,14 @@
 
 Issue #51. Three ways to hand something on, all generated in the browser:
 
-| What                   | Form                                                                       | Carries                  | Code                                                                                  |
-| ---------------------- | -------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------- |
-| Settings link          | `/#s=<payload>` (existing, [ADR-0003](adr/0003-no-backend-url-sharing.md)) | config incl. seed        | `src/ui/share.ts`                                                                     |
-| Settings code / file   | `TVT2-<payload>` or a `.json` file                                         | config incl. seed        | `src/share/config-code.ts`, `src/ui/config-transfer.ts`                               |
-| Result link            | `/r/?r=<base64url>` and `/en/r/?r=…`                                       | config + result snapshot | `src/share/result-codec.ts`, `src/share/result-page.ts`                               |
-| Result card            | PNG, 1080×1920 story or 1080×1080 square                                   | rendered snapshot        | `src/ui/result-card.ts`                                                               |
-| Text share             | Wordle-style emoji text                                                    | snapshot + result link   | `src/share/result-text.ts`                                                            |
-| Link preview (crawler) | rewritten `og:*` / `twitter:*` text on `/r/`                               | snapshot text            | `src/share/result-function.ts`, [ADR-0006](adr/0006-pages-function-share-previews.md) |
+| What                   | Form                                                                                            | Carries                  | Code                                                                                  |
+| ---------------------- | ----------------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------- |
+| Settings link          | `/play/#s=<payload>` ([ADR-0003](adr/0003-no-backend-url-sharing.md)); old `/#s=` links forward | config incl. seed        | `src/ui/share.ts`, [link routing](#link-routing)                                      |
+| Settings code / file   | `TVT2-<payload>` or a `.json` file                                                              | config incl. seed        | `src/share/config-code.ts`, `src/ui/config-transfer.ts`                               |
+| Result link            | `/r/?r=<base64url>` and `/en/r/?r=…`                                                            | config + result snapshot | `src/share/result-codec.ts`, `src/share/result-page.ts`                               |
+| Result card            | PNG, 1080×1920 story or 1080×1080 square                                                        | rendered snapshot        | `src/ui/result-card.ts`                                                               |
+| Text share             | Wordle-style emoji text                                                                         | snapshot + result link   | `src/share/result-text.ts`                                                            |
+| Link preview (crawler) | rewritten `og:*` / `twitter:*` text on `/r/`                                                    | snapshot text            | `src/share/result-function.ts`, [ADR-0006](adr/0006-pages-function-share-previews.md) |
 
 The DOM-free core (`config-code.ts`, `result-codec.ts`, `result-text.ts`, `messages.ts`, `baseline.ts`) is shared by the simulator, the result page and the Pages Function, so all three accept and describe exactly the same links. Strings for these features live in `src/share/messages-ko.ts` and `messages-en.ts` (read through `sm()` in `src/share/messages.ts`), not in the app dictionaries, so the Function and the result page get only what they need; species names still come from the app dictionaries (`src/i18n/ko.ts`, `en.ts`). Each result page bundles only its own language (`src/share/result-page-ko.ts`, `-en.ts`, #79); the Function registers both.
 
@@ -50,6 +50,51 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 
 - `freeModelVersion(raw)` in `src/ui/share-free.ts` reads `mv` from a payload; `tests/free-model-version.test.ts` holds payloads written by the encoder before `mv` existed and checks that they decode as model 1 and re-encode byte for byte.
 
+## Link routing
+
+Issue #142, design R2 ([RENEWAL-1.0.md §3.1](design/RENEWAL-1.0.md#31-surfaces-and-urls)). The simulator app moved from `/` and `/en/` to the play pages `/play/` and `/en/play/`, and `/` became the lobby. Every link made before that points at `/` or `/en/`. A link that carries app state (the kinds listed below) now ends on the play page, after one extra `location.replace`, and opens the same mode, config and reproduction check as it did on `/`; the fixture tests and a browser comparison with `main` check this per link type. Two things are not the same as before. The address the app shows is `/play/…` instead of `/…`. And a lobby address without app state (no `key=value` fragment, no settings code, no `tour` parameter) now shows the lobby, where `/` used to show the app with its defaults. That covers a bare `/`, plain anchors such as `/#faq` and a `/?_r=…` reload marker without a fragment.
+
+**Step 1: the lobby forwards.** The first thing in the lobby's `<head>` is a small inline script, identical in both languages. If the address holds app state, it calls `location.replace` to the play page of the same language with the query and fragment byte for byte unchanged. It runs before anything renders and adds no history entry. It runs again on `hashchange`, so a settings link pasted into the address bar of an open lobby tab (which changes only the fragment and does not reload) is forwarded too. An address holds app state when:
+
+- the fragment holds a `key=value` part. This covers `#s=…` (classic v1 and v2, free v3, any model version), `#s=…&chk=…` and `#chk=…` ("Run it yourself"), and any key a later link adds;
+- the fragment starts with a settings code (`#TVT2-…`, `#TVT3-…`, any case). The app never read codes from the fragment, so it opens the defaults, as it did on `/`;
+- the query holds the tour deep link: a `tour` parameter with or without a value (`?tour=1`, a bare `?tour`, `?a=1&tour`), as the app's `tourRequested` accepts it. `?tourist=` and `?detour=` do not count.
+
+Plain anchors such as `#faq` and other queries (`?utm_…`, the `?_r=` reload marker without a fragment) stay on the lobby. `playForwardUrl(pathname, search, hash)` in `src/pages/routes.ts` states the same rule in TypeScript. `tests/link-routing.test.ts` runs the real inline script from both lobbies and that function over every fixture link and requires them to agree. The script is allowed by its SHA-256 in the CSP ([DEPLOYMENT.md](DEPLOYMENT.md#rule--every-response)).
+
+**Step 2: the play page opens the fragment.** `routeLink(hash)` in `src/ui/link-route.ts` is the pure helper the app reads its starting fragment with:
+
+| Fragment                                                | Opens                                                                                                |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `#s=<v3>` (`m: "free"`), with or without `&chk=`        | Free mode with that config, and the free reproduction check when `chk=` validates                    |
+| `#s=<v3>` of a model this build does not run            | Free mode at the free defaults, `newerModel` set, so the address is kept ([`mv`](#model-version-mv)) |
+| `#s=<v1 or v2>`, with or without `&chk=`; `#chk=` alone | Classic with that config (the defaults for `#chk=` alone), and the classic reproduction check        |
+| no fragment, a malformed payload, a settings code       | Classic at the defaults                                                                              |
+
+This is the same decision `startApp` made on `/` before #142 (free when `freeConfigFromHash` finds a v3 payload, otherwise `configFromHash(hash) ?? defaultConfig()`). It now lives in one tested function.
+
+**Fixture tests.** `tests/link-routing.test.ts` holds one fixture per old link type, each opened from the Korean and the English lobby:
+
+- classic v1 and v2 settings links;
+- classic "Run it yourself" with a config and with `#chk=` alone;
+- free v3 settings links written by the encoder before `mv` existed;
+- free "Run it yourself" from a free `/r/` result link;
+- a free link of a newer model;
+- the tour deep link, alone and with a settings link;
+- a malformed payload;
+- a `TVT3-` code in the fragment.
+
+For each, the test checks four things:
+
+1. the forwarded URL is the play page with the same query and fragment;
+2. `routeLink` opens the expected mode, config and check;
+3. that equals the pre-#142 decision on the same fragment;
+4. that equals `routeLink` on the original link.
+
+The golden fixtures are untouched: a fragment that reaches `/play/` unchanged decodes and runs bit for bit as it did on `/`.
+
+**What does not move.** Result links stay on `/r/?r=…` and `/en/r/?r=…`, with their Pages Function. Only their **Run it yourself** and **Try your own** links now point at the play page. A result page cached before #142 still links `/#s=…&chk=…`, which the lobby forwards. Settings codes pasted into the import field and `.json` files are unaffected. The app's language switch moves between `/play/` and `/en/play/` (`switchedAppUrl`), and `/reset/` returns to the play page (`appReturnPath`). A tab of an older build names `/` or `/en/` as its return path; the reset maps those to `/play/` and `/en/play/`, so the app opens and drops its `?_r=` marker.
+
 ## Result links
 
 `/r/?r=<base64url(JSON { v: 1, c: { v: 2, …configDiff }, s: summary })>`. The query, not a fragment, so link-preview crawlers see it.
@@ -69,7 +114,7 @@ Summary `s`:
 
 Unknown keys, a wrong `v`, `r` over 4096 characters or outside the base64url alphabet are rejected. When only `s` fails, the page still offers **Run it yourself** with the config from `c`.
 
-The numbers are a **snapshot**: V8 and JavaScriptCore agree statistically but not run for run ([MODEL.md §2.2](MODEL.md)), so the page shows the shared numbers as they were and labels them so. **Run it yourself** opens `/#s=<config>&chk=<summary>`; after the person presses Run (never automatically) with unchanged settings, the app reports _exactly the same_, _reproduced within the 95 % CI_ (every shared rate inside the new run's Wilson interval) or _differs_. The `chk=` part is dropped from the address as soon as the app starts, so a reload does not repeat the check.
+The numbers are a **snapshot**: V8 and JavaScriptCore agree statistically but not run for run ([MODEL.md §2.2](MODEL.md)), so the page shows the shared numbers as they were and labels them so. **Run it yourself** opens `/play/#s=<config>&chk=<summary>` (`/en/play/` on the English page); after the person presses Run (never automatically) with unchanged settings, the app reports _exactly the same_, _reproduced within the 95 % CI_ (every shared rate inside the new run's Wilson interval) or _differs_. The `chk=` part is dropped from the address as soon as the app starts, so a reload does not repeat the check.
 
 In the simulator, **Share result** appears under the verdict after a run: Web Share where available, otherwise the link is copied (with the fallback dialog). **Open result page** opens the same link.
 
@@ -90,7 +135,7 @@ A free result ([design §2.5](design/FREE-MATCHUPS.md#25-settings-codes-and-resu
 | `at`, `bt` | pack buff: median seconds with at least one buffed member, only where the buff applies, optional | finite, 0–3600                        |
 | `ci`       | 95 % Wilson intervals `[aLo, aHi, bLo, bHi, dLo, dHi]`, optional                                 | six finite numbers in [0, 1], lo ≤ hi |
 
-The buff applies to a side of a social species with two or more animals and at least one effect switched on; buff keys for any other side are rejected. The page lists per side the mean still standing, incapacitated and fled (`freeStats` in `result-text.ts`). The snapshot has no still-standing key, so the page shows `as − ar` (`bs − br`) to one decimal, clamped at 0 because `as` is rounded to two decimals and `ar` to one; that is the figure the app's still-standing card shows (#42), give or take 0.1. The format and its version stay as they are, so older links read the same way. **Run it yourself** opens `/#s=<v3>&chk=<summary>` in free mode, and free mode reports _same_ / _within the 95 % CI_ / _differs_ after the next Run, as for classic links.
+The buff applies to a side of a social species with two or more animals and at least one effect switched on; buff keys for any other side are rejected. The page lists per side the mean still standing, incapacitated and fled (`freeStats` in `result-text.ts`). The snapshot has no still-standing key, so the page shows `as − ar` (`bs − br`) to one decimal, clamped at 0 because `as` is rounded to two decimals and `ar` to one; that is the figure the app's still-standing card shows (#42), give or take 0.1. The format and its version stay as they are, so older links read the same way. **Run it yourself** opens `/play/#s=<v3>&chk=<summary>` in free mode, and free mode reports _same_ / _within the 95 % CI_ / _differs_ after the next Run, as for classic links.
 
 Wording: the sides are named by species ("호랑이 1 vs 사자 1 — 호랑이 54%"). In a mirror matchup both sides carry their letter ("호랑이 A", "Tigers B"). There is no default matchup to compare with, so the tier is never _upset_ and the line beside it names the free model ("자유 대결 · 잠정 모델", plus "같은 종 대결" for a mirror); the link preview description uses that line instead of the ± points. The card draws side A on the left and side B on the right in their side colours, shape by size as in design §6 (body radius ≥ 1 m: heading triangles, else dots), and adds the pack-buff share of each buffed side to the runs line.
 
@@ -99,7 +144,7 @@ Wording: the sides are named by species ("호랑이 1 vs 사자 1 — 호랑이 
 `r/index.html` and `en/r/index.html` are ordinary build entries (`vite.pages.ts`) with the shared header (`<!-- site-header -->`, no nav item marked) and footer. Their script `src/share/result-page.ts` imports the sharing core, the card and `src/pages/site.ts`; it never imports the simulator engine, the worker pool or the app (`tests/result-share.test.ts` walks the import graph, and the built chunk contains no worker reference).
 
 - Head: `noindex` (also `X-Robots-Tag` from `_headers`), canonical to `/r/` or `/en/r/` without the query, a static `og:image` (`/og-result-ko.png`, `/og-result-en.png`, rendered by `brand/render.mjs` from `brand/src/og-result.html`). Not in `INDEXABLE_ROUTES`, so absent from the sitemap and llms.txt.
-- Body: winner and win % as the `<h1>`, outcome tier, ± points vs the default matchup, matchup line, a win bar (CSSOM widths, no inline style attributes), the three rates with CIs, the optional means, the snapshot note, **Run it yourself**, **Try your own** (`/` or `/en/`), the card picker and buttons **Save image**, **Share**, **Copy link**, **Share as text**.
+- Body: winner and win % as the `<h1>`, outcome tier, ± points vs the default matchup, matchup line, a win bar (CSSOM widths, no inline style attributes), the three rates with CIs, the optional means, the snapshot note, **Run it yourself**, **Try your own** (`/play/` or `/en/play/`), the card picker and buttons **Save image**, **Share**, **Copy link**, **Share as text**.
 - The language link in the header keeps the query (`/r/?r=…` ↔ `/en/r/?r=…`).
 - Mobile first: no horizontal overflow at 320 px (checked with Playwright at 320, 390 and 1280 px).
 

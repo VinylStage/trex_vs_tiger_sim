@@ -29,7 +29,7 @@
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Header button       | **튜토리얼** / **Tutorial**, next to the language switch. Always available.                                                                                   |
 | First-visit offer   | A small banner under the header with **Start the tour** and **No thanks**. Shown only until the visitor decides; see [below](#first-visit-offer-and-storage). |
-| Deep link `?tour=1` | Opens the tour right after the page loads (`/?tour=1`, `/en/?tour=1`); see [Deep link](#deep-link).                                                           |
+| Deep link `?tour=1` | Opens the tour right after the page loads (`/play/?tour=1`, `/en/play/?tour=1`); see [Deep link](#deep-link).                                                 |
 | Intro link          | **1분 튜토리얼 시작** in the static intro under the simulator; starts the tour in place.                                                                      |
 
 ## Steps
@@ -138,13 +138,14 @@ The `run` step offers **Run a quick demo (100 runs)** (`DEMO_RUNS` in `tour-mode
 
 ## Deep link
 
-Append **`?tour=1`** to the page URL, for example `https://trex-vs-tiger.vinylims.com/?tour=1`. Any value except `0` works (`?tour` too).
+Append **`?tour=1`** to the play page URL, for example `https://trex-vs-tiger.vinylims.com/play/?tour=1`. Any value except `0` works (`?tour` too).
 
-- The query parameter is used instead of a hash parameter because the URL fragment already carries the shared scenario (`#s=…`, see [ADR-0003](adr/0003-no-backend-url-sharing.md)). Both can be combined: `/?tour=1#s=…`.
+- The query parameter is used instead of a hash parameter because the URL fragment already carries the shared scenario (`#s=…`, see [ADR-0003](adr/0003-no-backend-url-sharing.md)). Both can be combined: `/play/?tour=1#s=…`.
 - On load the parameter is removed with `history.replaceState`, so reloading or copying the link afterwards does not restart the tour. Other query parameters and the fragment are kept.
-- The deep link is not a separate page for search engines: the canonical of `/?tour=1` is `/` (and `/en/` for `/en/?tour=1`), generated at build time ([SEO.md](SEO.md#head-tags)), and the sitemap lists only `/` and `/en/`.
-- The Korean guide links to `/?tour=1`, the English guide to `/en/?tour=1`. The tour runs in the language of the URL (`/` Korean, `/en/` English); nothing about the language is stored.
-- The static intro under the simulator (`index.html`, `en/index.html`) has a **1분 튜토리얼 시작 / Take the one-minute tour** link (`a[data-tour-start]`, `href` = the deep link). With JavaScript the app intercepts a plain click and starts the tour in place, without reloading; modified clicks (new tab) and no-JS visits follow the deep link.
+- The deep link is not a page for search engines: the play page is `noindex` and not in the sitemap ([SEO.md](SEO.md#urls-and-languages)).
+- Links made before #142 point at `/?tour=1` and `/en/?tour=1` (or a bare `/?tour`). The lobby forwards any `tour` parameter, with or without a value, to the play page with the query kept ([SHARING.md](SHARING.md#link-routing)).
+- The Korean guide links to `/play/?tour=1`, the English guide to `/en/play/?tour=1`. The tour runs in the language of the URL (`/play/` Korean, `/en/play/` English); nothing about the language is stored.
+- The intro on the lobby (`index.html`, `en/index.html`) has a **1분 튜토리얼 시작 / Take the one-minute tour** link to the same deep link. The lobby does not run the app, so the link opens the play page, and the tour starts there.
 
 ## CSP notes
 

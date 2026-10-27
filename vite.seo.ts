@@ -3,10 +3,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import { isAbsolute, join } from 'node:path';
 import type { Plugin } from 'vite';
 import { expandPatchNotes } from './src/pages/patch-notes-page.ts';
-import { notFoundLang, parsePagePath, type PageId } from './src/pages/routes.ts';
+import { notFoundLang, parsePagePath, playPageLang, type PageId } from './src/pages/routes.ts';
 import { headerRouteOf } from './src/pages/site-header.ts';
 import { extractPageFacts } from './src/seo/extract.ts';
-import { injectHead } from './src/seo/head.ts';
+import { injectHead, injectPlayHead } from './src/seo/head.ts';
 import { llmsFullTxt, llmsTxt, type LlmsPage } from './src/seo/llms.ts';
 import { robotsTxt } from './src/seo/robots.ts';
 import { INDEXABLE_ROUTES, pageSource } from './src/seo/site.ts';
@@ -182,8 +182,12 @@ export function seo({ root, version, deepen }: SeoOptions): Plugin {
     transformIndexHtml: {
       order: 'post',
       handler(html, ctx) {
+        if (!/(^|\/)index\.html$|\/$/.test(ctx.path)) return html;
+        // The play page is noindex: social tags only, so shared links still show a card.
+        const play = playPageLang(ctx.path);
+        if (play) return injectPlayHead(html, play, extractPageFacts(html));
         const route = parsePagePath(ctx.path);
-        if (!route || !/(^|\/)index\.html$|\/$/.test(ctx.path)) return html;
+        if (!route) return html;
         return injectHead(html, {
           page: route.page,
           lang: route.lang,

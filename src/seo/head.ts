@@ -3,6 +3,7 @@ import {
   SITE_ORIGIN,
   canonicalUrl,
   pagePath,
+  playPagePath,
   type PageId,
 } from '../pages/routes.ts';
 import { DICTIONARIES } from '../i18n/dictionaries.ts';
@@ -171,6 +172,43 @@ export function jsonForScript(value: unknown): string {
 const meta = (attr: 'name' | 'property', key: string, content: string | number): string =>
   `<meta ${attr}="${key}" content="${escapeHtml(String(content))}" />`;
 
+/** What the Open Graph and Twitter tags of a page say. */
+export interface SocialInput {
+  lang: Lang;
+  /** Absolute URL of the page (`og:url`). */
+  url: string;
+  type: 'website' | 'article';
+  title: string;
+  description: string;
+}
+
+/**
+ * Open Graph and Twitter card tags, one per line: what a chat app or social site shows when a
+ * link to the page is shared (the language's 1200×630 card as the image).
+ */
+export function socialTags({ lang, url, type, title, description }: SocialInput): string[] {
+  const image = OG_IMAGE[lang];
+  return [
+    meta('property', 'og:type', type),
+    meta('property', 'og:site_name', SITE_NAME[lang]),
+    meta('property', 'og:locale', OG_LOCALE[lang]),
+    ...otherLangs(lang).map((l) => meta('property', 'og:locale:alternate', OG_LOCALE[l])),
+    meta('property', 'og:url', url),
+    meta('property', 'og:title', title),
+    meta('property', 'og:description', description),
+    meta('property', 'og:image', image.url),
+    meta('property', 'og:image:type', image.type),
+    meta('property', 'og:image:width', image.width),
+    meta('property', 'og:image:height', image.height),
+    meta('property', 'og:image:alt', image.alt),
+    meta('name', 'twitter:card', 'summary_large_image'),
+    meta('name', 'twitter:title', title),
+    meta('name', 'twitter:description', description),
+    meta('name', 'twitter:image', image.url),
+    meta('name', 'twitter:image:alt', image.alt),
+  ];
+}
+
 /**
  * The generated head tags of an indexable page, one per line: canonical, hreflang alternates,
  * Open Graph, Twitter card, webmaster verification (home page only) and the JSON-LD block.
@@ -178,29 +216,18 @@ const meta = (attr: 'name' | 'property', key: string, content: string | number):
 export function headTags(input: HeadInput): string[] {
   const { page, lang, facts } = input;
   const url = canonicalUrl(page, lang);
-  const image = OG_IMAGE[lang];
   const lines = [
     `<link rel="canonical" href="${url}" />`,
     ...alternates(page).map(
       (a) => `<link rel="alternate" hreflang="${a.hreflang}" href="${a.href}" />`,
     ),
-    meta('property', 'og:type', page === 'simulator' ? 'website' : 'article'),
-    meta('property', 'og:site_name', SITE_NAME[lang]),
-    meta('property', 'og:locale', OG_LOCALE[lang]),
-    ...otherLangs(lang).map((l) => meta('property', 'og:locale:alternate', OG_LOCALE[l])),
-    meta('property', 'og:url', url),
-    meta('property', 'og:title', facts.title),
-    meta('property', 'og:description', facts.description),
-    meta('property', 'og:image', image.url),
-    meta('property', 'og:image:type', image.type),
-    meta('property', 'og:image:width', image.width),
-    meta('property', 'og:image:height', image.height),
-    meta('property', 'og:image:alt', image.alt),
-    meta('name', 'twitter:card', 'summary_large_image'),
-    meta('name', 'twitter:title', facts.title),
-    meta('name', 'twitter:description', facts.description),
-    meta('name', 'twitter:image', image.url),
-    meta('name', 'twitter:image:alt', image.alt),
+    ...socialTags({
+      lang,
+      url,
+      type: page === 'simulator' ? 'website' : 'article',
+      title: facts.title,
+      description: facts.description,
+    }),
   ];
   if (pagePath(page, lang) === '/') {
     for (const [name, value] of Object.entries(SITE_VERIFICATION)) {
@@ -220,6 +247,27 @@ export function injectHead(html: string, input: HeadInput): string {
   if (!m) throw new Error(`${pagePath(input.page, input.lang)}: no </title>`);
   const at = m.index + m[0].length;
   const block = headTags(input)
+    .map((l) => `\n    ${l}`)
+    .join('');
+  return html.slice(0, at) + block + html.slice(at);
+}
+
+/**
+ * The play page (`/play/`, `/en/play/`) with its social tags inserted after `</title>`. Settings
+ * links and "Run it yourself" links point at it, so a shared link shows the language's card. It
+ * is `noindex`, so it gets no canonical, hreflang or JSON-LD (docs/SEO.md#urls-and-languages).
+ */
+export function injectPlayHead(html: string, lang: Lang, facts: PageFacts): string {
+  const m = TITLE_END.exec(html);
+  if (!m) throw new Error(`${playPagePath(lang)}: no </title>`);
+  const at = m.index + m[0].length;
+  const block = socialTags({
+    lang,
+    url: `${SITE_ORIGIN}${playPagePath(lang)}`,
+    type: 'website',
+    title: facts.title,
+    description: facts.description,
+  })
     .map((l) => `\n    ${l}`)
     .join('');
   return html.slice(0, at) + block + html.slice(at);

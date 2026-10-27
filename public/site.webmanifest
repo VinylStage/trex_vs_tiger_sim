@@ -3,7 +3,7 @@
   "short_name": "티렉스대호랑이",
   "description": "몬테카를로 에이전트 기반 시뮬레이터: 열린 들판의 티라노사우루스 대 호랑이, 모든 계산은 브라우저에서 이루어집니다.",
   "lang": "ko",
-  "start_url": "/",
+  "start_url": "/play/",
   "display": "standalone",
   "background_color": "#f7f6f3",
   "theme_color": "#f7f6f3",

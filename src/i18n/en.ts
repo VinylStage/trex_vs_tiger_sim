@@ -341,6 +341,12 @@ export const en: Dictionary = {
   'footer.local': 'Simulations run in your browser.',
   'footer.copyright': '© 2026 VinylStage · Open source under the MIT License',
 
+  'lobby.lead':
+    'Pick the species and how many of each, press Run, and your browser plays the battle hundreds of times to show win chances and a replay.',
+  'lobby.play': 'Start the simulator',
+  'lobby.note': 'Free · nothing to install · everything runs in your browser',
+  'play.documentTitle': 'Run the simulator – T-Rex vs Tiger',
+
   'intro.title': 'What is the T-Rex vs Tiger Simulator?',
   'intro.lead':
     'What happens if N Tyrannosaurus rex meet M tigers on an open field? This free educational tool uses that question to let you try the Monte Carlo method yourself, and it also offers match-ups observed in the wild, such as elephants and lions or brown bears and wolves. Instead of a single fight, it repeats the battle hundreds of times with uncertain, literature-based traits and shows the win probabilities together with their uncertainty.',
@@ -368,7 +374,7 @@ export const en: Dictionary = {
     'No. Tyrannosaurus rex lived at the end of the Cretaceous, about 68 to 66 million years ago, and tigers appeared much later. The match-up is a hypothetical scenario for learning the method.',
   'faq.q2': 'So who wins?',
   'faq.a2':
-    'There is no fixed answer. The win probability depends strongly on assumptions such as head counts, morale, tactics and trait ranges. Preliminary results for the default assumptions, and how to read them, are on the model page, and you can check them yourself with the simulator above.',
+    'There is no fixed answer. The win probability depends strongly on assumptions such as head counts, morale, tactics and trait ranges. Preliminary results for the default assumptions, and how to read them, are on the model page, and you can check them yourself by opening the simulator.',
   'faq.q3': 'What is a Monte Carlo simulation?',
   'faq.a3':
     'It repeats the same experiment many times with uncertain values drawn at random and estimates the answer from the spread of the results. The more runs, the narrower the confidence interval of the win probability.',
