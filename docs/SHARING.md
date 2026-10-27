@@ -29,6 +29,26 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 - **Settings link** `#s=` with payload **v3** and the mode marker `m: "free"`, e.g. `{"v":3,"m":"free","a":{"sp":"tiger","n":5},"b":{"sp":"lion","n":5},"runs":1000}`. Per side `sp` species and `n` count, then `p`/`bf` edited trait and pack-buff ranges, `buff` switches turned off and `g` edited global constants, diffed against the species presets and the free defaults. A v3 link opens the simulator in free mode; every other link opens classic, and v1/v2 payloads decode exactly as before (the goldens guard them).
 - **Settings code** `TVT3-<v3 payload>`. Pasting one (or a v3 link) into the classic import field switches to free mode and applies it; free mode has a "Copy settings code" button. `TVT2-` stays the classic code.
 - **Result links** (`/r/`) of free results use result format **v2** with the v3 config; the result page, the card, the text share and the link preview handle both ([Free result links](#free-result-links)).
+- **Model version** `mv`, absent while it is 1 ([Model version](#model-version-mv)).
+
+### Model version (`mv`)
+
+[ADR-0008](adr/0008-live-interventions-and-model-version.md): a free link reproduces its results under the model version it names. `FREE_MODEL_VERSION` in `src/sim/free/config.ts` is the newest version this build runs (1 today), and `FreeConfig.mv` is the version a config runs under.
+
+- **Absent means 1.** Every v3 link, `TVT3-` code and free result link made before `mv` existed decodes as model 1, and so does any other input without `mv` (`sanitizeFreeConfig`, the golden fixtures).
+- **The encoder omits `mv` while it is 1** and writes any other version right after `m`: `{"v":3,"m":"free","mv":2,"a":…}`. Writing `mv: 1` into every link was the alternative; it was rejected because it would change the bytes of every free link from now on. With the omission, a model 1 link made today is byte for byte the link the earlier encoder made, and every existing test and golden is unchanged.
+- **A version this build does not run** is never read under this build's model. It is either a newer model, an integer above `FREE_MODEL_VERSION` (`freeModelNewer`), met in an older cached page built from #124 on, or a malformed value (0, -1, 1.5, the string `"1"`, `null`) that no build will ever run:
+  - a settings link or `TVT3-` code opens free mode at the free defaults, without any of the payload's values (`freeConfigFromObject`); it never falls through to the classic decoder;
+  - for a newer model only, the simulator keeps the link in the address as it came (`freeHashModelNewer`), whether the page opened with it or it arrived through `hashchange`, and shows a note under the mode switch (`free.newerModel`): the link was made with a newer model, and reloading opens it. **Copy settings link** copies that address. The first edit (a change in the free form, or a switch to classic) hides the note and writes the shown settings to the address as usual. A malformed `mv` gets no note: the address is rewritten to the defaults, as for any malformed payload;
+  - a newer model's `TVT3-` code or link pasted into the import field is refused (`freeInputModelNewer`): nothing is applied, the current settings and address stay, and the field shows `xfer.err.newerModel` (the code was made with a newer model; reload the page, then paste it again). A pasted code with a malformed `mv` applies the defaults, like any malformed value;
+  - a **Run it yourself** fragment (`#s=…&chk=…`) of such a link opens the same way, and its `chk=` snapshot is dropped (`freeCheckFromHash`), so free mode shows no reproduction check and never compares that snapshot with a run of this build's model;
+  - a free result link is a `version` error with no config, so the page shows the invalid-link message and **Try your own** but not **Run it yourself**, and the link preview keeps the static text.
+
+  Reloading loads the current build, which knows a newer version, and the kept address opens the link there.
+
+- **Builds up to v0.2.16 have no `mv` check.** They ignore the key, so a page cached from one of them opens a newer settings link with all its values under model 1, decodes a newer free result link as valid and offers **Run it yourself** for it. Pages already in a cache cannot be changed; the rules above hold for builds from #124 on.
+
+- `freeModelVersion(raw)` in `src/ui/share-free.ts` reads `mv` from a payload; `tests/free-model-version.test.ts` holds payloads written by the encoder before `mv` existed and checks that they decode as model 1 and re-encode byte for byte.
 
 ## Result links
 
@@ -55,7 +75,7 @@ In the simulator, **Share result** appears under the verdict after a run: Web Sh
 
 ### Free result links
 
-A free result ([design §2.5](design/FREE-MATCHUPS.md#25-settings-codes-and-result-links-51)) uses `/r/?r=<base64url(JSON { v: 2, c: { v: 3, m: "free", … }, s })>` (`src/share/free-result-codec.ts`). `c` is the same payload as a free `#s=` link. Version 1 links never reach the new code: a payload whose `c` is not a free payload goes to the unchanged `decodeResult`, so classic links decode, validate and render exactly as before. A free `c` under `v: 1` is a `version` error (the page still offers **Run it yourself**).
+A free result ([design §2.5](design/FREE-MATCHUPS.md#25-settings-codes-and-result-links-51)) uses `/r/?r=<base64url(JSON { v: 2, c: { v: 3, m: "free", … }, s })>` (`src/share/free-result-codec.ts`). `c` is the same payload as a free `#s=` link, `mv` included; a `c` of a model version this build does not run is a `version` error without a config ([Model version](#model-version-mv)). Version 1 links never reach the new code: a payload whose `c` is not a free payload goes to the unchanged `decodeResult`, so classic links decode, validate and render exactly as before. A free `c` under `v: 1` is a `version` error (the page still offers **Run it yourself**).
 
 | Key        | Meaning                                                                                          | Check                                 |
 | ---------- | ------------------------------------------------------------------------------------------------ | ------------------------------------- |

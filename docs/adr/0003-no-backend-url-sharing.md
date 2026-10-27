@@ -1,6 +1,6 @@
 # ADR-0003: No backend; share scenarios via URL fragment
 
-- Status: Accepted, amended by [ADR-0006](0006-pages-function-share-previews.md) (result links)
+- Status: Accepted, amended by [ADR-0006](0006-pages-function-share-previews.md) (result links) and [ADR-0008](0008-live-interventions-and-model-version.md) (identical results per model version)
 - Date: 2026-10-19
 - Issue: #4
 

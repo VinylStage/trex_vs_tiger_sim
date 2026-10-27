@@ -27,6 +27,8 @@ export const shareKo = {
   'xfer.err.shape': '설정 형식이 아닙니다.',
   'xfer.err.noPayload': '이 링크에는 설정(#s=…)이 없습니다.',
   'xfer.err.app': '이 시뮬레이터에서 내보낸 설정 파일이 아닙니다.',
+  'xfer.err.newerModel':
+    '이 코드는 더 새로운 모델 버전으로 만들어져 이 페이지에서 열 수 없습니다. 페이지를 새로 고쳐 최신 버전을 받은 뒤 다시 붙여 넣으세요.',
   'xfer.err.file': '파일을 읽지 못했습니다.',
 
   'copy.fallbackTitle': '아래 텍스트를 직접 복사하세요',

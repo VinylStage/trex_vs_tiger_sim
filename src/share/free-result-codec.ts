@@ -7,6 +7,8 @@ import { base64UrlDecode, base64UrlEncode } from '../ui/share.ts';
 import {
   freeConfigDiff,
   freeConfigFromObject,
+  freeModelVersion,
+  freePayloadFromHash,
   hashFromFreeConfig,
   isFreePayload,
 } from '../ui/share-free.ts';
@@ -22,7 +24,8 @@ import {
 /*
  * Result links of free matchups (docs/SHARING.md#free-result-links, design §2.5):
  * `/r/?r=<base64url(JSON {v: 2, c, s})>` where `c` is the v3 config payload (`m: "free"`) and `s`
- * a per-side snapshot. Version 1 links (classic, src/share/result-codec.ts) are untouched: they
+ * a per-side snapshot; `c` names its model version `mv` like a settings link (absent means 1,
+ * ADR-0008). Version 1 links (classic, src/share/result-codec.ts) are untouched: they
  * are decoded by the very same `decodeResult`, so they stay bit-compatible. Pure and DOM-free;
  * it imports the config schema, never the simulator (tests/result-share.test.ts guards that).
  */
@@ -167,8 +170,8 @@ export type AnyDecodedResult =
 
 /**
  * Decode and validate an `r` value of either version. A `c` holding a free (v3) payload goes the
- * free way and needs `v: 2`; everything else is handed to the classic `decodeResult` unchanged,
- * so classic (v1) links decode exactly as before.
+ * free way and needs `v: 2` and a model version this build runs; everything else is handed to the
+ * classic `decodeResult` unchanged, so classic (v1) links decode exactly as before.
  */
 export function decodeAnyResult(r: string | null): AnyDecodedResult {
   const classic = (): AnyDecodedResult => {
@@ -186,6 +189,8 @@ export function decodeAnyResult(r: string | null): AnyDecodedResult {
   if (!isPlainObject(parsed)) return classic();
   const c = parsed['c'];
   if (!isFreePayload(c)) return classic();
+  // A snapshot of a model this build does not run can be neither shown nor rerun as its own.
+  if (freeModelVersion(c) === null) return { ok: false, error: 'version', config: null };
   const config = freeConfigFromObject(c);
   if (parsed['v'] !== FREE_RESULT_VERSION) return { ok: false, error: 'version', config };
   const summary = validateFreeSummary(parsed['s'], config);
@@ -204,8 +209,14 @@ export function reproduceFreeHash(config: FreeConfig, summary: FreeResultSummary
   return `${hashFromFreeConfig(config)}&${CHECK_KEY}=${base64UrlEncode(JSON.stringify(summary))}`;
 }
 
-/** The shared free summary in a simulator fragment (`chk=`), validated against `config`. */
+/**
+ * The shared free summary in a simulator fragment (`chk=`), validated against `config`. Null when
+ * `s=` names a model version this build does not run: that snapshot was made under another model,
+ * so a run here neither reproduces nor contradicts it (ADR-0008).
+ */
 export function freeCheckFromHash(hash: string, config: FreeConfig): FreeResultSummary | null {
+  const raw = freePayloadFromHash(hash);
+  if (raw !== null && freeModelVersion(raw) === null) return null;
   const h = hash.startsWith('#') ? hash.slice(1) : hash;
   for (const part of h.split('&')) {
     if (!part.startsWith(`${CHECK_KEY}=`)) continue;

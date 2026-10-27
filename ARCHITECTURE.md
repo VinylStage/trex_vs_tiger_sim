@@ -138,17 +138,17 @@ Rule: `src/sim` has no DOM access, so it can be unit-tested in Node and run insi
 
 Testing rule (#61): every module with branching logic has a test that imports it. These modules are intentional **DOM shells**: they wire the DOM, events and timers around logic that lives in a tested module (in brackets), and are checked with Playwright instead of unit tests:
 
-| DOM shell                                                    | Tested logic                                                                                        |
-| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| `src/ui/app.ts`                                              | `app-model.ts`, `chunks.ts`, `cost.ts`, `verdict.ts`, `share.ts`, the charts' table and hit helpers |
-| `src/ui/free-mode.ts`                                        | `src/sim/free/*`, `share-free.ts`                                                                   |
-| `src/ui/replay.ts`, `replay/legend.ts`, `replay/strip.ts`    | `replay/prepare.ts`, `world.ts`, `camera.ts`, `timeline.ts`, `effects.ts`, `glyphs.ts`              |
-| `src/ui/tour.ts`, `tour-offer.ts`                            | `tour-model.ts`                                                                                     |
-| `src/ui/version.ts`                                          | `version-model.ts`                                                                                  |
-| `src/ui/config-transfer.ts`                                  | `src/share/config-code.ts`                                                                          |
-| `src/share/result-page.ts`                                   | `result-codec.ts`, `result-text.ts`                                                                 |
-| `src/ui/dom.ts`, `src/ui/announce.ts`                        | (element factory and live region; no decisions)                                                     |
-| `src/main*.ts`, `src/share/result-page-*.ts`, `src/reset.ts` | (entries: register the words, start the page)                                                       |
+| DOM shell                                                    | Tested logic                                                                                                         |
+| ------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| `src/ui/app.ts`                                              | `app-model.ts`, `chunks.ts`, `cost.ts`, `verdict.ts`, `share.ts`, `share-free.ts`, the charts' table and hit helpers |
+| `src/ui/free-mode.ts`                                        | `src/sim/free/*`, `share-free.ts`                                                                                    |
+| `src/ui/replay.ts`, `replay/legend.ts`, `replay/strip.ts`    | `replay/prepare.ts`, `world.ts`, `camera.ts`, `timeline.ts`, `effects.ts`, `glyphs.ts`                               |
+| `src/ui/tour.ts`, `tour-offer.ts`                            | `tour-model.ts`                                                                                                      |
+| `src/ui/version.ts`                                          | `version-model.ts`                                                                                                   |
+| `src/ui/config-transfer.ts`                                  | `src/share/config-code.ts`                                                                                           |
+| `src/share/result-page.ts`                                   | `result-codec.ts`, `result-text.ts`                                                                                  |
+| `src/ui/dom.ts`, `src/ui/announce.ts`                        | (element factory and live region; no decisions)                                                                      |
+| `src/main*.ts`, `src/share/result-page-*.ts`, `src/reset.ts` | (entries: register the words, start the page)                                                                        |
 
 ### Entry points (multi-page build)
 
@@ -203,6 +203,7 @@ sequenceDiagram
 - Sampling design (LHS permutation matrix) is generated from `S` and rebuilt identically in every worker; run `i` uses row `i`.
 - Battle `i` uses PRNG seeded with `splitmix32(S ⊕ hash(i))`.
 - Therefore results are identical for a given URL regardless of the number of workers or chunk boundaries.
+- Free-model links also name the model version they run under (`mv`, absent means 1), so a link's results are identical per model version ([ADR-0008](docs/adr/0008-live-interventions-and-model-version.md), [SHARING.md](docs/SHARING.md#model-version-mv)).
 
 ## 4. Simulation model (summary)
 
