@@ -1,6 +1,6 @@
 # ADR-0008: Live interventions and model version
 
-- Status: Accepted, except §6 (Proposed, pending owner confirmation). The owner accepted the 1.0 renewal design and its decisions on 2026-10-26 ([RENEWAL-1.0.md §12](../design/RENEWAL-1.0.md#12-owner-decisions)). The compatibility rule in §6 (a page meeting a link of a model version it does not run) was added during implementation (#124) and is not part of that decision record. Until the owner confirms it, §6 can still change in this file; once confirmed, the status becomes Accepted and §6 is immutable like the rest.
+- Status: Accepted. The owner accepted the 1.0 renewal design and its decisions on 2026-10-26 ([RENEWAL-1.0.md §12](../design/RENEWAL-1.0.md#12-owner-decisions)) and confirmed the compatibility rule in §6 (a page meeting a link of a model version it does not run), added during implementation (#124), on 2026-10-27 in the owner's session.
 - Date: 2026-10-26
 - Issue: #124
 - Design: [docs/design/RENEWAL-1.0.md §10.1–§10.4](../design/RENEWAL-1.0.md#10-technical-plan)
@@ -26,7 +26,7 @@ A v3 link (`#s=` with `m: "free"`) carries no model version. After any such chan
    - A constant-only retune keeps a constants table per `mv`, so old links run with their own constants.
    - The variable-card catalogue is keyed by `mv` (`CARDS_BY_MV`). The intervention log stores card codes, not raw effects. Card codes are append-only indices. Retuning a card is a new `mv` with the old catalogue kept.
    - A structural change that cannot keep the old behaviour opens old links with a "made with model vN" note. Links that carry a summary are also flagged by the existing `chk=` check.
-6. **A page built from this ADR on that does not know a link's `mv`** (a newer link opened in an older, cached page) never presents that link under its own model. Proposed, pending owner confirmation (see Status).
+6. **A page built from this ADR on that does not know a link's `mv`** (a newer link opened in an older, cached page) never presents that link under its own model.
    - A free result link is rejected as a `version` error, without **Run it yourself**.
    - A settings link opens the free model at its defaults; the link's settings are not applied. Values defined under an unknown model cannot be read safely, so the existing rule for settings payloads (malformed input yields the defaults) applies to the whole payload.
    - Only an integer `mv` above the newest version the build runs is a newer model. For such a link the simulator keeps the address until the user edits something, and a note says that the link was made with a newer model and that reloading opens it. Reloading loads the current build, which knows the version, and the kept address opens the link there.
