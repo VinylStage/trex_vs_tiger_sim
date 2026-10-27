@@ -199,6 +199,13 @@ const FIXTURES: readonly Fixture[] = [
     check: false,
   },
   {
+    name: 'tour parameter turned off (?tour=0): forwarded, classic defaults, no tour (#146 review)',
+    tail: '?tour=0',
+    mode: 'classic',
+    config: defaultConfig(),
+    check: false,
+  },
+  {
     name: 'malformed settings payload (opens the defaults, as before)',
     tail: '#s=%%',
     mode: 'classic',
@@ -320,16 +327,7 @@ describe('routeLink', () => {
 
 describe('Simple mode on the play page (#146)', () => {
   /** Query and fragment of a play page with nothing to open. */
-  const COLD = [
-    '',
-    '#',
-    '#main',
-    '#faq',
-    '?_r=1730000000000',
-    '?utm_source=x',
-    '?tour=0',
-    '?tourist=1',
-  ];
+  const COLD = ['', '#', '#main', '#faq', '?_r=1730000000000', '?utm_source=x', '?tourist=1'];
 
   it.each(COLD)('a cold /play/%s opens Simple at the default preset', (tail) => {
     const u = new URL(`${ORIGIN}/play/${tail}`);
@@ -363,7 +361,7 @@ describe('Simple mode on the play page (#146)', () => {
   });
 
   it('opens the tour deep link without a fragment in classic, as before', () => {
-    for (const q of ['?tour=1', '?tour', '?a=1&tour']) {
+    for (const q of ['?tour=1', '?tour', '?a=1&tour', '?tour=0']) {
       expect(routeLink('', q)).toEqual({ mode: 'classic', config: defaultConfig(), check: null });
     }
   });

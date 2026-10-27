@@ -1,5 +1,6 @@
 import { LIMITS } from '../sim/config';
-import { sanitizeFreeConfig, type FreeConfig } from '../sim/free/config';
+import { hashHasAppState } from '../pages/routes';
+import { defaultFreeConfig, sanitizeFreeConfig, type FreeConfig } from '../sim/free/config';
 import {
   FREE_PRESETS,
   PRESET_LIMITS,
@@ -54,13 +55,32 @@ export function matchingPreset(c: FreeConfig): FreePreset | undefined {
  * budget lowers the run count as for any free config.
  */
 export function simpleRunConfig(c: FreeConfig, seed: number): FreeConfig {
-  const runs = matchingPreset(c)?.runs;
   return sanitizeFreeConfig({
     sides: c.sides.map((s) => ({ species: s.species, count: s.count })),
     seed,
-    ...(runs === undefined ? {} : { runs }),
+    runs: simpleRuns(c),
   });
 }
+
+/** The run count Simple asks for: the matching preset's, else the default (before the budget). */
+export const simpleRuns = (c: FreeConfig): number =>
+  matchingPreset(c)?.runs ?? defaultFreeConfig().runs;
+
+/**
+ * The config with the run count the user asked for, lowered by the work budget only as far as
+ * these counts need. The sanitizer clamps `runs` to the budget of the counts it sees, so a config
+ * that once held large counts keeps the lowered count; Simple edits re-apply the requested count
+ * instead, so shrinking the counts gives the full run count back (#146 review).
+ */
+export const withRequestedRuns = (c: FreeConfig, runs: number): FreeConfig =>
+  sanitizeFreeConfig({ ...c, runs });
+
+/**
+ * Whether a cold Simple page leaves its address alone (#146): before the first Run or settings
+ * link, as long as the fragment holds no app state (`''`, `#`, a plain anchor such as `#main`).
+ */
+export const simpleKeepsAddress = (hash: string, linked: boolean): boolean =>
+  !linked && !hashHasAppState(hash);
 
 /**
  * Whether the config holds settings Simple does not show and would not run (edits made under

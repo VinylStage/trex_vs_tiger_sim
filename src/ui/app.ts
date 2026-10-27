@@ -46,6 +46,7 @@ import {
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import type { ReplayView } from './replay';
 import { routeLink } from './link-route';
+import { simpleKeepsAddress } from './simple-model';
 import { configFromHash, hashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
@@ -618,7 +619,7 @@ export function startApp(root: HTMLElement): void {
 
   function writeUrl(): void {
     if (keepNewerLink) return;
-    if (view === 'simple' && !simpleLinked && !location.hash) return;
+    if (view === 'simple' && simpleKeepsAddress(location.hash, simpleLinked)) return;
     const hash = mode === 'free' ? hashFromFreeConfig(free.getConfig()) : hashFromConfig(config);
     if (hash === location.hash) return;
     history.replaceState(history.state, '', hash || `${location.pathname}${location.search}`);

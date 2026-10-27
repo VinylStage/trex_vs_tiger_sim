@@ -2,11 +2,10 @@ import { checkFromHash, type ResultSummary } from '../share/result-codec';
 import { freeCheckFromHash, type FreeResultSummary } from '../share/free-result-codec';
 import { defaultConfig, type ScenarioConfig } from '../sim/config';
 import type { FreeConfig } from '../sim/free/config';
-import { hashHasAppState } from '../pages/routes';
+import { hasTourParam, hashHasAppState } from '../pages/routes';
 import { configFromHash } from './share';
 import { freeConfigFromHash, freeHashModelNewer } from './share-free';
 import { defaultSimpleConfig } from './simple-model';
-import { tourRequested } from './tour-model';
 
 /*
  * Link routing (docs/SHARING.md#link-routing): what a simulator fragment opens. The app reads its
@@ -33,13 +32,13 @@ export type LinkRoute =
 
 /**
  * Route a location hash and query. A cold page (a fragment without app state, `hashHasAppState`,
- * and no tour deep link, `tourRequested`) opens Simple mode. Otherwise a v3 payload
+ * and no `tour` parameter, `hasTourParam`) opens Simple mode. Otherwise a v3 payload
  * (`m: "free"`) opens free mode, and anything else (v1 and v2 payloads, a bare `#chk=`, a
  * malformed payload, a settings code in the fragment, the tour deep link without a fragment)
  * opens classic, with the defaults where the fragment holds no config.
  */
 export function routeLink(hash: string, search: string): LinkRoute {
-  if (!hashHasAppState(hash) && !tourRequested(search)) {
+  if (!hashHasAppState(hash) && !hasTourParam(search)) {
     return { mode: 'simple', config: defaultSimpleConfig(), check: null };
   }
   const free = freeConfigFromHash(hash);

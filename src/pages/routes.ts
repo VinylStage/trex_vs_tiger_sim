@@ -129,6 +129,13 @@ export const playPagePath = (lang: Lang): string => (lang === 'en' ? '/en/play/'
 export const hashHasAppState = (hash: string): boolean => /=|^#tvt\d-/i.test(hash);
 
 /**
+ * Whether a query names the tour deep link's parameter at all (`?tour=1`, `?tour`, `?tour=0`,
+ * `?a=1&tour`; not `?tourist=`). The lobby forwards such a query, and the play page then never
+ * treats it as cold (#146), whether or not the value starts the tour (`tourRequested`).
+ */
+export const hasTourParam = (search: string): boolean => /[?&]tour(=|&|$)/.test(search);
+
+/**
  * Where the lobby (`/`, `/en/`) forwards a visit, or null to stay (docs/SHARING.md#link-routing).
  * Links made before the play page existed point at the lobby's path with the app's state in the
  * fragment (`#s=…`, `#s=…&chk=…`, `#chk=…`) or with the tour deep link (`?tour=1`). Any fragment
@@ -139,7 +146,7 @@ export const hashHasAppState = (hash: string): boolean => /=|^#tvt\d-/i.test(has
  * link pasted into an open lobby tab); tests/link-routing.test.ts runs both over the same links.
  */
 export function playForwardUrl(pathname: string, search: string, hash: string): string | null {
-  if (!hashHasAppState(hash) && !/[?&]tour(=|&|$)/.test(search)) return null;
+  if (!hashHasAppState(hash) && !hasTourParam(search)) return null;
   return `${playPagePath(/^\/en(\/|$)/.test(pathname) ? 'en' : 'ko')}${search}${hash}`;
 }
 

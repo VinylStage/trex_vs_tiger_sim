@@ -22,7 +22,10 @@ import {
   freshSeed,
   hasHiddenEdits,
   matchingPreset,
+  simpleKeepsAddress,
   simpleRunConfig,
+  simpleRuns,
+  withRequestedRuns,
 } from '../src/ui/simple-model';
 import { en } from '../src/i18n/en';
 import { ko } from '../src/i18n/ko';
@@ -155,6 +158,47 @@ describe('Simple mode words', () => {
     const banned = /학살|도륙|피|잔혹|죽|사망|massacre|gore|blood|kill|dead|death|die/i;
     for (const d of [ko, en] as Record<string, string>[]) {
       for (const k of keys(d)) expect(d[k], k).not.toMatch(banned);
+    }
+  });
+});
+
+describe('run count after the work budget lowered it (#146 review)', () => {
+  it('comes back when the counts shrink, with no false hidden-edits note', () => {
+    let c = defaultSimpleConfig();
+    c = withSideCount(withSideSpecies(c, 0, 'wolf'), 0, 5000);
+    c = withSideCount(withSideSpecies(c, 1, 'tiger'), 1, 500);
+    const requested = simpleRuns(c);
+    const ran = simpleRunConfig(c, 9);
+    expect(ran.runs).toBeLessThan(requested);
+    // The sanitizer alone keeps the lowered count when the counts shrink…
+    const shrunk = withSideCount(withSideCount(ran, 0, 1), 1, 1);
+    expect(shrunk.runs).toBe(ran.runs);
+    expect(hasHiddenEdits(shrunk)).toBe(true);
+    // …Simple edits re-apply the requested count instead.
+    const next = withRequestedRuns(shrunk, requested);
+    expect(next.runs).toBe(defaultFreeConfig().runs);
+    expect(hasHiddenEdits(next)).toBe(false);
+    expect(next.seed).toBe(9);
+  });
+
+  it('still lowers the requested count as far as large counts need', () => {
+    let c = defaultSimpleConfig();
+    c = withSideCount(withSideSpecies(c, 0, 'wolf'), 0, 5000);
+    c = withSideCount(withSideSpecies(c, 1, 'tiger'), 1, 500);
+    const r = withRequestedRuns(c, 500);
+    expect(r.runs).toBe(freeMaxRunsFor(r));
+  });
+});
+
+describe('cold address (#146 review)', () => {
+  it.each(['', '#', '#main', '#faq'])('a cold Simple page leaves %j alone until linked', (hash) => {
+    expect(simpleKeepsAddress(hash, false)).toBe(true);
+    expect(simpleKeepsAddress(hash, true)).toBe(false);
+  });
+
+  it('writes an address that already holds app state', () => {
+    for (const hash of ['#s=abc', '#chk=x', '#TVT3-abc']) {
+      expect(simpleKeepsAddress(hash, false)).toBe(false);
     }
   });
 });

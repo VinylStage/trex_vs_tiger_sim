@@ -19,7 +19,7 @@ import { CancelledError, type PoolProgress, type SimPool } from './pool';
 import type { FreeReplayView } from './free-replay';
 import { createFreeReproduceCheck, createFreeResultShare } from './result-share';
 import { createSimpleView } from './simple-mode';
-import { freshSeed, simpleRunConfig } from './simple-model';
+import { freshSeed, simpleRunConfig, simpleRuns, withRequestedRuns } from './simple-model';
 import { formatBound, formatShare } from './verdict';
 import {
   sideBuffState,
@@ -94,6 +94,9 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   const { pool } = opts;
   let cfg: FreeConfig = sanitizeFreeConfig(opts.initial);
   let view: FreeView = opts.view ?? 'full';
+  // The run count asked for (a link, the runs field, or Simple's default), before the work budget
+  // lowered it for large counts; Simple edits re-apply it (withRequestedRuns).
+  let requestedRuns = cfg.runs;
   let result: FreeResult | null = null;
   let running = false;
   let statusKey: { key: MsgKey; vars?: Record<string, string | number>; error?: boolean } | null =
@@ -153,7 +156,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   );
   const simple = createSimpleView({
     update: (c, focusKey) => {
-      cfg = c;
+      cfg = withRequestedRuns(c, requestedRuns);
       commit(undefined, focusKey);
     },
     run: () => void run(),
@@ -434,6 +437,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       const id = nextId(`free-${key}`);
       const input = numberInput(cfg[key], LIMITS[key], step, int, (n) => {
         cfg = withNumber(cfg, key, n);
+        if (key === 'runs') requestedRuns = n;
       });
       input.id = id;
       grid.append(field(t(label), help, input, id));
@@ -590,7 +594,10 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     if (running) return;
     // Simple mode: the shown species and counts, everything else at its defaults, and a fresh
     // seed for every Run (R3); the app writes it into the address (onRun).
-    if (view === 'simple') cfg = simpleRunConfig(cfg, freshSeed());
+    if (view === 'simple') {
+      requestedRuns = simpleRuns(cfg);
+      cfg = simpleRunConfig(cfg, freshSeed());
+    }
     const runCfg = sanitizeFreeConfig(structuredClone(cfg));
     if (view === 'simple' || runCfg.runs !== cfg.runs) {
       cfg = runCfg;
@@ -906,6 +913,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     getConfig: () => structuredClone(cfg),
     setConfig: (c) => {
       cfg = sanitizeFreeConfig(c);
+      requestedRuns = c.runs;
       buildView();
       updateStale();
     },
