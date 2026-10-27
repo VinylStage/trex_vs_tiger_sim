@@ -120,8 +120,21 @@ export const GLOBALS: readonly GlobalDef[] = [
   },
 ];
 
+/**
+ * Newest model version (`mv`, ADR-0008) of the free engine in this build. A change that alters
+ * any free result raises it, and every version from 1 up to it stays runnable, so a link
+ * reproduces under the version it names. Wherever `mv` is absent it means 1.
+ */
+export const FREE_MODEL_VERSION = 1;
+
+/** Whether `v` is a model version this build runs: an integer from 1 to FREE_MODEL_VERSION. */
+export const isFreeModelVersion = (v: unknown): v is number =>
+  typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= FREE_MODEL_VERSION;
+
 export interface FreeConfig {
   mode: 'free';
+  /** Model version the config runs under (ADR-0008). */
+  mv: number;
   sides: [SideConfig, SideConfig];
   packBuff: PackBuffSwitches;
   globals: Record<GlobalId, Triangular>;
@@ -167,6 +180,7 @@ export function defaultFreeConfig(): FreeConfig {
   const d = defaultConfig();
   return {
     mode: 'free',
+    mv: FREE_MODEL_VERSION,
     sides: [defaultSide(DEFAULT_FREE_SPECIES[0]), defaultSide(DEFAULT_FREE_SPECIES[1])],
     packBuff: defaultPackBuff(),
     globals: globalPresets(),
@@ -285,6 +299,8 @@ export function sanitizeFreeConfig(input: unknown): FreeConfig {
   );
   return {
     mode: 'free',
+    // Absent means 1 (ADR-0008), so inputs written before `mv` existed keep running model 1.
+    mv: isFreeModelVersion(o['mv']) ? o['mv'] : 1,
     sides,
     packBuff,
     globals,

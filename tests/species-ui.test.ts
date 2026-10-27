@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { defaultConfig } from '../src/sim/config';
+import { FREE_SPECIES_IDS } from '../src/sim/free/species';
 import { HEAVY_SPECIES, speciesRanges } from '../src/sim/species';
 import { GLYPH, heavyLengthForRadius, heavyLengthPx } from '../src/ui/replay/glyphs';
 import {
@@ -17,6 +18,8 @@ import {
   paramLabel,
   setNamePair,
   speciesCounter,
+  speciesName,
+  speciesShort,
   speciesVars,
   t,
   teamLabel,
@@ -104,6 +107,19 @@ describe('species names in messages', () => {
     expect(speciesCounter('homoErectus')).toBe('');
     expect(t('stat.ofN', { n: '1', counter: speciesCounter('homoErectus') })).toBe('of 1');
     expect(t('stat.exchangeSub')).toBe('wolves incapacitated per Homo erectus lost');
+  });
+
+  it('names and counts every free species in both languages', () => {
+    for (const lang of ['ko', 'en'] as const) {
+      initLang(lang);
+      for (const id of FREE_SPECIES_IDS) {
+        expect(speciesName(id), `${lang} ${id}`).toMatch(/\S/);
+        expect(speciesShort(id, 'one', lang), `${lang} ${id}`).toMatch(/\S/);
+        expect(speciesShort(id, 'other', lang), `${lang} ${id}`).toMatch(/\S/);
+        const counter = lang === 'en' ? '' : id === 'homoErectus' ? '명' : '마리';
+        expect(speciesCounter(id, lang), `${lang} ${id}`).toBe(counter);
+      }
+    }
   });
 
   it('names the woolly mammoth and Homo erectus in both languages', () => {

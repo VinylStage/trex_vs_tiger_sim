@@ -255,6 +255,24 @@ describe('free result views', () => {
     );
   });
 
+  it('gives a species without a symbol the fallback of its side, not of its classic role', () => {
+    // Reversed from the classic roles: the mammoth (a heavy) is side B and Homo erectus side A.
+    const c = free('homoErectus', 3, 'mammoth', 1);
+    const v = freeResultView(c, SNAP, 'en');
+    expect([v.heavyEmoji, v.packEmoji]).toEqual(['🔷', '🔶']);
+    expect(freeShareText(c, SNAP, 'en', 'u').split('\n')[0]).toBe(
+      '🔷 Homo erectus 3 vs 🔶 Mammoth 1 — 500 runs',
+    );
+    expect(matchupLine({ view: v, summary: SNAP, domain: 'x.test' })).toBe(
+      '🔷 Homo erectus 3  vs  🔶 Mammoth 1',
+    );
+    // In a mirror the same species gets the fallback of each side.
+    const m = free('mammoth', 1, 'mammoth', 1);
+    expect(freeShareText(m, SNAP, 'ko', 'u').split('\n')[0]).toBe(
+      '🔷 매머드 A 1 vs 🔶 매머드 B 1 — 500회',
+    );
+  });
+
   it('leaves the classic text share unchanged', () => {
     const c = defaultConfig();
     c.heavyCount = 1;

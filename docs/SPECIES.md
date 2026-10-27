@@ -40,7 +40,7 @@ Each species carries, besides its eleven preset triangles:
 - **bounds**: its own hard limits for sanitising and for the per-animal clamp. _T. rex_ and the tiger keep exactly the v1 bounds. The other species use the v1 bounds widened where needed: heavy mass 100–20,000 kg, heavy weapon force 0.1–150 kN, pack mass 5–1,000 kg. The heavy _Homo erectus_ alone widens further to human size: mass from 20 kg, reach (`biteReach`) from 0.3 m and `bodyRadius` from 0.1 m (`HEAVY_HOMININ_BOUNDS`).
 - **era**: `extant` or a range in millions of years; the matchup badge reads it.
 - **weapon** (heavies): what `biteForce` stands for. `bite` (_T. rex_), `tusk` (tusks, trunk and trampling), `horn`, `pawBite`, `hands` (bare-hand strikes and grip, _H. erectus_). Only the labels change; the formula is the same.
-- **flags**: `adSafe` (whether ads may load on a matchup with this species; read through `matchupAdSafe`, [ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)) and `hominin` (adds the thought-experiment note, §9).
+- **flags**: `adSafe` (whether ads may load on a matchup with this species; read through `matchupAdSafe`, and in the free model through `freeMatchupAdSafe` (§11.1), [ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)) and `hominin` (adds the thought-experiment note, §9).
 - **constants**, not sampled and not in the URL: `hide` and `intimidation` (heavies) and `radius` (packs), §7. `intimidation` multiplies the morale a pack animal loses when the heavy hits it or throws it off, and the minimum recovery time after a hit (not after a throw); it is exactly 1 for every species that shipped before #47 and for the mammoth.
 
 ## 2. Catalog
@@ -539,6 +539,7 @@ The free model ([design](design/FREE-MATCHUPS.md), [ADR-0007](adr/0007-symmetric
 
 - **Mapped traits are read, not copied.** Every trait a legacy role already had comes from that role's preset at run time: heavy `mass`, `bodyRadius`, `turnRate`, `speed` → `sprintSpeed`, `bite*` → `strike*`, `shakeRate`; pack `mass`, `sprintSpeed`, `cruiseSpeed`, `sprintEndurance`, `recoveryTime`, `latchChance`, `latchEndurance`, `dps` → `latchDps`, `bleed`, `morale`, `moraleLoss`, and the constant `radius` → a fixed `bodyRadius` triangle. Their evidence tags carry over. The constants `hide` and `intimidation` carry over for former heavies and are 1 for former pack species.
 - **_Homo erectus_** merges its two presets: body (`bodyRadius`), `turnRate`, strike and shake-off from the heavy row; running, stamina, grip (latch), bleed and morale from the pack row. Mass is identical in both. `sprintSpeed` uses the pack row (6–9 m/s, a sprint with stamina) rather than the heavy `speed` (a speed held over a whole fight).
+- **`era` and `adSafe`** are read from the legacy entry too. The two _Homo erectus_ entries share one era, and the species is ad-safe only when both entries are. Free mode groups its species pickers by `era` (extant or extinct); `freeMatchupAdSafe(config)` is true only when the species on both sides are ad-safe ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)).
 - **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_. Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
 - **`canLatch`** (design §4.2): tiger, lion, wolf, hyena, _Homo erectus_. The others fight with strikes only.
 - **Inactive traits** (latch traits of a species that cannot latch, pack-buff traits of a non-social species) hold neutral values (0, or 1 s for `latchEndurance`) with no evidence tag. They only keep the design matrix layout independent of the species.
@@ -596,3 +597,21 @@ The values of design §5.3, all **S**, sampled per run and never per animal. Non
 | _Homo erectus_ | 15 / 30 / 60         | 0 / 0.15 / 0.3             | 0 / 15 / 30      | 0 / 0.04 / 0.08         | 0 / 0.05 / 0.1 | 0.2 / 0.3 / 0.5 |
 
 Sources and the calibration guard are in design §2.3 and §5: [Stander 1992], [Packer 1990], [McComb 1994], [MacNulty 2012], [MacNulty 2014], [Cassidy 2015], [Benson-Amram 2011], [Lehmann 2017], [Hatala 2016]. The full citations are in the design's §10.
+
+### 11.5 Species without a legacy entry
+
+Every species above has a legacy entry, and its free entry reads from it (§11.1). A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
+
+- **Registry.** Append the id to `FREE_SPECIES_IDS` (append-only, never renamed) and build its entry with the standalone constructor `defineFreeSpecies(id, sheet)` in `src/sim/free/species.ts`. The sheet (`FreeSpeciesSheet`) holds everything the free model reads: `era`, `adSafe`, `social`, `canLatch`, the constants `hide` and `intimidation`, one preset row `[min, mode, max, evidence]` per individual trait, and the six pack-buff rows of a social species (`buff: null` otherwise). Latch rows are given only when the species can latch. Inactive traits get the neutral values of §11.1. The constructor throws when the rows do not match the flags.
+- **Same as a derived entry.** `tests/free-species.test.ts` rebuilds every current entry from its own sheet with the constructor and checks that the result equals the registry entry, so a standalone species reaches the engine in exactly the form a derived one does.
+- **Names and counters.** `speciesName`, `speciesShort`, `teamLabel` and `speciesCounter` in `src/ui/i18n.ts` take an id of either registry (`AnySpeciesId`). The typecheck therefore fails until both dictionaries (`src/i18n/ko.ts`, `en.ts`) have `species.<id>`, `species.<id>.one` and `species.<id>.other`. The Korean counter is `마리` unless `KO_COUNTERS` names another one (§9).
+- **Text-share symbol.** `SPECIES_EMOJI` in `src/share/result-text.ts` is keyed by free species id. A species without an entry falls back to 🔷 for side A and 🔶 for side B ([SHARING.md](SHARING.md)). The side decides, not the species' classic role: `tests/free-result.test.ts` puts the mammoth, a classic heavy, on side B and expects 🔶.
+- **Tests with fixed lists.** Some registry tests compare the roster with hard-coded lists. The PR that adds the first free-only species updates them:
+  - `tests/free-species.test.ts`, "lists every legacy species once": always. It checks that the free ids and the legacy ids are the same set; it becomes a check that every legacy id is a free id, plus the list of free-only ids.
+  - `tests/free-species.test.ts`, the `SOCIAL` and `LATCHERS` lists ("marks the social group hunters and the latching species"): when the species is social or can latch.
+  - `tests/free-species.test.ts`, "keeps the extinct group of the species pickers": when its `era` is a range.
+  - `tests/result-share.test.ts`, "keys the text-share symbols by free species id": the fallback list (`mammoth`, `homoErectus`), when the species has no `SPECIES_EMOJI` entry.
+  - `tests/species-ui.test.ts`, "names and counts every free species in both languages": the expected Korean counter, when `KO_COUNTERS` names one for the species.
+  - `tests/free-species.test.ts`, "marks every pairing ad-safe, mirror matchups included": when `adSafe` is false, which no species is today ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)).
+
+  The era and ad-safety test ("carries the era and adSafe flag of its legacy entries") runs only for species with a legacy entry and needs no change.

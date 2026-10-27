@@ -48,7 +48,13 @@ import type { ReplayView } from './replay';
 import { configFromHash, hashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
-import { freeConfigFromHash, hashFromFreeConfig, parseFreeConfigInput } from './share-free';
+import {
+  freeConfigFromHash,
+  freeHashModelNewer,
+  freeInputModelNewer,
+  hashFromFreeConfig,
+  parseFreeConfigInput,
+} from './share-free';
 import { copyText } from '../share/share-ui';
 import { createConfigTransfer } from './config-transfer';
 import { createReproduceCheck, createResultShare } from './result-share';
@@ -101,6 +107,13 @@ export function startApp(root: HTMLElement): void {
   const startHash = location.hash;
   const startFree = freeConfigFromHash(startHash);
   let mode: 'classic' | 'free' = startFree ? 'free' : 'classic';
+  // A free link of a newer model opens at the free defaults (ADR-0008 §6). The address keeps that
+  // link until the user edits something, so a reload (which loads the current build) or a copied
+  // address still carries it, and a note says why the defaults are shown. A malformed `mv` also
+  // opens the defaults, but its address is rewritten like any malformed link.
+  let keepNewerLink = freeHashModelNewer(startHash);
+  const newerLinkNote = h('p', { class: 'stale-banner free-newer-link', i18n: 'free.newerModel' });
+  newerLinkNote.hidden = !keepNewerLink;
   let config: ScenarioConfig =
     (startFree ? null : configFromHash(location.hash)) ?? defaultConfig();
   // "Run it yourself" links carry a result snapshot (`&chk=`); read it before the URL is rewritten.
@@ -315,12 +328,14 @@ export function startApp(root: HTMLElement): void {
     createConfigTransfer({
       getConfig: () => config,
       applyFreeInput: (text) => {
+        // A newer model's code is refused, not swapped for the defaults (ADR-0008 §6).
+        if (freeInputModelNewer(text)) return 'newerModel';
         const fc = parseFreeConfigInput(text);
-        if (!fc) return false;
+        if (!fc) return 'notFree';
         free.setConfig(fc);
         setMode('free');
         writeUrl();
-        return true;
+        return 'applied';
       },
       applyConfig: (c) => {
         config = c;
@@ -475,9 +490,13 @@ export function startApp(root: HTMLElement): void {
     initial: startFree ?? defaultFreeConfig(),
     pool,
     modeSwitch,
-    onChange: () => writeUrl(),
+    onChange: () => {
+      holdNewerLink(false);
+      writeUrl();
+    },
     showToast,
     startHash,
+    notice: newerLinkNote,
   });
 
   clear(root);
@@ -509,6 +528,8 @@ export function startApp(root: HTMLElement): void {
     if (next === mode) return;
     if (running || free.isRunning()) pool.cancel();
     mode = next;
+    // The classic mode never holds a free link.
+    if (next === 'classic') holdNewerLink(false);
     applyMode();
     if (next === 'free') free.relocalize();
     writeUrl();
@@ -518,7 +539,14 @@ export function startApp(root: HTMLElement): void {
   }
 
   // ---------- behaviour ----------
+  /** Keep the address of a newer model's link and show the note, or let both go. */
+  function holdNewerLink(hold: boolean): void {
+    keepNewerLink = hold;
+    newerLinkNote.hidden = !hold;
+  }
+
   function writeUrl(): void {
+    if (keepNewerLink) return;
     const hash = mode === 'free' ? hashFromFreeConfig(free.getConfig()) : hashFromConfig(config);
     if (hash === location.hash) return;
     history.replaceState(history.state, '', hash || `${location.pathname}${location.search}`);
@@ -961,6 +989,8 @@ export function startApp(root: HTMLElement): void {
 
   window.addEventListener('hashchange', () => {
     const fc = freeConfigFromHash(location.hash);
+    holdNewerLink(freeHashModelNewer(location.hash));
+    if (keepNewerLink) announce(t('free.newerModel'));
     if (fc) {
       free.setConfig(fc);
       if (mode !== 'free') setMode('free');

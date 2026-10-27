@@ -156,6 +156,10 @@
   font-weight: 600;
 }
 
+.free-newer-link {
+  margin: 0 0 16px;
+}
+
 .free-tools {
   margin-top: 12px;
 }
