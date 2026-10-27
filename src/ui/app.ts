@@ -45,6 +45,7 @@ import {
 } from './i18n';
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import type { ReplayView } from './replay';
+import { routeLink } from './link-route';
 import { configFromHash, hashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
@@ -105,17 +106,17 @@ export function startApp(root: HTMLElement): void {
   const pool = new SimPool();
   // A v3 link (`#s=` with `m: "free"`) opens in free mode; everything else stays classic (D1).
   const startHash = location.hash;
-  const startFree = freeConfigFromHash(startHash);
-  let mode: 'classic' | 'free' = startFree ? 'free' : 'classic';
+  const startRoute = routeLink(startHash);
+  const startFree = startRoute.mode === 'free' ? startRoute.config : null;
+  let mode: 'classic' | 'free' = startRoute.mode;
   // A free link of a newer model opens at the free defaults (ADR-0008 §6). The address keeps that
   // link until the user edits something, so a reload (which loads the current build) or a copied
   // address still carries it, and a note says why the defaults are shown. A malformed `mv` also
   // opens the defaults, but its address is rewritten like any malformed link.
-  let keepNewerLink = freeHashModelNewer(startHash);
+  let keepNewerLink = startRoute.mode === 'free' && startRoute.newerModel;
   const newerLinkNote = h('p', { class: 'stale-banner free-newer-link', i18n: 'free.newerModel' });
   newerLinkNote.hidden = !keepNewerLink;
-  let config: ScenarioConfig =
-    (startFree ? null : configFromHash(location.hash)) ?? defaultConfig();
+  let config: ScenarioConfig = startRoute.mode === 'classic' ? startRoute.config : defaultConfig();
   // "Run it yourself" links carry a result snapshot (`&chk=`); read it before the URL is rewritten.
   const repro = createReproduceCheck(location.hash, config);
   const resultShare = createResultShare();
