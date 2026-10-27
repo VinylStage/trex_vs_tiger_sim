@@ -142,6 +142,7 @@ Testing rule (#61): every module with branching logic has a test that imports it
 | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `src/ui/app.ts`                                              | `app-model.ts`, `chunks.ts`, `cost.ts`, `verdict.ts`, `share.ts`, `share-free.ts`, `link-route.ts`, the charts' table and hit helpers |
 | `src/ui/free-mode.ts`                                        | `src/sim/free/*`, `share-free.ts`                                                                                                     |
+| `src/ui/simple-mode.ts`                                      | `simple-model.ts`, `free-form-model.ts`, `src/sim/free/presets.ts`                                                                    |
 | `src/ui/replay.ts`, `replay/legend.ts`, `replay/strip.ts`    | `replay/prepare.ts`, `world.ts`, `camera.ts`, `timeline.ts`, `effects.ts`, `glyphs.ts`                                                |
 | `src/ui/tour.ts`, `tour-offer.ts`                            | `tour-model.ts`                                                                                                                       |
 | `src/ui/version.ts`                                          | `version-model.ts`                                                                                                                    |
@@ -216,6 +217,8 @@ Two-level uncertainty:
 2. **Aleatory (per individual):** each animal multiplies the run-level value by `N(1, CV)` truncated to `[0.5, 1.5]`.
 
 Fixed time step `dt = 0.1 s`; open square arena; battle ends when one side is eliminated (dead or routed) or at `maxTime` (draw).
+
+The play page opens in **Simple mode** (#146, [PAGES.md](docs/PAGES.md#simple-mode-and-the-advanced-switch)): `src/ui/simple-mode.ts` is a second view of the free mode (`free-mode.ts` keeps the config, the Run button, the run and the results panel) with preset chips, a species picker and a count per side, and in the results a win share bar and the still-standing / fled / incapacitated breakdown. Its pure part, `src/ui/simple-model.ts`, builds the config a Simple run uses (species and counts, a fresh seed, every hidden setting at its default). The app (`app.ts`) holds the view (`simple` or `advanced`) next to the engine (`classic` or `free`); one **Advanced** switch at the top of each config panel changes the view, and the existing classic / free radio group appears below it in Advanced mode.
 
 The free model's matchup presets (`src/sim/free/presets.ts`) are pure data. A test measures each one on the free engine and checks it against a committed fixture and the rout check ([PRESETS.md](docs/PRESETS.md)).
 

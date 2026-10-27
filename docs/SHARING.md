@@ -69,9 +69,12 @@ Plain anchors such as `#faq` and other queries (`?utm_…`, the `?_r=` reload ma
 | `#s=<v3>` (`m: "free"`), with or without `&chk=`        | Free mode with that config, and the free reproduction check when `chk=` validates                    |
 | `#s=<v3>` of a model this build does not run            | Free mode at the free defaults, `newerModel` set, so the address is kept ([`mv`](#model-version-mv)) |
 | `#s=<v1 or v2>`, with or without `&chk=`; `#chk=` alone | Classic with that config (the defaults for `#chk=` alone), and the classic reproduction check        |
-| no fragment, a malformed payload, a settings code       | Classic at the defaults                                                                              |
+| no app state and no tour deep link (a cold play page)   | **Simple mode** at the default preset, lion vs tiger 1:1 (#146)                                      |
+| a malformed payload, a settings code; `?tour` alone     | Classic at the defaults                                                                              |
 
-This is the same decision `startApp` made on `/` before #142 (free when `freeConfigFromHash` finds a v3 payload, otherwise `configFromHash(hash) ?? defaultConfig()`). It now lives in one tested function.
+For every link this is the same decision `startApp` made on `/` before #142 (free when `freeConfigFromHash` finds a v3 payload, otherwise `configFromHash(hash) ?? defaultConfig()`). It now lives in one tested function, `routeLink(hash, search)`.
+
+**Cold play page (#146).** Only a play page with nothing to open changes: no app state in the fragment (`hashHasAppState` in `src/pages/routes.ts`, the same test the lobby forwarder applies, so `''`, `#`, `#main` or `#faq`) and no `tour` parameter (`hasTourParam`, the lobby's own query test, so `?_r=…` and `?utm_…` count as cold while `?tour=0`, which the lobby forwards, still opens classic at the defaults without the tour, as on `main`). It opens Simple mode instead of classic at the defaults, and leaves the address as it is (a plain anchor such as `#main` stays) until the first Run or **Copy settings link** (`simpleKeepsAddress`). No link the lobby forwards is cold, so every old link type opens as before; `tests/link-routing.test.ts` checks that for every fixture, through the lobby and on the play page directly, and checks the cold cases. A Simple Run writes its config, fresh seed included (R3), into the address as an ordinary v3 link, so that link (and a reload) opens the free form of Advanced mode with the same config. Reopening Simple-shaped v3 links in Simple (`isSimpleDiff`, design §3.2) is a later item of #125, because it changes what an existing link type opens.
 
 **Fixture tests.** `tests/link-routing.test.ts` holds one fixture per old link type, each opened from the Korean and the English lobby:
 

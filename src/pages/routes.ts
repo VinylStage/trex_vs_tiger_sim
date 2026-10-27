@@ -121,6 +121,21 @@ export function playPageLang(path: string): Lang | null {
 export const playPagePath = (lang: Lang): string => (lang === 'en' ? '/en/play/' : '/play/');
 
 /**
+ * Whether a fragment holds app state: a `key=value` part (`#s=…`, `#chk=…`) or a settings code
+ * (`#TVT2-…`, `#TVT3-…`, any case). The lobby forwards such a fragment to the play page
+ * (`playForwardUrl`), and the play page opens Simple mode only for a fragment without it
+ * (`routeLink` in src/ui/link-route.ts).
+ */
+export const hashHasAppState = (hash: string): boolean => /=|^#tvt\d-/i.test(hash);
+
+/**
+ * Whether a query names the tour deep link's parameter at all (`?tour=1`, `?tour`, `?tour=0`,
+ * `?a=1&tour`; not `?tourist=`). The lobby forwards such a query, and the play page then never
+ * treats it as cold (#146), whether or not the value starts the tour (`tourRequested`).
+ */
+export const hasTourParam = (search: string): boolean => /[?&]tour(=|&|$)/.test(search);
+
+/**
  * Where the lobby (`/`, `/en/`) forwards a visit, or null to stay (docs/SHARING.md#link-routing).
  * Links made before the play page existed point at the lobby's path with the app's state in the
  * fragment (`#s=…`, `#s=…&chk=…`, `#chk=…`) or with the tour deep link (`?tour=1`). Any fragment
@@ -131,7 +146,7 @@ export const playPagePath = (lang: Lang): string => (lang === 'en' ? '/en/play/'
  * link pasted into an open lobby tab); tests/link-routing.test.ts runs both over the same links.
  */
 export function playForwardUrl(pathname: string, search: string, hash: string): string | null {
-  if (!/=|^#tvt\d-/i.test(hash) && !/[?&]tour(=|&|$)/.test(search)) return null;
+  if (!hashHasAppState(hash) && !hasTourParam(search)) return null;
   return `${playPagePath(/^\/en(\/|$)/.test(pathname) ? 'en' : 'ko')}${search}${hash}`;
 }
 

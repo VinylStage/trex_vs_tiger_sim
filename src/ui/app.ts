@@ -46,6 +46,7 @@ import {
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import type { ReplayView } from './replay';
 import { routeLink } from './link-route';
+import { simpleKeepsAddress } from './simple-model';
 import { configFromHash, hashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
@@ -104,12 +105,19 @@ export function startApp(root: HTMLElement): void {
   // Same text as the static <title> of this language's play page (tests/pages.test.ts).
   document.title = t('play.documentTitle');
   const pool = new SimPool();
-  // A v3 link (`#s=` with `m: "free"`) opens in free mode; everything else stays classic (D1).
-  // Old links that land on the lobby reach this page with the same fragment (link-route.ts).
+  // A cold page (no app state, no tour deep link) opens Simple mode (#146). A v3 link (`#s=` with
+  // `m: "free"`) opens the free form of Advanced mode; every other link opens classic (D1). Old
+  // links that land on the lobby reach this page with the same fragment (link-route.ts).
   const startHash = location.hash;
-  const startRoute = routeLink(startHash);
-  const startFree = startRoute.mode === 'free' ? startRoute.config : null;
-  let mode: 'classic' | 'free' = startRoute.mode;
+  const startRoute = routeLink(startHash, location.search);
+  const startFree = startRoute.mode === 'classic' ? null : startRoute.config;
+  /** Simple mode, or Advanced mode with the free form or the classic simulator. */
+  let view: 'simple' | 'advanced' = startRoute.mode === 'simple' ? 'simple' : 'advanced';
+  /** The engine Advanced mode shows; Simple mode always runs the free engine. */
+  let mode: 'classic' | 'free' = startRoute.mode === 'classic' ? 'classic' : 'free';
+  // Simple mode leaves a cold address alone until its first Run, which writes the config and its
+  // fresh seed (R3); a reload of a cold page therefore opens Simple again.
+  let simpleLinked = false;
   // A free link of a newer model opens at the free defaults (ADR-0008 §6). The address keeps that
   // link until the user edits something, so a reload (which loads the current build) or a copied
   // address still carries it, and a note says why the defaults are shown. A malformed `mv` also
@@ -181,6 +189,7 @@ export function startApp(root: HTMLElement): void {
     }, 2500);
   };
   shareBtn.addEventListener('click', () => {
+    simpleLinked = true;
     writeUrl();
     const url = location.href;
     // Without clipboard access the link is shown in a selected field instead (src/share/share-ui.ts).
@@ -217,10 +226,47 @@ export function startApp(root: HTMLElement): void {
   let siteNav = createSiteNav(getLang(), null);
   header.append(siteNav);
 
-  // ---------- match-up mode (classic / free, #50) ----------
+  // ---------- view (Simple / Advanced, #146) and match-up mode (classic / free, #50) ----------
   let switchSeq = 0;
-  /** Radio group choosing the model; one instance per config panel. */
+  /** The Advanced switch; one instance per config panel. */
+  function viewSwitch(): HTMLElement {
+    const id = `view-switch-${++switchSeq}`;
+    const hintId = `${id}-hint`;
+    const box = h('input', {
+      id,
+      attrs: { type: 'checkbox', role: 'switch', 'aria-describedby': hintId },
+    });
+    box.checked = view === 'advanced';
+    box.addEventListener('change', () => setView(box.checked ? 'advanced' : 'simple'));
+    return h(
+      'div',
+      { class: 'view-switch' },
+      h(
+        'label',
+        { class: 'view-switch-label', attrs: { for: id } },
+        box,
+        h('span', { text: t('view.advanced') }),
+      ),
+      h('small', {
+        class: 'hint',
+        id: hintId,
+        text: t(view === 'advanced' ? 'view.advancedOn' : 'view.advancedOff'),
+      }),
+    );
+  }
+
+  /** The Advanced switch, and in Advanced mode the classic / free radio group below it. */
   function modeSwitch(): HTMLElement {
+    return h(
+      'div',
+      { class: 'matchup-switches' },
+      viewSwitch(),
+      view === 'advanced' ? engineSwitch() : null,
+    );
+  }
+
+  /** Radio group choosing the model. */
+  function engineSwitch(): HTMLElement {
     const name = `matchup-mode-${++switchSeq}`;
     const hintId = `${name}-hint`;
     const option = (value: 'classic' | 'free', key: MsgKey): HTMLElement => {
@@ -497,9 +543,15 @@ export function startApp(root: HTMLElement): void {
       holdNewerLink(false);
       writeUrl();
     },
+    onRun: () => {
+      if (view !== 'simple') return;
+      simpleLinked = true;
+      writeUrl();
+    },
     showToast,
     startHash,
     notice: newerLinkNote,
+    view: view === 'simple' ? 'simple' : 'full',
   });
 
   clear(root);
@@ -525,20 +577,37 @@ export function startApp(root: HTMLElement): void {
     free.configPanel.hidden = !isFree;
     free.resultsPanel.hidden = !isFree;
     classicSwitchSlot.replaceChildren(modeSwitch());
+    if (isFree) free.setView(view === 'simple' ? 'simple' : 'full');
+  }
+
+  /**
+   * Show a view and engine; false when already shown. Simple mode runs the free engine, so only a
+   * change of engine cancels a run in progress.
+   */
+  function show(nextView: 'simple' | 'advanced', nextMode: 'classic' | 'free'): boolean {
+    const engine = nextView === 'simple' ? 'free' : nextMode;
+    if (nextView === view && engine === mode) return false;
+    if (engine !== mode && (running || free.isRunning())) pool.cancel();
+    view = nextView;
+    mode = engine;
+    // The classic mode never holds a free link.
+    if (engine === 'classic') holdNewerLink(false);
+    applyMode();
+    writeUrl();
+    return true;
   }
 
   function setMode(next: 'classic' | 'free'): void {
-    if (next === mode) return;
-    if (running || free.isRunning()) pool.cancel();
-    mode = next;
-    // The classic mode never holds a free link.
-    if (next === 'classic') holdNewerLink(false);
-    applyMode();
-    if (next === 'free') free.relocalize();
-    writeUrl();
+    if (!show('advanced', next)) return;
     // Keep focus on the switch of the panel now shown.
     const panel = next === 'free' ? free.configPanel : configPanel;
     panel.querySelector<HTMLInputElement>(`.mode-switch input[value="${next}"]`)?.focus();
+  }
+
+  function setView(next: 'simple' | 'advanced'): void {
+    if (!show(next, mode)) return;
+    const panel = mode === 'free' ? free.configPanel : configPanel;
+    panel.querySelector<HTMLInputElement>('.view-switch input')?.focus();
   }
 
   // ---------- behaviour ----------
@@ -550,6 +619,7 @@ export function startApp(root: HTMLElement): void {
 
   function writeUrl(): void {
     if (keepNewerLink) return;
+    if (view === 'simple' && simpleKeepsAddress(location.hash, simpleLinked)) return;
     const hash = mode === 'free' ? hashFromFreeConfig(free.getConfig()) : hashFromConfig(config);
     if (hash === location.hash) return;
     history.replaceState(history.state, '', hash || `${location.pathname}${location.search}`);
@@ -994,14 +1064,15 @@ export function startApp(root: HTMLElement): void {
     const fc = freeConfigFromHash(location.hash);
     holdNewerLink(freeHashModelNewer(location.hash));
     if (keepNewerLink) announce(t('free.newerModel'));
+    // A link opens as it does on load: a free link in the free form, any other in classic.
     if (fc) {
       free.setConfig(fc);
-      if (mode !== 'free') setMode('free');
+      setMode('free');
       return;
     }
     const c = configFromHash(location.hash);
     if (!c) return;
-    if (mode !== 'classic') setMode('classic');
+    setMode('classic');
     config = c;
     form.setConfig(c);
     updateStale();
@@ -1042,8 +1113,8 @@ export function startApp(root: HTMLElement): void {
     );
   };
   tourBtn.addEventListener('click', () => {
-    // The tour walks through the classic form and results.
-    setMode('classic');
+    // The tour walks through the classic form and results (Advanced mode, classic).
+    show('advanced', 'classic');
     startTour();
   });
   // Warm the tour on intent, so a click opens it without a visible wait.
