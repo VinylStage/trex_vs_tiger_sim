@@ -245,8 +245,9 @@ export interface FreeSpeciesSheet {
 
 /**
  * Standalone constructor: a registry entry built from its own sheet, without reading the legacy
- * registry, so a new species can join the free model alone. Throws on a sheet whose rows do not
- * match its flags (caught by the tests).
+ * registry, so a new species can join the free model alone. Everything is copied, so editing the
+ * sheet afterwards changes nothing. Throws on a sheet whose rows do not match its flags (caught
+ * by the tests).
  */
 export function defineFreeSpecies(id: FreeSpeciesId, sheet: FreeSpeciesSheet): FreeSpecies {
   if (!sheet.canLatch && LATCH_TRAIT_IDS.some((k) => Object.hasOwn(sheet.traits, k))) {
@@ -255,9 +256,10 @@ export function defineFreeSpecies(id: FreeSpeciesId, sheet: FreeSpeciesSheet): F
   if (sheet.social !== (sheet.buff !== null)) {
     throw new Error(`free species ${id}: pack-buff rows must be given exactly when social`);
   }
+  const era = sheet.era;
   return {
     id,
-    era: sheet.era,
+    era: era === 'extant' ? 'extant' : { fromMa: era.fromMa, toMa: era.toMa },
     adSafe: sheet.adSafe,
     social: sheet.social,
     canLatch: sheet.canLatch,

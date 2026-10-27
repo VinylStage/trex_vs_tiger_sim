@@ -261,7 +261,7 @@ function sheetOf(id: FreeSpeciesId): FreeSpeciesSheet {
     ? Object.fromEntries(BUFF_TRAIT_IDS.map((k) => [k, rowOf(s.buff[k])]))
     : null;
   return {
-    era: s.era,
+    era: s.era === 'extant' ? 'extant' : { ...s.era },
     adSafe: s.adSafe,
     social: s.social,
     canLatch: s.canLatch,
@@ -280,12 +280,19 @@ describe('standalone constructor', () => {
   });
 
   it('copies the sheet, so editing it later changes nothing', () => {
-    const sheet = sheetOf('lion');
-    const built = defineFreeSpecies('lion', sheet);
+    // Homo erectus has every kind of input: an extinct era, latch rows and pack-buff rows.
+    const before = structuredClone(FREE_SPECIES.homoErectus);
+    const sheet = sheetOf('homoErectus');
+    const built = defineFreeSpecies('homoErectus', sheet);
+    (sheet.era as { fromMa: number }).fromMa = 0;
+    (sheet.era as { toMa: number }).toMa = 0;
     (sheet.constants as { hide: number }).hide = 9;
     (sheet.traits.mass as unknown as number[])[1] = -1;
-    expect(built.constants.hide).toBe(1);
-    expect(built.traits.mass.range).toEqual(FREE_SPECIES.lion.traits.mass.range);
+    (sheet.traits.latchDps as unknown as number[])[1] = -1;
+    (sheet.buff?.cohesionRadius as unknown as number[])[1] = -1;
+    // The edits stay on the sheet: neither the registry nor the built entry sees them.
+    expect(FREE_SPECIES.homoErectus).toEqual(before);
+    expect(built).toEqual(before);
   });
 
   it('rejects a sheet whose rows do not match its flags', () => {
