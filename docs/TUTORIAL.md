@@ -25,12 +25,12 @@
 
 ## Starting the tour
 
-| Entry point         | Behaviour                                                                                                                                                     |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Header button       | **튜토리얼** / **Tutorial**, next to the language switch. Always available.                                                                                   |
-| First-visit offer   | A small banner under the header with **Start the tour** and **No thanks**. Shown only until the visitor decides; see [below](#first-visit-offer-and-storage). |
-| Deep link `?tour=1` | Opens the tour right after the page loads (`/play/?tour=1`, `/en/play/?tour=1`); see [Deep link](#deep-link).                                                 |
-| Intro link          | **1분 튜토리얼 시작** in the static intro under the simulator; starts the tour in place.                                                                      |
+| Entry point         | Behaviour                                                                                                                                                      |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Header button       | **튜토리얼** / **Tutorial**, next to the language switch. Always available. Opens Advanced mode → classic first, since the steps walk the classic form (#146). |
+| First-visit offer   | A small banner under the header with **Start the tour** and **No thanks**. Shown only until the visitor decides; see [below](#first-visit-offer-and-storage).  |
+| Deep link `?tour=1` | Opens the tour right after the page loads (`/play/?tour=1`, `/en/play/?tour=1`); see [Deep link](#deep-link).                                                  |
+| Intro link          | **1분 튜토리얼 시작** in the static intro under the simulator; starts the tour in place.                                                                       |
 
 ## Steps
 
