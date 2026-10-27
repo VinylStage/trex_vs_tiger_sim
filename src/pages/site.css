@@ -371,10 +371,15 @@ h1 {
   padding-left: 1.4em;
 }
 
-/* A comfortable line length for prose; tables and figures keep the column's full width. */
+/*
+ * A comfortable line length for prose; tables and figures keep the column's full width.
+ * 41.7em is 70ch of Pretendard ("0" advances 0.5957em). Text widths are in em, never ch: ch
+ * follows the font in use, so the column would widen when Pretendard replaces the fallback face
+ * and paragraphs would re-wrap (#138, docs/PERFORMANCE.md, tests/css-units.test.ts).
+ */
 .page-body p,
 .page-body li {
-  max-width: 70ch;
+  max-width: 41.7em;
 }
 
 .page-body li + li {

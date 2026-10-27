@@ -29,6 +29,8 @@ export const shareEn: ShareDictionary = {
   'xfer.err.shape': 'This is not a settings payload.',
   'xfer.err.noPayload': 'This link carries no settings (#s=…).',
   'xfer.err.app': 'This is not a settings file exported by this simulator.',
+  'xfer.err.newerModel':
+    'This code was made with a newer model version, so this page cannot open it. Reload the page to get the latest version, then paste it again.',
   'xfer.err.file': 'Could not read the file.',
 
   'copy.fallbackTitle': 'Copy the text below',

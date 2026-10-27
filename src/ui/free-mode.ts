@@ -58,6 +58,8 @@ export interface FreeModeOptions {
   showToast: (text: string) => void;
   /** The location hash the page opened with, read for a reproduction check (`&chk=`). */
   startHash?: string;
+  /** A note the app shows under the mode switch (a link of a newer model, ADR-0008 §6). */
+  notice?: HTMLElement;
 }
 
 interface FreeResult {
@@ -141,6 +143,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     { class: 'panel config-panel', attrs: { 'aria-labelledby': configTitle.id } },
     configTitle,
     switchSlot,
+    opts.notice,
     formEl,
     runBar,
     h('div', { class: 'free-tools' }, copyBtn),

@@ -7,6 +7,7 @@
 > - `SpatialGrid.nearest`가 동물이 있는 칸의 경계 상자 안만 찾도록 바꿔서 엔진이 대규모 전투에서 최대 1.36배 빨라졌습니다. 같은 시드의 결과는 그대로입니다.
 > - 워커 수 기본값은 논리 코어 수 − 1(최소 1, 최대 8)입니다.
 > - 웹 글꼴이 바뀔 때 생기던 레이아웃 이동(CLS)은 글자 폭을 맞춘 대체 글꼴로 거의 0이 되었고, 언어 전환과 시작 시 긴 작업도 줄었습니다.
+> - 그 뒤 본문 최대 폭을 `ch`(숫자 0의 폭) 단위로 정하면서 글꼴이 바뀌는 순간 폭이 넓어져 이동이 다시 생겼습니다(#138). 폭을 `em`으로 바꿔서 12개 페이지·화면 조합의 합계가 0.0524에서 0.0034로 줄었습니다.
 
 This page records what issue #24 changed for speed and responsiveness and the before/after numbers. The investigation, the original baselines and the full list of candidate changes are in [research/PERFORMANCE.md](research/PERFORMANCE.md).
 
@@ -30,6 +31,8 @@ This page records what issue #24 changed for speed and responsiveness and the be
 | Layout shift when the first results render (1366×900 / 390×800)     | 0.40 / 0.83   | 0 / 0.0002          | results skeleton        |
 
 The result-render CLS row comes from the UX work in the same issue (the results panel reserves its final size on the first Run); it is listed because it was measured with the same harness.
+
+The font-swap row went back up to 0.052 when text widths in `ch` landed (#52) and is 0.0034 / 0.0017 since #138; see [Text widths in em](#text-widths-in-em-138).
 
 ## Environment and method
 
@@ -70,7 +73,7 @@ Pretendard loads with `font-display: swap`, so a first visit paints text in a fa
 | Hangul ≤ 550 | Noto Sans CJK KR, Source Han Sans KR, WenQuanYi Zen Hei | 86.43%        | 110.15% / 27.88%          |
 | Hangul > 550 | the bold cuts of the same fonts (WenQuanYi has none)    | 86.43%        | 110.15% / 27.88%          |
 
-The values come from Canvas `TextMetrics` in Chromium at 1,000 px: Pretendard Variable has ascent 0.952 em, descent 0.241 em and no line gap; common Hangul syllables advance 0.8643 em at every weight; a Latin sentence is 1.0093x as wide as in Arial at weight 400 and 0.986x as wide as in Arial Bold at 600–700. The overrides are divided by `size-adjust` because they scale with it. Separate bold faces matter: without them the browser synthesises bold from the regular face, which is about 5% narrower than Pretendard's bold, and headings re-wrapped on the swap (0.066 on `/en/guide/` before the bold faces were added).
+The values come from Canvas `TextMetrics` in Chromium at 1,000 px: Pretendard Variable has ascent 0.952 em, descent 0.241 em and no line gap; common Hangul syllables advance 0.8643 em at every weight; a Latin sentence is 1.0093x as wide as in Arial at weight 400 and 0.986x as wide as in Arial Bold at 600–700. The overrides are divided by `size-adjust` because they scale with it. Separate bold faces matter: without them the browser synthesises bold from the regular face, which is about 5% narrower than Pretendard's bold. With the two bold faces removed from the `908470d` build, the swap measured 0.0661 on `/en/guide/` at 1366 px (0.0708 over the 12 pairs). In the first screen, the bold lead-ins of three list items widened, the text after them moved 9–17 px to the right, and a link that was split across two lines moved whole onto the next line. The only element on the page that changed height was the bold table row header "1 buffalo vs 15 hyenas" below the fold (2 → 3 lines). No heading re-wrapped; an earlier version of this page said headings did (#138).
 
 Font-swap CLS per page (fonts delayed 700 ms):
 
@@ -84,6 +87,36 @@ Font-swap CLS per page (fonts delayed 700 ms):
 | `/en/model/` | 0.0006        | 0.0001       | 0.0067         | 0.0001        |
 
 Limits: the measurements use the fonts installed in the test VM (Liberation Sans and WenQuanYi Zen Hei). On macOS (Helvetica, Apple SD Gothic Neo) and Windows (Arial, Malgun Gothic) the Latin face applies, but Hangul falls back to the unadjusted system font, because the advances of Apple SD Gothic Neo and Malgun Gothic could not be measured here. Repeat visits are unaffected either way: the fonts come from the immutable `assets/` cache before first paint.
+
+### Text widths in em (#138)
+
+`max-width: 70ch` on `.page-body p` and `.page-body li` (#52) brought the shift back. `ch` is the advance of "0" in the element's font: 0.5613 em in `Pretendard Fallback` and 0.5957 em in Pretendard Variable at weight 400 (Chromium computed widths at 1,000 px). When Pretendard arrived, a 70ch column at 16 px widened from 627.8 to 667.2 px and its text re-wrapped: on `/en/guide/` at 1366 px the first paragraph went from 6 lines to 5 and the content below it moved up. At 390 px the column is narrower than 70ch, so phones were not affected.
+
+Text widths are now in `em`, n ch of Pretendard being n × 0.5957 em:
+
+| Rule                                                          | Before | After     |
+| ------------------------------------------------------------- | ------ | --------- |
+| `.page-body p`, `.page-body li` (`src/pages/site.css`)        | `70ch` | `41.7em`  |
+| `.intro-lead` (`src/ui/styles.css`)                           | `80ch` | `47.66em` |
+| `.faq-item p` (`src/ui/styles.css`)                           | `72ch` | `42.89em` |
+| `.site-footer p` (`src/ui/site-footer.css`)                   | `72ch` | `42.89em` |
+| `.version-footer-num`, `min-width` (`src/ui/site-footer.css`) | `5ch`  | `2.98em`  |
+
+The version slot in the footer stays empty without JavaScript, so its `5ch` would also have widened at the swap (38.1 → 40.5 px at 13.6 px). `tests/css-units.test.ts` fails when `width`, `min-width`, `max-width` or an `inline-size` property in a stylesheet under `src/` uses `ch`.
+
+With Pretendard loaded, the columns keep their width. On all 21 built pages at 390, 1366 and 1920 px, the 2,922 elements under these rules have the same height and position as on `main`, and every page has the same height. Prose at 16 px is about 667.2 px wide on both. The only width differences are below 0.5 px: the footer disclaimer and the patch-note card lines at 13.6 and 14.4 px are 0.27–0.41 px wider, because Chromium's `ch` at those sizes matches a font size rounded down to 1/64 px; `.intro-lead` is 0.05 px wider; and the prose column is 0.01 px wider (667.19 px on `main`, 667.20 px with `41.7em`), because 70ch of Pretendard is 41.699em. Before the swap the column now has its final width: on `/en/guide/` at 1366 px the first paragraph is 667.2 px wide and 5 lines tall before and after.
+
+Font-swap CLS over the 12 pairs (method above, Chromium 141, median of 3 runs; a second pass of 3 runs gave the same medians):
+
+| Build                           |    Sum | Worst                          |
+| ------------------------------- | -----: | ------------------------------ |
+| `908470d` (#24, before `70ch`)  | 0.0022 | 0.0017 (`/guide/`, 1366 px)    |
+| `main` at `0e5bfd8`             | 0.0524 | 0.0242 (`/en/guide/`, 1366 px) |
+| with text widths in `em` (#138) | 0.0034 | 0.0017 (`/en/guide/`, 1366 px) |
+
+Per pair, `main` → #138: `/guide/` 1366 px 0.0225 → 0.0012, `/en/guide/` 1366 px 0.0242 → 0.0017, `/en/model/` 1366 px 0.0053 → 0.0002; the other nine pairs are 0–0.0001 on both. Counting every `p`, `li`, heading and table cell on the 12 pairs, 96 changed height at the swap on `main` (3 in the first 900 px) and 51 with #138 (none in the first 900 px). 38 of those 51 are on `/en/model/` at 390 px, mostly cells of narrow tables, and change on `main` too.
+
+The remaining 0.0034 is text moving sideways while no block in view changes height: the English header links (weight 500, drawn from the regular fallback face) move 3–5 px, and in a few list items a word moves up to the line above, which shifts the rest of the item's lines sideways (68 px for a link on `/en/guide/`).
 
 ## Language switch and startup
 

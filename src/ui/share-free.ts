@@ -1,8 +1,10 @@
 import {
+  FREE_MODEL_VERSION,
   GLOBALS,
   PACK_BUFF_EFFECTS,
   defaultFreeConfig,
   globalPresets,
+  isFreeModelVersion,
   sanitizeFreeConfig,
   type FreeConfig,
   type SideConfig,
@@ -29,6 +31,9 @@ import {
  * Per side: `sp` species, `n` count, `p` edited trait ranges and `bf` edited pack-buff ranges as
  * `[min, mode, max]`, both diffed against the species presets. `buff` holds switches that are
  * off, `g` edited global constants; scalars as in v2, diffed against the free defaults.
+ *
+ * `mv` is the model version (ADR-0008). Absent means 1, and the encoder writes it only when it is
+ * not 1, so every link of model 1 is byte-identical to the links made before `mv` existed.
  */
 
 export const FREE_SHARE_VERSION = 3;
@@ -75,12 +80,10 @@ function sideDiff(side: SideConfig): Record<string, unknown> {
 /** Minimal JSON-able form of a free config (always carries `v`, `m` and both sides). */
 export function freeConfigDiff(config: FreeConfig): Record<string, unknown> {
   const d = defaultFreeConfig();
-  const out: Record<string, unknown> = {
-    v: FREE_SHARE_VERSION,
-    m: FREE_MODE_MARKER,
-    a: sideDiff(config.sides[0]),
-    b: sideDiff(config.sides[1]),
-  };
+  const out: Record<string, unknown> = { v: FREE_SHARE_VERSION, m: FREE_MODE_MARKER };
+  if (config.mv !== 1) out['mv'] = config.mv;
+  out['a'] = sideDiff(config.sides[0]);
+  out['b'] = sideDiff(config.sides[1]);
   const off = PACK_BUFF_EFFECTS.filter((e) => !config.packBuff[e]);
   if (off.length > 0) out['buff'] = Object.fromEntries(off.map((e) => [e, false]));
   const g = diffRanges(
@@ -135,9 +138,36 @@ export function isFreePayload(raw: unknown): raw is Record<string, unknown> {
   );
 }
 
-/** Free config from a parsed v3 payload object. Never throws; invalid values fall back. */
+/**
+ * Model version a free payload names (ADR-0008): 1 when `mv` is absent, the version when this
+ * build runs it, null when it does not (a newer model, or anything that is not a version).
+ */
+export function freeModelVersion(raw: Record<string, unknown>): number | null {
+  if (!Object.hasOwn(raw, 'mv')) return 1;
+  const mv = raw['mv'];
+  return isFreeModelVersion(mv) ? mv : null;
+}
+
+/**
+ * Whether a free payload names a newer model than this build runs: `mv` is an integer above
+ * FREE_MODEL_VERSION. Only such a link can open once the page is reloaded; any other `mv` this
+ * build does not run (0, -1, 1.5, "1", null) is malformed, and no build will ever run it.
+ */
+export function freeModelNewer(raw: Record<string, unknown>): boolean {
+  const mv = raw['mv'];
+  return typeof mv === 'number' && Number.isInteger(mv) && mv > FREE_MODEL_VERSION;
+}
+
+/**
+ * Free config from a parsed v3 payload object. Never throws; invalid values fall back. A payload
+ * of a model version this build does not run yields the free defaults: none of its values can be
+ * read under another model (ADR-0008).
+ */
 export function freeConfigFromObject(raw: Record<string, unknown>): FreeConfig {
+  const mv = freeModelVersion(raw);
+  if (mv === null) return defaultFreeConfig();
   const input: Record<string, unknown> = {
+    mv,
     sides: [sideInput(raw['a']), sideInput(raw['b'])],
     packBuff: isObject(raw['buff']) ? raw['buff'] : {},
     globals: expandRanges(raw['g']),
@@ -157,12 +187,29 @@ function parsePayloadObject(payload: string): unknown {
   }
 }
 
-/** Free config of a `#s=` hash, or null when the hash holds no free (v3) payload. */
-export function freeConfigFromHash(hash: string): FreeConfig | null {
+/** The free (v3) payload object of a `#s=` hash, or null when the hash holds none. */
+export function freePayloadFromHash(hash: string): Record<string, unknown> | null {
   const payload = payloadFromHash(hash);
   if (payload === null) return null;
   const raw = parsePayloadObject(payload);
-  return isFreePayload(raw) ? freeConfigFromObject(raw) : null;
+  return isFreePayload(raw) ? raw : null;
+}
+
+/** Free config of a `#s=` hash, or null when the hash holds no free (v3) payload. */
+export function freeConfigFromHash(hash: string): FreeConfig | null {
+  const raw = freePayloadFromHash(hash);
+  return raw === null ? null : freeConfigFromObject(raw);
+}
+
+/**
+ * Whether a `#s=` hash holds a free payload of a newer model (`freeModelNewer`). Such a link opens
+ * at the free defaults, and the app keeps the address as it came, so a reload or a copied address
+ * still carries the link (ADR-0008 §6). A malformed `mv` also opens the defaults, but the app
+ * rewrites that address like any other.
+ */
+export function freeHashModelNewer(hash: string): boolean {
+  const raw = freePayloadFromHash(hash);
+  return raw !== null && freeModelNewer(raw);
 }
 
 /** The copy/paste settings code of a free config. */
@@ -170,11 +217,8 @@ export function freeConfigCode(config: FreeConfig): string {
   return FREE_CODE_PREFIX + encodeFreeConfig(config);
 }
 
-/**
- * Free config from pasted text: a `TVT3-` code (any case), a link whose `#s=` holds a v3 payload,
- * or a bare v3 payload. Null when the text is not a free config (it may still be a legacy one).
- */
-export function parseFreeConfigInput(input: string): FreeConfig | null {
+/** The free (v3) payload object of pasted text, or null when the text holds none. */
+function freePayloadFromInput(input: string): Record<string, unknown> | null {
   const text = input.trim();
   if (text === '' || text.length > MAX_SHARE_LENGTH + 2048) return null;
   let payload: string | null = text;
@@ -186,5 +230,25 @@ export function parseFreeConfigInput(input: string): FreeConfig | null {
   }
   if (payload === null) return null;
   const raw = parsePayloadObject(payload);
-  return isFreePayload(raw) ? freeConfigFromObject(raw) : null;
+  return isFreePayload(raw) ? raw : null;
+}
+
+/**
+ * Free config from pasted text: a `TVT3-` code (any case), a link whose `#s=` holds a v3 payload,
+ * or a bare v3 payload. Null when the text is not a free config (it may still be a legacy one).
+ * Text of a newer model yields the free defaults like a link does; the import field refuses it
+ * first (`freeInputModelNewer`).
+ */
+export function parseFreeConfigInput(input: string): FreeConfig | null {
+  const raw = freePayloadFromInput(input);
+  return raw === null ? null : freeConfigFromObject(raw);
+}
+
+/**
+ * Whether pasted text is a free config of a newer model (`freeModelNewer`). The import field
+ * refuses such text with a note instead of applying the defaults in its place (ADR-0008 §6).
+ */
+export function freeInputModelNewer(input: string): boolean {
+  const raw = freePayloadFromInput(input);
+  return raw !== null && freeModelNewer(raw);
 }

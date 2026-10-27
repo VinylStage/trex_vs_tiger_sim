@@ -26,10 +26,13 @@ export interface ConfigTransferHooks {
   applyConfig(config: ScenarioConfig): void;
   /**
    * Pasted text that is a free-matchup config (`TVT3-` code or v3 link, #50): apply it and
-   * return true; return false to parse it as a classic config.
+   * return `applied`. Return `newerModel` when it names a newer model than this build runs
+   * (ADR-0008 §6), so nothing is applied, and `notFree` to parse it as a classic config.
    */
-  applyFreeInput?(text: string): boolean;
+  applyFreeInput?(text: string): FreeInputOutcome;
 }
+
+export type FreeInputOutcome = 'applied' | 'newerModel' | 'notFree';
 
 const t = (key: ShareMsgKey, vars?: Readonly<Record<string, string | number>>): string =>
   sm(getLang(), key, vars);
@@ -193,10 +196,18 @@ export function createConfigTransfer(hooks: ConfigTransferHooks): HTMLElement {
     flash(statusEl, t('xfer.saved'));
   });
   const check = (): void => {
-    if (hooks.applyFreeInput?.(pasteField.value)) {
-      pasteField.value = '';
+    const outcome = hooks.applyFreeInput?.(pasteField.value) ?? 'notFree';
+    if (outcome !== 'notFree') {
       pending = null;
       preview.hidden = true;
+    }
+    if (outcome === 'newerModel') {
+      errorEl.textContent = t('xfer.err.newerModel');
+      return;
+    }
+    if (outcome === 'applied') {
+      errorEl.textContent = '';
+      pasteField.value = '';
       flash(statusEl, t('xfer.applied'));
       return;
     }
