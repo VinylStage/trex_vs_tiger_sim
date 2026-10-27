@@ -59,6 +59,35 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.19',
+    date: '2026-10-27',
+    title: {
+      ko: '버튼 하나면 충분해요 🎯',
+      en: 'One button is enough 🎯',
+    },
+    prs: [151],
+    items: [
+      {
+        cat: 'new',
+        refs: [146],
+        ko: '시뮬레이터가 간단 모드로 시작해요. 양쪽 동물과 마릿수를 고르거나 추천 대결을 누르고 "실행"만 하면 됩니다.',
+        en: 'The simulator now opens in Simple mode: pick each side and a head count, or tap a suggested matchup, then press Run.',
+      },
+      {
+        cat: 'new',
+        refs: [146],
+        ko: '결과는 승률 막대와 함께 끝까지 남은 수, 이탈한 수, 전투 불능 수를 보여 줘요. 실행할 때마다 새 시드로 다시 싸웁니다.',
+        en: 'Results show a win-share bar plus still standing, fled and incapacitated for each side. Every Run fights again with a fresh seed.',
+      },
+      {
+        cat: 'improved',
+        refs: [146],
+        ko: '세부 설정표와 기존 티렉스 대 호랑이 시뮬레이터는 "고급" 스위치 하나로 그대로 쓸 수 있어요. 예전 링크도 전처럼 열립니다.',
+        en: 'The full settings table and the original T. rex vs tiger simulator are one Advanced switch away, and old links open just as before.',
+      },
+    ],
+  },
+  {
     version: '0.2.18',
     date: '2026-10-27',
     title: {
