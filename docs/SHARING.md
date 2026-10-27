@@ -126,7 +126,7 @@ T-Rex 61% · 호랑이 35% · 무승부 4%
 https://trex-vs-tiger.vinylims.com/r/?r=…
 ```
 
-Ten cells by largest remainder (🟦 heavy, 🟧 pack, ⬜ draw). Species emoji come from `SPECIES_EMOJI`, keyed by free species id (every classic id is one too); species without one (today the woolly mammoth and _Homo erectus_) fall back to 🔷 (heavy, or side A of a free result) and 🔶 (pack, or side B). Chain: Web Share (text) → clipboard → the X intent `https://x.com/intent/tweet?text=…&url=…`.
+Ten cells by largest remainder (🟦 heavy, 🟧 pack, ⬜ draw). Species emoji come from `SPECIES_EMOJI`, keyed by free species id (every classic id is one too); species without one (today the woolly mammoth and _Homo erectus_) fall back to 🔷 (heavy, or side A of a free result) and 🔶 (pack, or side B). In a free result the side decides, not the species' classic role: a mammoth on side B gets 🔶 (`tests/free-result.test.ts`). Chain: Web Share (text) → clipboard → the X intent `https://x.com/intent/tweet?text=…&url=…`.
 
 ## Link preview (Pages Function)
 

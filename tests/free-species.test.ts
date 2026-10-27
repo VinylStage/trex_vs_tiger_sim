@@ -225,12 +225,15 @@ describe('mapping from the legacy registry', () => {
 });
 
 describe('era and ad safety (read from the legacy registry)', () => {
-  it.each(FREE_SPECIES_IDS)('%s carries the era and adSafe flag of its legacy entries', (id) => {
+  // Only species with a legacy entry: a free-only species sets both on its own sheet
+  // (SPECIES.md §11.5).
+  const withLegacy = FREE_SPECIES_IDS.filter((id) => isHeavySpecies(id) || isPackSpecies(id));
+
+  it.each(withLegacy)('%s carries the era and adSafe flag of its legacy entries', (id) => {
     const legacy = [
       isHeavySpecies(id) ? HEAVY_SPECIES[id] : null,
       isPackSpecies(id) ? PACK_SPECIES[id] : null,
     ].filter((x) => x !== null);
-    expect(legacy.length).toBeGreaterThan(0);
     for (const l of legacy) expect(FREE_SPECIES[id].era).toEqual(l.era);
     expect(FREE_SPECIES[id].adSafe).toBe(legacy.every((l) => l.adSafe));
   });
