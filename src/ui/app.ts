@@ -50,7 +50,8 @@ import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
 import {
   freeConfigFromHash,
-  freeHashModelUnknown,
+  freeHashModelNewer,
+  freeInputModelNewer,
   hashFromFreeConfig,
   parseFreeConfigInput,
 } from './share-free';
@@ -106,10 +107,11 @@ export function startApp(root: HTMLElement): void {
   const startHash = location.hash;
   const startFree = freeConfigFromHash(startHash);
   let mode: 'classic' | 'free' = startFree ? 'free' : 'classic';
-  // A free link of a model this build does not run opens at the free defaults (ADR-0008 §6). The
-  // address keeps that link until the user edits something, so a reload (which loads the current
-  // build) or a copied address still carries it, and a note says why the defaults are shown.
-  let keepNewerLink = freeHashModelUnknown(startHash);
+  // A free link of a newer model opens at the free defaults (ADR-0008 §6). The address keeps that
+  // link until the user edits something, so a reload (which loads the current build) or a copied
+  // address still carries it, and a note says why the defaults are shown. A malformed `mv` also
+  // opens the defaults, but its address is rewritten like any malformed link.
+  let keepNewerLink = freeHashModelNewer(startHash);
   const newerLinkNote = h('p', { class: 'stale-banner free-newer-link', i18n: 'free.newerModel' });
   newerLinkNote.hidden = !keepNewerLink;
   let config: ScenarioConfig =
@@ -326,12 +328,14 @@ export function startApp(root: HTMLElement): void {
     createConfigTransfer({
       getConfig: () => config,
       applyFreeInput: (text) => {
+        // A newer model's code is refused, not swapped for the defaults (ADR-0008 §6).
+        if (freeInputModelNewer(text)) return 'newerModel';
         const fc = parseFreeConfigInput(text);
-        if (!fc) return false;
+        if (!fc) return 'notFree';
         free.setConfig(fc);
         setMode('free');
         writeUrl();
-        return true;
+        return 'applied';
       },
       applyConfig: (c) => {
         config = c;
@@ -985,7 +989,7 @@ export function startApp(root: HTMLElement): void {
 
   window.addEventListener('hashchange', () => {
     const fc = freeConfigFromHash(location.hash);
-    holdNewerLink(freeHashModelUnknown(location.hash));
+    holdNewerLink(freeHashModelNewer(location.hash));
     if (keepNewerLink) announce(t('free.newerModel'));
     if (fc) {
       free.setConfig(fc);

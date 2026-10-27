@@ -26,10 +26,12 @@ A v3 link (`#s=` with `m: "free"`) carries no model version. After any such chan
    - A constant-only retune keeps a constants table per `mv`, so old links run with their own constants.
    - The variable-card catalogue is keyed by `mv` (`CARDS_BY_MV`). The intervention log stores card codes, not raw effects. Card codes are append-only indices. Retuning a card is a new `mv` with the old catalogue kept.
    - A structural change that cannot keep the old behaviour opens old links with a "made with model vN" note. Links that carry a summary are also flagged by the existing `chk=` check.
-6. **A page built from this ADR on that does not know a link's `mv`** (a newer link opened in an older, cached page) never presents that link under its own model.
+6. **A page built from this ADR on that does not know a link's `mv`** (a newer link opened in an older, cached page) never presents that link under its own model. Proposed, pending owner confirmation (see Status).
    - A free result link is rejected as a `version` error, without **Run it yourself**.
-   - A settings link or `TVT3-` code opens the free model at its defaults; the link's settings are not applied. Values defined under an unknown model cannot be read safely, so the existing rule for settings payloads (malformed input yields the defaults) applies to the whole payload.
-   - The simulator keeps such a link in the address until the user edits something, and a note says that the link was made with a newer model and that reloading opens it. Reloading loads the current build, which knows the version, and the kept address opens the link there.
+   - A settings link opens the free model at its defaults; the link's settings are not applied. Values defined under an unknown model cannot be read safely, so the existing rule for settings payloads (malformed input yields the defaults) applies to the whole payload.
+   - Only an integer `mv` above the newest version the build runs is a newer model. For such a link the simulator keeps the address until the user edits something, and a note says that the link was made with a newer model and that reloading opens it. Reloading loads the current build, which knows the version, and the kept address opens the link there.
+   - Any other `mv` the build does not run (0, a negative or fractional number, a string, `null`) is malformed, and no build will ever run it. It opens the defaults like any malformed payload: the address is rewritten and no note is shown.
+   - A newer model's `TVT3-` code or settings link pasted into the import field is refused: nothing is applied, and the field says that the code was made with a newer model and that it opens after a reload. The import never reports the defaults as the pasted settings.
    - Builds up to v0.2.16 predate this rule: they ignore `mv` and run such a link under model 1 with its settings, and accept a newer free result link as valid. Pages already in a cache cannot be changed.
 7. **Live interventions are a free-engine feature.** The classic engine gets no live mode.
    - The log is a list of `[tick, card, side]` entries (at most 64, sorted by tick) in the link's optional `live` field. It is applied at the top of the tick loop, and trait effects are recomputed from base values on every start or expiry, never reverted.
@@ -47,5 +49,5 @@ A v3 link (`#s=` with `m: "free"`) carries no model version. After any such chan
 
 - Every existing free link keeps decoding and reproducing exactly as before.
 - A change that alters free results costs a version bump and, where possible, the old constants or catalogue kept beside the new ones. Reviews check the free goldens to decide whether a bump is due.
-- An older cached page built from this ADR on cannot open a link from a newer model. It shows the free defaults with a note, or the invalid-link message, instead of different numbers. A page built up to v0.2.16 ignores `mv` and shows such a link's numbers under model 1.
+- An older cached page built from this ADR on cannot open a link from a newer model. It shows the free defaults with a note, refuses a pasted code with a note, or shows the invalid-link message, instead of different numbers. A page built up to v0.2.16 ignores `mv` and shows such a link's numbers under model 1.
 - Viewer names are never encoded in links (owner decision R9).

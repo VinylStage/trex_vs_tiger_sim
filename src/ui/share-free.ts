@@ -1,4 +1,5 @@
 import {
+  FREE_MODEL_VERSION,
   GLOBALS,
   PACK_BUFF_EFFECTS,
   defaultFreeConfig,
@@ -148,6 +149,16 @@ export function freeModelVersion(raw: Record<string, unknown>): number | null {
 }
 
 /**
+ * Whether a free payload names a newer model than this build runs: `mv` is an integer above
+ * FREE_MODEL_VERSION. Only such a link can open once the page is reloaded; any other `mv` this
+ * build does not run (0, -1, 1.5, "1", null) is malformed, and no build will ever run it.
+ */
+export function freeModelNewer(raw: Record<string, unknown>): boolean {
+  const mv = raw['mv'];
+  return typeof mv === 'number' && Number.isInteger(mv) && mv > FREE_MODEL_VERSION;
+}
+
+/**
  * Free config from a parsed v3 payload object. Never throws; invalid values fall back. A payload
  * of a model version this build does not run yields the free defaults: none of its values can be
  * read under another model (ADR-0008).
@@ -191,13 +202,14 @@ export function freeConfigFromHash(hash: string): FreeConfig | null {
 }
 
 /**
- * Whether a `#s=` hash holds a free payload of a model version this build does not run. Such a
- * link opens at the free defaults, and the app keeps the address as it came, so a reload or a
- * copied address still carries the link (ADR-0008 §6).
+ * Whether a `#s=` hash holds a free payload of a newer model (`freeModelNewer`). Such a link opens
+ * at the free defaults, and the app keeps the address as it came, so a reload or a copied address
+ * still carries the link (ADR-0008 §6). A malformed `mv` also opens the defaults, but the app
+ * rewrites that address like any other.
  */
-export function freeHashModelUnknown(hash: string): boolean {
+export function freeHashModelNewer(hash: string): boolean {
   const raw = freePayloadFromHash(hash);
-  return raw !== null && freeModelVersion(raw) === null;
+  return raw !== null && freeModelNewer(raw);
 }
 
 /** The copy/paste settings code of a free config. */
@@ -205,11 +217,8 @@ export function freeConfigCode(config: FreeConfig): string {
   return FREE_CODE_PREFIX + encodeFreeConfig(config);
 }
 
-/**
- * Free config from pasted text: a `TVT3-` code (any case), a link whose `#s=` holds a v3 payload,
- * or a bare v3 payload. Null when the text is not a free config (it may still be a legacy one).
- */
-export function parseFreeConfigInput(input: string): FreeConfig | null {
+/** The free (v3) payload object of pasted text, or null when the text holds none. */
+function freePayloadFromInput(input: string): Record<string, unknown> | null {
   const text = input.trim();
   if (text === '' || text.length > MAX_SHARE_LENGTH + 2048) return null;
   let payload: string | null = text;
@@ -221,5 +230,25 @@ export function parseFreeConfigInput(input: string): FreeConfig | null {
   }
   if (payload === null) return null;
   const raw = parsePayloadObject(payload);
-  return isFreePayload(raw) ? freeConfigFromObject(raw) : null;
+  return isFreePayload(raw) ? raw : null;
+}
+
+/**
+ * Free config from pasted text: a `TVT3-` code (any case), a link whose `#s=` holds a v3 payload,
+ * or a bare v3 payload. Null when the text is not a free config (it may still be a legacy one).
+ * Text of a newer model yields the free defaults like a link does; the import field refuses it
+ * first (`freeInputModelNewer`).
+ */
+export function parseFreeConfigInput(input: string): FreeConfig | null {
+  const raw = freePayloadFromInput(input);
+  return raw === null ? null : freeConfigFromObject(raw);
+}
+
+/**
+ * Whether pasted text is a free config of a newer model (`freeModelNewer`). The import field
+ * refuses such text with a note instead of applying the defaults in its place (ADR-0008 §6).
+ */
+export function freeInputModelNewer(input: string): boolean {
+  const raw = freePayloadFromInput(input);
+  return raw !== null && freeModelNewer(raw);
 }

@@ -20,7 +20,9 @@ import {
   freeConfigCode,
   freeConfigDiff,
   freeConfigFromHash,
-  freeHashModelUnknown,
+  freeHashModelNewer,
+  freeInputModelNewer,
+  freeModelNewer,
   freeModelVersion,
   parseFreeConfigInput,
 } from '../src/ui/share-free';
@@ -138,6 +140,14 @@ describe('a model version this build does not run', () => {
       expect(freeModelVersion({ mv })).toBeNull();
   });
 
+  it('is newer only as an integer above FREE_MODEL_VERSION (freeModelNewer)', () => {
+    expect(freeModelNewer(newer)).toBe(true);
+    expect(freeModelNewer({ mv: FREE_MODEL_VERSION + 7 })).toBe(true);
+    for (const mv of [1, 0, -1, 1.5, FREE_MODEL_VERSION + 0.5, '1', '2', null, true, [2], {}])
+      expect(freeModelNewer({ mv }), JSON.stringify(mv)).toBe(false);
+    expect(freeModelNewer(json(OLD.edited))).toBe(false);
+  });
+
   it('opens a settings link or code at the free defaults, never with its values', () => {
     const payload = encode(newer);
     expect(freeConfigFromHash(`#s=${payload}`)).toEqual(defaultFreeConfig());
@@ -145,11 +155,44 @@ describe('a model version this build does not run', () => {
     expect(parseFreeConfigInput(`https://example.org/en/#s=${payload}`)).toEqual(
       defaultFreeConfig(),
     );
-    // Still a free link: it never falls through to the classic decoder.
-    expect(freeConfigFromHash(`#s=${encode({ ...newer, mv: '2' })}`)).toEqual(defaultFreeConfig());
+    // A malformed mv is still a free link: it never falls through to the classic decoder.
+    for (const mv of [0, -1, 1.5, '1', '2', null]) {
+      const bad = encode({ ...newer, mv });
+      expect(freeConfigFromHash(`#s=${bad}`)).toEqual(defaultFreeConfig());
+      expect(parseFreeConfigInput(`TVT3-${bad}`)).toEqual(defaultFreeConfig());
+    }
   });
 
-  it('is found in a location hash, so the app keeps that address (freeHashModelUnknown)', () => {
+  it('is refused by the import field when pasted (freeInputModelNewer)', () => {
+    const payload = encode(newer);
+    for (const text of [
+      `TVT3-${payload}`,
+      `  tvt3-${payload}\n`,
+      `https://example.org/en/#s=${payload}`,
+      `https://example.org/en/#s=${payload}&chk=${encode({ n: 200, a: 120, b: 70, d: 10 })}`,
+      payload,
+    ]) {
+      expect(freeInputModelNewer(text), text).toBe(true);
+    }
+    // A model this build runs, a malformed mv (applied as the defaults, like any malformed
+    // value), a classic code or link, or no payload: not refused as newer.
+    for (const text of [
+      `TVT3-${OLD.edited}`,
+      `https://example.org/en/#s=${OLD.wolves}`,
+      ...[0, -1, 1.5, '1', '2', null].map((mv) => `TVT3-${encode({ ...newer, mv })}`),
+      `TVT2-${encode({ v: 2, mv: FREE_MODEL_VERSION + 1 })}`,
+      `https://example.org/en/${hashFromConfig({ ...defaultConfig(), seed: 7 })}`,
+      encode({ v: 3, mv: FREE_MODEL_VERSION + 1 }),
+      '',
+      'TVT3-',
+      'TVT3-%%%',
+      'https://example.org/',
+    ]) {
+      expect(freeInputModelNewer(text), text).toBe(false);
+    }
+  });
+
+  it('is found in a location hash, so the app keeps that address (freeHashModelNewer)', () => {
     const payload = encode(newer);
     const chk = encode({ n: 200, a: 120, b: 70, d: 10 });
     for (const hash of [
@@ -157,13 +200,15 @@ describe('a model version this build does not run', () => {
       `s=${payload}`,
       `#s=${payload}&chk=${chk}`,
       `#chk=${chk}&s=${payload}`,
-      `#s=${encode({ ...newer, mv: '2' })}`,
+      `#s=${encode({ ...newer, mv: FREE_MODEL_VERSION + 5 })}`,
     ]) {
-      expect(freeHashModelUnknown(hash), hash).toBe(true);
+      expect(freeHashModelNewer(hash), hash).toBe(true);
     }
-    // A model this build runs, a classic link, no payload or a malformed one: the app writes the
-    // address as before.
+    // A model this build runs, a malformed mv, a classic link, no payload or a malformed one: the
+    // app writes the address as before. No build will ever run a malformed mv, so a reload could
+    // not open it and the note would not be true.
     for (const hash of [
+      ...[0, -1, 1.5, '1', '2', null, true].map((mv) => `#s=${encode({ ...newer, mv })}`),
       `#s=${OLD.edited}`,
       `#s=${encode({ ...json(OLD.edited), mv: 1 })}`,
       `#s=${OLD.wolves}&chk=${chk}`,
@@ -176,7 +221,7 @@ describe('a model version this build does not run', () => {
       '#s=%%',
       '#tour',
     ]) {
-      expect(freeHashModelUnknown(hash), hash).toBe(false);
+      expect(freeHashModelNewer(hash), hash).toBe(false);
     }
   });
 
