@@ -13,10 +13,12 @@ import {
 } from '../src/share/free-result-codec';
 import { decodeResult, encodeResult, RESULT_VERSION } from '../src/share/result-codec';
 import { onResultRequest } from '../src/share/result-function';
+import { sm } from '../src/share/messages';
 import {
   buildMeta,
   freeResultView,
   freeShareText,
+  freeStats,
   resultView,
   shareText,
 } from '../src/share/result-text';
@@ -296,6 +298,42 @@ describe('free result views', () => {
     );
     expect(cardFileName(input, 'story')).toBe('trex-vs-tiger-free-wolf8-vs-wolf8-story.png');
     expect(cardTexts(input)).toContain(view.context);
+  });
+
+  it('lists still standing as the app does, not survivors that include the fled (#42)', () => {
+    const c = free('lion', 5, 'tiger', 5, 60);
+    const agg = aggregateFree(c, runAllFree(c).summaries);
+    expect(agg.a.routed).toBeGreaterThan(0);
+    expect(agg.b.routed).toBeGreaterThan(0);
+    const res = decodeAnyResult(encodeFreeResult(c, summarizeFree(c, agg)));
+    if (!res.ok || res.kind !== 'free') throw new Error('free result expected');
+    const v = freeResultView(res.config, res.summary, 'en');
+    const items = new Map(freeStats(v, res.summary));
+    for (const [name, side] of [
+      [v.heavyName, agg.a],
+      [v.packName, agg.b],
+    ] as const) {
+      const value = (key: 'free.standing' | 'free.fled'): number =>
+        Number(items.get(sm('en', key, { side: name })));
+      const killed = Number(items.get(sm('en', 'result.incapacitated', { pack: name })));
+      expect(Math.abs(value('free.standing') - side.active)).toBeLessThanOrEqual(0.11);
+      expect(value('free.standing') + value('free.fled') + killed).toBeCloseTo(5, 0);
+    }
+  });
+
+  it('clamps still standing at 0 where the snapshot rounding would go below it', () => {
+    // Lion 30 vs elephant 5, seed 20261019, 500 runs: survivors 26.69, fled 26.7 (two and one
+    // decimals), still standing 0.004 in the app.
+    const c = free('lion', 30, 'elephant', 5);
+    const runs = { n: 500, a: 0, b: 499, d: 1 };
+    const s: FreeResultSummary = { ...runs, as: 26.69, ak: 3.3, ar: 26.7, bs: 5, bk: 0, br: 0 };
+    const ko = freeStats(freeResultView(c, s, 'ko'), s);
+    expect(ko).toContainEqual(['사자 평균 끝까지 남음', '0']);
+    expect(ko).toContainEqual(['사자 평균 이탈', '26.7']);
+    expect(ko).toContainEqual(['코끼리 평균 끝까지 남음', '5']);
+    expect(ko.map(([k]) => k).join()).not.toMatch(/생존|도주/);
+    const en = new Map(freeStats(freeResultView(c, s, 'en'), s));
+    expect(en.get('Mean Lions still standing')).toBe('0');
   });
 });
 

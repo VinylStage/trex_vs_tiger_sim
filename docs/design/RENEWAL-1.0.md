@@ -701,6 +701,7 @@ Names are common nouns. The **"Why?" column is the text shown to users** (`FreeP
 
 - **Every preset passes the automated rout check** in the fixture (§3.2) before it ships. The table marks the presets with large social groups that are most likely to trip it: #2, #6, #10, #11 and #18.
 - M2 ships the presets among 1–10 that pass the check, and #11 after R4. Batch A adds #12 and #14–#18.
+- **Status (M1, #124).** #1–#11 are in the registry (`src/sim/free/presets.ts`) with their measured fixture; #12–#23 wait for their species. Measured on the free engine, every one-on-one preset ends in a rout (rout share 100 %), so #1, #3 and #8 pass through a documented override, as does #4 (field records of bears and wolves withdrawing). #2, #10 and #11 are on hold until the owner accepts an override, other counts or a retune (R4). The close tag now comes from the fixture: #1, #2, #8 and #11 are close in the free model, #4 and #5 are not. Details in [docs/PRESETS.md](../PRESETS.md).
 - Not recommended: a "1 gorilla vs 100 _H. erectus_" preset. The meme it remixes started with a racial slur, and the framing is human against animal.
 - **Cup presets**: "16강 기본 / Standard 16" and "Quick 8" are built from ready species × counts. In a single-elimination bracket any two entries can meet in some round, so **all pairs** are tested (120 for 16 entries, 28 for 8). Each pair must pass:
   - the re-simulation gate and the card-pause budget on the reference streamer profile (§10.2)

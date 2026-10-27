@@ -434,6 +434,8 @@ Examples with defaults:
 
 This models the observation that tigers avoid injurious fights. The thresholds are **[speculative]**.
 
+**Free matchups.** The free model (design: [FREE-MATCHUPS.md §4.5, §5.2](design/FREE-MATCHUPS.md#45-fleeing)) gives both sides morale, so any species can rout. Wounds cost morale in proportion to the damage. In a social species (lion, wolf, spotted hyena, _H. erectus_), a nearby ally that is incapacitated or routs also costs the buffed members morale, so a whole group can break at once. Free results therefore show per side the mean still standing, fled and incapacitated, with each one's share of the side's count. When the side that won fewer runs is a group that shares morale, meaning a social species of two or more with `morale` and the pack buff's morale effect on, and at least 80 % (**[speculative]**) of it fled in the runs it lost, a notice says the group's morale broke at once (`routNotice` in `src/sim/free/aggregate.ts`). The rout share is fled ÷ (fled + incapacitated) of the losing side over decided runs (`routShare`). One on one, the loser flees in practically every run. Solitary animals fielded together also flee, but each on its own morale: 5 tigers against 5 lions lose 210 of 500 runs, and in those runs 99.9 % of the tigers flee rather than being incapacitated (seed 20261019). Neither case has group morale to break, so neither gets the notice. The Simple-mode presets are checked against the same measure ([PRESETS.md](PRESETS.md)).
+
 ## 4. Constants
 
 These are fixed in `engine.ts`. They are not sampled and not editable in the UI. The pack contact radius is a species constant (§2.7; 0.8 m for the tiger).

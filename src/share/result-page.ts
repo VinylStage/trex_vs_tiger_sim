@@ -12,17 +12,14 @@ import {
 } from '../ui/result-card.ts';
 import { encodeConfig } from '../ui/share.ts';
 import { hashFromFreeConfig } from '../ui/share-free.ts';
-import {
-  decodeAnyResultQuery,
-  reproduceFreeHash,
-  type FreeResultSummary,
-} from './free-result-codec.ts';
+import { decodeAnyResultQuery, reproduceFreeHash } from './free-result-codec.ts';
 import { sm, type ShareMsgKey } from './messages.ts';
 import { reproduceHash, type ResultError, type ResultSummary } from './result-codec.ts';
 import {
   formatCount,
   formatSeconds,
   freeResultView,
+  freeStats,
   pct,
   pct1,
   resultView,
@@ -172,30 +169,6 @@ function classicStats(v: ResultView, s: ResultSummary): StatItem[] {
   }
   if (s.pk !== undefined) {
     items.push([t('result.incapacitated', { pack: v.packName }), s.pk.toLocaleString(lang)]);
-  }
-  return items;
-}
-
-/** Per side: survivors, incapacitated, fled and, where the pack buff applies, its active time. */
-function freeStats(v: ResultView, s: FreeResultSummary): StatItem[] {
-  const items: StatItem[] = [];
-  if (s.t !== undefined) items.push([t('result.duration'), formatSeconds(s.t, lang)]);
-  const num = (x: number): string => x.toLocaleString(lang);
-  const sides = [
-    { name: v.heavyName, sv: s.as, k: s.ak, r: s.ar, b: s.ab, bt: s.at },
-    { name: v.packName, sv: s.bs, k: s.bk, r: s.br, b: s.bb, bt: s.bt },
-  ];
-  for (const x of sides) {
-    if (x.sv !== undefined) items.push([t('result.survivors', { heavy: x.name }), num(x.sv)]);
-    if (x.k !== undefined) items.push([t('result.incapacitated', { pack: x.name }), num(x.k)]);
-    if (x.r !== undefined) items.push([t('free.fled', { side: x.name }), num(x.r)]);
-    if (x.b !== undefined) {
-      const time = x.bt === undefined ? '' : formatSeconds(x.bt, lang);
-      items.push([
-        t('free.buff', { side: x.name }),
-        t('free.buffValue', { pct: pct(x.b), t: time }),
-      ]);
-    }
   }
   return items;
 }

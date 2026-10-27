@@ -146,6 +146,16 @@
   margin: 0 0 8px;
 }
 
+.free-rout-notice {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.free-rout-notice a {
+  font-weight: 600;
+}
+
 .free-newer-link {
   margin: 0 0 16px;
 }

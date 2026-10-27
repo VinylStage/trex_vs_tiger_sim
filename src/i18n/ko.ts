@@ -525,9 +525,13 @@ export const ko = {
   'free.verdict': '이 모델로 {n}번 싸워 보니 {team} 쪽이 {k}번 이겼습니다 ({pct}).',
   'free.basis': '{a} vs {b} · {n}회 시뮬레이션 · 시드 {seed} · 계산 {elapsed}',
   'free.win': '{side} 승리',
-  'free.stat.survivors': '{side} 생존 (평균)',
+  'free.stat.standing': '{side} 끝까지 남음 (평균)',
   'free.stat.killed': '{side} 전투 불능 (평균)',
-  'free.stat.routed': '{side} 도주 (평균)',
+  'free.stat.routed': '{side} 이탈 (평균)',
+  'free.stat.part': '{n}{counter} 중 {pct}',
+  'free.rout.notice':
+    '무리의 사기가 한꺼번에 무너졌어요. {side} {team} 쪽이 진 판에서는 {pct}가 전투 불능이 아니라 이탈로 끝났습니다.',
+  'free.rout.why': '왜?',
   'free.replay.repNote': '가장 흔한 결과 가운데 교전 시간이 중앙값에 가장 가까운 전투',
   'free.replay.canvasLabel':
     '자유 대결 재생 애니메이션: A 진영은 파란색, B 진영은 주황색입니다. 큰 동물은 삼각형, 작은 동물은 점, 무리 버프가 적용된 개체는 얇은 고리, 도주는 회색, 전투 불능은 ×로 표시합니다',
