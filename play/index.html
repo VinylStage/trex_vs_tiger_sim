@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>티렉스 대 호랑이 시뮬레이터 – 티라노사우루스 vs 호랑이, 누가 이길까?</title>
+    <title>시뮬레이터 실행 – 티렉스 대 호랑이</title>
     <meta
       name="description"
-      content="티라노사우루스 N마리와 호랑이 M마리가 싸우면 누가 이길까? 문헌 기반 능력치로 몬테카를로 전투를 수백 번 돌려 승률(95% 신뢰구간), 전투 시간, 민감도를 보여 주는 무료 브라우저 시뮬레이터."
+      content="티렉스 대 호랑이 시뮬레이터의 실행 화면입니다. 종과 마릿수를 고르고 몬테카를로 전투를 돌려 승률과 95% 신뢰구간, 전투 재생을 확인하세요."
     />
+    <meta name="robots" content="noindex, follow" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
@@ -25,7 +26,7 @@
         </div>
         <a
           class="btn btn-ghost"
-          href="/en/"
+          href="/en/play/"
           hreflang="en"
           lang="en"
           data-lang-switch
@@ -40,131 +41,6 @@
         <span lang="en">This simulator needs JavaScript. Please enable it in your browser.</span>
       </p>
     </noscript>
-    <section class="site-intro" id="intro" aria-labelledby="intro-title">
-      <div class="site-intro-inner">
-        <h2 id="intro-title" data-i18n="intro.title">티렉스 대 호랑이 시뮬레이터란?</h2>
-        <p class="intro-lead" data-i18n="intro.lead">
-          티라노사우루스 N마리와 호랑이 M마리가 탁 트인 평지에서 맞붙으면 어떻게 될까요? 이
-          시뮬레이터는 이 질문을 출발점으로 몬테카를로 방법을 직접 체험해 보는 무료 교육용
-          도구입니다. 코끼리와 사자, 불곰과 늑대처럼 야생에서 관찰된 대결도 고를 수 있습니다. 한
-          판의 승패 대신, 문헌에 근거한 불확실한 능력치로 전투를 수백 번 반복해 승률과 그 불확실성을
-          함께 보여 줍니다.
-        </p>
-        <div class="intro-grid">
-          <div class="intro-block">
-            <h3 data-i18n="intro.howTitle">어떻게 작동하나요?</h3>
-            <ol class="intro-steps">
-              <li data-i18n="intro.how1">
-                양쪽 종과 마릿수, 전술, 실행 횟수를 정하고, 원하면 22개 능력치의 범위도 바꿉니다.
-              </li>
-              <li data-i18n="intro.how2">
-                전투마다 체중, 무는 힘, 속도 같은 능력치를 범위 안에서 새로 뽑습니다.
-              </li>
-              <li data-i18n="intro.how3">
-                개체마다 단순한 규칙으로 움직이는 에이전트 기반 전투를 브라우저가 여러 번
-                계산합니다.
-              </li>
-              <li data-i18n="intro.how4">
-                결과를 승률과 95% 신뢰구간, 전투 시간 분포, 민감도 차트, 전투 재생으로 정리합니다.
-              </li>
-            </ol>
-          </div>
-          <div class="intro-block">
-            <h3 data-i18n="intro.learnTitle">무엇을 배울 수 있나요?</h3>
-            <ul>
-              <li data-i18n="intro.learn1">
-                몬테카를로 시뮬레이션: 무작위 실험을 반복해 답을 근사하는 방법
-              </li>
-              <li data-i18n="intro.learn2">
-                신뢰구간: 실행 횟수에 따라 추정이 얼마나 정밀해지는지
-              </li>
-              <li data-i18n="intro.learn3">민감도 분석: 결과가 어떤 가정에 가장 크게 좌우되는지</li>
-            </ul>
-          </div>
-          <div class="intro-block">
-            <h3 data-i18n="intro.moreTitle">더 알아보기</h3>
-            <ul class="intro-links">
-              <li>
-                <a href="/guide/" data-page="guide" data-i18n="intro.link.guide"
-                  >사용 방법과 결과 읽는 법</a
-                >
-              </li>
-              <li>
-                <a
-                  href="/model/#results"
-                  data-page="model"
-                  data-href-suffix="#results"
-                  data-i18n="intro.link.model"
-                  >모델 설명과 기본 가정의 예비 결과</a
-                >
-              </li>
-              <li>
-                <a href="/parameters/" data-page="parameters" data-i18n="intro.link.parameters"
-                  >파라미터 범위와 출처</a
-                >
-              </li>
-              <li>
-                <a
-                  href="/?tour=1"
-                  data-page="simulator"
-                  data-href-suffix="?tour=1"
-                  data-tour-start
-                  data-i18n="intro.link.tour"
-                  >1분 튜토리얼 시작</a
-                >
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section class="site-faq" id="faq" aria-labelledby="faq-title">
-      <div class="site-intro-inner">
-        <h2 id="faq-title" data-i18n="faq.title">자주 묻는 질문</h2>
-        <div class="faq-list">
-          <div class="faq-item">
-            <h3 data-i18n="faq.q1">티라노사우루스와 호랑이가 실제로 만난 적이 있나요?</h3>
-            <p data-i18n="faq.a1">
-              없습니다. 티라노사우루스는 약 6,800만–6,600만 년 전 백악기 말에 살았고, 호랑이는
-              그보다 훨씬 뒤에 나타났습니다. 이 대결은 방법을 배우기 위한 가상의 시나리오입니다.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3 data-i18n="faq.q2">그래서 누가 이기나요?</h3>
-            <p data-i18n="faq.a2">
-              정해진 답은 없습니다. 승률은 마릿수, 사기, 전술, 능력치 범위 같은 가정에 따라 크게
-              달라집니다. 기본 가정에서의 예비 결과와 그 해석은 모델 설명 페이지에 있고, 위의
-              시뮬레이터로 직접 확인할 수도 있습니다.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3 data-i18n="faq.q3">몬테카를로 시뮬레이션이란 무엇인가요?</h3>
-            <p data-i18n="faq.a3">
-              불확실한 값을 무작위로 뽑아 같은 실험을 여러 번 반복하고, 결과의 분포로 답을 추정하는
-              방법입니다. 실행 횟수가 많을수록 승률의 신뢰구간이 좁아집니다.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3 data-i18n="faq.q4">결과를 공유하거나 다시 재현할 수 있나요?</h3>
-            <p data-i18n="faq.a4">
-              네. 링크 복사를 누르면 종, 마릿수, 파라미터 범위, 시드가 담긴 주소가 만들어집니다.
-              같은 링크를 열고 실행하면 같은 결과가 나옵니다.
-            </p>
-          </div>
-          <div class="faq-item">
-            <h3 data-i18n="faq.q5">어떤 동물을 고를 수 있나요?</h3>
-            <p data-i18n="faq.a5">
-              대형 동물은 티라노사우루스, 아프리카코끼리, 아프리카물소, 불곰, 털매머드, 호모
-              에렉투스이고, 무리 동물은 호랑이, 사자, 회색늑대, 점박이하이에나, 호모 에렉투스입니다.
-              코끼리와 사자, 물소와 사자, 불곰과 늑대처럼 야생에서 관찰된 대결에는 표시가 붙고,
-              기본값마다 근거 수준(문헌, 유도, 추정, 미검증)을 함께 보여 줍니다. 멸종 인류인 호모
-              에렉투스는 옷 · 도구 · 무기 없이 신체 능력만 비교하는 사고 실험이며, 현생 인류와
-              가축은 다루지 않습니다.
-            </p>
-          </div>
-        </div>
-      </div>
-    </section>
     <!-- site-footer -->
   </body>
 </html>

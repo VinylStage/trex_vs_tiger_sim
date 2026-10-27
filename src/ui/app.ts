@@ -99,12 +99,13 @@ interface ReplayState {
 }
 
 export function startApp(root: HTMLElement): void {
-  // The language comes from the URL (`/` Korean, `/en/` English) and its static `<html lang>`.
+  // The language comes from the URL (`/play/` Korean, `/en/play/` English) and its `<html lang>`.
   initLang(pageLang(location.pathname, document.documentElement.lang));
-  // Same text as the static <title> of this language's page (tests/pages.test.ts).
-  document.title = t('app.documentTitle');
+  // Same text as the static <title> of this language's play page (tests/pages.test.ts).
+  document.title = t('play.documentTitle');
   const pool = new SimPool();
   // A v3 link (`#s=` with `m: "free"`) opens in free mode; everything else stays classic (D1).
+  // Old links that land on the lobby reach this page with the same fragment (link-route.ts).
   const startHash = location.hash;
   const startRoute = routeLink(startHash);
   const startFree = startRoute.mode === 'free' ? startRoute.config : null;
@@ -186,7 +187,7 @@ export function startApp(root: HTMLElement): void {
     void copyText(url, getLang()).then((ok) => ok && showToast(t('share.copied')));
   });
 
-  // index.html and en/index.html ship a static header inside #app with the page's only <h1> and
+  // play/index.html and en/play/index.html ship a static header inside #app with the page's only <h1> and
   // a link to the other language, for crawlers that do not run JavaScript (docs/SEO.md). The app
   // moves that <h1> into its own header and drops the rest: the language button replaces the link.
   const staticHead = root.querySelector('.app-static-head');
@@ -483,7 +484,7 @@ export function startApp(root: HTMLElement): void {
   );
 
   // ---------- footer ----------
-  // The footer is static HTML outside #app (index.html, en/index.html): links, disclaimer and a
+  // The footer is static HTML outside #app (play/index.html, en/play/index.html): links, disclaimer and a
   // version slot. The app fills the version and re-localises it when the language changes.
   fillVersionFooter(document);
 
@@ -966,12 +967,12 @@ export function startApp(root: HTMLElement): void {
   }
 
   // In-place language switch: results, replay and form state stay; the URL moves to the other
-  // language's app path (`/` ↔ `/en/`) with the query and `#s=` fragment kept.
+  // language's play page (`/play/` ↔ `/en/play/`) with the query and `#s=` fragment kept.
   onLangChange((lang) => {
     const nextNav = createSiteNav(lang);
     siteNav.replaceWith(nextNav);
     siteNav = nextNav;
-    document.title = t('app.documentTitle');
+    document.title = t('play.documentTitle');
     langBtn.lang = otherLang();
     history.replaceState(history.state, '', switchedAppUrl(lang, location.search, location.hash));
     const footerLinks = document.querySelector<HTMLElement>('.site-footer .footer-links');
@@ -1046,15 +1047,6 @@ export function startApp(root: HTMLElement): void {
   });
   // Warm the tour on intent, so a click opens it without a visible wait.
   tourBtn.addEventListener('pointerenter', () => void loadTour().catch(() => undefined));
-  // Static tour links (`a[data-tour-start]`, e.g. in the intro) start the tour in place instead of
-  // reloading the page through `?tour=1`.
-  document.addEventListener('click', (e) => {
-    const a = e.target instanceof Element ? e.target.closest('a[data-tour-start]') : null;
-    if (!a || !(e instanceof MouseEvent) || e.button !== 0) return;
-    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-    e.preventDefault();
-    startTour();
-  });
 
   // Canvas text does not reflow when a web font arrives; redraw once Pretendard is ready.
   void document.fonts?.ready.then(() => {

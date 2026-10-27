@@ -1,6 +1,6 @@
 import { h, uniqueId } from './dom';
 import { versionAnchor } from '../content/patch-notes';
-import { pagePath } from '../pages/routes';
+import { pagePath, playPagePath } from '../pages/routes';
 import { getLang, locale, onLangChange, t, type MsgKey } from './i18n';
 import { clearSiteData } from './site-data';
 import {
@@ -515,9 +515,7 @@ export function createVersionBadge(): HTMLButtonElement {
     resetting = true;
     render();
     await clearSiteData();
-    location.replace(
-      resetUrl(CURRENT_BUILD.version, location.hash, pagePath('simulator', getLang())),
-    );
+    location.replace(resetUrl(CURRENT_BUILD.version, location.hash, playPagePath(getLang())));
   }
 
   document.addEventListener('visibilitychange', () => {

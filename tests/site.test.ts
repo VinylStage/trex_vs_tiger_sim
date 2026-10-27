@@ -21,6 +21,8 @@ import {
   pageLang,
   pagePath,
   parsePagePath,
+  playPageLang,
+  playPagePath,
   switchedAppUrl,
 } from '../src/pages/routes';
 import { LANGS } from '../src/ui/i18n';
@@ -111,12 +113,31 @@ describe('language from the URL', () => {
   });
 
   it('switches the app URL in place, keeping the query and the fragment', () => {
-    expect(switchedAppUrl('en', '', '')).toBe('/en/');
-    expect(switchedAppUrl('ko', '', '')).toBe('/');
-    expect(switchedAppUrl('en', '', '#s=abc')).toBe('/en/#s=abc');
-    expect(switchedAppUrl('ko', '?tour=1', '#s=abc')).toBe('/?tour=1#s=abc');
-    expect(switchedAppUrl('en', '?a=1&b=2', '#x')).toBe('/en/?a=1&b=2#x');
-    expect(switchedAppUrl('en', '?', '#')).toBe('/en/');
+    expect(switchedAppUrl('en', '', '')).toBe('/en/play/');
+    expect(switchedAppUrl('ko', '', '')).toBe('/play/');
+    expect(switchedAppUrl('en', '', '#s=abc')).toBe('/en/play/#s=abc');
+    expect(switchedAppUrl('ko', '?tour=1', '#s=abc')).toBe('/play/?tour=1#s=abc');
+    expect(switchedAppUrl('en', '?a=1&b=2', '#x')).toBe('/en/play/?a=1&b=2#x');
+    expect(switchedAppUrl('en', '?', '#')).toBe('/en/play/');
+  });
+
+  it('reads the language of the play page from its path', () => {
+    for (const p of ['/play/', '/play', '/play/index.html']) {
+      expect(playPageLang(p), p).toBe('ko');
+      expect(pageLang(p, 'en'), p).toBe('ko');
+    }
+    for (const p of ['/en/play/', '/en/play', '/en/play/index.html']) {
+      expect(playPageLang(p), p).toBe('en');
+      expect(pageLang(p, 'ko'), p).toBe('en');
+    }
+    for (const p of ['/', '/en/', '/playground/', '/en/play/x/', '/r/']) {
+      expect(playPageLang(p), p).toBeNull();
+    }
+    expect(playPagePath('ko')).toBe('/play/');
+    expect(playPagePath('en')).toBe('/en/play/');
+    // The play page is not an indexable page: no PageId, so no sitemap entry or nav item.
+    expect(parsePagePath('/play/')).toBeNull();
+    expect(parsePagePath('/en/play/')).toBeNull();
   });
 });
 
@@ -361,6 +382,8 @@ describe('shared site header (src/pages/site-header.ts)', () => {
     expect(headerRouteOf('/index.html')).toEqual({ page: 'simulator', lang: 'ko' });
     expect(headerRouteOf('/en/index.html')).toEqual({ page: 'simulator', lang: 'en' });
     expect(headerRouteOf('/en/')).toEqual({ page: 'simulator', lang: 'en' });
+    expect(headerRouteOf('/play/index.html')).toEqual({ page: 'play', lang: 'ko' });
+    expect(headerRouteOf('/en/play/index.html')).toEqual({ page: 'play', lang: 'en' });
     expect(headerRouteOf('/404.html')).toEqual({ page: null, lang: 'ko' });
     expect(headerRouteOf('/en/404.html')).toEqual({ page: null, lang: 'en' });
     expect(headerRouteOf('/reset/index.html')).toBeNull();
@@ -372,13 +395,16 @@ describe('shared site header (src/pages/site-header.ts)', () => {
       `<body>${renderSiteHeader('ko', 'about')}<main></main></body>`,
     );
     const app = `<div class="brand">${APP_LOGO_PLACEHOLDER}<h1>t</h1></div>`;
-    expect(expandSiteHeader(app, { page: 'simulator', lang: 'en' }, 'x')).toContain(
-      renderAppLogo(),
+    expect(expandSiteHeader(app, { page: 'play', lang: 'en' }, 'x')).toContain(renderAppLogo());
+    // The lobby (`simulator`) has the site header like a content page.
+    expect(expandSiteHeader(page, { page: 'simulator', lang: 'ko' }, 'x')).toBe(
+      `<body>${renderSiteHeader('ko', 'simulator')}<main></main></body>`,
     );
     expect(expandSiteHeader('<p>reset</p>', null, 'x')).toBe('<p>reset</p>');
     expect(() => expandSiteHeader(page, null, 'x')).toThrow(/no known route/);
-    expect(() => expandSiteHeader(page, { page: 'simulator', lang: 'ko' }, 'x')).toThrow();
+    expect(() => expandSiteHeader(page, { page: 'play', lang: 'ko' }, 'x')).toThrow();
     expect(() => expandSiteHeader(app, { page: 'guide', lang: 'ko' }, 'x')).toThrow();
+    expect(() => expandSiteHeader(app, { page: 'simulator', lang: 'ko' }, 'x')).toThrow();
   });
 
   it('is applied by the Vite plugin before Vite’s own HTML processing, in dev too', () => {

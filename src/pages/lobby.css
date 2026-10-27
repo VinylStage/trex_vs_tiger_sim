@@ -1,0 +1,181 @@
+/*
+ * The lobby (`/`, `/en/`; docs/PAGES.md#the-lobby--en): a play-first hero, then the crawlable
+ * intro and FAQ. Loaded after site.css, whose tokens it uses. The glyphs are abstract shapes
+ * (triangles and dots), as everywhere on the site (CONTRIBUTING.md content framing rules).
+ */
+
+.lobby {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 0 40px;
+}
+
+/* ---------- hero: one big way into the simulator ---------- */
+
+.lobby-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 40px 24px 44px;
+  text-align: center;
+}
+
+.lobby-glyphs {
+  width: min(100%, 320px);
+  height: auto;
+}
+
+.glyph-a {
+  fill: var(--c-heavy);
+}
+
+.glyph-b {
+  fill: var(--c-pack);
+}
+
+.glyph-line {
+  stroke: var(--border);
+  stroke-width: 2;
+  stroke-dasharray: 6 8;
+}
+
+.lobby-hero h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 1.2rem + 2vw, 2.4rem);
+  line-height: 1.2;
+}
+
+/* 40em: about 70 characters of Pretendard per line (in em, #138). */
+.lobby-lead {
+  max-width: 40em;
+  margin: 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.lobby-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 56px;
+  margin-top: 6px;
+  padding: 0 36px;
+  border-radius: 999px;
+  background: var(--accent-fill);
+  color: var(--accent-fill-fg);
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: var(--shadow);
+}
+
+.lobby-play:hover {
+  background: var(--accent-fill-hover);
+  color: var(--accent-fill-fg);
+}
+
+.lobby-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* ---------- intro and FAQ (crawlable text, docs/PAGES.md) ---------- */
+
+.site-intro,
+.site-faq {
+  border-top: 1px solid var(--border);
+}
+
+.site-intro-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 24px 24px 28px;
+}
+
+.site-intro h2,
+.site-faq h2 {
+  margin-bottom: 8px;
+  font-size: 1.15rem;
+  line-height: 1.35;
+}
+
+.site-intro h3,
+.site-faq h3 {
+  margin-bottom: 6px;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* 80ch of Pretendard, in em so the width does not change at the font swap (#138). */
+.intro-lead {
+  max-width: 47.66em;
+  color: var(--muted);
+}
+
+.intro-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 16px 28px;
+  margin-top: 18px;
+}
+
+.intro-block ol,
+.intro-block ul {
+  margin: 0;
+  padding-left: 1.25em;
+  color: var(--muted);
+}
+
+.intro-block li + li {
+  margin-top: 4px;
+}
+
+.intro-links a {
+  display: inline-block;
+  min-height: 24px;
+  color: var(--accent-text);
+  font-weight: 500;
+}
+
+.intro-links a:hover {
+  color: var(--fg);
+}
+
+.faq-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 16px 28px;
+}
+
+/* 72ch of Pretendard, in em (see .intro-lead). */
+.faq-item p {
+  max-width: 42.89em;
+  color: var(--muted);
+}
+
+:lang(ko) .site-intro,
+:lang(ko) .site-faq {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.site-intro h2,
+.site-faq h2,
+.site-intro h3,
+.site-faq h3,
+.site-intro p,
+.site-faq p {
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .lobby-hero {
+    padding: 28px 16px 32px;
+  }
+
+  .site-intro-inner {
+    padding: 20px 16px 24px;
+  }
+}

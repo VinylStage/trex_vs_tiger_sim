@@ -254,20 +254,25 @@ export function expiringCookies(names: readonly string[], host: string, secure: 
 /** Only keep a URL fragment (`#…`) so the scenario survives the reset round-trip. */
 const fragment = (hash: string): string => (hash.startsWith('#') ? hash : '');
 
-/** Query parameter of `/reset/` that names the app page to return to (`/` or `/en/`). */
+/** Query parameter of `/reset/` that names the app page to return to (`/play/` or `/en/play/`). */
 export const RETURN_PARAM = 'to';
 
+/** The paths a reset may return to: the play pages, and the lobbies older builds name. */
+const RETURN_PATHS: readonly string[] = ['/play/', '/en/play/', '/', '/en/'];
+
 /**
- * The app path to come back to after the reset: `/en/` for the English app, `/` for everything
- * else. Only these two values are accepted, so the reset page never redirects off-site.
+ * The app path to come back to after the reset: one of {@link RETURN_PATHS}, `/play/` for
+ * anything else (no `to`). Only these values are accepted, so the reset page never redirects
+ * off-site. `/` and `/en/` come from a tab of a build before the lobby; the lobby forwards a
+ * fragment that holds settings to the play page.
  */
 export function appReturnPath(path: string | null): string {
-  return path === '/en/' ? '/en/' : '/';
+  return path !== null && RETURN_PATHS.includes(path) ? path : '/play/';
 }
 
-export function resetUrl(fromVersion: string, hash: string, appPath = '/'): string {
+export function resetUrl(fromVersion: string, hash: string, appPath = '/play/'): string {
   const back = appReturnPath(appPath);
-  const to = back === '/' ? '' : `&${RETURN_PARAM}=${encodeURIComponent(back)}`;
+  const to = back === '/play/' ? '' : `&${RETURN_PARAM}=${encodeURIComponent(back)}`;
   return `${RESET_PATH}?from=${encodeURIComponent(fromVersion)}${to}${fragment(hash)}`;
 }
 

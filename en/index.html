@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      (function () {
+        var l = location;
+        if (/=|^#tvt\d-/i.test(l.hash) || /[?&]tour=/.test(l.search)) {
+          l.replace((/^\/en(\/|$)/.test(l.pathname) ? '/en' : '') + '/play/' + l.search + l.hash);
+        }
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>T-Rex vs Tiger Simulator – who wins, T. rex or tigers?</title>
+    <meta
+      name="description"
+      content="Free in-browser Monte Carlo simulator: choose how many T. rex and tigers fight, sample literature-based traits and get win probabilities with 95% CIs."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/src/pages/site.css" />
+    <link rel="stylesheet" href="/src/pages/lobby.css" />
+    <script type="module" src="/src/pages/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <!-- site-header -->
+    <main id="main" class="lobby">
+      <section class="lobby-hero" id="play" aria-labelledby="lobby-title">
+        <svg
+          class="lobby-glyphs"
+          viewBox="0 0 320 96"
+          width="320"
+          height="96"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path class="glyph-a" d="M40 30 L70 48 L40 66 Z" />
+          <path class="glyph-a" d="M78 18 L100 31 L78 44 Z" />
+          <path class="glyph-a" d="M78 52 L100 65 L78 78 Z" />
+          <circle class="glyph-b" cx="222" cy="30" r="7" />
+          <circle class="glyph-b" cx="246" cy="48" r="7" />
+          <circle class="glyph-b" cx="222" cy="66" r="7" />
+          <circle class="glyph-b" cx="268" cy="24" r="7" />
+          <circle class="glyph-b" cx="270" cy="70" r="7" />
+          <circle class="glyph-b" cx="292" cy="46" r="7" />
+          <path class="glyph-line" d="M118 48 H198" />
+        </svg>
+        <h1 id="lobby-title" data-i18n="app.title">T-Rex vs Tiger Simulator</h1>
+        <p class="lobby-lead" data-i18n="lobby.lead">
+          Pick the species and how many of each, press Run, and your browser plays the battle
+          hundreds of times to show win chances and a replay.
+        </p>
+        <a class="lobby-play" href="/en/play/" data-i18n="lobby.play">Start the simulator</a>
+        <p class="lobby-note" data-i18n="lobby.note">
+          Free · nothing to install · everything runs in your browser
+        </p>
+      </section>
+      <section class="site-intro" id="intro" aria-labelledby="intro-title">
+        <div class="site-intro-inner">
+          <h2 id="intro-title" data-i18n="intro.title">What is the T-Rex vs Tiger Simulator?</h2>
+          <p class="intro-lead" data-i18n="intro.lead">
+            What happens if N Tyrannosaurus rex meet M tigers on an open field? This free
+            educational tool uses that question to let you try the Monte Carlo method yourself, and
+            it also offers match-ups observed in the wild, such as elephants and lions or brown
+            bears and wolves. Instead of a single fight, it repeats the battle hundreds of times
+            with uncertain, literature-based traits and shows the win probabilities together with
+            their uncertainty.
+          </p>
+          <div class="intro-grid">
+            <div class="intro-block">
+              <h3 data-i18n="intro.howTitle">How does it work?</h3>
+              <ol class="intro-steps">
+                <li data-i18n="intro.how1">
+                  Choose the species and head counts on both sides, the pack tactic and the number
+                  of runs, and optionally edit the ranges of the 22 traits.
+                </li>
+                <li data-i18n="intro.how2">
+                  Every battle draws fresh traits, such as body mass, bite force and speed, from
+                  those ranges.
+                </li>
+                <li data-i18n="intro.how3">
+                  Your browser computes many agent-based battles, in which each animal follows
+                  simple rules.
+                </li>
+                <li data-i18n="intro.how4">
+                  The results show win probabilities with 95% confidence intervals, battle
+                  durations, a sensitivity chart and a replay.
+                </li>
+              </ol>
+            </div>
+            <div class="intro-block">
+              <h3 data-i18n="intro.learnTitle">What can you learn?</h3>
+              <ul>
+                <li data-i18n="intro.learn1">
+                  Monte Carlo simulation: approximating an answer by repeating random experiments
+                </li>
+                <li data-i18n="intro.learn2">
+                  Confidence intervals: how the estimate sharpens as the number of runs grows
+                </li>
+                <li data-i18n="intro.learn3">
+                  Sensitivity analysis: which assumptions the outcome depends on most
+                </li>
+              </ul>
+            </div>
+            <div class="intro-block">
+              <h3 data-i18n="intro.moreTitle">Learn more</h3>
+              <ul class="intro-links">
+                <li>
+                  <a href="/en/guide/" data-i18n="intro.link.guide"
+                    >How to use it and read the results</a
+                  >
+                </li>
+                <li>
+                  <a href="/en/model/#results" data-i18n="intro.link.model"
+                    >The model and its preliminary results</a
+                  >
+                </li>
+                <li>
+                  <a href="/en/parameters/" data-i18n="intro.link.parameters"
+                    >Parameter ranges and sources</a
+                  >
+                </li>
+                <li>
+                  <a href="/en/play/?tour=1" data-i18n="intro.link.tour"
+                    >Take the one-minute tour</a
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="site-faq" id="faq" aria-labelledby="faq-title">
+        <div class="site-intro-inner">
+          <h2 id="faq-title" data-i18n="faq.title">Frequently asked questions</h2>
+          <div class="faq-list">
+            <div class="faq-item">
+              <h3 data-i18n="faq.q1">Did Tyrannosaurus rex and tigers ever meet?</h3>
+              <p data-i18n="faq.a1">
+                No. Tyrannosaurus rex lived at the end of the Cretaceous, about 68 to 66 million
+                years ago, and tigers appeared much later. The match-up is a hypothetical scenario
+                for learning the method.
+              </p>
+            </div>
+            <div class="faq-item">
+              <h3 data-i18n="faq.q2">So who wins?</h3>
+              <p data-i18n="faq.a2">
+                There is no fixed answer. The win probability depends strongly on assumptions such
+                as head counts, morale, tactics and trait ranges. Preliminary results for the
+                default assumptions, and how to read them, are on the model page, and you can check
+                them yourself by opening the simulator.
+              </p>
+            </div>
+            <div class="faq-item">
+              <h3 data-i18n="faq.q3">What is a Monte Carlo simulation?</h3>
+              <p data-i18n="faq.a3">
+                It repeats the same experiment many times with uncertain values drawn at random and
+                estimates the answer from the spread of the results. The more runs, the narrower the
+                confidence interval of the win probability.
+              </p>
+            </div>
+            <div class="faq-item">
+              <h3 data-i18n="faq.q4">Can I share or reproduce a result?</h3>
+              <p data-i18n="faq.a4">
+                Yes. Copy link creates an address that holds the species, head counts, parameter
+                ranges and seed. Opening that link and running it gives the same result.
+              </p>
+            </div>
+            <div class="faq-item">
+              <h3 data-i18n="faq.q5">Which animals can I choose?</h3>
+              <p data-i18n="faq.a5">
+                The large animals are Tyrannosaurus rex, the African bush elephant, the African
+                buffalo, the brown bear, the woolly mammoth and Homo erectus; the pack animals are
+                the tiger, the lion, the gray wolf, the spotted hyena and Homo erectus. Match-ups
+                observed in the wild, such as elephants and lions, buffalo and lions or brown bears
+                and wolves, are marked, and every preset value shows its evidence level (literature,
+                derived, speculative or unverified). Homo erectus, an extinct human species, is a
+                thought experiment on physical capability alone, without clothing, tools or weapons;
+                modern humans and domestic animals are not included.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <!-- site-footer -->
+  </body>
+</html>

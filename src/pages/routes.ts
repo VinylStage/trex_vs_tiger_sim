@@ -26,8 +26,9 @@ export const CONTENT_PAGES = [
 export type ContentPage = (typeof CONTENT_PAGES)[number];
 
 /**
- * `simulator` is the app: Korean at `/` (source `index.html`), English at `/en/` (source
- * `en/index.html`). Both load the same `src/main.ts`; the language comes from the URL.
+ * `simulator` is the home page, the lobby: Korean at `/` (source `index.html`), English at `/en/`
+ * (source `en/index.html`). The simulator app itself is the play page (`/play/`, `/en/play/`,
+ * {@link playPagePath}), which is not an indexable page and so not a `PageId` (docs/PAGES.md).
  */
 export type PageId = 'simulator' | ContentPage;
 
@@ -106,6 +107,34 @@ export function resultPageLang(path: string): Lang | null {
 /** Root-relative path of the result page in a language. */
 export const resultPagePath = (lang: Lang): string => (lang === 'en' ? '/en/r/' : '/r/');
 
+/**
+ * Language of the play page (the simulator app, docs/PAGES.md#the-play-pages-play-enplay):
+ * `/play/`, `/play`, `/play/index.html` → 'ko'; the same under `/en/` → 'en'; anything else null.
+ */
+export function playPageLang(path: string): Lang | null {
+  if (/^\/?play(\/(index\.html)?)?$/.test(path)) return 'ko';
+  if (/^\/?en\/play(\/(index\.html)?)?$/.test(path)) return 'en';
+  return null;
+}
+
+/** Root-relative path of the play page (the simulator app) in a language. */
+export const playPagePath = (lang: Lang): string => (lang === 'en' ? '/en/play/' : '/play/');
+
+/**
+ * Where the lobby (`/`, `/en/`) forwards a visit, or null to stay (docs/SHARING.md#link-routing).
+ * Links made before the play page existed point at the lobby's path with the app's state in the
+ * fragment (`#s=…`, `#s=…&chk=…`, `#chk=…`) or with the tour deep link (`?tour=1`). Any fragment
+ * holding a `key=value` part, a fragment starting with a settings code (`#TVT2-…`, `#TVT3-…`) and a
+ * `tour=` query go to the play page of the same language with query and fragment unchanged; plain
+ * anchors (`#faq`) stay. The lobby runs the same rule as an inline script in its head
+ * (`index.html`, `en/index.html`), before anything renders; tests/link-routing.test.ts runs
+ * both over the same links.
+ */
+export function playForwardUrl(pathname: string, search: string, hash: string): string | null {
+  if (!/=|^#tvt\d-/i.test(hash) && !/[?&]tour=/.test(search)) return null;
+  return `${playPagePath(/^\/en(\/|$)/.test(pathname) ? 'en' : 'ko')}${search}${hash}`;
+}
+
 /** The same page in the other language (app or content page), or null for an unknown path. */
 export function counterpartPath(pathname: string): string | null {
   const here = parsePagePath(pathname);
@@ -119,17 +148,19 @@ export function counterpartPath(pathname: string): string | null {
 export function pageLang(pathname: string, htmlLang: string): Lang {
   const here = parsePagePath(pathname);
   if (here) return here.lang;
+  const play = playPageLang(pathname);
+  if (play) return play;
   return htmlLang.toLowerCase().startsWith('en') ? 'en' : 'ko';
 }
 
 /**
- * URL the app shows after switching to `lang` in place: the app path of that language with the
+ * URL the app shows after switching to `lang` in place: the play page of that language with the
  * query (`?tour=…`, …) and fragment (`#s=…`) kept.
  */
 export function switchedAppUrl(lang: Lang, search: string, hash: string): string {
   const q = search === '?' ? '' : search;
   const h = hash === '#' ? '' : hash;
-  return `${pagePath('simulator', lang)}${q}${h}`;
+  return `${playPagePath(lang)}${q}${h}`;
 }
 
 /** Absolute production URL of a page. */

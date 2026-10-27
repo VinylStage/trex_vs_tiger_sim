@@ -1,6 +1,6 @@
 // Fonts, site navigation and the footer version (shared with the content pages).
 import '../pages/site.ts';
-import { pagePath, resultPageLang, resultPagePath, SITE_ORIGIN } from '../pages/routes.ts';
+import { playPagePath, resultPageLang, resultPagePath, SITE_ORIGIN } from '../pages/routes.ts';
 import type { ScenarioConfig } from '../sim/config.ts';
 import type { FreeConfig } from '../sim/free/config.ts';
 import type { Lang } from '../i18n/lang.ts';
@@ -79,7 +79,7 @@ status.setAttribute('role', 'status');
 
 /** Canonical URL of this result (production origin, no fragment). */
 const shareUrl = `${SITE_ORIGIN}${resultPagePath(lang)}${location.search}`;
-const simulatorUrl = (hash: string): string => `${pagePath('simulator', lang)}${hash}`;
+const simulatorUrl = (hash: string): string => `${playPagePath(lang)}${hash}`;
 
 const ERROR_KEY: Readonly<Record<ResultError, ShareMsgKey>> = {
   missing: 'result.missing',
@@ -103,7 +103,7 @@ function renderError(error: ResultError, config: ScenarioConfig | FreeConfig | n
     const hash = isFree(config) ? hashFromFreeConfig(config) : payload ? `#s=${payload}` : '';
     actions.append(link(t('result.runIt'), simulatorUrl(hash), 'rp-btn rp-primary'));
   }
-  actions.append(link(t('result.tryOwn'), pagePath('simulator', lang)));
+  actions.append(link(t('result.tryOwn'), playPagePath(lang)));
   root.replaceChildren(
     el('p', 'rp-error', t(ERROR_KEY[error])),
     ...(config ? [el('p', 'rp-note', t('result.invalidConfig'))] : []),
@@ -315,7 +315,7 @@ function renderResult({
   });
 
   const runIt = link(t('result.runIt'), simulatorUrl(runHash), 'rp-btn rp-primary');
-  const tryOwn = link(t('result.tryOwn'), pagePath('simulator', lang));
+  const tryOwn = link(t('result.tryOwn'), playPagePath(lang));
 
   const statsEl = stats(statItems);
   root.replaceChildren(

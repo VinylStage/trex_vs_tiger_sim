@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { readFileSync, readdirSync } from 'node:fs';
 import { DICTIONARIES, SHARE_MESSAGES } from '../src/i18n/dictionaries';
 import { join, relative } from 'node:path';
@@ -33,6 +34,8 @@ import {
   RELEASES_URL,
   pagePath,
   parsePagePath,
+  playPageLang,
+  playPagePath,
   type ContentPage,
   type PageId,
 } from '../src/pages/routes';
@@ -86,18 +89,28 @@ const PAGES = LANGS.flatMap((lang) =>
   })),
 );
 
-/** The simulator's two static entries: `index.html` (ko, `/`) and `en/index.html` (en, `/en/`). */
-const appSourceOf = (lang: Lang): string => (lang === 'ko' ? 'index.html' : 'en/index.html');
-const APP_PAGES = LANGS.map((lang) => ({
+/** The lobby (page `simulator`): `index.html` (ko, `/`) and `en/index.html` (en, `/en/`). */
+const lobbySourceOf = (lang: Lang): string => (lang === 'ko' ? 'index.html' : 'en/index.html');
+const LOBBY_PAGES = LANGS.map((lang) => ({
   page: 'simulator' as const,
   lang,
-  file: appSourceOf(lang),
-  html: readPage(appSourceOf(lang)),
+  file: lobbySourceOf(lang),
+  html: readPage(lobbySourceOf(lang)),
 }));
 
-/** Every page with the shared site shell (static footer, i18n-bound text). */
+/** The simulator app: `play/index.html` (ko, `/play/`) and `en/play/index.html` (en). */
+const playSourceOf = (lang: Lang): string =>
+  lang === 'ko' ? 'play/index.html' : 'en/play/index.html';
+const PLAY_PAGES = LANGS.map((lang) => ({
+  page: 'play' as const,
+  lang,
+  file: playSourceOf(lang),
+  html: readPage(playSourceOf(lang)),
+}));
+
+/** Every indexable page (lobby and content pages): shared site shell, generated SEO head. */
 const ALL_PAGES: readonly { page: PageId; lang: Lang; file: string; html: string }[] = [
-  ...APP_PAGES,
+  ...LOBBY_PAGES,
   ...PAGES,
 ];
 
@@ -111,10 +124,17 @@ const NOT_FOUND_PAGES = LANGS.map((lang) => ({
 }));
 
 /** Every page with the shared shell: header or app header, static footer, i18n-bound text. */
-const SHELL_PAGES: readonly { page: PageId | '404'; lang: Lang; file: string; html: string }[] = [
-  ...ALL_PAGES,
-  ...NOT_FOUND_PAGES,
-];
+const SHELL_PAGES: readonly {
+  page: PageId | 'play' | '404';
+  lang: Lang;
+  file: string;
+  html: string;
+}[] = [...ALL_PAGES, ...PLAY_PAGES, ...NOT_FOUND_PAGES];
+
+/** The page CSP of `public/_headers` (its `/*` rule). */
+const PAGE_CSP =
+  /^\/\*\n(?:\s+.*\n)*?\s+Content-Security-Policy: (.*)$/m.exec(read('public/_headers'))?.[1] ?? '';
+const sha256 = (text: string): string => createHash('sha256').update(text).digest('base64');
 
 /** Search-result limits used in docs/SEO.md: titles up to 60 characters, descriptions ~160. */
 const MAX_TITLE = 60;
@@ -264,16 +284,21 @@ const shownNumber = (s: string): number => Number(textOf(s).replace(/[,\s]/g, ''
 describe('every HTML page is CSP-safe', () => {
   const files = Object.values(findHtmlEntries(ROOT)).map((f) => relative(ROOT, f));
 
-  it('includes the app, all content pages and both 404 pages', () => {
-    expect(files).toContain('index.html');
-    expect(files).toContain('en/index.html');
+  it('includes the lobby, the app, all content pages and both 404 pages', () => {
+    for (const p of [...LOBBY_PAGES, ...PLAY_PAGES]) expect(files).toContain(p.file);
     for (const p of PAGES) expect(files).toContain(p.file);
     for (const p of NOT_FOUND_PAGES) expect(files).toContain(p.file);
   });
 
   it.each(files)('%s has no inline script, style block, style attribute or handler', (file) => {
     const html = readPage(file);
+    const lobby = LOBBY_PAGES.some((p) => p.file === file);
     for (const s of elements(html, 'script')) {
+      // The lobby's link forwarder is the one inline script, allowed by its hash in the CSP.
+      if (lobby && s.attrs['src'] === undefined) {
+        expect(PAGE_CSP, `${file}: forwarder hash`).toContain(`'sha256-${sha256(s.inner)}'`);
+        continue;
+      }
       expect(s.attrs['src'], `${file}: <script> without src`).toBeTruthy();
       expect(s.inner.trim(), `${file}: inline script body`).toBe('');
     }
@@ -410,6 +435,14 @@ function checkLinks(html: string, lang: Lang): void {
     } else if (href.startsWith('/')) {
       const [pathAndQuery = '', frag] = href.split('#');
       const [path = '', query] = pathAndQuery.split('?');
+      const play = playPageLang(path);
+      if (play) {
+        expect(play, `${href}: link language`).toBe(a.attrs['hreflang'] ?? lang);
+        expect(path, `${href}: canonical form`).toBe(playPagePath(play));
+        expect(frag, href).toBeUndefined();
+        if (query !== undefined) expect(query, `${href}: only the tour deep link`).toBe('tour=1');
+        continue;
+      }
       const target = parsePagePath(path);
       expect(target, href).not.toBeNull();
       if (!target) continue;
@@ -417,8 +450,10 @@ function checkLinks(html: string, lang: Lang): void {
       expect(target.lang, `${href}: link language`).toBe(expected);
       expect(path, `${href}: canonical form`).toBe(pagePath(target.page, target.lang));
       if (target.page === 'simulator') {
-        expect(frag, href).toBeUndefined();
-        if (query !== undefined) expect(query, `${href}: only the tour deep link`).toBe('tour=1');
+        expect(query, `${href}: the lobby takes no query (the tour is on the play page)`).toBe(
+          undefined,
+        );
+        if (frag !== undefined) expect(ids(readPage(lobbySourceOf(lang))), href).toContain(frag);
         continue;
       }
       expect(query, `${href}: content pages take no query`).toBeUndefined();
@@ -432,122 +467,129 @@ function checkLinks(html: string, lang: Lang): void {
 }
 
 describe('all pages as a set', () => {
-  it('have unique titles and descriptions, the simulator included', () => {
-    const titles = ALL_PAGES.map((p) => one(elements(p.html, 'title'), 'title').inner.trim());
-    const descriptions = ALL_PAGES.map((p) =>
-      one(meta(p.html, 'name', 'description'), 'description'),
-    );
-    expect(new Set(titles).size).toBe(ALL_PAGES.length);
-    expect(new Set(descriptions).size).toBe(ALL_PAGES.length);
+  it('have unique titles and descriptions, the lobby and the play page included', () => {
+    const pages = [...ALL_PAGES, ...PLAY_PAGES];
+    const titles = pages.map((p) => one(elements(p.html, 'title'), 'title').inner.trim());
+    const descriptions = pages.map((p) => one(meta(p.html, 'name', 'description'), 'description'));
+    expect(new Set(titles).size).toBe(pages.length);
+    expect(new Set(descriptions).size).toBe(pages.length);
   });
 });
 
-// ---------- the simulator's static entries (/ and /en/) ----------
+// ---------- the lobby (/ and /en/) ----------
 
-describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
+/** Message keys bound in a page, in document order (`data-i18n`, `-aria`, `-title`). */
+const keysOf = (src: string): string[] =>
+  tags(src).flatMap((t) =>
+    (['data-i18n', 'data-i18n-aria', 'data-i18n-title'] as const)
+      .filter((a) => a in t.attrs)
+      .map((a) => `${a}=${t.attrs[a] ?? ''}`),
+  );
+
+describe.each(LOBBY_PAGES)('$file (lobby)', ({ lang, html }) => {
   const d = DICTIONARIES[lang];
 
   it('declares its language statically', () => {
     expect(one(tags(html, 'html'), '<html>').attrs['lang']).toBe(lang);
   });
 
-  it('has the static title the app sets as document.title', () => {
+  it('keeps the title and description the simulator ranked with', () => {
     const title = decode(one(elements(html, 'title'), '<title>').inner.trim());
     expect(title).toBe(d['app.documentTitle']);
     expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
-  });
-
-  it('has a description of search-result length', () => {
     const description = one(meta(html, 'name', 'description'), 'description');
     expect(description.length).toBeGreaterThanOrEqual(50);
     expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION);
+    expect(meta(html, 'name', 'robots')).toEqual([]);
   });
 
-  it('loads the app script; #app holds only the static header the app replaces', () => {
-    const script = one(tags(html, 'script'), '<script>');
-    // One entry per language, so the page bundles only its own words (#79).
-    expect(script.attrs).toMatchObject({ type: 'module', src: `/src/main-${lang}.ts` });
-    const app = outerElement(html, (t) => t.name === 'div' && t.attrs['id'] === 'app');
-    const head = outerElement(app.inner, (t) => t.name === 'header');
-    expect(head.attrs['class']).toBe('app-header app-static-head');
-    expect(app.inner.replace(head.outer, '').trim()).toBe('');
+  it('forwards old links first: the inline forwarder is the first script, before any content', () => {
+    const scripts = elements(html, 'script');
+    const inline = one(
+      scripts.filter((x) => x.attrs['src'] === undefined),
+      'inline script',
+    );
+    expect(scripts[0]).toEqual(inline);
+    expect(html.indexOf('<script>')).toBeLessThan(html.indexOf('<title>'));
+    expect(inline.inner).toContain('location');
+    expect(inline.inner).toContain('.replace(');
+    // Loads no app code: the lobby is the light, crawlable page.
+    expect(scripts.filter((x) => x.attrs['src']).map((x) => x.attrs['src'])).toEqual([
+      '/src/pages/site.ts',
+    ]);
+    const css = tags(html, 'link')
+      .filter((l) => l.attrs['rel'] === 'stylesheet')
+      .map((l) => l.attrs['href']);
+    expect(css).toEqual(['/src/pages/site.css', '/src/pages/lobby.css']);
   });
 
-  it('has exactly one static <h1>, the app title, before any other heading', () => {
+  it('has the site header and one <h1>, the app title, in a play-first hero', () => {
     const h1 = one(elements(html, 'h1'), '<h1>');
     expect(h1.attrs['data-i18n']).toBe('app.title');
     expect(textOf(h1.inner)).toBe(d['app.title']);
     expect(html.search(/<h1[\s>]/)).toBeLessThan(html.search(/<h[2-6][\s>]/));
-    const head = outerElement(html, (t) => t.name === 'header');
-    expect(head.inner).toContain('<h1');
-  });
-
-  it('links the other language statically, for crawlers that do not run JavaScript', () => {
-    const sw = one(
-      tags(html, 'a').filter((a) => 'data-lang-switch' in a.attrs),
-      'language link',
+    const hero = outerElement(html, (t) => (t.attrs['class'] ?? '') === 'lobby-hero');
+    expect(hero.inner).toContain('<h1');
+    const play = one(
+      tags(hero.inner, 'a').filter((a) => a.attrs['class'] === 'lobby-play'),
+      'play button',
     );
-    expect(sw.attrs).toMatchObject({
-      href: pagePath('simulator', other(lang)),
-      hreflang: other(lang),
-      lang: other(lang),
-      'data-i18n': 'lang.switch',
-    });
+    expect(play.attrs['href']).toBe(playPagePath(lang));
+    expect(play.attrs['data-i18n']).toBe('lobby.play');
+    // The hero comes before the intro and the FAQ.
+    expect(html.indexOf('class="lobby-hero"')).toBeLessThan(html.indexOf('id="intro"'));
   });
 
-  it('binds every piece of static text to a message key, so the in-place switch translates it', () => {
+  it('draws only abstract glyphs (triangles, dots, lines), hidden from assistive tech', () => {
+    const svg = one(elements(html, 'svg'), '<svg>');
+    expect(svg.attrs['aria-hidden']).toBe('true');
+    const shapes = tags(svg.inner).map((t) => t.name);
+    expect(new Set(shapes)).toEqual(new Set(['path', 'circle']));
+    expect(tags(html, 'img').filter((i) => !/header-logo/.test(i.attrs['src'] ?? ''))).toEqual([]);
+  });
+
+  it('binds every piece of static text in the hero, intro, FAQ and footer to a message key', () => {
     const regions = [
-      outerElement(html, (t) => t.attrs['class'] === 'app-header app-static-head'),
+      outerElement(html, (t) => t.attrs['class'] === 'lobby-hero'),
       outerElement(html, (t) => t.attrs['id'] === 'intro'),
       outerElement(html, (t) => t.attrs['id'] === 'faq'),
       outerElement(html, (t) => t.name === 'footer'),
     ];
     for (const r of regions) {
       for (const { text, ancestors } of textNodes(r.outer)) {
-        // Footer links are rebuilt from FOOTER_LINKS (checked against footerItems below).
         const bound = ancestors.some((a) => 'data-i18n' in a.attrs || 'data-footer' in a.attrs);
         expect(bound, `unbound text “${text}”`).toBe(true);
       }
     }
   });
 
-  it('uses the same message keys in the same order as the other language’s page', () => {
-    const keysOf = (src: string): string[] =>
-      tags(src).flatMap((t) =>
-        (['data-i18n', 'data-i18n-aria', 'data-i18n-title'] as const)
-          .filter((a) => a in t.attrs)
-          .map((a) => `${a}=${t.attrs[a] ?? ''}`),
-      );
-    expect(keysOf(html)).toEqual(keysOf(readPage(appSourceOf(other(lang)))));
+  it('uses the same message keys in the same order as the other language’s lobby', () => {
+    expect(keysOf(html)).toEqual(keysOf(readPage(lobbySourceOf(other(lang)))));
   });
 
-  it('shows every intro and FAQ message exactly once', () => {
+  it('shows every lobby, intro and FAQ message exactly once', () => {
+    const re = /^(lobby|intro|faq)\./;
     const used = tags(html)
       .map((t) => t.attrs['data-i18n'])
-      .filter((k): k is string => k !== undefined && /^(intro|faq)\./.test(k));
-    const defined = Object.keys(d).filter((k) => /^(intro|faq)\./.test(k));
+      .filter((k): k is string => k !== undefined && re.test(k));
+    const defined = Object.keys(d).filter((k) => re.test(k));
     expect([...used].sort()).toEqual([...defined].sort());
   });
 
-  it('puts the intro, the FAQ and the footer after #app, outside it', () => {
-    const at = (needle: string): number => {
-      const i = html.indexOf(needle);
-      expect(i, needle).toBeGreaterThan(0);
-      return i;
-    };
-    const app = outerElement(html, (t) => t.name === 'div' && t.attrs['id'] === 'app').end;
-    const intro = at('id="intro"');
-    const faq = at('id="faq"');
-    const footer = at('<footer class="site-footer"');
-    expect(app).toBeLessThan(intro);
-    expect(intro).toBeLessThan(faq);
-    expect(faq).toBeLessThan(footer);
+  it('keeps the crawlable intro and FAQ inside <main>, before the one footer', () => {
+    const main = outerElement(html, (t) => t.name === 'main');
+    expect(main.attrs['id']).toBe('main');
+    expect(main.inner).toContain('id="intro"');
+    expect(main.inner).toContain('id="faq"');
+    expect(html.indexOf('id="intro"')).toBeLessThan(html.indexOf('id="faq"'));
+    expect(main.end).toBeLessThan(html.indexOf('<footer class="site-footer"'));
     expect(tags(html, 'footer')).toHaveLength(1);
     const all = ids(html);
     expect(new Set(all).size, 'duplicate ids').toBe(all.length);
+    expect(textOf(main.inner).replace(/\s/g, '').length).toBeGreaterThan(900);
   });
 
-  it('answers what, how and what you learn, links the docs and the tour, and has a short FAQ', () => {
+  it('answers what, how and what you learn, links the Learn pages and the tour, and has a short FAQ', () => {
     const keys = tags(html)
       .map((t) => t.attrs['data-i18n'])
       .filter((k): k is string => k !== undefined);
@@ -567,25 +609,79 @@ describe.each(APP_PAGES)('$file (simulator)', ({ lang, html }) => {
     expect(questions.length).toBeLessThanOrEqual(5);
     expect(keys.filter((k) => /^faq\.a\d$/.test(k))).toHaveLength(questions.length);
 
-    const intro = tags(html, 'a').filter((a) => a.attrs['data-page'] !== undefined);
-    expect(intro.map((a) => [a.attrs['data-page'], a.attrs['href']])).toEqual([
-      ['guide', pagePath('guide', lang)],
-      ['model', `${pagePath('model', lang)}#results`],
-      ['parameters', pagePath('parameters', lang)],
-      ['simulator', `${pagePath('simulator', lang)}?tour=1`],
+    const intro = outerElement(html, (t) => t.attrs['id'] === 'intro');
+    expect(tags(intro.inner, 'a').map((a) => a.attrs['href'])).toEqual([
+      pagePath('guide', lang),
+      `${pagePath('model', lang)}#results`,
+      pagePath('parameters', lang),
+      `${playPagePath(lang)}?tour=1`,
     ]);
-    for (const a of intro) {
-      const suffix = a.attrs['data-href-suffix'] ?? '';
-      expect(a.attrs['href'], 'href = page path + data-href-suffix').toBe(
-        `${pagePath(a.attrs['data-page'] as PageId, lang)}${suffix}`,
-      );
-    }
-    expect(intro.filter((a) => 'data-tour-start' in a.attrs)).toHaveLength(1);
     checkLinks(html, lang);
   });
 
   it('states only facts the code pins (the number of parameters)', () => {
     expect(d['intro.how1']).toContain(String(PARAMS.length));
+  });
+});
+
+// ---------- the play page (/play/ and /en/play/): the simulator app ----------
+
+describe.each(PLAY_PAGES)('$file (play)', ({ lang, html }) => {
+  const d = DICTIONARIES[lang];
+
+  it('is a noindex, follow page in its language with the title the app sets', () => {
+    expect(one(tags(html, 'html'), '<html>').attrs['lang']).toBe(lang);
+    expect(one(meta(html, 'name', 'robots'), 'robots')).toBe('noindex, follow');
+    const title = decode(one(elements(html, 'title'), '<title>').inner.trim());
+    expect(title).toBe(d['play.documentTitle']);
+    expect(title.length).toBeLessThanOrEqual(MAX_TITLE);
+    const description = one(meta(html, 'name', 'description'), 'description');
+    expect(description.length).toBeLessThanOrEqual(MAX_DESCRIPTION);
+  });
+
+  it('loads the app script; #app holds only the static header the app replaces', () => {
+    const script = one(tags(html, 'script'), '<script>');
+    // One entry per language, so the page bundles only its own words (#79).
+    expect(script.attrs).toMatchObject({ type: 'module', src: `/src/main-${lang}.ts` });
+    const app = outerElement(html, (t) => t.name === 'div' && t.attrs['id'] === 'app');
+    const head = outerElement(app.inner, (t) => t.name === 'header');
+    expect(head.attrs['class']).toBe('app-header app-static-head');
+    expect(app.inner.replace(head.outer, '').trim()).toBe('');
+    expect(app.end).toBeLessThan(html.indexOf('<footer class="site-footer"'));
+    expect(tags(html, 'footer')).toHaveLength(1);
+  });
+
+  it('has exactly one static <h1>, the app title, in the static header', () => {
+    const h1 = one(elements(html, 'h1'), '<h1>');
+    expect(h1.attrs['data-i18n']).toBe('app.title');
+    expect(textOf(h1.inner)).toBe(d['app.title']);
+    expect(outerElement(html, (t) => t.name === 'header').inner).toContain('<h1');
+  });
+
+  it('links the other language’s play page statically', () => {
+    const sw = one(
+      tags(html, 'a').filter((a) => 'data-lang-switch' in a.attrs),
+      'language link',
+    );
+    expect(sw.attrs).toMatchObject({
+      href: playPagePath(other(lang)),
+      hreflang: other(lang),
+      lang: other(lang),
+      'data-i18n': 'lang.switch',
+    });
+  });
+
+  it('binds its static text to message keys, in the same order as the other language', () => {
+    for (const region of [
+      outerElement(html, (t) => t.attrs['class'] === 'app-header app-static-head'),
+      outerElement(html, (t) => t.name === 'footer'),
+    ]) {
+      for (const { text, ancestors } of textNodes(region.outer)) {
+        const bound = ancestors.some((a) => 'data-i18n' in a.attrs || 'data-footer' in a.attrs);
+        expect(bound, `unbound text “${text}”`).toBe(true);
+      }
+    }
+    expect(keysOf(html)).toEqual(keysOf(readPage(playSourceOf(other(lang)))));
   });
 });
 
@@ -720,7 +816,7 @@ describe.each(SHELL_PAGES)('$file shell', ({ page, lang, file, html }) => {
   });
 
   it('names the site consistently', () => {
-    if (page !== 'simulator') {
+    if (page !== 'play') {
       const brand = one(
         elements(html, 'a').filter((a) => a.attrs['class'] === 'site-brand'),
         'brand',
@@ -739,7 +835,7 @@ describe('shared site header', () => {
   it.each(RAW_SHELL)(
     '$file takes its header from the shared module, never hand-written',
     ({ page, source }) => {
-      if (page === 'simulator') {
+      if (page === 'play') {
         expect(source.split(APP_LOGO_PLACEHOLDER)).toHaveLength(2);
         expect(source).not.toContain(SITE_HEADER_PLACEHOLDER);
       } else {
@@ -764,7 +860,7 @@ describe('shared site header', () => {
         'header',
       );
       const img = one(tags(header.inner, 'img'), 'header logo');
-      const size = String(SITE_LOGO.size[page === 'simulator' ? 'app' : 'page']);
+      const size = String(SITE_LOGO.size[page === 'play' ? 'app' : 'page']);
       expect(img.attrs).toMatchObject({
         src: SITE_LOGO.src,
         alt: SITE_LOGO.alt,
@@ -787,7 +883,7 @@ describe('shared site header', () => {
     expect(app).not.toMatch(/['"]\/(?:header-logo|favicon)\.svg['"]/);
   });
 
-  it.each(SHELL_PAGES.filter((p) => p.page !== 'simulator'))(
+  it.each([...ALL_PAGES, ...NOT_FOUND_PAGES])(
     '$file has exactly the rendered header: brand, nav, language link',
     ({ page, lang, html }) => {
       const current = page === '404' ? null : page;
@@ -1268,7 +1364,10 @@ describe('public/site.webmanifest', () => {
 
 describe('public/_headers', () => {
   const src = read('public/_headers');
-  const htmlPaths = ALL_PAGES.map((p) => pagePath(p.page, p.lang));
+  const htmlPaths = [
+    ...ALL_PAGES.map((p) => pagePath(p.page, p.lang)),
+    ...PLAY_PAGES.map((p) => playPagePath(p.lang)),
+  ];
 
   it.each(htmlPaths)('%s gets the CSP and exactly one no-cache, no-transform', (path) => {
     const h = headersFor(src, path);
@@ -1290,6 +1389,24 @@ describe('public/_headers', () => {
         'max-age=31536000',
       ]);
     }
+  });
+
+  it('allows inline script only by hash: the lobby forwarder, nothing else', () => {
+    const [csp] = headersFor(src, '/')['content-security-policy'] ?? [];
+    const scriptSrc = /script-src ([^;]*)/.exec(csp ?? '')?.[1]?.split(' ') ?? [];
+    expect(scriptSrc[0]).toBe("'self'");
+    const forwarders = LOBBY_PAGES.map(
+      (p) =>
+        `'sha256-${sha256(
+          one(
+            elements(p.html, 'script').filter((x) => !x.attrs['src']),
+            'inline',
+          ).inner,
+        )}'`,
+    );
+    expect(new Set(forwarders).size, 'one forwarder, identical in both lobbies').toBe(1);
+    expect(scriptSrc.slice(1)).toEqual([forwarders[0]]);
+    expect(csp).not.toMatch(/unsafe-inline|unsafe-eval|strict-dynamic/);
   });
 
   it('enforces Trusted Types with only the worker policy', () => {

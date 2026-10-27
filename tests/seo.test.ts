@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { DICTIONARIES } from '../src/i18n/dictionaries';
 import { mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -87,6 +88,14 @@ const oneMeta = (html: string, attr: 'name' | 'property', key: string): string =
   expect(all, key).toHaveLength(1);
   return all[0] ?? '';
 };
+const sha256 = (text: string): string => createHash('sha256').update(text).digest('base64');
+
+/** The page CSP of `public/_headers`: its `/*` rule is the only one that sets one. */
+const PAGE_CSP =
+  /^\/\*\n(?:\s+.*\n)*?\s+Content-Security-Policy: (.*)$/m.exec(
+    readFileSync(join(ROOT, 'public/_headers'), 'utf8'),
+  )?.[1] ?? '';
+
 const scripts = (html: string): { attrs: Record<string, string>; body: string }[] =>
   [...html.matchAll(/<script(\s[^>]*)?>([\s\S]*?)<\/script>/g)].map((m) => ({
     attrs: attrsOf(m[1] ?? ''),
@@ -201,10 +210,16 @@ describe.each(ROUTES)('$file generated head', ({ page, lang, html, input, built 
     expect(built.indexOf('<link rel="canonical"')).toBeLessThan(built.indexOf('</head>'));
   });
 
-  it('allows only JSON-LD data blocks inline, and their JSON cannot close the element', () => {
+  it('allows only JSON-LD data blocks and the hashed lobby forwarder inline', () => {
     for (const s of scripts(built)) {
       if (s.attrs['src']) {
         expect(s.body.trim()).toBe('');
+        continue;
+      }
+      if (s.attrs['type'] === undefined) {
+        // The lobby's link forwarder (docs/SHARING.md#link-routing), allowed by its hash only.
+        expect(page, 'inline script outside the lobby').toBe('simulator');
+        expect(PAGE_CSP).toContain(`'sha256-${sha256(s.body)}'`);
         continue;
       }
       expect(s.attrs['type']).toBe('application/ld+json');
@@ -567,7 +582,7 @@ describe('llms.txt and llms-full.txt', () => {
     const ko = DICTIONARIES.ko;
     expect(full).toContain(`- [${ko['intro.link.guide']}](${canonicalUrl('guide', 'ko')})`);
     expect(full).toContain(`[${ko['intro.link.model']}](${canonicalUrl('model', 'ko')}#results)`);
-    expect(full).toContain(`[${ko['intro.link.tour']}](${SITE_ORIGIN}/?tour=1)`);
+    expect(full).toContain(`[${ko['intro.link.tour']}](${SITE_ORIGIN}/play/?tour=1)`);
     const links = [...full.matchAll(/\]\(([^)\s]+)\)/g)].map((m) => m[1] ?? '');
     expect(links.length).toBeGreaterThan(50);
     for (const href of links) expect(href).toMatch(/^https:\/\//);
