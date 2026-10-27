@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.17](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.16...trex-vs-tiger-sim-v0.2.17) (2026-10-27)
+
+
+### Features
+
+* **free:** free-only species plumbing and freeMatchupAdSafe ([#124](https://github.com/VinylStage/trex_vs_tiger_sim/issues/124)) ([#133](https://github.com/VinylStage/trex_vs_tiger_sim/issues/133)) ([b81fcc4](https://github.com/VinylStage/trex_vs_tiger_sim/commit/b81fcc4e5e8624e3bbe3c0d52a6c752b2757c372))
+* **free:** preset registry with a measured fixture, and the rout display for free results ([#124](https://github.com/VinylStage/trex_vs_tiger_sim/issues/124)) ([#134](https://github.com/VinylStage/trex_vs_tiger_sim/issues/134)) ([a3a192a](https://github.com/VinylStage/trex_vs_tiger_sim/commit/a3a192a8e305c7dff290f0bdf7c1d042cf6d0d75))
+* **share:** model version mv in free links, ADR-0008 and the social-species golden ([#124](https://github.com/VinylStage/trex_vs_tiger_sim/issues/124)) ([#132](https://github.com/VinylStage/trex_vs_tiger_sim/issues/132)) ([1428823](https://github.com/VinylStage/trex_vs_tiger_sim/commit/1428823764b4d76a85b736b48eda6b07109d2ee8))
+
+
+### Bug Fixes
+
+* **ui:** keep the text column width stable across the font swap ([#138](https://github.com/VinylStage/trex_vs_tiger_sim/issues/138)) ([#139](https://github.com/VinylStage/trex_vs_tiger_sim/issues/139)) ([5542034](https://github.com/VinylStage/trex_vs_tiger_sim/commit/5542034ac15a83eb101f04de46b628c33e3bf942))
+
 ## [0.2.16](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.15...trex-vs-tiger-sim-v0.2.16) (2026-10-26)
 
 
