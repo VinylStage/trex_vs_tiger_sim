@@ -61,7 +61,7 @@ The loser of a decided run has no active agent left, so its fled + incapacitated
 | `social-count` | A social side (lion, wolf, spotted hyena, _H. erectus_) has more than the limit | 100                     |
 | `close-tag`    | The `close` tag disagrees with the measurement                                  | 35–65 % for both sides  |
 
-The `close` tag is never chosen by hand: the test fails until the tag matches the fixture. A `check` override may only loosen `short` and `rout`. The test asserts that every preset without a hold passes, and that every held preset still fails, so a preset that starts passing after a model change is noticed and released.
+The `close` tag is never chosen by hand: for every preset, held or not, the test fails until the tag matches the fixture. A `check` override may only loosen `short` and `rout`. The test asserts that every preset without a hold passes, and that every held preset still fails the rout check (`short` or `rout`, the reason its hold names), so a preset that starts passing after a model change is noticed and released.
 
 ## Fixture
 

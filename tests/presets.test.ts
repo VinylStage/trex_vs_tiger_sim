@@ -201,11 +201,20 @@ describe(`preset fixture (seed ${String(fixture.seed)}, ${String(fixture.runs)} 
   );
 
   it.each(FREE_PRESETS.map((p) => [p.id, p] as const))(
-    '%s: passes the rout check, or is on hold and still fails it',
+    '%s: carries the measured close tag, and passes the rout check or is on hold and still fails it',
     (_, p) => {
-      const problems = presetProblems(p, toMeasure(rowOf(p)));
-      if (p.hold === undefined) expect(problems).toEqual([]);
-      else expect(problems).not.toEqual([]);
+      const row = rowOf(p);
+      const problems = presetProblems(p, toMeasure(row));
+      // The close tag follows the fixture for every preset, held or not: never chosen by hand.
+      expect(p.tags.includes('close')).toBe(row.close);
+      expect(problems).not.toContain('close-tag');
+      if (p.hold === undefined) {
+        expect(problems).toEqual([]);
+      } else {
+        // A hold names the rout check (short or rout), so it must still fail that check, not just
+        // any check: a held preset whose median and rout share now pass fails here until released.
+        expect(problems.filter((x) => x === 'short' || x === 'rout')).not.toEqual([]);
+      }
     },
   );
 });
