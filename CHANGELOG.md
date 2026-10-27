@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.19](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.18...trex-vs-tiger-sim-v0.2.19) (2026-10-27)
+
+
+### Features
+
+* **ui:** Simple mode on /play/ with an Advanced switch ([#146](https://github.com/VinylStage/trex_vs_tiger_sim/issues/146)) ([#151](https://github.com/VinylStage/trex_vs_tiger_sim/issues/151)) ([dad8b21](https://github.com/VinylStage/trex_vs_tiger_sim/commit/dad8b21e17cbdc48c32fabea146166bf852ee788))
+
 ## [0.2.18](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.17...trex-vs-tiger-sim-v0.2.18) (2026-10-27)
 
 
