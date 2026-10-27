@@ -2,10 +2,10 @@
 
 > **한국어 요약**
 >
-> - 시뮬레이터는 한국어 `/`, 영어 `/en/` 두 주소로 제공됩니다(같은 앱 `src/main.ts`, 페이지마다 그 언어 사전만 포함, 언어는 URL로 결정, 저장하지 않음). 그 밖에 검색엔진이 읽을 수 있는 정적 안내 페이지 7종을 한국어(`/<page>/`)와 영어(`/en/<page>/`)로 제공합니다: 사용 방법, 모델 설명, 파라미터 설명, 소개 · 문의, 패치노트, 개인정보처리방침, 라이선스.
-> - 시뮬레이터 페이지에는 `#app` 바깥에 정적 소개 · FAQ가 있고, 모든 페이지에 같은 정적 푸터(면책 문구, 소개 · 개인정보처리방침 · 라이선스 · GitHub · 블로그 · Linktree, 버전)가 있습니다. 문구는 `src/i18n/ko.ts` · `src/i18n/en.ts`와 글자 하나까지 같아야 하며 테스트가 확인합니다.
+> - 첫 화면 `/`(영어 `/en/`)는 로비입니다. 큰 "시뮬레이터 시작" 버튼과 검색엔진이 읽는 소개 · FAQ가 있습니다. 시뮬레이터 앱은 `/play/`(영어 `/en/play/`)에 있습니다(같은 앱 `src/main.ts`, 페이지마다 그 언어 사전만 포함, 언어는 URL로 결정, 저장하지 않음). `/play/`는 `noindex`이고 사이트맵에 없습니다. 예전 링크(`/#s=…`, `/#s=…&chk=…`, `/?tour=1` 등)는 로비 `<head>`의 인라인 스크립트가 무엇이든 그리기 전에 같은 해시 그대로 `/play/`로 넘깁니다([SHARING.md](SHARING.md#link-routing)). 이 스크립트 하나만 CSP 해시로 허용합니다. 그 밖에 검색엔진이 읽을 수 있는 정적 안내 페이지 7종을 한국어(`/<page>/`)와 영어(`/en/<page>/`)로 제공합니다: 사용 방법, 모델 설명, 파라미터 설명, 소개 · 문의, 패치노트, 개인정보처리방침, 라이선스.
+> - 로비에는 정적 소개 · FAQ가 있고, 모든 페이지에 같은 정적 푸터(면책 문구, 소개 · 개인정보처리방침 · 라이선스 · GitHub · 블로그 · Linktree, 버전)가 있습니다. 문구는 `src/i18n/ko.ts` · `src/i18n/en.ts`와 글자 하나까지 같아야 하며 테스트가 확인합니다.
 > - 페이지는 손으로 쓴 HTML입니다(`<page>/index.html`, `en/<page>/index.html`). Vite가 저장소 안의 모든 `index.html`을 자동으로 찾아 빌드하므로, 새 페이지는 설정 변경 없이 폴더와 `index.html`만 추가하면 됩니다.
-> - 공통 스타일은 `src/pages/site.css`(앱과 같은 색 토큰, 다크 모드, 인쇄용), 공통 스크립트는 `src/pages/site.ts`(현재 메뉴 표시, 언어 링크 유지, 푸터 버전 표시)입니다. 인라인 스크립트·스타일은 쓰지 않습니다(CSP).
+> - 공통 스타일은 `src/pages/site.css`(앱과 같은 색 토큰, 다크 모드, 인쇄용), 공통 스크립트는 `src/pages/site.ts`(현재 메뉴 표시, 언어 링크 유지, 푸터 버전 표시)입니다. 로비는 `src/pages/lobby.css`를 더 씁니다. 인라인 스타일은 쓰지 않고, 인라인 스크립트는 로비의 링크 전달 스크립트 하나뿐입니다(CSP 해시).
 > - 글꼴은 앱과 같은 자체 호스팅 Pretendard입니다. `site.ts`가 앱과 같은 `@font-face` 스타일시트를 불러오므로 빌드 결과에서 앱과 페이지가 파일 하나를 함께 씁니다. 웹 글꼴이 오기 전에는 Pretendard와 글자 폭·줄 높이를 맞춘 대체 글꼴(`Pretendard Fallback`)로 그려서, 글꼴이 바뀔 때 레이아웃이 거의 움직이지 않습니다.
 > - 접근성: 본문 크기 글자는 양쪽 테마에서 명도 대비 4.5:1 이상([색 대비](#colour-contrast)), 가로로 스크롤되는 표는 키보드로 초점을 옮겨 스크롤할 수 있습니다.
 > - 상단 헤더(로고, 사이트 이름, 메뉴, 언어 링크)는 페이지마다 손으로 쓰지 않습니다. 원본에는 `<!-- site-header -->` 한 줄만 두고, 빌드(개발 서버 포함)가 `src/pages/site-header.ts`의 `renderSiteHeader(lang, page)`로 채웁니다. 로고는 모든 페이지와 앱이 같은 `SITE_LOGO`(`/header-logo.svg`)를 씁니다([사이트 헤더](#site-header)).
@@ -24,7 +24,8 @@
 - [Writing and markup rules](#writing-and-markup-rules)
 - [Site header](#site-header)
 - [Patch notes](#patch-notes)
-- [The simulator pages (`/`, `/en/`)](#the-simulator-pages--en)
+- [The lobby (`/`, `/en/`)](#the-lobby--en)
+- [The play pages (`/play/`, `/en/play/`)](#the-play-pages-play-enplay)
 - [Footer](#footer)
 - [Colour contrast](#colour-contrast)
 - [Fonts](#fonts)
@@ -37,7 +38,7 @@
 
 | Page id       | Korean          | English            | Content                                                                                                                                                                                                   |
 | ------------- | --------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `simulator`   | `/`             | `/en/`             | The app (`index.html`, `en/index.html`), with a static intro, FAQ and footer outside `#app`                                                                                                               |
+| `simulator`   | `/`             | `/en/`             | The lobby (`index.html`, `en/index.html`): a play-first hero linking the app, the static intro and FAQ, the footer ([The lobby](#the-lobby--en))                                                          |
 | `guide`       | `/guide/`       | `/en/guide/`       | Step-by-step use of the simulator, reading results, sharing, a three-experiment tutorial, FAQ, troubleshooting                                                                                            |
 | `model`       | `/model/`       | `/en/model/`       | Plain-language model description: Monte Carlo design, agent rules, outcomes, statistics, reproducibility, species and documented match-ups (`#matchup-*` anchors the matchup badge links to), limitations |
 | `parameters`  | `/parameters/`  | `/en/parameters/`  | One card per role parameter in `src/sim/params.ts` (default-species values), the species preset tables, every scenario setting, the engine constants                                                      |
@@ -46,18 +47,21 @@
 | `privacy`     | `/privacy/`     | `/en/privacy/`     | Privacy policy (effective 2026-10-20): no own cookies, `trexsim.tour` in localStorage (the v0.1.0 key `trexsim.lang` is deleted on load), Cloudflare cookies and logs                                     |
 | `license`     | `/license/`     | `/en/license/`     | MIT License text (identical to `LICENSE`), what it covers, the Pretendard (OFL 1.1) notice and its full license text                                                                                      |
 
+The simulator app itself is the **play page**, `/play/` and `/en/play/` (`play/index.html`, `en/play/index.html`). It is not a `PageId`: it is `noindex`, has no nav item and no generated SEO head, like the `/r/` result pages ([The play pages](#the-play-pages-play-enplay)). `playPagePath(lang)` and `playPageLang(path)` in `src/pages/routes.ts` name it.
+
 The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation (`NAV_PAGES`) is simulator · guide · model · parameters · about · patch notes; about, privacy and license are linked from every footer (`FOOTER_LINKS`).
 
 ## URL scheme and languages
 
-- Korean is the default language: `/<page>/`. English lives under `/en/<page>/`. The simulator is `/` (Korean) and `/en/` (English): two static entries, `index.html` and `en/index.html`, with one script each (`src/main-ko.ts`, `src/main-en.ts`): both start the same app (`src/main.ts`), and each bundles only its own language's words (#79).
+- Korean is the default language: `/<page>/`. English lives under `/en/<page>/`. The home page is the lobby, `/` (Korean) and `/en/` (English). The simulator app is `/play/` and `/en/play/`: two static entries, `play/index.html` and `en/play/index.html`, with one script each (`src/main-ko.ts`, `src/main-en.ts`): both start the same app (`src/main.ts`), and each bundles only its own language's words (#79).
+- **Old links keep working.** Before #142 the app lived at `/` and `/en/`, so every shared link points there. The lobby forwards any visit whose fragment holds app state, or whose query holds the tour deep link, to the play page of the same language with query and fragment unchanged, before anything renders ([SHARING.md](SHARING.md#link-routing)).
 - **The URL decides the language.** Every page has a static `<html lang>`; the app reads its language with `pageLang(location.pathname, <html lang>)` (`src/pages/routes.ts`). Nothing is stored (there is no language key in `localStorage`), and visitors are never redirected by browser language.
-- **In-place switch in the app.** The header language button translates the UI (`applyI18n`, also covering the static intro and footer through their `data-i18n` keys), rebuilds the site nav and the footer links, re-points the intro links (`a[data-page]`, `relocalizeLinks`), sets `<html lang>` and `document.title` (the other language's static `<title>`, `app.documentTitle`) and rewrites the URL with `history.replaceState` to `switchedAppUrl(lang, search, hash)`: `/#s=…` ↔ `/en/#s=…`, query and fragment kept. Results, the replay and form state stay. Reloading `/en/` shows English.
+- **In-place switch in the app.** The header language button translates the UI (`applyI18n`, also covering the static intro and footer through their `data-i18n` keys), rebuilds the site nav and the footer links, re-points the intro links (`a[data-page]`, `relocalizeLinks`), sets `<html lang>` and `document.title` (the other language's static `<title>`, `play.documentTitle`) and rewrites the URL with `history.replaceState` to `switchedAppUrl(lang, search, hash)`: `/play/#s=…` ↔ `/en/play/#s=…`, query and fragment kept. Results, the replay and form state stay. Reloading `/en/play/` shows English.
 - Every page carries `<link rel="canonical">` to its own URL on the production domain `https://trex-vs-tiger.vinylims.com`, so `*.pages.dev` copies (production alias and previews) consolidate onto it.
 - Every page carries `hreflang` alternates `ko`, `en` and `x-default` (= **English**, SEO_GEO §1.4). Canonical, hreflang, Open Graph, Twitter and JSON-LD are generated at build time, not written in the sources ([SEO.md](SEO.md#head-tags)).
 - Unknown URLs get `404.html` (Korean) or, under `/en/`, `en/404.html`, with status 404 ([SEO.md](SEO.md#404-pages)).
 - The header's language link (`a[data-lang-switch]`) points to the counterpart page. Both languages use the **same section ids**, so `site.ts` can keep the reader's place (`/guide/#share` ↔ `/en/guide/#share`).
-- Links from a page to the simulator use the simulator URL of the page's language (`/` or `/en/`, the tour deep link `/?tour=1` or `/en/?tour=1`). Links from the app to the static files it needs are root-absolute (`/favicon.svg`, `/version.json`, `/reset/`), and workers load relative to the bundle (`import.meta.url`), so the app works at both `/` and `/en/`.
+- Links from a page to the simulator use the lobby of the page's language (`/` or `/en/`); the tour deep link goes straight to the play page (`/play/?tour=1` or `/en/play/?tour=1`). Links from the app to the static files it needs are root-absolute (`/favicon.svg`, `/version.json`, `/reset/`), and workers load relative to the bundle (`import.meta.url`), so the app works at both `/play/` and `/en/play/`.
 - Cloudflare Pages serves `<dir>/index.html` at `/<dir>/` and redirects `/<dir>` and `/<dir>/index.html` there.
 
 ## Files
@@ -97,7 +101,7 @@ The registry is `CONTENT_PAGES` in `src/pages/routes.ts`. The header navigation 
 
 ## Writing and markup rules
 
-- **CSP**: no inline `<script>` (every script has `src`), no `<style>` blocks, no `style=` attributes, no `on*=` handlers, no `javascript:` URLs. Link the shared files exactly as the existing pages do: `<link rel="stylesheet" href="/src/pages/site.css" />` and `<script type="module" src="/src/pages/site.ts"></script>`.
+- **CSP**: no inline `<script>` (every script has `src`; the lobby's link forwarder is the one hashed exception, [The lobby](#the-lobby--en)), no `<style>` blocks, no `style=` attributes, no `on*=` handlers, no `javascript:` URLs. Link the shared files exactly as the existing pages do: `<link rel="stylesheet" href="/src/pages/site.css" />` and `<script type="module" src="/src/pages/site.ts"></script>`.
 - **Semantics**: `header` → `nav.site-nav` → `main#main` → `article.page` (`header.page-head` with `nav.breadcrumb` (app short title › the page's nav label, matching the BreadcrumbList JSON-LD), one `h1`, a lead and `p.page-meta` with a `<time datetime="YYYY-MM-DD">`; then `nav.toc`, `div.page-body` of `section`s with `h2`/`h3`) → `footer`. Tables get `thead`/`th scope`.
 - **Tables**: every `<table>` sits in `<div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-<name>">` and has `<caption id="caption-<name>">`. The wrapper scrolls sideways on narrow screens so the page itself never does; `tabindex="0"` lets keyboard users focus the region and scroll it with the arrow keys (Safari never makes scroll containers focusable on its own; WCAG 2.1.1), and the caption gives the region and the table an accessible name. `.table-wrap:focus-visible` draws the focus ring. Use the same caption ids in both languages. The simulator's chart data tables follow the same rule: `.chart-table-wrap` is a focusable `role="region"` named by its chart title (`src/ui/charts.ts`, #68).
 - **Numbers that come from code** use `<data data-k="…" value="…">shown</data>`; the test compares both the `value` and the shown text with the code. Parameter cards are `section.param#param-<id>[data-param][data-unit]`, settings `section.setting#setting-<key>[data-setting]`, constants `tr[data-constant]`.
@@ -121,7 +125,7 @@ The header is not written by hand. Every content page and both 404 pages have on
 - `nav.site-nav` with `siteNavItems(lang, page)` (the list the app's `createSiteNav` uses), the current page marked `aria-current="page"`;
 - `a.lang-switch[data-lang-switch]` to the same page in the other language (the other language's simulator on a 404). `site.ts` adds the `#hash` at run time.
 
-**One logo.** `SITE_LOGO` is the only place the header logo is named: `/header-logo.svg` (the owner's icon, [BRANDING.md](BRANDING.md#assets)), 40 px in the app header and 32 px in the content-page header. The app takes it from the same constant: `src/ui/app.ts` builds its logo with `logoAttrs('app')`, and the static head of `index.html` / `en/index.html` has an `<!-- app-logo -->` line the same plugin replaces with `renderAppLogo()`. To change the logo or its size, change `SITE_LOGO` and nothing else.
+**One logo.** `SITE_LOGO` is the only place the header logo is named: `/header-logo.svg` (the owner's icon, [BRANDING.md](BRANDING.md#assets)), 40 px in the app header and 32 px in the content-page header. The app takes it from the same constant: `src/ui/app.ts` builds its logo with `logoAttrs('app')`, and the static head of `play/index.html` / `en/play/index.html` has an `<!-- app-logo -->` line the same plugin replaces with `renderAppLogo()`. To change the logo or its size, change `SITE_LOGO` and nothing else.
 
 A placeholder on a page whose path the plugin cannot resolve, `<!-- site-header -->` on the simulator or `<!-- app-logo -->` on a content page fails the build. `tests/pages.test.ts` runs the same `expandSiteHeader` over the sources, so every other page test sees the header as built, and fails if a source hand-writes a header or a logo `<img>`, lacks its placeholder, or if any page's header logo (src, size, alt) differs from `SITE_LOGO`.
 
@@ -136,33 +140,49 @@ The words live in `src/content/patch-notes.ts` (`PATCH_NOTES`, typed data, ko an
 
 The app's version dialog links "패치노트 보기" / "Patch notes" to the running version's card, and the update banner links "바뀐 점 보기" / "What's new" to the deployed version's card (`src/ui/version.ts`; both follow an in-app language switch through `data-page`).
 
-## The simulator pages (`/`, `/en/`)
+## The lobby (`/`, `/en/`)
 
-`index.html` (Korean) and `en/index.html` (English) carry the static head of their language (title = `app.documentTitle`, description; the build adds canonical, hreflang, Open Graph and JSON-LD including `FAQPage` from the visible FAQ) and this body:
+`index.html` (Korean) and `en/index.html` (English) are the home page (#142, design R2 in [RENEWAL-1.0.md §3.1](design/RENEWAL-1.0.md#31-surfaces-and-urls)). They keep the title (`app.documentTitle`) and description the simulator ranked with, and the build adds canonical, hreflang, Open Graph and JSON-LD (`WebApplication` and `FAQPage` from the visible FAQ) as before. The body:
+
+```html
+<a class="skip-link" href="#main">…</a>
+<!-- site-header -->
+<main id="main" class="lobby">
+  <section class="lobby-hero" id="play">…</section>
+  <!-- glyphs, the only <h1> (app.title), a lead, the big play link to /play/, a note -->
+  <section class="site-intro" id="intro">…</section>
+  <!-- answer-first intro -->
+  <section class="site-faq" id="faq">…</section>
+  <!-- visible Q&A -->
+</main>
+<!-- site-footer -->
+```
+
+- **Forwarder first.** The first element after `<meta charset>` is the one inline script of the site. It forwards old links to the play page with `location.replace`, before the browser renders anything, so an old link never flashes the lobby and adds no history entry. Its SHA-256 is the only hash in the CSP's `script-src` ([SHARING.md](SHARING.md#link-routing), [DEPLOYMENT.md](DEPLOYMENT.md#rule--every-response)). Both languages carry the identical script, so one hash covers both. When you edit it, recompute the hash, then update `public/_headers` and `RESULT_HEADERS` in `src/share/result-function.ts`; `tests/pages.test.ts` and `tests/seo.test.ts` name the hash they expect.
+- **Play first, light.** The hero is a few abstract glyphs (blue triangles and orange dots, an `aria-hidden` inline SVG coloured by classes), the `<h1>`, a one-line lead, one big link to the play page (`a.lobby-play`) and a short note. The lobby loads only `site.css`, `src/pages/lobby.css` and the 1 KiB `site.ts`, never the app bundle.
+- **Crawlable text kept.** The intro and FAQ that `/` had before #142 are kept word for word, inside `<main>`, with one exception: the FAQ answer that pointed at "the simulator above" now says to open the simulator. They count toward AdSense gate G1 and feed `FAQPage` and `llms-full.txt`. The intro says what the simulator is, how it works in four steps and what you learn, and links the Learn pages: the guide, the model's preliminary results (`/model/#results`) and the parameters. It also links the tour on the play page (`/play/?tour=1`). It states no simulation result numbers; the only number (22 parameters) is pinned to `PARAMS.length` by a test.
+- **Bound to message keys.** Every text in the hero, intro, FAQ and footer has `data-i18n="<key>"` and repeats `DICTIONARIES[lang][key]` exactly (`lobby.*`, `intro.*`, `faq.*`). The tests compare the ordered key list of the two languages, so ko and en stay in parity. Nothing translates the lobby in place: its language link opens the other lobby.
+
+## The play pages (`/play/`, `/en/play/`)
+
+`play/index.html` and `en/play/index.html` hold the app. They carry `<meta name="robots" content="noindex, follow">`, their own title (`play.documentTitle`, which the app also sets as `document.title`) and a description, and no generated SEO head: `parsePagePath` does not know them, so `vite.seo.ts` skips them, and they are not in the sitemap, hreflang or `llms.txt`. The body:
 
 ```html
 <div id="app">
   <header class="app-header app-static-head">…</header>
-  <!-- logo, the only <h1>, link to the other language; the app replaces it -->
+  <!-- logo, the only <h1>, link to the other language's play page; the app replaces it -->
 </div>
 <noscript>…</noscript>
-<section class="site-intro" id="intro">…</section>
-<!-- answer-first intro -->
-<section class="site-faq" id="faq">…</section>
-<!-- 4 visible Q&A -->
 <!-- site-footer -->
-<!-- shared footer, filled by the build -->
 ```
 
-- **Static header and `<h1>`.** `#app` starts with a static header in the app header's classes: logo (the `<!-- app-logo -->` line, see [Site header](#site-header)), `<h1 data-i18n="app.title">` and `<a data-lang-switch hreflang lang data-i18n="lang.switch">` to the other language's app. Crawlers that do not run JavaScript thus get the page heading and the language link. `startApp` moves the `<h1>` element into its own header and removes the rest (the language button replaces the link), so the page always has exactly one `<h1>`.
-- **Outside `#app`.** The intro, FAQ and footer are siblings of `#app`, so they exist without JavaScript (crawlers that do not run scripts, see [SEO.md](SEO.md)) and stay in the DOM after the app mounts.
-- **Answer first, compact.** The intro says what the simulator is, how it works in four steps, what you learn (Monte Carlo, confidence intervals, sensitivity) and links to the guide, the model's preliminary results (`/model/#results`), the parameters and the tour. It states no simulation result numbers; the only number (22 parameters) is pinned to `PARAMS.length` by a test.
-- **Below the simulator, no layout shift.** The simulator stays at the top. `#app` reserves one viewport (`min-height: 100vh` / `100svh` in `src/ui/styles.css`), so the intro starts below the fold before the app mounts and stays there after it; mounting shifts nothing on screen (measured CLS 0.0000 at 1366/390/320 px). Without JavaScript (`@media (scripting: none)`) `#app` drops the reservation and shows only the static header; the `<noscript>` notice and the intro follow.
-- **Translatable in place.** Every static text element has `data-i18n="<key>"` and contains exactly `DICTIONARIES[lang][key]` (`data-i18n-aria`, `data-i18n-title` likewise), so the app's `applyI18n` translates it when the language switches. Links carry `data-page` (plus `data-href-suffix` such as `#results` or `?tour=1`) so `relocalizeLinks` can point them at the other language. The tour link also has `data-tour-start`: the app starts the tour in place on a plain click.
+- **Static header and `<h1>`.** `#app` starts with a static header in the app header's classes: the logo (the `<!-- app-logo -->` line, see [Site header](#site-header)), `<h1 data-i18n="app.title">` and `<a data-lang-switch hreflang lang data-i18n="lang.switch">` to the other language's play page. `startApp` moves the `<h1>` into its own header and removes the rest (the language button replaces the link), so the page always has exactly one `<h1>`.
+- **No layout shift.** `#app` reserves one viewport (`min-height: 100vh` / `100svh` in `src/ui/styles.css`), so the footer starts below the fold before the app mounts and stays there after it. Without JavaScript (`@media (scripting: none)`) `#app` drops the reservation and shows only the static header, followed by the `<noscript>` notice.
+- **Translatable in place.** Every static text element has `data-i18n="<key>"`, so the app's `applyI18n` translates it when the language switches. Links that carry `data-page` (plus `data-href-suffix`) are re-pointed by `relocalizeLinks`.
 
 ## Footer
 
-Every page (both app entries, all content pages including the license pages, the 404 and `/r/` pages) has exactly one static `<footer class="site-footer">`. The sources contain only the `<!-- site-footer -->` line; the build (and the dev server) replaces it with `renderSiteFooter(lang)` from `src/pages/site-footer.ts`, the same plugin pass that fills the header (`expandSiteHeader`, [Site header](#site-header)), so a disclaimer or link change is one edit in the dictionaries or `FOOTER_LINKS` (#64). The footer contains:
+Every page (the lobbies, both play pages, all content pages including the license pages, the 404 and `/r/` pages) has exactly one static `<footer class="site-footer">`. The sources contain only the `<!-- site-footer -->` line; the build (and the dev server) replaces it with `renderSiteFooter(lang)` from `src/pages/site-footer.ts`, the same plugin pass that fills the header (`expandSiteHeader`, [Site header](#site-header)), so a disclaimer or link change is one edit in the dictionaries or `FOOTER_LINKS` (#64). The footer contains:
 
 1. the educational disclaimer (`footer.disclaimer`, including that the site does not promote or endorse real animal fighting);
 2. `ul.footer-links` in the order of `FOOTER_LINKS` (`src/pages/routes.ts`): about · privacy · license (site pages of the page's language), source code (GitHub repository, `rel="noopener"`), blog `https://vinylims.com` and Linktree `https://link.vinylims.com` (both `rel="me noopener"`, they identify the owner);
@@ -213,7 +233,7 @@ Text widths are set in `em`, not `ch`. `ch` is the width of "0" in the font in u
 
 ## SEO
 
-- Unique, descriptive `<title>` (`<topic> – <site name>`, at most 60 characters) and meta description (50–165 characters) per page, the two simulator pages included; the tests enforce length and uniqueness. Names, titles and descriptions: [SEO.md](SEO.md).
+- Unique, descriptive `<title>` (`<topic> – <site name>`, at most 60 characters) and meta description (50–165 characters) per page, the lobbies and play pages included; the tests enforce length and uniqueness. Names, titles and descriptions: [SEO.md](SEO.md).
 - Canonical + `hreflang` (`ko`, `en`, `x-default` = English) on every page and in the sitemap; `og:locale` / `og:locale:alternate`; the language's 1200×630 card as `og:image` and `summary_large_image`; JSON-LD. All generated at build time from one registry ([SEO.md](SEO.md)).
 - `robots.txt` (generated) allows everything except `/reset/` and names the search and AI crawlers and the sitemap. Submitting the sitemap and setting up the webmaster tools are owner actions: [SEO.md](SEO.md#owner-actions).
 - Pages are complete HTML without JavaScript (the no-JS render is verified in the browser check), load one small stylesheet, the shared font stylesheet and a 1 KiB script, and reserve image sizes (`width`/`height`). The only possible layout shift is the one-time font swap described in [Fonts](#fonts), which the metric-matched fallback keeps near zero.
@@ -238,16 +258,17 @@ No ad code is included yet. The pages were written with an AdSense review in min
 - a scenario setting's default, limits or options differ from `defaultConfig()`, `LIMITS`, `SAMPLING_METHODS`, `PACK_TACTICS`, the species id lists, or the work budget from `MAX_WORK`; an engine constant differs from `CONSTANTS`/`DT`;
 - any page lacks a title, description, theme-colour, viewport, favicon, apple-touch-icon, manifest link, the shared CSS/JS, one `h1`, `main#main`, footer, or about 2,500 characters of text, or hand-writes a canonical, hreflang, `og:*` or `twitter:*` tag (those are generated); a title is longer than 60 or a description longer than 165 characters; titles or descriptions repeat (across all pages including `/` and `/en/`); ids repeat;
 - a content page lacks the visible breadcrumb (app short title → its nav label, `aria-label` = `breadcrumb.label`) that its BreadcrumbList JSON-LD describes;
-- a simulator page's `<title>` differs from `app.documentTitle`, its `#app` holds anything but the static header, it has not exactly one `<h1>` (`app.title`, before every other heading) or no static link to the other language, a text node in the static header, intro, FAQ or footer is not bound to a message key, its ordered `data-i18n*` key list differs from the other language's page, an `intro.*`/`faq.*` message is missing or repeated, the intro/FAQ/footer are not after `#app`, the intro has fewer than 3 or more than 4 steps, fewer than 3 or more than 5 FAQ items, or its links differ from guide · model#results · parameters · tour of its language;
+- a lobby's `<title>` differs from `app.documentTitle`, its inline forwarder is not its first script or its hash is not in the CSP, it loads anything but `site.css`, `lobby.css` and `site.ts`, it has not exactly one `<h1>` (`app.title`) in the hero, the hero's play link does not go to the play page of its language, its glyph SVG holds anything but abstract shapes, a text node in the hero, intro, FAQ or footer is not bound to a message key, its ordered `data-i18n*` key list differs from the other language's lobby, a `lobby.*`/`intro.*`/`faq.*` message is missing or repeated, the intro or FAQ is outside `<main>`, the intro has fewer than 3 or more than 4 steps, fewer than 3 or more than 5 FAQ items, or its links differ from guide · model#results · parameters · play-page tour of its language;
+- a play page is not `noindex, follow`, its `<title>` differs from `play.documentTitle`, its `#app` holds anything but the static header, it has not exactly one `<h1>` (`app.title`), its language link does not open the other play page, or its static text is unbound or its key list differs from the other language's play page;
 - on any page, a `data-i18n` (`-aria`, `-title`) text differs from the dictionary, the footer links differ from `footerItems(lang)` (href, label, rel), the version link does not point at the releases, the header brand differs from `app.shortTitle`, or the footer still claims "no tracking";
 - the license pages' MIT text differs from `LICENSE`, or the OFL text from `src/assets/fonts/pretendard/LICENSE.txt`; `package.json` gains runtime `dependencies`;
 - a `'trexsim.*'` storage key in `src/` is missing from either privacy page, or a privacy page names a key the code does not use;
 - a page source hand-writes its header or a logo `<img>` instead of the `<!-- site-header -->` / `<!-- app-logo -->` placeholder, or a page's header logo (src, size, alt) differs from `SITE_LOGO` ([Site header](#site-header));
 - a static nav differs from `siteNavItems(lang, page)`; the language link is wrong; ko/en section ids differ; an internal link or `#anchor` points nowhere; an external link is not `https`;
 - a table is not inside a `.table-wrap` with `role="region"`, `tabindex="0"` and an `aria-labelledby` that names its own `<caption id>`;
-- any discovered HTML file (including the app's `index.html`) has inline script, style blocks, style attributes, event handlers or `javascript:` URLs;
+- any discovered HTML file (the lobby and play pages included) has inline script, style blocks, style attributes, event handlers or `javascript:` URLs; the lobby's forwarder is the one inline script, allowed only while its SHA-256 is in the CSP;
 - `site.css` tokens (colours and `--font-sans`) differ from `src/ui/styles.css`, or a text/background pair from [Colour contrast](#colour-contrast) falls below 4.5:1 in either theme;
-- `_headers` does not give every page exactly one `Cache-Control: no-cache, no-transform` (and the CSP), or unknown paths (the 404 pages) get no CSP;
+- `_headers` does not give every page (the play pages included) exactly one `Cache-Control: no-cache, no-transform` (and the CSP), unknown paths (the 404 pages) get no CSP, or the CSP's `script-src` allows anything inline beyond the forwarder's hash (`'unsafe-inline'`, `'unsafe-eval'`, another hash);
 - a 404 page is not noindex, has a canonical, shares a title with a page, has a wrong nav or language link, misses a link to a main page or the other language, or uses a URL that is not root-absolute.
 
 `tests/seo.test.ts` runs the build's generators over the real sources and checks the generated head of every page (canonical, hreflang, OG, Twitter, JSON-LD and `FAQPage` = visible FAQ), the sitemap against the registry and the build entries, `robots.txt`, `llms.txt`, git dates and the IndexNow key ([SEO.md](SEO.md#tests)).

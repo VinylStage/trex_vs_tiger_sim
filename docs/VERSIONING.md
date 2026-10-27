@@ -5,7 +5,7 @@
 > - 헤더의 배지가 지금 실행 중인 릴리스 버전(`v0.1.0`)과 상태(**확인 중 / 최신 / 새 버전 / 새 빌드 / 변경됨 / 확인 불가**)를 보여 줍니다. 상태 문구는 고정된 짧은 목록이라 배지 폭이 바뀌지 않고(레이아웃 이동 없음), 배포된 버전 번호는 배너·대화상자와 스크린 리더용 텍스트에 나옵니다. 모든 페이지의 정적 푸터에 릴리스 노트 링크가 있고, 앱은 그 자리에 `버전 v0.1.0 (커밋 7자리)`를, 안내 페이지는 `버전 v0.1.0`을 채웁니다.
 > - 버전은 빌드 시점에 `package.json`의 `version`(release-please가 올림)과 커밋 SHA(`CF_PAGES_COMMIT_SHA`, 없으면 `git rev-parse HEAD`)에서 가져와 번들에 넣고, 같은 내용을 `dist/version.json`으로도 내보냅니다.
 > - 페이지는 로드 직후, 탭이 다시 보일 때(10분 간격 제한), 보이는 동안 30분마다 `/version.json`을 `no-store`로 받아 자기 버전과 비교합니다. 버전이 더 높거나, 버전이 같아도 커밋이 다르면 새 배포로 봅니다.
-> - 새 배포가 있으면 화면 아래쪽에 고정 배너가 뜹니다(넓은 화면은 오른쪽 아래, 좁은 화면은 실행 버튼 막대 바로 위). 레이아웃을 밀지 않고, 헤더를 가리지 않으며, 배너가 떠 있는 동안 포커스된 요소는 배너 위로 스크롤되고, Esc로 닫을 수 있습니다. 배지를 누르면 버전 정보 대화상자가 열립니다. **최신 버전 불러오기 (캐시·저장소 초기화)** 를 확인하면 Cache Storage, 서비스 워커, localStorage, sessionStorage, 이 호스트의 JS 쿠키를 지운 뒤 `/reset/`으로 이동합니다. `/reset/` 응답의 `Clear-Site-Data: "cache", "storage"` 헤더가 브라우저 캐시와 저장소를 한 번 더 비우고, 페이지는 `/?_r=<시각>`(영어판에서 시작했다면 `/en/?_r=<시각>`)으로 새로 불러옵니다. 시나리오(URL `#s=`)와 언어(URL 경로)는 유지됩니다.
+> - 새 배포가 있으면 화면 아래쪽에 고정 배너가 뜹니다(넓은 화면은 오른쪽 아래, 좁은 화면은 실행 버튼 막대 바로 위). 레이아웃을 밀지 않고, 헤더를 가리지 않으며, 배너가 떠 있는 동안 포커스된 요소는 배너 위로 스크롤되고, Esc로 닫을 수 있습니다. 배지를 누르면 버전 정보 대화상자가 열립니다. **최신 버전 불러오기 (캐시·저장소 초기화)** 를 확인하면 Cache Storage, 서비스 워커, localStorage, sessionStorage, 이 호스트의 JS 쿠키를 지운 뒤 `/reset/`으로 이동합니다. `/reset/` 응답의 `Clear-Site-Data: "cache", "storage"` 헤더가 브라우저 캐시와 저장소를 한 번 더 비우고, 페이지는 `/play/?_r=<시각>`(영어판에서 시작했다면 `/en/play/?_r=<시각>`)으로 새로 불러옵니다. 시나리오(URL `#s=`)와 언어(URL 경로)는 유지됩니다.
 > - 튜토리얼 안내 기록(`trexsim.tour`)은 초기화됩니다(확인 문구에 안내). 언어는 저장하지 않고 URL로 정하므로 그대로입니다.
 > - `Clear-Site-Data`에 `"cookies"`는 **넣지 않습니다.** 명세와 MDN에 따르면 이 지시어는 응답 출처의 **등록 도메인 전체**(`vinylims.com`과 모든 `*.vinylims.com` 하위 도메인)의 쿠키를 지우므로, 소유자의 다른 사이트 로그인까지 끊을 수 있습니다. 대신 JS로 이 호스트의 쿠키만 만료시킵니다(HttpOnly 쿠키는 JS로 지울 수 없음).
 
@@ -74,7 +74,7 @@ flowchart LR
 
 ## Footer version
 
-Every page (`index.html`, `en/index.html`, the content and license pages) has the same static footer ([PAGES.md](PAGES.md#footer)). Its last line holds
+Every page (the lobbies, the play pages, the content and license pages) has the same static footer ([PAGES.md](PAGES.md#footer)). Its last line holds
 
 ```html
 <a class="version-footer" href="https://github.com/VinylStage/trex_vs_tiger_sim/releases" …>
@@ -155,21 +155,21 @@ sequenceDiagram
     Page->>Page: unregister service workers
     Page->>Page: localStorage.clear(), sessionStorage.clear()
     Page->>Page: expire this host's JS-visible cookies
-    Page->>CDN: location.replace("/reset/?from=0.1.0[&to=/en/]#s=…")
+    Page->>CDN: location.replace("/reset/?from=0.1.0[&to=/en/play/]#s=…")
     CDN-->>Reset: HTML + Clear-Site-Data: "cache", "storage"
     Note over Reset: the browser clears the origin's HTTP cache and storage<br/>before the page runs (where supported)
     Reset->>Reset: repeat the JS clean-up, show "업데이트 중…" ≥ 0.4 s
-    Reset->>CDN: location.replace("/?_r=<ms>#s=…" or "/en/?_r=<ms>#s=…")
+    Reset->>CDN: location.replace("/play/?_r=<ms>#s=…" or "/en/play/?_r=<ms>#s=…")
     CDN-->>Page: fresh index.html → new hashed assets
     Page->>Page: drop _r from the URL, show "최신 버전을 불러왔습니다"
 ```
 
 - **Confirmation.** The action asks first, inside the dialog, and says that the tutorial record (`trexsim.tour` in `localStorage`, the only key the site writes; the v0.1.0 key `trexsim.lang` is deleted on every load, `src/pages/legacy-storage.ts`) is reset. The scenario and the language are kept: the scenario lives in the URL fragment (`#s=…`), which both redirects carry along, and the language is the URL path.
-- **Language round-trip.** The app passes its own path to `resetUrl()`; from the English app the reset URL gets `&to=%2Fen%2F`. `src/reset.ts` reads it with `returnPathFromSearch()`, which accepts only `/` and `/en/` (anything else falls back to `/`, so the parameter cannot redirect off-site), and `reloadUrl()` sends the visitor back to `/en/?_r=…#s=…`.
+- **Language round-trip.** The app passes its play page path to `resetUrl()`; from the English app the reset URL gets `&to=%2Fen%2Fplay%2F`. `src/reset.ts` reads it with `returnPathFromSearch()`, which accepts only `/play/`, `/en/play/` and the lobbies `/` and `/en/` that a tab of a build before #142 names. Anything else falls back to `/play/`, so the parameter cannot redirect off-site. `reloadUrl()` sends the visitor back to `/en/play/?_r=…#s=…`. A return to a lobby with a scenario fragment is forwarded to the play page ([SHARING.md](SHARING.md#link-routing)).
 - **`location.replace`** is used for both hops, so Back does not return to the old page or to `/reset/`.
 - **`?_r=<timestamp>`** gives `index.html` a URL that no cache has seen. `index.html` is already `no-cache`, and assets are content-hashed, so this is a belt-and-braces measure for intermediaries and for Chrome's partial `"cache"` support (see below). The app removes `_r` with `history.replaceState` right away, so shared links stay clean; other query parameters are kept.
 - **Opening `/reset/` directly** works too: it is a support link that fixes a stuck client (`https://trex-vs-tiger.vinylims.com/reset/`). The page repeats the JavaScript clean-up for browsers without `Clear-Site-Data`.
-- **Fallback link.** If the hand-off has not happened after 3 s (also without JavaScript), the reset page shows a "Continue" link. It is revealed with a CSS animation of `visibility`, not `opacity`, so it stays out of the tab order while it is invisible. `src/reset.ts` points it at the same `/?_r=<ms>#s=…` (or `/en/…`) URL as the automatic hand-off, so it keeps the scenario too; without JavaScript it is a plain `/`, since HTML alone cannot carry the current fragment. Its colour (`--link` in `src/reset.css`, `#1f62b8` light) is 5.56:1 on the light background and 5.07:1 on the dark one.
+- **Fallback link.** If the hand-off has not happened after 3 s (also without JavaScript), the reset page shows a "Continue" link. It is revealed with a CSS animation of `visibility`, not `opacity`, so it stays out of the tab order while it is invisible. `src/reset.ts` points it at the same `/play/?_r=<ms>#s=…` (or `/en/play/…`) URL as the automatic hand-off, so it keeps the scenario too; without JavaScript it is a plain `/`, since HTML alone cannot carry the current fragment. Its colour (`--link` in `src/reset.css`, `#1f62b8` light) is 5.56:1 on the light background and 5.07:1 on the dark one.
 - Every async step has a 5 s ceiling, so an unresponsive browser API cannot strand the visitor.
 
 ## Response headers

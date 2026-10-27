@@ -18,7 +18,7 @@ The research behind these decisions, with sources, is [docs/research/SEO_GEO.md]
 - [URLs and languages](#urls-and-languages)
 - [Names](#names)
 - [Titles and descriptions](#titles-and-descriptions)
-- [Crawlable content on the simulator pages](#crawlable-content-on-the-simulator-pages)
+- [Crawlable content on the lobby](#crawlable-content-on-the-lobby)
 - [Footer and owner links](#footer-and-owner-links)
 - [How the SEO files are generated](#how-the-seo-files-are-generated)
 - [Head tags](#head-tags)
@@ -45,15 +45,18 @@ The research behind these decisions, with sources, is [docs/research/SEO_GEO.md]
 | Privacy     | `/privacy/`     | `/en/privacy/`     |
 | License     | `/license/`     | `/en/license/`     |
 | Not found   | `/404.html`     | `/en/404.html`     |
+| Play (app)  | `/play/`        | `/en/play/`        |
 
 - One URL per language (SEO_GEO §1.1): Googlebot sends no `Accept-Language` and ignores cookies and storage, so a single URL that switches language client-side cannot be targeted. Each file has a static `<html lang>`.
 - The app takes its language from the URL (`pageLang` in `src/pages/routes.ts`), never from storage, and never redirects by browser language.
-- The language button switches in place and rewrites the URL to the counterpart (`/#s=…` ↔ `/en/#s=…`), keeping the scenario fragment. Details: [PAGES.md](PAGES.md#url-scheme-and-languages).
-- The shared scenario stays in the fragment (`#s=…`), which search engines ignore, so `/` and `/en/` remain the canonical pages for every scenario. `?tour=1` is canonicalised to the page without it.
+- `/` and `/en/` are the lobby (`simulator` in the registry): indexed, with canonical, hreflang, the `WebApplication` node and `FAQPage`. The app itself runs at `/play/` and `/en/play/` (#142). The play pages are `noindex, follow`, carry no generated head (no canonical, hreflang, Open Graph or JSON-LD), and are absent from the sitemap and `llms.txt`, like the `/r/` result pages. `robots.txt` does not disallow them, because a crawler that may not fetch a URL never sees its `noindex`.
+- The language button in the app switches in place and rewrites the URL to the counterpart (`/play/#s=…` ↔ `/en/play/#s=…`), keeping the scenario fragment. Details: [PAGES.md](PAGES.md#url-scheme-and-languages).
+- The shared scenario stays in the fragment (`#s=…`), which search engines ignore. Old links to `/#s=…` and `/?tour=1` are forwarded to the play page by the lobby before it renders ([SHARING.md](SHARING.md#link-routing)), so the lobby URL stays the one canonical page.
 
 ```mermaid
 flowchart LR
-  ko["/ (ko)"] -- "language button: replaceState, #s= kept" --> en["/en/ (en)"]
+  old["/#s=… or /en/#s=… (old link)"] -- "lobby forwarder: location.replace, query and #s= kept" --> ko
+  ko["/play/ (ko)"] -- "language button: replaceState, #s= kept" --> en["/en/play/ (en)"]
   en -- "language button" --> ko
   ko -. "reload" .-> ko
   en -. "reload" .-> en
@@ -77,6 +80,7 @@ Pattern: `<topic> – <site name>`. Titles are at most 60 characters, descriptio
 | Page        | Korean title                                                         | English title                                               |
 | ----------- | -------------------------------------------------------------------- | ----------------------------------------------------------- |
 | `/`, `/en/` | 티렉스 대 호랑이 시뮬레이터 – 티라노사우루스 vs 호랑이, 누가 이길까? | T-Rex vs Tiger Simulator – who wins, T. rex or tigers?      |
+| play        | 시뮬레이터 실행 – 티렉스 대 호랑이                                   | Run the simulator – T-Rex vs Tiger                          |
 | guide       | 사용 방법: 단계별 가이드와 튜토리얼 – 티렉스 대 호랑이               | How to use the simulator – T-Rex vs Tiger                   |
 | model       | 모델 설명: 몬테카를로 에이전트 기반 전투 모델 – 티렉스 대 호랑이     | Model explained (Monte Carlo, agent-based) – T-Rex vs Tiger |
 | parameters  | 파라미터와 출처: 22개 능력치와 시나리오 설정 – 티렉스 대 호랑이      | Parameters and sources – T-Rex vs Tiger                     |
@@ -86,14 +90,14 @@ Pattern: `<topic> – <site name>`. Titles are at most 60 characters, descriptio
 | license     | 라이선스: MIT와 오픈 소스 고지 – 티렉스 대 호랑이                    | License (MIT) and notices – T-Rex vs Tiger                  |
 | 404         | 페이지를 찾을 수 없습니다 (404) – 티렉스 대 호랑이                   | Page not found (404) – T-Rex vs Tiger                       |
 
-The simulator's `<title>` is also the dictionary string `app.documentTitle`; the app sets `document.title` from it, so the rendered title Google indexes equals the static one.
+The lobby's `<title>` is the dictionary string `app.documentTitle`, the title `/` ranked with before the play page existed. The play page's title is `play.documentTitle`, which the app also sets as `document.title`.
 
-## Crawlable content on the simulator pages
+## Crawlable content on the lobby
 
 AI crawlers such as GPTBot and ClaudeBot do not run JavaScript, and Naver indexes the static HTML first (SEO_GEO §1.5).
 
-- **Static header inside `#app`.** `<header class="app-header app-static-head">` holds the logo, the page's only `<h1>` (`app.title`, 티렉스 대 호랑이 시뮬레이터 / T-Rex vs Tiger Simulator) and a link to the other language (`<a data-lang-switch hreflang lang>`, text `lang.switch`). It uses the app header's own classes, so it looks like the header before the app mounts. `startApp` moves that `<h1>` element into its header and removes the rest; the language button replaces the link. Without JavaScript `#app` loses its viewport-high reservation and shows just this header, followed by the `<noscript>` note.
-- **Outside `#app`**, `/` and `/en/` carry an answer-first intro (what, how in four steps, what you learn, links to the guide, the model's preliminary results, the parameters and the tour), a visible FAQ with four questions, and the site footer. The intro states no simulation results; the one number it states (22 parameters) is pinned to `PARAMS.length` by a test. Wording follows the content framing rules in [CONTRIBUTING.md](../CONTRIBUTING.md#content-framing-rules). Layout and CLS: [PAGES.md](PAGES.md#the-simulator-pages--en).
+- **Everything is static HTML.** The lobby (`/`, `/en/`) is plain HTML with the site header, so crawlers that run no script get all of it. It holds the page's only `<h1>` (`app.title`, 티렉스 대 호랑이 시뮬레이터 / T-Rex vs Tiger Simulator) and a one-line lead in the play-first hero. After that come the answer-first intro (what, how in four steps, what you learn, links to the guide, the model's preliminary results, the parameters and the tour on the play page), a visible FAQ and the site footer. The intro states no simulation results; the one number it states (22 parameters) is pinned to `PARAMS.length` by a test. Wording follows the content framing rules in [CONTRIBUTING.md](../CONTRIBUTING.md#content-framing-rules). Layout: [PAGES.md](PAGES.md#the-lobby--en).
+- **The play page** (`/play/`) keeps a static header inside `#app`: logo, `<h1>` and a link to the other language's play page. `startApp` replaces it. The page is `noindex`, so this is for readers without JavaScript, not for ranking.
 
 ## Footer and owner links
 
@@ -170,7 +174,7 @@ One `<script type="application/ld+json">` per indexable page with an `@graph`:
 | `BreadcrumbList`        | every content page                    | 1 = site short name → the app of that language, 2 = the page's nav label → the page. The page shows the same trail above its `<h1>` (`<nav class="eyebrow breadcrumb">`, tested against this node)                                                                                                                                                                  |
 | `FAQPage`               | `/`, `/en/`, guide (ko, en)           | Only where a visible `<section id="faq">` exists. Questions = its `<h3>`s, answers = the visible text up to the next `<h3>`, character for character. Google no longer shows FAQ rich results (SEO_GEO §2.1); the value is for other consumers                                                                                                                      |
 
-CSP: a `<script>` whose type is not JavaScript is a data block and is never executed, so `script-src 'self'` does not apply and no hash or nonce is needed (SEO_GEO §2.2, verified in Chromium; the browser check below shows zero CSP violations). `jsonForScript` writes `<`, `>`, `&` as `<` etc., so the JSON can never contain `</script`. `tests/seo.test.ts` fails on any other inline script.
+CSP: a `<script>` whose type is not JavaScript is a data block and is never executed, so `script-src` does not apply and no hash or nonce is needed (SEO_GEO §2.2, verified in Chromium; the browser check below shows zero CSP violations). `jsonForScript` writes `<`, `>`, `&` as `<` etc., so the JSON can never contain `</script`. `tests/seo.test.ts` fails on any other inline script, except the lobby's link forwarder, whose SHA-256 must be in the CSP ([SHARING.md](SHARING.md#link-routing)).
 
 ## Sitemap and lastmod
 
@@ -219,7 +223,7 @@ Sitemap: https://trex-vs-tiger.vinylims.com/sitemap.xml
 ## llms.txt and llms-full.txt
 
 - `/llms.txt` (llmstxt.org format): H1 site name; a blockquote with the Korean and English simulator descriptions; notes (the disclaimer in both languages, "runs in your browser", author and source, a pointer to `llms-full.txt`); then `## 한국어 페이지` and `## English pages`, each linking all 8 pages as `- [nav label](URL): meta description`.
-- `/llms-full.txt`: every indexable page's readable text, Korean first, each with URL, language, last modified (when known) and description. Content pages contribute their `<main>` (navigation, the breadcrumb and the table of contents dropped, headings as `#`, lists as `-`, tables as Markdown tables, `<pre>` as fenced code, links as `[text](absolute URL)` resolved against the page's canonical URL); the simulator pages contribute the static intro and FAQ. About 140 KB.
+- `/llms-full.txt`: every indexable page's readable text, Korean first, each with URL, language, last modified (when known) and description. Content pages contribute their `<main>` (navigation, the breadcrumb and the table of contents dropped, headings as `#`, lists as `-`, tables as Markdown tables, `<pre>` as fenced code, links as `[text](absolute URL)` resolved against the page's canonical URL); the lobby contributes the static intro and FAQ. About 140 KB.
 - Google Search ignores both files (SEO_GEO §5.2); other agents and Lighthouse's agentic audit use them. Markdown copies per page (`/model/index.md`) are not generated.
 
 ## 404 pages
