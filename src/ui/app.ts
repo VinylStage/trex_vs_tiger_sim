@@ -46,7 +46,7 @@ import {
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import type { ReplayView } from './replay';
 import { routeLink } from './link-route';
-import { simpleKeepsAddress } from './simple-model';
+import { simpleCanShow, simpleKeepsAddress } from './simple-model';
 import { configFromHash, hashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
@@ -60,7 +60,7 @@ import {
 import { copyText } from '../share/share-ui';
 import { createConfigTransfer } from './config-transfer';
 import { createReproduceCheck, createResultShare } from './result-share';
-import { pageLang, pagePath, switchedAppUrl } from '../pages/routes';
+import { hashHasAppState, pageLang, pagePath, switchedAppUrl } from '../pages/routes';
 import { logoAttrs } from '../pages/site-shell';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
 import './site-footer.css';
@@ -105,9 +105,10 @@ export function startApp(root: HTMLElement): void {
   // Same text as the static <title> of this language's play page (tests/pages.test.ts).
   document.title = t('play.documentTitle');
   const pool = new SimPool();
-  // A cold page (no app state, no tour deep link) opens Simple mode (#146). A v3 link (`#s=` with
-  // `m: "free"`) opens the free form of Advanced mode; every other link opens classic (D1). Old
-  // links that land on the lobby reach this page with the same fragment (link-route.ts).
+  // A cold page (no app state, no tour deep link) opens Simple mode (#146), and so does a link
+  // Simple mode wrote (#154). Any other v3 link (`#s=` with `m: "free"`) opens the free form of
+  // Advanced mode; every other link opens classic (D1). Old links that land on the lobby reach
+  // this page with the same fragment (link-route.ts).
   const startHash = location.hash;
   const startRoute = routeLink(startHash, location.search);
   const startFree = startRoute.mode === 'classic' ? null : startRoute.config;
@@ -552,6 +553,8 @@ export function startApp(root: HTMLElement): void {
     startHash,
     notice: newerLinkNote,
     view: view === 'simple' ? 'simple' : 'full',
+    // A Simple link (not a cold page) keeps its seed for the first Run, so it reproduces (#154).
+    linkSeed: startRoute.mode === 'simple' && hashHasAppState(startHash),
   });
 
   clear(root);
@@ -620,7 +623,12 @@ export function startApp(root: HTMLElement): void {
   function writeUrl(): void {
     if (keepNewerLink) return;
     if (view === 'simple' && simpleKeepsAddress(location.hash, simpleLinked)) return;
-    const hash = mode === 'free' ? hashFromFreeConfig(free.getConfig()) : hashFromConfig(config);
+    // Simple mode marks its links so they reopen in Simple (#154), but only for a config Simple
+    // can show whole: after an Advanced-only edit the link opens the free form instead.
+    const fc = mode === 'free' ? free.getConfig() : null;
+    const hash = fc
+      ? hashFromFreeConfig(fc, { simple: view === 'simple' && simpleCanShow(fc) })
+      : hashFromConfig(config);
     if (hash === location.hash) return;
     history.replaceState(history.state, '', hash || `${location.pathname}${location.search}`);
   }

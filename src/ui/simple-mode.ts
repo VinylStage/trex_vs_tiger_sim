@@ -36,6 +36,8 @@ export interface SimpleViewOptions {
   update(c: FreeConfig, focusKey: string): void;
   /** Start a run (each Simple run draws a fresh seed). */
   run(): void;
+  /** The seed of the Simple link the page opened with while the next Run keeps it (#154), else null. */
+  linkSeed(): number | null;
 }
 
 const SIDES: readonly FreeSideIndex[] = [0, 1];
@@ -209,7 +211,14 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
       out.push(h('p', { class: 'matchup-note', text: t('matchup.thoughtExperiment') }));
     }
     if (hasHiddenEdits(c)) out.push(h('p', { class: 'free-note', text: t('simple.hiddenEdits') }));
-    out.push(h('p', { class: 'free-note', text: t('simple.seedNote') }));
+    const seed = opts.linkSeed();
+    out.push(
+      h('p', {
+        class: 'free-note',
+        text:
+          seed === null ? t('simple.seedNote') : t('simple.linkSeedNote', { seed: String(seed) }),
+      }),
+    );
     return out;
   }
 

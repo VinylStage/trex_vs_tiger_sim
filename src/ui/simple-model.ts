@@ -90,6 +90,14 @@ export function hasHiddenEdits(c: FreeConfig): boolean {
   return JSON.stringify(simpleRunConfig(c, c.seed)) !== JSON.stringify(sanitizeFreeConfig(c));
 }
 
+/**
+ * Whether Simple mode can show this config whole, so a link of it may carry the Simple-mode
+ * marker and reopen in Simple (#154): no hidden edits. This one rule decides both when a link is
+ * written with the marker and when a marked link opens Simple, so Simple never opens a config it
+ * cannot display; a marked link with hidden edits opens the free form of Advanced mode instead.
+ */
+export const simpleCanShow = (c: FreeConfig): boolean => !hasHiddenEdits(c);
+
 /** A uniformly random seed in the seed range (R3: a fresh seed per Run). */
 export function freshSeed(random: () => number = cryptoRandom): number {
   const [lo, hi] = LIMITS.seed;

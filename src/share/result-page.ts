@@ -353,7 +353,7 @@ export function startResultPage(): void {
       view,
       summary: decoded.summary,
       stats: freeStats(view, decoded.summary),
-      runIt: reproduceFreeHash(decoded.config, decoded.summary),
+      runIt: reproduceFreeHash(decoded.config, decoded.summary, { simple: decoded.simple }),
       seed: decoded.config.seed,
     });
     return;

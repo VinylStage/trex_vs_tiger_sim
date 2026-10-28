@@ -22,6 +22,7 @@ import {
   freshSeed,
   hasHiddenEdits,
   matchingPreset,
+  simpleCanShow,
   simpleKeepsAddress,
   simpleRunConfig,
   simpleRuns,
@@ -200,5 +201,38 @@ describe('cold address (#146 review)', () => {
     for (const hash of ['#s=abc', '#chk=x', '#TVT3-abc']) {
       expect(simpleKeepsAddress(hash, false)).toBe(false);
     }
+  });
+});
+
+describe('which configs a Simple link may mark (#154)', () => {
+  it('every Simple run config, for every shown preset and a budget-lowered matchup', () => {
+    for (const p of readyPresets())
+      expect(simpleCanShow(simpleRunConfig(presetConfig(p), 5)), p.id).toBe(true);
+    let big = withSideCount(withSideSpecies(defaultSimpleConfig(), 0, 'wolf'), 0, 5000);
+    big = withSideCount(withSideSpecies(big, 1, 'tiger'), 1, 500);
+    const ran = simpleRunConfig(big, 77);
+    expect(ran.runs).toBeLessThan(defaultFreeConfig().runs);
+    expect(simpleCanShow(ran)).toBe(true);
+  });
+
+  it('Simple edits (species, counts, presets) and the seed keep it showable', () => {
+    const c = defaultSimpleConfig();
+    expect(simpleCanShow(withNumber(c, 'seed', 99))).toBe(true);
+    expect(simpleCanShow(withSideCount(withSideSpecies(c, 1, 'hyena'), 1, 3))).toBe(true);
+  });
+
+  it('any edit only Advanced can make does not: the link then opens the free form', () => {
+    const c = simpleRunConfig(defaultSimpleConfig(), 5);
+    expect(simpleCanShow(withNumber(c, 'runs', 50))).toBe(false);
+    expect(simpleCanShow(withNumber(c, 'maxTime', 30))).toBe(false);
+    expect(simpleCanShow(withNumber(c, 'individualCV', 0.3))).toBe(false);
+    expect(simpleCanShow(withBuffSwitch(withSideSpecies(c, 0, 'wolf'), 'focus', false))).toBe(
+      false,
+    );
+  });
+
+  it('keeps the link-seed note in both languages, with the seed placeholder', () => {
+    expect(ko['simple.linkSeedNote']).toContain('{seed}');
+    expect(en['simple.linkSeedNote']).toContain('{seed}');
   });
 });

@@ -47,15 +47,24 @@ export function resultUrl(origin: string, config: ScenarioConfig, agg: Aggregate
   return `${origin}${resultPath(getLang(), encodeResult(config, summarize(agg)))}`;
 }
 
-/** Absolute URL of the result page for a finished free run, on the current origin. */
-export function freeResultUrl(origin: string, config: FreeConfig, agg: FreeAggregate): string {
-  return `${origin}${resultPath(getLang(), encodeFreeResult(config, summarizeFree(config, agg)))}`;
+/**
+ * Absolute URL of the result page for a finished free run, on the current origin; `simple` adds
+ * the Simple-mode marker to its config (a Simple run made it, #154).
+ */
+export function freeResultUrl(
+  origin: string,
+  config: FreeConfig,
+  agg: FreeAggregate,
+  simple = false,
+): string {
+  const r = encodeFreeResult(config, summarizeFree(config, agg), { simple });
+  return `${origin}${resultPath(getLang(), r)}`;
 }
 
 export interface ResultShare<C = ScenarioConfig, A = AggregateLike> {
   el: HTMLElement;
-  /** Results changed (null: none shown). */
-  update(result: { config: C; agg: A } | null): void;
+  /** Results changed (null: none shown); `simple`: a Simple run made them (free only, #154). */
+  update(result: { config: C; agg: A; simple?: boolean } | null): void;
 }
 
 export function createResultShare(): ResultShare {
@@ -67,7 +76,7 @@ export function createFreeResultShare(): ResultShare<FreeConfig, FreeAggregate> 
 }
 
 function createShareBox<C, A>(
-  toUrl: (origin: string, config: C, agg: A) => string,
+  toUrl: (origin: string, config: C, agg: A, simple: boolean) => string,
 ): ResultShare<C, A> {
   const shareBtn = el('button', 'btn btn-small btn-primary');
   shareBtn.type = 'button';
@@ -85,11 +94,11 @@ function createShareBox<C, A>(
     shareBtn.title = t('rs.shareHint');
     open.textContent = t('rs.open');
   };
-  let current: { config: C; agg: A } | null = null;
+  let current: { config: C; agg: A; simple?: boolean } | null = null;
   const refresh = (): void => {
     box.hidden = current === null;
     if (!current) return;
-    url = toUrl(location.origin, current.config, current.agg);
+    url = toUrl(location.origin, current.config, current.agg, current.simple ?? false);
     open.href = url;
   };
 

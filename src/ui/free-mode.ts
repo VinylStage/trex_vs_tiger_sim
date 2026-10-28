@@ -19,7 +19,13 @@ import { CancelledError, type PoolProgress, type SimPool } from './pool';
 import type { FreeReplayView } from './free-replay';
 import { createFreeReproduceCheck, createFreeResultShare } from './result-share';
 import { createSimpleView } from './simple-mode';
-import { freshSeed, simpleRunConfig, simpleRuns, withRequestedRuns } from './simple-model';
+import {
+  freshSeed,
+  simpleCanShow,
+  simpleRunConfig,
+  simpleRuns,
+  withRequestedRuns,
+} from './simple-model';
 import { formatBound, formatShare } from './verdict';
 import {
   sideBuffState,
@@ -40,7 +46,8 @@ import './free-mode.css';
  *
  * Two views over the same config (#146): `full`, the free form of Advanced mode, and `simple`,
  * Simple mode (src/ui/simple-mode.ts), which shows only presets, species and counts and runs
- * everything else at its defaults with a fresh seed per Run.
+ * everything else at its defaults with a fresh seed per Run. A page opened from a link Simple
+ * mode wrote (#154) keeps that link's seed for its first Run, so the link reproduces its result.
  */
 
 export type FreeView = 'simple' | 'full';
@@ -74,10 +81,17 @@ export interface FreeModeOptions {
   view?: FreeView;
   /** Called with the config of every run as it starts (the app writes the URL after a Simple run). */
   onRun?: (c: FreeConfig) => void;
+  /**
+   * The page opened in Simple mode from a link Simple mode wrote (#154): the first Simple Run uses
+   * the link's seed instead of a fresh one, until the first edit or view change.
+   */
+  linkSeed?: boolean;
 }
 
 interface FreeResult {
   config: FreeConfig;
+  /** A Simple run made it: its result link carries the Simple-mode marker (#154). */
+  simple: boolean;
   agg: FreeAggregate;
   summaries: FreeRunSummary[];
   elapsedMs: number;
@@ -95,8 +109,12 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   let cfg: FreeConfig = sanitizeFreeConfig(opts.initial);
   let view: FreeView = opts.view ?? 'full';
   // The run count asked for (a link, the runs field, or Simple's default), before the work budget
-  // lowered it for large counts; Simple edits re-apply it (withRequestedRuns).
-  let requestedRuns = cfg.runs;
+  // lowered it for large counts; Simple edits re-apply it (withRequestedRuns). A Simple link
+  // holds the lowered count, so Simple asks for its own.
+  let requestedRuns = view === 'simple' ? simpleRuns(cfg) : cfg.runs;
+  // The link's seed is kept for the first Simple Run (#154), so "Run it yourself" and a shared
+  // Simple link reproduce; any edit or view change goes back to a fresh seed per Run (R3).
+  let keepLinkSeed = view === 'simple' && opts.linkSeed === true;
   let result: FreeResult | null = null;
   let running = false;
   let statusKey: { key: MsgKey; vars?: Record<string, string | number>; error?: boolean } | null =
@@ -156,10 +174,12 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   );
   const simple = createSimpleView({
     update: (c, focusKey) => {
+      keepLinkSeed = false;
       cfg = withRequestedRuns(c, requestedRuns);
       commit(undefined, focusKey);
     },
     run: () => void run(),
+    linkSeed: () => (keepLinkSeed ? cfg.seed : null),
   });
   const freeTools = h('div', { class: 'free-tools' }, copyBtn);
   const configTitle = h('h2', { id: nextId('free-config-title') });
@@ -594,9 +614,11 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     if (running) return;
     // Simple mode: the shown species and counts, everything else at its defaults, and a fresh
     // seed for every Run (R3); the app writes it into the address (onRun).
-    if (view === 'simple') {
+    const isSimple = view === 'simple';
+    if (isSimple) {
       requestedRuns = simpleRuns(cfg);
-      cfg = simpleRunConfig(cfg, freshSeed());
+      cfg = simpleRunConfig(cfg, keepLinkSeed ? cfg.seed : freshSeed());
+      keepLinkSeed = false;
     }
     const runCfg = sanitizeFreeConfig(structuredClone(cfg));
     if (view === 'simple' || runCfg.runs !== cfg.runs) {
@@ -625,7 +647,13 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       setStatus({ key: 'run.aggregating' });
       // In a worker, like the classic aggregate: no long task on the main thread (#24).
       const agg = await pool.aggregateFree(runCfg, summaries);
-      result = { config: runCfg, agg, summaries, elapsedMs: performance.now() - t0 };
+      result = {
+        config: runCfg,
+        simple: isSimple && simpleCanShow(runCfg),
+        agg,
+        summaries,
+        elapsedMs: performance.now() - t0,
+      };
       repro.afterRun(runCfg, agg);
       setStatus(null);
       renderResults();
@@ -766,7 +794,9 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     emptyEl.hidden = result !== null;
     resultsBody.hidden = result === null;
     updateStale();
-    resultShare.update(result ? { config: result.config, agg: result.agg } : null);
+    resultShare.update(
+      result ? { config: result.config, agg: result.agg, simple: result.simple } : null,
+    );
     simple.renderResult(view === 'simple' ? result : null);
     if (!result) return;
     const { agg, config: c } = result;
@@ -912,6 +942,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     resultsPanel,
     getConfig: () => structuredClone(cfg),
     setConfig: (c) => {
+      keepLinkSeed = false;
       cfg = sanitizeFreeConfig(c);
       requestedRuns = c.runs;
       buildView();
@@ -920,6 +951,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     relocalize,
     isRunning: () => running,
     setView: (v) => {
+      if (v !== view) keepLinkSeed = false;
       view = v;
       applyView();
       renderResults();
