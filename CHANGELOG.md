@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.22](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.21...trex-vs-tiger-sim-v0.2.22) (2026-10-28)
+
+
+### Features
+
+* **pages:** learn hub, Play/Learn nav groups and the species guide ([#162](https://github.com/VinylStage/trex_vs_tiger_sim/issues/162)) ([#163](https://github.com/VinylStage/trex_vs_tiger_sim/issues/163)) ([fb9f532](https://github.com/VinylStage/trex_vs_tiger_sim/commit/fb9f5322f6d1316c6397c923a146e07650df6bcb))
+
 ## [0.2.21](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.20...trex-vs-tiger-sim-v0.2.21) (2026-10-28)
 
 
