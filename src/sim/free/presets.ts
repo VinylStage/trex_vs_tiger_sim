@@ -1,5 +1,5 @@
-import { sanitizeFreeConfig, type FreeConfig } from './config';
-import { FREE_SPECIES, type FreeSpeciesId } from './species';
+import { sanitizeFreeConfig, type FreeConfig } from './config.ts';
+import { FREE_SPECIES, type FreeSpeciesId } from './species.ts';
 
 /**
  * Simple-mode presets of the free model (docs/design/RENEWAL-1.0.md §3.2 and §6,

@@ -3,6 +3,7 @@ import { join, relative, sep } from 'node:path';
 import type { Plugin } from 'vite';
 import { expandPatchNotes } from './src/pages/patch-notes-page.ts';
 import { expandSiteHeader, headerRouteOf } from './src/pages/site-header.ts';
+import { expandSpeciesGuide } from './src/pages/species-page.ts';
 
 /**
  * Directories never searched for pages: dependencies, build/test output, static files copied
@@ -80,6 +81,24 @@ export function patchNotes(version: string): Plugin {
       order: 'pre',
       handler(html, ctx) {
         return expandPatchNotes(html, headerRouteOf(ctx.path), version, ctx.path);
+      },
+    },
+  };
+}
+
+/**
+ * Fills the species guide (docs/PAGES.md#species-guide): `<!-- species-guide -->` in
+ * species/index.html and en/species/index.html becomes the overview table and the species
+ * sections rendered from the registries (src/pages/species-page.ts). Like {@link patchNotes} it
+ * runs before Vite's HTML processing, in dev and in the build.
+ */
+export function speciesGuide(): Plugin {
+  return {
+    name: 'trexsim:species-guide',
+    transformIndexHtml: {
+      order: 'pre',
+      handler(html, ctx) {
+        return expandSpeciesGuide(html, headerRouteOf(ctx.path), ctx.path);
       },
     },
   };

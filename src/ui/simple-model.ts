@@ -1,14 +1,14 @@
-import { LIMITS } from '../sim/config';
-import { hashHasAppState } from '../pages/routes';
-import { defaultFreeConfig, sanitizeFreeConfig, type FreeConfig } from '../sim/free/config';
+import { LIMITS } from '../sim/config.ts';
+import { hashHasAppState } from '../pages/routes.ts';
+import { defaultFreeConfig, sanitizeFreeConfig, type FreeConfig } from '../sim/free/config.ts';
 import {
   FREE_PRESETS,
   PRESET_LIMITS,
   presetConfig,
   readyPresets,
   type FreePreset,
-} from '../sim/free/presets';
-import { FREE_SPECIES, type FreeSpeciesId } from '../sim/free/species';
+} from '../sim/free/presets.ts';
+import { FREE_SPECIES, type FreeSpeciesId } from '../sim/free/species.ts';
 
 /*
  * Simple mode on the play page (docs/design/RENEWAL-1.0.md §3.2, #146), as pure functions: the

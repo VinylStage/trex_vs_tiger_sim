@@ -1,5 +1,5 @@
 import { FOOTER_LINKS, NAV_LABEL_KEYS, footerHref, pagePath, type PageId } from '../pages/routes';
-import { navItems, type SiteNavItem } from '../pages/site-shell';
+import { navGroupsOf, navItems, type SiteNavItem } from '../pages/site-shell';
 import { h } from './dom';
 import { words, type Lang } from './i18n';
 import './site-nav.css';
@@ -16,19 +16,33 @@ export function siteNavItems(lang: Lang, current: PageId | null = 'simulator'): 
 /**
  * `<nav>` linking the simulator and the content pages for `lang`, with `current` marked
  * `aria-current="page"` (null marks none: the play page is not a nav item). Labels and hrefs depend on the language, so build a new nav (and
- * replace the old one) when the language changes. Markup matches the static pages
- * (`.site-nav > ul.site-nav-list > li > a.site-nav-link[data-page]`).
+ * replace the old one) when the language changes. Markup matches the static pages: one
+ * `li.site-nav-group[data-group]` per group holding its head link (`a.site-nav-link.site-nav-head`)
+ * and a `ul.site-nav-sub` of its children (`a.site-nav-link`), every link with `data-page`.
  */
 export function createSiteNav(lang: Lang, current: PageId | null = 'simulator'): HTMLElement {
-  const list = h('ul', { class: 'site-nav-list' });
-  for (const item of siteNavItems(lang, current)) {
+  const link = (item: SiteNavItem): HTMLElement => {
     const a = h('a', {
-      class: 'site-nav-link',
+      class: item.head ? 'site-nav-link site-nav-head' : 'site-nav-link',
       text: item.label,
       attrs: { href: item.href, 'data-page': item.page },
     });
     if (item.current) a.setAttribute('aria-current', 'page');
-    list.append(h('li', {}, a));
+    return a;
+  };
+  const list = h('ul', { class: 'site-nav-list' });
+  for (const [head, children] of navGroupsOf(siteNavItems(lang, current))) {
+    const group = h(
+      'li',
+      { class: 'site-nav-group', attrs: { 'data-group': head.group } },
+      link(head),
+    );
+    if (children.length > 0) {
+      const sub = h('ul', { class: 'site-nav-sub', attrs: { 'aria-label': head.label } });
+      for (const c of children) sub.append(h('li', {}, link(c)));
+      group.append(sub);
+    }
+    list.append(group);
   }
   return h(
     'nav',

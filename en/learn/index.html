@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Learn: Monte Carlo simulation, explained – T-Rex vs Tiger</title>
+    <meta
+      name="description"
+      content="Learn Monte Carlo methods, confidence intervals and sensitivity analysis with the T-Rex vs Tiger simulator: guide, Advanced manual, model, parameters, species, FAQ."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/src/pages/site.css" />
+    <script type="module" src="/src/pages/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <!-- site-header -->
+    <main id="main" class="site-main">
+      <article class="page">
+        <header class="page-head">
+          <nav class="eyebrow breadcrumb" aria-label="Breadcrumb" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/en/">T-Rex vs Tiger</a></li>
+              <li aria-current="page">Learn</li>
+            </ol>
+          </nav>
+          <h1>Learn: reasoning under uncertainty with the simulator</h1>
+          <p class="lead">
+            Every explanatory page of this site in one place. Read them in the order you need: from
+            your first run, to how the model computes a single battle, where each number comes from
+            and which values each species uses.
+          </p>
+          <p class="page-meta">Last updated <time datetime="2026-10-28">28 October 2026</time></p>
+        </header>
+
+        <nav class="toc" aria-labelledby="toc-title">
+          <h2 id="toc-title">Contents</h2>
+          <ol>
+            <li><a href="#start">Where to start</a></li>
+            <li><a href="#pages">All explanatory pages</a></li>
+            <li><a href="#questions">Questions and what changed</a></li>
+            <li><a href="#method">What the simulator teaches</a></li>
+            <li><a href="#sources">Sources and design documents</a></li>
+          </ol>
+        </nav>
+
+        <div class="page-body">
+          <section id="start">
+            <h2>Where to start</h2>
+            <p>
+              If you are new, the quickest route is to run one battle first, then look up whatever
+              the result screen made you wonder about, in roughly this order. Each page stands on
+              its own, so you can also jump straight to the one you need. Formulas appear only where
+              they are needed, and every term is explained in plain words where it first appears. If
+              you use the site for a class or a school project, please also read the
+              <a href="/en/model/#limitations">limits section of the model page</a>.
+            </p>
+            <ol class="steps">
+              <li>
+                Open <a href="/en/">Play</a> and run a preset in Simple mode. Pick the species and
+                the counts, and hundreds of runs come back as win shares with 95% confidence
+                intervals.
+              </li>
+              <li>
+                Read <a href="/en/guide/#simple">Simple mode in the guide</a> to see how to read the
+                bar, the interval and the still standing, fled and incapacitated counts.
+              </li>
+              <li>
+                Compare the mass, era and group living of the species you picked in the
+                <a href="/en/species/">species guide</a>.
+              </li>
+              <li>
+                Read the <a href="/en/model/">model</a> page to learn how one run is computed and
+                why the same setup gives a different result every run.
+              </li>
+              <li>
+                To change the values yourself, keep the
+                <a href="/en/guide/#advanced">Advanced settings manual</a> and the
+                <a href="/en/parameters/">parameters</a> page side by side.
+              </li>
+            </ol>
+          </section>
+
+          <section id="pages">
+            <h2>All explanatory pages</h2>
+            <p>Every explanatory page on the site, with one line on what you will find there.</p>
+            <ul class="learn-list">
+              <li>
+                <a href="/en/guide/">Guide</a>
+                <p>
+                  Step by step from Simple mode to reading results, sharing and reproducing links,
+                  and three tutorial experiments.
+                </p>
+              </li>
+              <li>
+                <a href="/en/guide/#advanced">Advanced settings manual</a>
+                <p>
+                  Trait minimum, mode and maximum, the pack buff, shared settings, the work budget
+                  and the classic lab, item by item.
+                </p>
+              </li>
+              <li>
+                <a href="/en/model/">Model</a>
+                <p>
+                  The Monte Carlo design, how agents move and strike, how a run is decided, the
+                  statistics, reproducibility and the limits, in plain language.
+                </p>
+              </li>
+              <li>
+                <a href="/en/model/#results">Preliminary results</a>
+                <p>
+                  The default matchup run under a few scenarios, and why those numbers are for
+                  reference only.
+                </p>
+              </li>
+              <li>
+                <a href="/en/parameters/">Parameters</a>
+                <p>
+                  Every trait with its unit, range, evidence level and per-species defaults, plus
+                  the scenario settings and engine constants.
+                </p>
+              </li>
+              <li>
+                <a href="/en/species/">Species guide</a>
+                <p>
+                  The era, mass, body size, group living, latching and presets of every species,
+                  with the values the simulator runs on, and a link that opens each one in Simple
+                  mode.
+                </p>
+              </li>
+            </ul>
+          </section>
+
+          <section id="questions">
+            <h2>Questions and what changed</h2>
+            <p>
+              Your question may already have an answer. The questions live in two places: the home
+              page answers questions about the site as a whole, and the guide answers the ones that
+              come up while using the simulator. The patch notes say what changed in each version.
+            </p>
+            <ul class="learn-list">
+              <li>
+                <a href="/en/#faq">FAQ on the home page</a>
+                <p>
+                  Short answers on whether the two species ever met, what a Monte Carlo simulation
+                  is and which animals you can pick.
+                </p>
+              </li>
+              <li>
+                <a href="/en/guide/#faq">FAQ in the guide</a>
+                <p>
+                  How many runs to use, why the same link can give slightly different numbers, draws
+                  and speed on phones.
+                </p>
+              </li>
+              <li>
+                <a href="/en/patch-notes/">Patch notes</a>
+                <p>
+                  What each version added, improved and fixed, and its known issues, newest first.
+                </p>
+              </li>
+              <li>
+                <a href="/en/about/">About and contact</a>
+                <p>
+                  Why the site exists, its educational disclaimer, the open source code and how to
+                  get in touch.
+                </p>
+              </li>
+            </ul>
+          </section>
+
+          <section id="method">
+            <h2>What the simulator teaches</h2>
+            <p>
+              “Who would win, a T. rex or a tiger?” has no single answer. The values that fossils
+              and field studies give come with ranges, and most behavioural values are assumptions.
+              The simulator is built to practise putting that uncertainty into the calculation
+              instead of hiding it.
+            </p>
+            <p>
+              The <strong>Monte Carlo method</strong> draws each uncertain value at random from its
+              range, repeats the same situation hundreds or thousands of times and looks at the
+              spread of outcomes. One run depends heavily on chance; many runs tell you how often
+              each outcome happens.
+            </p>
+            <p>
+              A <strong>confidence interval</strong> shows how precisely that share is known. More
+              runs narrow it, but no number of runs fixes an assumption that is wrong.
+              <strong>Sensitivity analysis</strong> finds the assumptions that move the result most,
+              which is where better data would help.
+            </p>
+            <p>
+              When you read a number, it helps to check three things together: not just the win
+              share but how wide its interval is, which assumptions the result leans on, and whether
+              those assumptions are literature values or estimates. The parameters page and the
+              species guide tag every value with its evidence level.
+            </p>
+            <p>
+              You can also watch effects that only appear in numbers, such as the pack buff and a
+              group’s morale breaking: one animal and ten animals of the same species fight very
+              differently. Every result is a statement about the model’s rules; it does not predict
+              or endorse real animal fights.
+            </p>
+          </section>
+
+          <section id="sources">
+            <h2>Sources and design documents</h2>
+            <p>
+              The reasons behind the model and its defaults are written up, with sources, in the
+              repository’s documents.
+            </p>
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/MODEL.md"
+                  rel="noopener"
+                  >Model document</a
+                >: the engine’s rules and the source of every parameter
+              </li>
+              <li>
+                <a
+                  href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/SPECIES.md"
+                  rel="noopener"
+                  >Species document</a
+                >: per-species defaults, evidence levels and recorded encounters
+              </li>
+              <li>
+                <a
+                  href="https://github.com/VinylStage/trex_vs_tiger_sim/tree/main/docs/research"
+                  rel="noopener"
+                  >Research notes</a
+                >: what was looked into before new features and species were added
+              </li>
+            </ul>
+          </section>
+        </div>
+      </article>
+    </main>
+    <!-- site-footer -->
+  </body>
+</html>

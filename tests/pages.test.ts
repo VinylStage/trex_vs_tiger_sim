@@ -29,6 +29,8 @@ import {
 } from '../src/sim/species';
 import {
   CONTENT_PAGES,
+  breadcrumbTrail,
+  LEARN_CHILDREN,
   NAV_LABEL_KEYS,
   NAV_PAGES,
   RELEASES_URL,
@@ -53,6 +55,9 @@ import {
   renderSiteHeader,
 } from '../src/pages/site-header';
 import { expandPatchNotes } from '../src/pages/patch-notes-page';
+import { expandSpeciesGuide } from '../src/pages/species-page';
+import { freeConfigFromHash, freePayloadFromHash, freePayloadSimple } from '../src/ui/share-free';
+import { simpleCanShow } from '../src/ui/simple-model';
 import { findHtmlEntries } from '../vite.pages';
 
 /*
@@ -70,10 +75,14 @@ const read = (rel: string): string => readFileSync(join(ROOT, rel), 'utf8');
  */
 const VERSION = (JSON.parse(read('package.json')) as { version: string }).version;
 const readPage = (rel: string): string =>
-  expandPatchNotes(
-    expandSiteHeader(read(rel), headerRouteOf(`/${rel}`), rel),
+  expandSpeciesGuide(
+    expandPatchNotes(
+      expandSiteHeader(read(rel), headerRouteOf(`/${rel}`), rel),
+      headerRouteOf(`/${rel}`),
+      VERSION,
+      rel,
+    ),
     headerRouteOf(`/${rel}`),
-    VERSION,
     rel,
   );
 const sourceOf = (page: ContentPage, lang: Lang): string =>
@@ -381,12 +390,16 @@ describe.each(PAGES)('$file', ({ page, lang, html }) => {
     );
     expect(nav.attrs['aria-label']).toBe(d['breadcrumb.label']);
     const items = tags(nav.inner, 'li');
-    expect(elements(nav.inner, 'li').map((li) => textOf(li.inner))).toEqual([
-      d['app.shortTitle'],
-      d[NAV_LABEL_KEYS[page]],
-    ]);
-    expect(tags(nav.inner, 'a').map((a) => a.attrs['href'])).toEqual([pagePath('simulator', lang)]);
-    expect(items.map((li) => li.attrs['aria-current'] ?? null)).toEqual([null, 'page']);
+    const trail = breadcrumbTrail(page);
+    expect(elements(nav.inner, 'li').map((li) => textOf(li.inner))).toEqual(
+      trail.map((p) => (p === 'simulator' ? d['app.shortTitle'] : d[NAV_LABEL_KEYS[p]])),
+    );
+    expect(tags(nav.inner, 'a').map((a) => a.attrs['href'])).toEqual(
+      trail.slice(0, -1).map((p) => pagePath(p, lang)),
+    );
+    expect(items.map((li) => li.attrs['aria-current'] ?? null)).toEqual(
+      trail.map((p) => (p === page ? 'page' : null)),
+    );
   });
 
   it('links its counterpart in the other language', () => {
@@ -439,7 +452,16 @@ function checkLinks(html: string, lang: Lang): void {
       if (play) {
         expect(play, `${href}: link language`).toBe(a.attrs['hreflang'] ?? lang);
         expect(path, `${href}: canonical form`).toBe(playPagePath(play));
-        expect(frag, href).toBeUndefined();
+        // The only fragment a page may hand the play page is a Simple link (the species guide's
+        // "Try it"): a free payload with the Simple-mode marker that Simple can show whole.
+        if (frag !== undefined) {
+          const payload = freePayloadFromHash(`#${frag}`);
+          const config = freeConfigFromHash(`#${frag}`);
+          expect(payload && freePayloadSimple(payload), `${href}: a Simple link`).toBe(true);
+          expect(config && simpleCanShow(config), `${href}: Simple can show it`).toBe(true);
+          expect(query, `${href}: no query with a Simple link`).toBeUndefined();
+          continue;
+        }
         if (query !== undefined) expect(query, `${href}: only the tour deep link`).toBe('tour=1');
         continue;
       }
@@ -1503,6 +1525,36 @@ describe('neutral outcome wording', () => {
     }
     for (const s of ['가죽은 두껍다', '가죽을', 'wolf skills', 'diet', 'incapacitated']) {
       expect(DEATH_WORDS.test(s), s).toBe(false);
+    }
+  });
+});
+
+// ---------- learn hub (docs/PAGES.md#learn-hub) ----------
+
+describe.each(LANGS)('learn hub (%s)', (lang) => {
+  const html = readPage(sourceOf('learn', lang));
+  const main = one(elements(html, 'main'), '<main>').inner;
+  const listed = elements(main, 'ul')
+    .filter((u) => u.attrs['class'] === 'learn-list')
+    .flatMap((u) => elements(u.inner, 'li'));
+
+  it('links every page under it, the Advanced manual, both FAQs and the patch notes', () => {
+    const hrefs = listed.map((li) => tags(li.inner, 'a')[0]?.attrs['href']);
+    const want = [
+      ...LEARN_CHILDREN.map((p) => pagePath(p, lang)),
+      `${pagePath('guide', lang)}#advanced`,
+      `${pagePath('simulator', lang)}#faq`,
+      `${pagePath('guide', lang)}#faq`,
+      pagePath('patch-notes', lang),
+    ];
+    for (const href of want) expect(hrefs, href).toContain(href);
+  });
+
+  it('gives every listed page a one-line description', () => {
+    expect(listed.length).toBeGreaterThanOrEqual(8);
+    for (const li of listed) {
+      const p = one(elements(li.inner, 'p'), 'description');
+      expect(textOf(p.inner).length).toBeGreaterThan(20);
     }
   });
 });

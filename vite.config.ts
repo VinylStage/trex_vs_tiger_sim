@@ -4,7 +4,7 @@ import { env } from 'node:process';
 import { fileURLToPath } from 'node:url';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
-import { findHtmlEntries, patchNotes, siteHeader } from './vite.pages.ts';
+import { findHtmlEntries, patchNotes, siteHeader, speciesGuide } from './vite.pages.ts';
 import { seo } from './vite.seo.ts';
 
 interface BuildInfo {
@@ -70,6 +70,7 @@ export default defineConfig({
     versionJson(info),
     siteHeader(),
     patchNotes(info.version),
+    speciesGuide(),
     seo({ root, version: info.version, deepen: env.CF_PAGES === '1' }),
   ],
   build: {

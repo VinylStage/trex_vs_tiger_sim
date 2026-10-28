@@ -1,4 +1,4 @@
-import type { ColorRole } from './theme';
+import type { ColorRole } from './theme.ts';
 
 /**
  * Glyph geometry and paints (docs/REPLAY.md §4). Agents are abstract marks only: triangles,

@@ -15,6 +15,7 @@ export const BLOG_URL = 'https://vinylims.com';
  * and English at `/en/<page>/` (source `en/<page>/index.html`). See docs/PAGES.md.
  */
 export const CONTENT_PAGES = [
+  'learn',
   'guide',
   'model',
   'parameters',
@@ -22,6 +23,7 @@ export const CONTENT_PAGES = [
   'patch-notes',
   'privacy',
   'license',
+  'species',
 ] as const;
 export type ContentPage = (typeof CONTENT_PAGES)[number];
 
@@ -32,19 +34,42 @@ export type ContentPage = (typeof CONTENT_PAGES)[number];
  */
 export type PageId = 'simulator' | ContentPage;
 
-/** Order of the shared site navigation (header). Privacy and license are in the footer only. */
-export const NAV_PAGES: readonly PageId[] = [
-  'simulator',
-  'guide',
-  'model',
-  'parameters',
-  'about',
-  'patch-notes',
+/** A group of the site navigation (docs/design/RENEWAL-1.0.md §3.1, docs/PAGES.md#site-header). */
+export interface NavGroup {
+  id: 'play' | 'learn';
+  /** The group's landing page, shown as its head link; the rest are its children. */
+  pages: readonly [PageId, ...PageId[]];
+}
+
+/**
+ * The site navigation (header), in two groups: Play (the lobby) and Learn (the learn hub, then
+ * its children). About, patch notes, privacy and license are in the footer (`FOOTER_LINKS`).
+ */
+export const NAV_GROUPS: readonly NavGroup[] = [
+  { id: 'play', pages: ['simulator'] },
+  { id: 'learn', pages: ['learn', 'guide', 'model', 'parameters', 'species'] },
 ];
+
+/** Every nav page in header order (the groups flattened). */
+export const NAV_PAGES: readonly PageId[] = NAV_GROUPS.flatMap((g) => g.pages);
+
+/** Pages under the learn hub: their breadcrumb and BreadcrumbList pass through `/learn/`. */
+export const LEARN_CHILDREN: readonly PageId[] = (
+  NAV_GROUPS.find((g) => g.id === 'learn')?.pages ?? []
+).slice(1);
+
+/**
+ * The breadcrumb trail of a content page, home first and the page last: the lobby, the learn hub
+ * for its children, then the page (docs/SEO.md#structured-data).
+ */
+export function breadcrumbTrail(page: Exclude<PageId, 'simulator'>): PageId[] {
+  return ['simulator', ...(LEARN_CHILDREN.includes(page) ? (['learn'] as const) : []), page];
+}
 
 /** Dictionary key of each page's short name (navigation, breadcrumbs, llms.txt). */
 export const NAV_LABEL_KEYS: Readonly<Record<PageId, MsgKey>> = {
   simulator: 'nav.simulator',
+  learn: 'nav.learn',
   guide: 'nav.guide',
   model: 'nav.model',
   parameters: 'nav.parameters',
@@ -52,6 +77,7 @@ export const NAV_LABEL_KEYS: Readonly<Record<PageId, MsgKey>> = {
   'patch-notes': 'nav.patch-notes',
   privacy: 'nav.privacy',
   license: 'nav.license',
+  species: 'nav.species',
 };
 
 export { otherLang };
@@ -185,7 +211,7 @@ export function canonicalUrl(page: PageId, lang: Lang): string {
 
 /** One link of the shared site footer. */
 export interface FooterLink {
-  id: 'about' | 'privacy' | 'license' | 'source' | 'blog' | 'linktree';
+  id: 'about' | 'patch-notes' | 'privacy' | 'license' | 'source' | 'blog' | 'linktree';
   /** i18n key of the visible label (the static pages repeat the dictionary text). */
   label: MsgKey;
   /** Site page (localised path) or external URL. */
@@ -200,6 +226,7 @@ export interface FooterLink {
  */
 export const FOOTER_LINKS: readonly FooterLink[] = [
   { id: 'about', label: 'footer.about', target: { page: 'about' } },
+  { id: 'patch-notes', label: 'footer.patchNotes', target: { page: 'patch-notes' } },
   { id: 'privacy', label: 'footer.privacy', target: { page: 'privacy' } },
   { id: 'license', label: 'footer.license', target: { page: 'license' } },
   { id: 'source', label: 'footer.source', target: { url: REPO_URL }, rel: 'noopener' },

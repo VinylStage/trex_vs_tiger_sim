@@ -1,4 +1,4 @@
-import type { PackState } from './engine';
+import type { PackState } from './engine.ts';
 
 /**
  * Replay event log (docs/MODEL.md §2.6). Recorded only for the traced replay run.

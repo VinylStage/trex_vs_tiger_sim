@@ -1,10 +1,10 @@
-import { individualFactor } from '../distributions';
-import { CONSTANTS, DT } from '../engine';
-import { Rng, deriveSeed } from '../rng';
-import { SpatialGrid } from '../spatial';
-import { FREE_PARAM_INDEX, type FreeConfig, type GlobalId } from './config';
-import { FREE_SPECIES } from './species';
-import { TRAITS, TRAIT_BOUNDS, type TraitId } from './traits';
+import { individualFactor } from '../distributions.ts';
+import { CONSTANTS, DT } from '../engine.ts';
+import { Rng, deriveSeed } from '../rng.ts';
+import { SpatialGrid } from '../spatial.ts';
+import { FREE_PARAM_INDEX, type FreeConfig, type GlobalId } from './config.ts';
+import { FREE_SPECIES } from './species.ts';
+import { TRAITS, TRAIT_BOUNDS, type TraitId } from './traits.ts';
 
 /**
  * Symmetric battle engine of the free model (docs/design/FREE-MATCHUPS.md §4) with the pack-buff

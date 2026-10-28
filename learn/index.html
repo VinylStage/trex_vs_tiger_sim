@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>배우기: 몬테카를로 시뮬레이션 학습 안내 – 티렉스 대 호랑이</title>
+    <meta
+      name="description"
+      content="티렉스 대 호랑이 시뮬레이터로 배우는 몬테카를로 방법, 신뢰구간, 민감도 분석. 사용 방법, 고급 설정 설명서, 모델 설명, 파라미터, 종 도감, FAQ, 패치노트를 한곳에 모았습니다."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161615" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="stylesheet" href="/src/pages/site.css" />
+    <script type="module" src="/src/pages/site.ts"></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+    <!-- site-header -->
+    <main id="main" class="site-main">
+      <article class="page">
+        <header class="page-head">
+          <nav class="eyebrow breadcrumb" aria-label="이동 경로" data-i18n-aria="breadcrumb.label">
+            <ol>
+              <li><a href="/">티렉스 대 호랑이</a></li>
+              <li aria-current="page">배우기</li>
+            </ol>
+          </nav>
+          <h1>배우기: 시뮬레이터로 불확실성을 다루는 법</h1>
+          <p class="lead">
+            이 사이트의 설명 페이지를 한곳에 모았습니다. 시뮬레이터를 처음 쓰는 방법부터 모델이 한
+            판의 전투를 어떻게 계산하는지, 각 숫자가 어디서 왔는지, 종마다 어떤 값을 쓰는지까지
+            필요한 순서대로 읽을 수 있습니다.
+          </p>
+          <p class="page-meta">최종 수정 <time datetime="2026-10-28">2026년 10월 28일</time></p>
+        </header>
+
+        <nav class="toc" aria-labelledby="toc-title">
+          <h2 id="toc-title">목차</h2>
+          <ol>
+            <li><a href="#start">어디서부터 읽을까</a></li>
+            <li><a href="#pages">설명 페이지 모음</a></li>
+            <li><a href="#questions">자주 묻는 질문과 바뀐 점</a></li>
+            <li><a href="#method">이 시뮬레이터로 배우는 것</a></li>
+            <li><a href="#sources">출처와 설계 문서</a></li>
+          </ol>
+        </nav>
+
+        <div class="page-body">
+          <section id="start">
+            <h2>어디서부터 읽을까</h2>
+            <p>
+              처음이라면 먼저 한 판을 돌려 보고, 결과 화면에서 궁금해진 것을 아래 순서로 찾아 읽는
+              것이 가장 빠릅니다. 페이지마다 앞 페이지를 읽지 않아도 이해할 수 있게 썼으니, 필요한
+              곳부터 골라 읽어도 됩니다. 수학 공식은 꼭 필요한 곳에만 쓰고, 모든 용어는 처음 나올 때
+              쉬운 말로 풀어 두었습니다. 학교 과제나 수업 자료로 쓸 때는
+              <a href="/model/#limitations">모델 설명의 한계 절</a>도 함께 읽어 주세요.
+            </p>
+            <ol class="steps">
+              <li>
+                <a href="/">대결하기</a>에서 간단 모드로 추천 대결 하나를 실행해 봅니다. 종과 수만
+                고르면 수백 판의 결과가 승률과 95% 신뢰구간으로 나옵니다.
+              </li>
+              <li>
+                <a href="/guide/#simple">사용 방법의 간단 모드 설명</a>으로 결과 화면의 막대,
+                신뢰구간, 남은 개체 · 이탈 · 전투 불능 숫자를 읽는 법을 확인합니다.
+              </li>
+              <li>
+                <a href="/species/">종 도감</a>에서 고른 종의 몸무게, 시대, 무리 생활 여부를 비교해
+                봅니다.
+              </li>
+              <li>
+                <a href="/model/">모델 설명</a>에서 한 판이 어떻게 계산되는지, 왜 같은 설정에서도
+                결과가 판마다 다른지 읽습니다.
+              </li>
+              <li>
+                값을 직접 바꿔 보고 싶다면 <a href="/guide/#advanced">고급 설정 설명서</a>와
+                <a href="/parameters/">파라미터</a> 페이지를 함께 봅니다.
+              </li>
+            </ol>
+          </section>
+
+          <section id="pages">
+            <h2>설명 페이지 모음</h2>
+            <p>
+              사이트 안의 모든 설명 페이지와, 각 페이지에서 무엇을 알 수 있는지 한 줄로
+              정리했습니다.
+            </p>
+            <ul class="learn-list">
+              <li>
+                <a href="/guide/">사용 방법</a>
+                <p>
+                  간단 모드부터 결과 읽기, 링크 공유와 재현, 세 가지 실험 튜토리얼까지 단계별로
+                  안내합니다.
+                </p>
+              </li>
+              <li>
+                <a href="/guide/#advanced">고급 설정 설명서</a>
+                <p>
+                  특성의 최솟값 · 최빈값 · 최댓값, 무리 버프, 공통 설정, 작업량 한도, 클래식
+                  실험실을 항목별로 설명합니다.
+                </p>
+              </li>
+              <li>
+                <a href="/model/">모델 설명</a>
+                <p>
+                  몬테카를로 설계, 개체가 움직이고 공격하는 규칙, 승패 판정, 통계 처리, 재현성과
+                  한계를 쉬운 말로 풀어 씁니다.
+                </p>
+              </li>
+              <li>
+                <a href="/model/#results">예비 결과</a>
+                <p>
+                  기본 대결을 몇 가지 시나리오로 돌려 본 예비 결과와, 그 숫자를 참고용으로만 봐야
+                  하는 이유를 보여 줍니다.
+                </p>
+              </li>
+              <li>
+                <a href="/parameters/">파라미터</a>
+                <p>
+                  모든 특성의 단위, 범위, 근거 수준과 종별 기본값, 시나리오 설정, 엔진 상수를 표로
+                  정리했습니다.
+                </p>
+              </li>
+              <li>
+                <a href="/species/">종 도감</a>
+                <p>
+                  시뮬레이터에 나오는 모든 종의 시대, 몸무게, 몸 크기, 무리 생활, 매달리기, 추천
+                  대결을 시뮬레이터가 쓰는 값 그대로 보여 주고, 종마다 간단 모드로 바로 열 수
+                  있습니다.
+                </p>
+              </li>
+            </ul>
+          </section>
+
+          <section id="questions">
+            <h2>자주 묻는 질문과 바뀐 점</h2>
+            <p>
+              궁금한 점이 이미 답으로 정리되어 있을 수 있습니다. 질문은 두 곳에 나뉘어 있는데, 첫
+              화면에는 사이트 전체에 대한 질문이, 사용 방법 페이지에는 시뮬레이터를 쓰다가 생기는
+              질문이 있습니다. 새 버전에서 무엇이 바뀌었는지는 패치노트에서 확인할 수 있습니다.
+            </p>
+            <ul class="learn-list">
+              <li>
+                <a href="/#faq">첫 화면의 자주 묻는 질문</a>
+                <p>
+                  두 종이 실제로 만난 적이 있는지, 몬테카를로 시뮬레이션이 무엇인지, 어떤 동물을
+                  고를 수 있는지에 대한 짧은 답입니다.
+                </p>
+              </li>
+              <li>
+                <a href="/guide/#faq">사용 방법의 자주 묻는 질문</a>
+                <p>
+                  실행 횟수, 같은 링크인데 결과가 조금 다른 이유, 무승부, 휴대폰 속도처럼 쓰다가
+                  생기는 질문에 답합니다.
+                </p>
+              </li>
+              <li>
+                <a href="/patch-notes/">패치노트</a>
+                <p>버전마다 새로 생긴 기능, 고친 점, 알려진 문제를 최신순으로 정리했습니다.</p>
+              </li>
+              <li>
+                <a href="/about/">소개 · 문의</a>
+                <p>사이트를 만든 이유, 교육용 면책 문구, 오픈 소스와 문의 방법을 안내합니다.</p>
+              </li>
+            </ul>
+          </section>
+
+          <section id="method">
+            <h2>이 시뮬레이터로 배우는 것</h2>
+            <p>
+              “티라노사우루스와 호랑이가 싸우면 누가 이길까?”는 정답이 없는 질문입니다. 화석과 현장
+              연구가 알려 주는 값에도 폭이 있고, 행동에 관한 값은 대부분 추정이기 때문입니다. 이
+              시뮬레이터는 그 불확실성을 숨기지 않고 계산에 넣는 연습을 하도록 만들었습니다.
+            </p>
+            <p>
+              <strong>몬테카를로 방법</strong>은 불확실한 값을 범위 안에서 무작위로 뽑아 같은 상황을
+              수백, 수천 번 반복하고, 그 결과의 분포를 보는 방법입니다. 한 판의 결과는 우연에 크게
+              좌우되지만, 많은 판을 모으면 어떤 결과가 얼마나 자주 나오는지 말할 수 있습니다.
+            </p>
+            <p>
+              <strong>신뢰구간</strong>은 그 비율을 얼마나 정확히 알고 있는지 보여 줍니다. 판 수를
+              늘리면 구간이 좁아지지만, 가정 자체가 틀렸을 가능성은 판 수로 줄어들지 않습니다.
+              <strong>민감도 분석</strong>은 어떤 가정이 결과를 가장 크게 흔드는지 찾아, 더 좋은
+              자료가 필요한 곳을 알려 줍니다.
+            </p>
+            <p>
+              숫자를 읽을 때는 세 가지를 함께 보는 습관이 도움이 됩니다. 승률 하나만 보지 말고 그
+              구간이 얼마나 넓은지, 결과가 어떤 가정에 기대고 있는지, 그 가정의 근거 수준이 문헌
+              값인지 추정인지를 같이 확인하세요. 파라미터 페이지와 종 도감은 모든 값에 근거 수준을
+              붙여 두었습니다.
+            </p>
+            <p>
+              무리 버프와 사기 붕괴처럼 수가 많아질 때만 나타나는 효과도 직접 확인할 수 있습니다.
+              같은 종이라도 한 마리와 열 마리는 전혀 다르게 싸웁니다. 결과는 모두 모델이 정한 규칙
+              안에서의 이야기이며, 실제 동물의 싸움을 예측하거나 권장하지 않습니다.
+            </p>
+          </section>
+
+          <section id="sources">
+            <h2>출처와 설계 문서</h2>
+            <p>
+              모델과 기본값의 근거는 저장소의 문서에 출처와 함께 정리되어 있습니다. 문서는 영어로
+              쓰였고 앞부분에 한국어 요약이 있습니다.
+            </p>
+            <ul>
+              <li>
+                <a
+                  href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/MODEL.md"
+                  rel="noopener"
+                  >모델 문서</a
+                >: 엔진의 규칙과 모든 파라미터의 출처
+              </li>
+              <li>
+                <a
+                  href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/SPECIES.md"
+                  rel="noopener"
+                  >종 문서</a
+                >: 종별 기본값, 근거 수준, 관찰된 대결 기록
+              </li>
+              <li>
+                <a
+                  href="https://github.com/VinylStage/trex_vs_tiger_sim/tree/main/docs/research"
+                  rel="noopener"
+                  >연구 노트</a
+                >: 새 기능과 새 종을 넣기 전에 조사한 자료
+              </li>
+            </ul>
+          </section>
+        </div>
+      </article>
+    </main>
+    <!-- site-footer -->
+  </body>
+</html>
