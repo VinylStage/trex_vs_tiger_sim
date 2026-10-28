@@ -606,7 +606,7 @@ export const ko = {
   // Simple mode and the Advanced switch (#146, docs/design/RENEWAL-1.0.md §3.2)
   'view.advanced': '고급 설정',
   'view.advancedOff':
-    '켜면 종 특성 범위, 실행 횟수, 시드 같은 세부 설정과 클래식 모델(대형 vs 무리)을 쓸 수 있습니다.',
+    '켜면 실행 횟수 · 시드 · 제한 시간 같은 공통 설정과 무리 버프 효과별 스위치, 그리고 능력치 범위 표가 있는 티라노사우루스 대 호랑이 클래식 실험실을 쓸 수 있습니다.',
   'view.advancedOn': '끄면 종과 수만 고르는 간단 모드로 돌아갑니다.',
   'view.manual': '설명서',
   'view.manualNewTab': '(새 탭에서 열림)',

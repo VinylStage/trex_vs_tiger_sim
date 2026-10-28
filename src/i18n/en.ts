@@ -612,7 +612,7 @@ export const en: Dictionary = {
   // Simple mode and the Advanced switch (#146, docs/design/RENEWAL-1.0.md §3.2)
   'view.advanced': 'Advanced',
   'view.advancedOff':
-    'Turn on for trait ranges, runs, seed and the other settings, and for the classic model (large vs group).',
+    'Turn on for runs, seed, time limit and the other shared settings, a switch for each pack-buff effect, and the classic T. rex vs tiger lab with its range table.',
   'view.advancedOn': 'Turn off to go back to Simple mode: just species and counts.',
   'view.manual': 'Manual',
   'view.manualNewTab': '(opens in a new tab)',
