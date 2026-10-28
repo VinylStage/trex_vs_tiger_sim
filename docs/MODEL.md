@@ -11,6 +11,8 @@
 
 Source of truth: `src/sim/engine.ts`, `params.ts`, `species.ts`, `config.ts`, `sampling.ts`, `distributions.ts`, `montecarlo.ts`, `stats.ts` and `rng.ts`. If this document and the code disagree, the code wins. Please open an issue in that case.
 
+This document describes the classic engine. The free model, which Simple mode runs (`src/sim/free/`), is specified in [design/FREE-MATCHUPS.md](design/FREE-MATCHUPS.md) with its traits in [SPECIES.md §11](SPECIES.md#11-free-model-traits-50). How it compares with the classic engine, and what still looks miscalibrated, is in the calibration report [research/CALIBRATION.md](research/CALIBRATION.md); the model page summarises it under `#free-model`.
+
 ## Contents
 
 1. [Purpose and disclaimer](#1-purpose-and-disclaimer)

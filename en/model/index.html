@@ -60,6 +60,7 @@
             <li><a href="#results">Preliminary results with the defaults</a></li>
             <li><a href="#tigers-win">What would make the tigers win?</a></li>
             <li><a href="#species">Other species and match-ups seen in the wild</a></li>
+            <li><a href="#free-model">The free model and its calibration</a></li>
             <li><a href="#limitations">Limitations and future work</a></li>
             <li><a href="#references">References</a></li>
           </ol>
@@ -866,6 +867,49 @@
               Ambushes, water, herd rescue, 360° close-range strikes, fleeing prey and courage that
               depends on numbers are not in the engine yet, which is why the Nile crocodile,
               Spinosaurus and the Komodo dragon are not in the roster.
+            </p>
+          </section>
+          <section id="free-model">
+            <h2>The free model and its calibration</h2>
+            <p>
+              Simple mode and free matchups run on a symmetric model instead of the classic model
+              described above. Any species can stand on either side, and every animal follows the
+              same rules; only the values differ by species.
+            </p>
+            <ul>
+              <li>
+                Every animal strikes from the front. Only species that can latch do so, and only
+                onto a target about 3 times their own mass or more (2–5 times, an assumption).
+              </li>
+              <li>
+                Both sides have morale, so any species can flee, and morale falls in proportion to
+                the damage taken.
+              </li>
+              <li>
+                Only social species (lion, gray wolf, spotted hyena, <i>Homo erectus</i>) get the
+                pack buff: they approach together and share morale. Solitary animals such as tigers
+                each go straight in, however many there are.
+              </li>
+            </ul>
+            <p>
+              A calibration report compares the two models with the same species, counts and seed.
+              Same-species matches come out 50/50, swapping the sides gives the same result, and
+              adding animals to a side raises its win share. The largest difference is in
+              <i>T. rex</i> against tigers. Under the classic model's default tactic the tigers
+              circle to the rear; in the free model they go straight in. With one
+              <i>T. rex</i> against 20 tigers, the tigers' win share drops from about 46% to about
+              2%, close to the classic “direct” tactic. Free-model tigers also almost never flee a
+              much larger opponent and fight on until incapacitated; whether that needs
+              recalibrating is under review.
+            </p>
+            <p>
+              Free results therefore still carry the “provisional” note. The comparison tables and
+              the open items are in the
+              <a
+                href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/research/CALIBRATION.md"
+                >calibration report</a
+              >
+              on GitHub.
             </p>
           </section>
           <section id="limitations">
