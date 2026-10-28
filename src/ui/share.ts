@@ -184,3 +184,17 @@ export function hashFromConfig(config: ScenarioConfig): string {
   const payload = encodeConfig(config);
   return payload ? `#${SHARE_KEY}=${payload}` : '';
 }
+
+/**
+ * The address the app writes while the classic simulator is shown (#158 review). At the defaults
+ * `hashFromConfig` is empty, and a play page without app state opens Simple mode (#146), so a
+ * copied classic link would not reopen classic. Here the defaults are written as the bare v2
+ * payload `{"v":2}`, which decodes to the defaults and routes to classic like any v2 link; every
+ * other config gets exactly the hash `hashFromConfig` writes.
+ */
+export function classicHashFromConfig(config: ScenarioConfig): string {
+  return (
+    hashFromConfig(config) ||
+    `#${SHARE_KEY}=${base64UrlEncode(JSON.stringify({ v: SHARE_VERSION }))}`
+  );
+}

@@ -56,6 +56,8 @@ Design §3.2 ([RENEWAL-1.0.md](design/RENEWAL-1.0.md#32-simple-mode-and-advanced
 | 5   | `simple-share`    | `share` (header button)                         | always                            | **Copy settings link** (reopens in Simple with the seed) and **Share result**.                                                                                                                                               |
 | 6   | `simple-advanced` | `view-switch` (the Advanced switch)             | always                            | One or two sentences on what Advanced offers, and the manual link (`extra: 'manual'`) to `/guide/#advanced` or `/en/guide/#advanced` (`manualHref`). The last step: **Done** closes; following the link counts as completed. |
 
+When a free run ends while the Simple tour is open (run-now, or a run started before the tour), `createFreeMode`'s `onRunEnd` hook calls `refresh()`, so the results preview gives way to the result step, as the classic tour does after a classic run.
+
 The run-now button uses its own words (`tour.simple.runNow`, `runHint`, `running`, `runFailed`), and otherwise behaves like the classic quick demo ([The quick demo](#the-quick-demo)): it keeps focus while running, a second press does nothing, a failure is announced, and when results already exist the step says the next step uses them.
 
 The Advanced view has its own link to the manual: a small **? 설명서 / Manual** link next to the switch, to `#advanced` in the free form and `#advanced-classic` in classic, opening in a new tab so results on the page stay. `tests/tour.test.ts` checks that every anchor the app links (`ManualSection`) exists on both guide pages.

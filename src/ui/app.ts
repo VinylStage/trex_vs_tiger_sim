@@ -52,7 +52,7 @@ import {
   simpleKeepsAddress,
   type NavigationType,
 } from './simple-model';
-import { hashFromConfig } from './share';
+import { classicHashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
 import {
@@ -603,6 +603,9 @@ export function startApp(root: HTMLElement): void {
       writeUrl();
     },
     showToast,
+    // An open Simple tour leaves its results preview once results exist (also for runs it did not
+    // start), like the classic tour below.
+    onRunEnd: () => tours.simple?.refresh(),
     startHash,
     notice: newerLinkNote,
     view: view === 'simple' ? 'simple' : 'full',
@@ -685,7 +688,7 @@ export function startApp(root: HTMLElement): void {
     const fc = mode === 'free' ? free.getConfig() : null;
     const hash = fc
       ? hashFromFreeConfig(fc, { simple: view === 'simple' && simpleCanShow(fc) })
-      : hashFromConfig(config);
+      : classicHashFromConfig(config);
     if (hash === location.hash) return;
     history.replaceState(history.state, '', hash || `${location.pathname}${location.search}`);
   }

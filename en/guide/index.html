@@ -6,7 +6,7 @@
     <title>How to use the simulator – T-Rex vs Tiger</title>
     <meta
       name="description"
-      content="How to use the simulator: Simple mode, every Advanced setting (trait ranges, pack buff, classic lab), reading results and intervals, sharing and reproducing."
+      content="How to use the simulator: Simple mode, every Advanced setting (pack buff, shared settings, classic lab), reading results and intervals, sharing and reproducing."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
@@ -330,8 +330,8 @@
                     <td>Latch chance, latch endurance, latch damage (HP/s)</td>
                     <td>
                       Used only by species that can latch, and only on a target heavy enough (three
-                      times its own mass by default). For every other species they are fixed at zero
-                      and never read.
+                      times its own mass by default). For every other species they are fixed at
+                      neutral values and never read.
                     </td>
                   </tr>
                   <tr>
@@ -412,8 +412,8 @@
                     <th scope="row">Coordinated approach</th>
                     <td>
                       Against a much heavier opponent, the group spreads out around its rear and
-                      steps out of its frontal strike cone. Animals approaching this way do not get
-                      in each other’s way.
+                      steps out of its frontal strike cone. With Coordinated approach on, buffed
+                      animals never obstruct each other.
                     </td>
                   </tr>
                   <tr>
@@ -506,8 +506,8 @@
                     <th scope="row">Crowding interference</th>
                     <td>0 / 0.1 / 0.3</td>
                     <td>
-                      How much each extra unbuffed ally on the same target cuts accuracy and latch
-                      chance.
+                      How much each extra ally on the same target that is not exempt by Coordinated
+                      approach cuts accuracy and latch chance.
                     </td>
                   </tr>
                   <tr>
@@ -740,8 +740,10 @@
               <li>
                 <strong>Settings codes and files.</strong> <em>Copy settings code</em> gives a
                 <code>TVT3-</code> code in the free form and a <code>TVT2-</code> code in classic.
-                Paste a code or link, or load a .json file, under <em>Export · import settings</em>
-                on the classic screen; you see a preview before it is applied.
+                Under <em>Export · import settings</em> on the classic screen, a classic code
+                (<code>TVT2-</code>), a classic link or a .json file shows a preview first and is
+                applied only when you confirm it. A free code (<code>TVT3-</code>) or a free-matchup
+                link is applied straight away and opens in the free form.
               </li>
               <li>
                 <strong>Result links.</strong> <em>Share result</em> below a result makes a
@@ -781,7 +783,8 @@
                   <tr>
                     <th scope="row">Exactly the same</th>
                     <td>
-                      Every number matches the snapshot, usually because the browser engine matches.
+                      The run count and every win count match the snapshot exactly, usually because
+                      the browser engine matches.
                     </td>
                   </tr>
                   <tr>
@@ -1247,8 +1250,9 @@
                 probabilities and distributions agree statistically.
               </li>
               <li>
-                Only settings that differ from the defaults are stored, which keeps links short.
-                With all defaults, the <code>#s=</code> part disappears.
+                Only settings that differ from the defaults are stored, which keeps links short. At
+                all defaults a short <code>#s=</code> marker remains, so the link still reopens the
+                classic simulator.
               </li>
               <li>
                 Browsers never send the part after <code>#</code> (the fragment) to the server, so

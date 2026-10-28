@@ -93,6 +93,11 @@ export interface FreeModeOptions {
   /** Called with the config of every run as it starts (the app writes the URL after a Simple run). */
   onRun?: (c: FreeConfig) => void;
   /**
+   * Called when a run ends (results rendered, or cancelled or failed), so an open Simple tour can
+   * leave its results preview (#158 review).
+   */
+  onRunEnd?: () => void;
+  /**
    * The page opened in Simple mode from a link Simple mode wrote (#154): the first Simple Run uses
    * the link's seed instead of a fresh one, until the first edit or view change.
    */
@@ -695,6 +700,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       running = false;
       runBtn.disabled = false;
       cancelBtn.disabled = true;
+      opts.onRunEnd?.();
     }
   }
   runBtn.addEventListener('click', () => void run());
