@@ -59,6 +59,35 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.21',
+    date: '2026-10-28',
+    title: {
+      ko: '친절한 안내서가 왔어요 📖',
+      en: 'A proper manual 📖',
+    },
+    prs: [159],
+    items: [
+      {
+        cat: 'new',
+        refs: [158],
+        ko: '간단 모드용 튜토리얼이 생겼어요. 고르고, 실행하고, 결과를 읽고, 공유하는 순서를 다섯 걸음에 보여 주고 "고급" 스위치도 짧게 소개합니다.',
+        en: 'Simple mode has its own tutorial: pick, run, read the result and share in five steps, with a short look at the Advanced switch at the end.',
+      },
+      {
+        cat: 'new',
+        refs: [158],
+        ko: '가이드에 고급 설정 설명서를 새로 썼어요. 설정 하나하나의 뜻, 결과 카드 읽는 법, 링크와 시드, 모델의 한계까지 담았고 고급 화면의 "설명서" 링크로 바로 열립니다.',
+        en: "The guide now has a full Advanced manual: every setting, how to read each result card, links and seeds, and the model's limits. The Manual link in Advanced opens it directly.",
+      },
+      {
+        cat: 'fixed',
+        refs: [158],
+        ko: '클래식 화면을 기본값 그대로 두고 링크를 복사해도 클래식으로 열려요.',
+        en: 'A classic-screen link copied at the default settings now reopens the classic screen.',
+      },
+    ],
+  },
+  {
     version: '0.2.20',
     date: '2026-10-28',
     title: {
