@@ -352,6 +352,8 @@ interface FreePreset {
 | TVT3 codes                                                                                        | Simple or Advanced, by the same rule                     |
 | `/r/` v1 and v2 result links                                                                      | unchanged                                                |
 
+> **As built (#154, 2026-10-28).** Simple is chosen by an explicit marker, not by the key shape above: Simple mode writes `ui: "simple"` into the v3 payload, and a link opens Simple only with that marker, a model version the build runs and a config Simple can show whole (audit decision of 2026-10-28 in `IMPLEMENTATION_AUDIT.md`). `TVT3-` codes are written by Advanced only and always open the free form. The routing lives in `routeLink` (`src/ui/link-route.ts`), and the first Run of a freshly opened Simple link reuses its seed. Details: [SHARING.md, Simple links](../SHARING.md#simple-links).
+
 **Tour.** A new `SIMPLE_TOUR_STEPS` (3–4 steps: pick, count, Run, Why?). The tour button stops forcing classic mode (`app.ts:1011-1015`). The classic tour stays in Lab.
 
 ### 3.3 Streamer mode
