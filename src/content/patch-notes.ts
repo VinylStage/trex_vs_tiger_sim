@@ -59,6 +59,35 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.20',
+    date: '2026-10-28',
+    title: {
+      ko: '보낸 그대로 열려요 📮',
+      en: 'Opens just the way you sent it 📮',
+    },
+    prs: [155],
+    items: [
+      {
+        cat: 'improved',
+        refs: [154],
+        ko: '간단 모드에서 돌린 결과 링크를 친구에게 보내면 친구 화면에서도 간단 모드로 열려요.',
+        en: 'A link from a Simple-mode run now opens in Simple mode for whoever you send it to.',
+      },
+      {
+        cat: 'improved',
+        refs: [154],
+        ko: '받은 링크로 처음 실행하면 같은 시드를 써서 보낸 사람과 똑같은 결과가 나와요. 그다음 실행부터는 다시 새 판입니다.',
+        en: 'The first Run from a shared link uses its seed, so you get exactly the result that was shared. Every Run after that is a fresh match.',
+      },
+      {
+        cat: 'fixed',
+        refs: [154],
+        ko: '실행 뒤 새로 고침하면 같은 판이 되풀이되지 않고 새 판으로 싸워요.',
+        en: 'Reloading after a run starts a fresh match instead of replaying the same one.',
+      },
+    ],
+  },
+  {
     version: '0.2.19',
     date: '2026-10-27',
     title: {
