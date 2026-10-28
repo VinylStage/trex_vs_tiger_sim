@@ -356,6 +356,8 @@ interface FreePreset {
 
 **Tour.** A new `SIMPLE_TOUR_STEPS` (3–4 steps: pick, count, Run, Why?). The tour button stops forcing classic mode (`app.ts:1011-1015`). The classic tour stays in Lab.
 
+> **As built (#158, 2026-10-28).** `SIMPLE_TOUR_STEPS` has four steps (pick, Run with a run-now button, the result with the rout note, share) and one short step on the Advanced switch that links the guide's new Advanced settings manual (`/guide/#advanced`). The view decides the tour: Simple mode opens the Simple tour; under Advanced the tour button still opens classic and its tour, and old `?tour` links open as before ([TUTORIAL.md](../TUTORIAL.md#starting-the-tour)).
+
 ### 3.3 Streamer mode
 
 Two surfaces on the same origin, synchronized by a `BroadcastChannel('tvt-stream')`. This needs no backend and stays inside the `'self'` CSP.

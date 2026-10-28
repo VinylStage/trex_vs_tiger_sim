@@ -51,7 +51,10 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
   const form = h('div', { class: 'simple-form' });
   const bar = h('div', { class: 'simple-bar' });
   bar.hidden = true;
-  const breakdown = h('div', { class: 'simple-breakdown' });
+  const breakdown = h('div', {
+    class: 'simple-breakdown',
+    attrs: { 'data-tour': 'simple-result' },
+  });
   breakdown.hidden = true;
   let cfg: FreeConfig | null = null;
 
@@ -83,7 +86,10 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
     }
     return h(
       'section',
-      { class: 'simple-section', attrs: { 'aria-labelledby': titleId } },
+      {
+        class: 'simple-section',
+        attrs: { 'aria-labelledby': titleId, 'data-tour': 'simple-pick' },
+      },
       h('h3', { id: titleId, class: 'simple-heading', text: t('simple.presets') }),
       list,
       current
@@ -226,7 +232,12 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
     cfg = c;
     form.replaceChildren(
       presets(c),
-      h('div', { class: 'free-sides simple-sides' }, side(c, 0), side(c, 1)),
+      h(
+        'div',
+        { class: 'free-sides simple-sides', attrs: { 'data-tour': 'simple-pick' } },
+        side(c, 0),
+        side(c, 1),
+      ),
       ...notes(c),
     );
     if (focusKey) form.querySelector<HTMLElement>(`[${FOCUS_ATTR}="${focusKey}"]`)?.focus();

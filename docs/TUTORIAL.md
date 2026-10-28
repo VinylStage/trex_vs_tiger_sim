@@ -3,6 +3,8 @@
 > **한국어 요약**
 >
 > - 시뮬레이터 화면 위에 단계별 안내(가이드 투어)를 띄웁니다. 헤더의 **튜토리얼** 버튼, 첫 방문 안내 배너, 또는 `?tour=1` 링크로 시작합니다.
+> - 투어는 두 가지입니다. 간단 모드에서는 5단계짜리 **간단 모드 투어**(대결 고르기 → 실행 → 결과 읽기 → 링크 공유 → 고급 설정 스위치와 설명서 링크)가, 고급 설정에서는 기존 **클래식 투어**가 열립니다. 헤더 버튼은 고급 설정에서 누르면 클래식으로 바꾼 뒤 클래식 투어를 엽니다. 설정 없이 연 `/play/`의 첫 방문 배너는 간단 모드 투어를 시작합니다. 예전 `?tour` 링크는 예전과 똑같이 클래식 투어를 엽니다(#158).
+> - 간단 모드 투어의 “실행” 단계에는 **지금 실행해 보기** 버튼이 있어, 투어 중에도 실제 결과를 보고 결과 단계로 넘어갑니다. 마지막 단계는 사용 방법 페이지의 고급 설정 설명서(`/guide/#advanced`)로 연결됩니다.
 > - 각 단계는 `data-tour="<id>"` 속성이 붙은 요소를 찾아 주변을 밝히고(스포트라이트) 나머지 화면을 어둡게 합니다. 대상이 없거나 숨겨진 단계는 자동으로 건너뜁니다.
 > - “실행” 단계에서 **빠른 데모(100회)**를 돌리면 결과가 나온 뒤 자동으로 결과 설명 단계로 넘어갑니다. 이미 결과가 있으면 데모 버튼은 나오지 않습니다.
 > - 키보드: ← → 이동, Esc 닫기, Tab은 안내 상자 안에서만 순환합니다. 닫으면 투어를 시작한 버튼으로 포커스가 돌아갑니다. 동작 줄이기(prefers-reduced-motion) 설정을 따릅니다.
@@ -12,6 +14,7 @@
 ## Contents
 
 - [Starting the tour](#starting-the-tour)
+- [Simple-mode tour](#simple-mode-tour)
 - [Steps](#steps)
 - [Files](#files)
 - [Adding or editing a step](#adding-or-editing-a-step)
@@ -25,16 +28,41 @@
 
 ## Starting the tour
 
-| Entry point         | Behaviour                                                                                                                                                      |
-| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Header button       | **튜토리얼** / **Tutorial**, next to the language switch. Always available. Opens Advanced mode → classic first, since the steps walk the classic form (#146). |
-| First-visit offer   | A small banner under the header with **Start the tour** and **No thanks**. Shown only until the visitor decides; see [below](#first-visit-offer-and-storage).  |
-| Deep link `?tour=1` | Opens the tour right after the page loads (`/play/?tour=1`, `/en/play/?tour=1`); see [Deep link](#deep-link).                                                  |
-| Intro link          | **1분 튜토리얼 시작** in the static intro under the simulator; starts the tour in place.                                                                       |
+There are two tours (#158): the **Simple-mode tour** (`SIMPLE_TOUR_STEPS`, [below](#simple-mode-tour)) and the **classic tour** (`TOUR_STEPS`, [Steps](#steps)), which walks the classic form and its charts. Which one opens depends on the view the page shows and on what started it (`tourFor` in `tour-model.ts`):
+
+| Entry point         | In Simple mode        | Under Advanced (free or classic)                             |
+| ------------------- | --------------------- | ------------------------------------------------------------ |
+| Header button       | Simple tour, in place | Switches to Advanced → classic (#146), then the classic tour |
+| First-visit offer   | Simple tour, in place | Classic tour where the page is (as before #158)              |
+| Deep link `?tour=1` | Simple tour, in place | Classic tour where the page is (as before #158)              |
+
+- **Header button**: **튜토리얼** / **Tutorial**, next to the language switch. Always available.
+- **First-visit offer**: a small banner under the header with **Start the tour** and **No thanks**, shown only until the visitor decides; see [below](#first-visit-offer-and-storage). A cold `/play/` opens Simple mode, so its offer starts the Simple tour.
+- **Deep link**: opens a tour right after the page loads (`/play/?tour=1`, `/en/play/?tour=1`); see [Deep link](#deep-link). A `?tour` link without a fragment, or with a classic or free fragment, opens Advanced (link routing, [SHARING.md](SHARING.md#link-routing)) and so the classic tour, exactly as on `main` before #158. Only a link Simple mode wrote (`ui: "simple"`, #154) plus `?tour` opens Simple, and now gets the Simple tour instead of classic steps over Simple mode.
+- **Intro link**: **1분 튜토리얼 시작** in the lobby's static intro goes to the deep link, so it opens the classic tour.
+
+Only one tour is open at a time; a start while either is open does nothing. Both share the first-visit flag.
+
+## Simple-mode tour
+
+Design §3.2 ([RENEWAL-1.0.md](design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode)), #158. Four steps over Simple mode and one short step that points at the Advanced switch. Before a run there are 5 steps, and after one still 5 (the result preview is replaced by the result step).
+
+| #   | id                | Anchor(s) (`data-tour`)                         | Shown when                        | Notes                                                                                                                                                                                                                        |
+| --- | ----------------- | ----------------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `simple-pick`     | `simple-pick` (preset row and the two sides)    | always                            | Presets, species per side, count chips; keyboard hints.                                                                                                                                                                      |
+| 2   | `simple-run`      | `simple-run` (the free panel's run bar)         | always                            | **Run it now** (`extra: 'run'`): a normal Simple run (fresh seed, Simple's run count) through `FreeMode.runNow()`. On success the tour moves to the next available step, which is then the result.                           |
+| 3   | `simple-preview`  | `simple-results` (free results panel)           | `simple-results-empty` is visible | What appears after a run. Replaced by step 4 once results exist.                                                                                                                                                             |
+| 4   | `simple-result`   | `simple-result` (verdict box and the breakdown) | results exist                     | Win bar, verdict and 95% interval, still standing / fled / incapacitated, the rout note and its **Why?** link, **Details**.                                                                                                  |
+| 5   | `simple-share`    | `share` (header button)                         | always                            | **Copy settings link** (reopens in Simple with the seed) and **Share result**.                                                                                                                                               |
+| 6   | `simple-advanced` | `view-switch` (the Advanced switch)             | always                            | One or two sentences on what Advanced offers, and the manual link (`extra: 'manual'`) to `/guide/#advanced` or `/en/guide/#advanced` (`manualHref`). The last step: **Done** closes; following the link counts as completed. |
+
+The run-now button uses its own words (`tour.simple.runNow`, `runHint`, `running`, `runFailed`), and otherwise behaves like the classic quick demo ([The quick demo](#the-quick-demo)): it keeps focus while running, a second press does nothing, a failure is announced, and when results already exist the step says the next step uses them.
+
+The Advanced view has its own link to the manual: a small **? 설명서 / Manual** link next to the switch, to `#advanced` in the free form and `#advanced-classic` in classic, opening in a new tab so results on the page stay. `tests/tour.test.ts` checks that every anchor the app links (`ManualSection`) exists on both guide pages.
 
 ## Steps
 
-Steps are shown in this order. "Anchor" is the `data-tour` id the step spotlights. A step is skipped while none of its required anchors is visible, so the counter (`n / N`) only counts the steps that can be shown right now. Before the first run there are 10 steps; once results exist there are 13.
+The classic tour. Steps are shown in this order. "Anchor" is the `data-tour` id the step spotlights. A step is skipped while none of its required anchors is visible, so the counter (`n / N`) only counts the steps that can be shown right now. Before the first run there are 10 steps; once results exist there are 13.
 
 | #   | id            | Anchor(s) (`data-tour`)           | Shown when                 | Notes                                                                                                                                    |
 | --- | ------------- | --------------------------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -57,7 +85,7 @@ Steps are shown in this order. "Anchor" is the `data-tour` id the step spotlight
 
 | File                                            | Role                                                                                                                                                                                                                                                                                    |
 | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/ui/tour-model.ts`                          | DOM-free logic: `TOUR_STEPS`, step filtering and navigation, `n / N` counter, rectangle helpers, popover placement, the storage flag, the deep link, `guideHref`. Unit-tested in `tests/tour.test.ts`.                                                                                  |
+| `src/ui/tour-model.ts`                          | DOM-free logic: `TOUR_STEPS`, `SIMPLE_TOUR_STEPS`, `tourFor` (which tour a start opens), `manualHref`, step filtering and navigation, `n / N` counter, rectangle helpers, popover placement, the storage flag, the deep link, `guideHref`. Unit-tested in `tests/tour.test.ts`.         |
 | `src/ui/tour.ts`                                | DOM layer: the `<dialog>`, SVG spotlight, popover, keyboard and focus handling. Imports `tour.css`. Loaded with `import()` on the first start (button, offer, `?tour=1` or an intro link) and warmed when the pointer enters the button, so the startup bundle does not carry it (#80). |
 | `src/ui/tour-offer.ts`, `src/ui/tour-offer.css` | The first-visit offer, part of the startup page; **Start the tour** loads the tour.                                                                                                                                                                                                     |
 | `src/ui/tour.css`                               | Tour styles. Uses the colour tokens from `styles.css`, so light and dark mode follow automatically.                                                                                                                                                                                     |
@@ -74,15 +102,15 @@ Steps are shown in this order. "Anchor" is the `data-tour` id the step spotlight
    { id: 'duration', title: 'tour.duration.title', body: 'tour.duration.body', targets: ['duration-chart'] },
    ```
 
-   | Field      | Meaning                                                                                                                           |
-   | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
-   | `id`       | Unique step id (tested).                                                                                                          |
-   | `title`    | i18n key of the heading.                                                                                                          |
-   | `body`     | i18n key of the text (one paragraph).                                                                                             |
-   | `targets`  | `data-tour` ids to spotlight. `[]` shows a centred dialog.                                                                        |
-   | `requires` | Optional. `data-tour` ids that decide visibility instead of `targets` (at least one must be visible). Used by the `results` step. |
-   | `expand`   | Optional. `data-tour` id of a `<details>` element to open during the step. Its previous `open` state is restored afterwards.      |
-   | `extra`    | Optional. `'demo'` adds the quick-demo button, `'guide'` adds the guide link.                                                     |
+   | Field      | Meaning                                                                                                                                                                            |
+   | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `id`       | Unique step id (tested).                                                                                                                                                           |
+   | `title`    | i18n key of the heading.                                                                                                                                                           |
+   | `body`     | i18n key of the text (one paragraph).                                                                                                                                              |
+   | `targets`  | `data-tour` ids to spotlight. `[]` shows a centred dialog.                                                                                                                         |
+   | `requires` | Optional. `data-tour` ids that decide visibility instead of `targets` (at least one must be visible). Used by the `results` step.                                                  |
+   | `expand`   | Optional. `data-tour` id of a `<details>` element to open during the step. Its previous `open` state is restored afterwards.                                                       |
+   | `extra`    | Optional. `'demo'` adds the quick-demo button, `'run'` the Simple tour's run-now button, `'guide'` the guide link and `'manual'` the link to the guide's Advanced settings manual. |
 
 4. Run `npm run check`. The step-data tests check unique ids and that every title and body exists in both languages.
 
@@ -157,5 +185,5 @@ The tour runs under the production CSP (`style-src 'self'`, `script-src 'self'`)
 
 ## Testing
 
-- **Unit tests:** `tests/tour.test.ts` covers the step data, filtering, navigation and counter, leaving a step that became unavailable (`resolveStep`), the rectangle helpers, `placePopover`, the storage flag (including missing and throwing storage), the deep link and `guideHref`.
-- **Browser check (manual or Playwright):** with the production CSP injected, at 1366 px and 390 px, in light and dark mode: start from the header button, go forward and back with the keyboard and the mouse, check that focus stays inside the popover, run the demo (focus stays on the demo button, a second Enter does nothing, the tour lands on `7 / 13` even if Next was pressed during the run, a blocked worker is announced as a failure), check at 320 × 256 that the focused **Next** is inside the popover, close with Esc and check that focus returns, confirm the offer appears once, and check that there are no console or CSP errors and no horizontal overflow.
+- **Unit tests:** `tests/tour.test.ts` covers the step data of both tours (the Simple tour's five steps before and after a run, its run-now step, its final manual step), which tour each trigger opens in each view (`tourFor`), the manual anchors on both guide pages, filtering, navigation and counter, leaving a step that became unavailable (`resolveStep`), the rectangle helpers, `placePopover`, the storage flag (including missing and throwing storage), the deep link and `guideHref`.
+- **Browser check (manual or Playwright):** with the production CSP injected, at 1366 px and 390 px, in light and dark mode, both languages. Simple tour: on a cold `/play/` with no stored flag, start from the offer, walk all five steps, use **Run it now** and land on the result step, follow the manual link to `#advanced`. Classic tour: switch Advanced on, start from the header button, go forward and back with the keyboard and the mouse, check that focus stays inside the popover, run the demo (focus stays on the demo button, a second Enter does nothing, the tour lands on `7 / 13` even if Next was pressed during the run, a blocked worker is announced as a failure), check at 320 × 256 that the focused **Next** is inside the popover, close with Esc and check that focus returns, confirm the offer appears once, and check that there are no console or CSP errors and no horizontal overflow.

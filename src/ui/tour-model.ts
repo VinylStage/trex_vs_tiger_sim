@@ -22,8 +22,11 @@ export interface TourStep {
   readonly requires?: readonly string[];
   /** `data-tour` id of a `<details>` element that is opened during the step and restored after. */
   readonly expand?: string;
-  /** Extra content: the quick-demo button or the link to the guide page. */
-  readonly extra?: 'demo' | 'guide';
+  /**
+   * Extra content: the classic quick-demo button (`demo`), the Simple tour's "run it now" button
+   * (`run`), the link to the guide page (`guide`) or to its Advanced settings manual (`manual`).
+   */
+  readonly extra?: 'demo' | 'run' | 'guide' | 'manual';
 }
 
 export const TOUR_STEPS: readonly TourStep[] = [
@@ -80,6 +83,73 @@ export const TOUR_STEPS: readonly TourStep[] = [
     extra: 'guide',
   },
 ];
+
+/**
+ * The Simple-mode tour (design RENEWAL-1.0 §3.2, #158): pick, run, read the result, share, then
+ * one short step that points at the Advanced switch and links its manual. The classic tour
+ * (`TOUR_STEPS`) stays reachable from Advanced mode.
+ */
+export const SIMPLE_TOUR_STEPS: readonly TourStep[] = [
+  {
+    id: 'simple-pick',
+    title: 'tour.simple.pick.title',
+    body: 'tour.simple.pick.body',
+    targets: ['simple-pick'],
+  },
+  {
+    id: 'simple-run',
+    title: 'tour.simple.run.title',
+    body: 'tour.simple.run.body',
+    targets: ['simple-run'],
+    extra: 'run',
+  },
+  {
+    id: 'simple-preview',
+    title: 'tour.simple.preview.title',
+    body: 'tour.simple.preview.body',
+    targets: ['simple-results'],
+    requires: ['simple-results-empty'],
+  },
+  {
+    id: 'simple-result',
+    title: 'tour.simple.result.title',
+    body: 'tour.simple.result.body',
+    targets: ['simple-result'],
+  },
+  {
+    id: 'simple-share',
+    title: 'tour.simple.share.title',
+    body: 'tour.simple.share.body',
+    targets: ['share'],
+  },
+  {
+    id: 'simple-advanced',
+    title: 'tour.simple.advanced.title',
+    body: 'tour.simple.advanced.body',
+    targets: ['view-switch'],
+    extra: 'manual',
+  },
+];
+
+/** The two tours: Simple mode's and the classic simulator's. */
+export type TourKind = 'simple' | 'classic';
+
+/** What started a tour: the header button, the first-visit offer or the `?tour` deep link. */
+export type TourTrigger = 'button' | 'offer' | 'link';
+
+/**
+ * Which tour a start opens, and whether the app first switches to Advanced → classic. In Simple
+ * mode every trigger opens the Simple tour in place. In Advanced mode the classic tour opens; the
+ * header button first switches to classic (its steps walk the classic form), while the offer and
+ * the deep link start it where the page is, as before #158, so old `?tour` links are unchanged.
+ */
+export function tourFor(
+  view: 'simple' | 'advanced',
+  trigger: TourTrigger,
+): { kind: TourKind; showClassic: boolean } {
+  if (view === 'simple') return { kind: 'simple', showClassic: false };
+  return { kind: 'classic', showClassic: trigger === 'button' };
+}
 
 /**
  * Open a `<details>` for a step and fire its `toggle` event now. The native event is queued, but
@@ -358,4 +428,12 @@ export function withoutTourParam(search: string): string {
 /** Path of the static guide page for a language. */
 export function guideHref(lang: Lang): string {
   return lang === 'en' ? '/en/guide/' : '/guide/';
+}
+
+/** Sections of the guide's Advanced settings manual that the app links (same ids in both languages). */
+export type ManualSection = 'advanced' | 'advanced-free' | 'advanced-classic';
+
+/** Link to a section of the Advanced settings manual on the guide page. */
+export function manualHref(lang: Lang, section: ManualSection = 'advanced'): string {
+  return `${guideHref(lang)}#${section}`;
 }

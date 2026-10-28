@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DICTIONARIES } from '../src/i18n/dictionaries';
 import { LANGS } from '../src/ui/i18n';
@@ -16,6 +17,9 @@ import {
   mergeRects,
   parseTourFlag,
   MIN_POPOVER_ROOM,
+  SIMPLE_TOUR_STEPS,
+  manualHref,
+  tourFor,
   placePopover,
   readTourFlag,
   resolveStep,
@@ -137,6 +141,101 @@ describe('tour step data', () => {
     expect(resolveStep(TOUR_STEPS, before, preview)).toBe(preview);
     expect(resolveStep(TOUR_STEPS, after, preview)).toBe(verdict);
     expect(stepCounter(TOUR_STEPS, after, verdict)).toEqual({ n: 7, total: 13 });
+  });
+});
+
+describe('Simple tour step data (#158)', () => {
+  const ids = (fn: (id: string) => boolean): string[] =>
+    availableIndices(SIMPLE_TOUR_STEPS, fn).map((i) => SIMPLE_TOUR_STEPS[i]?.id ?? '');
+  const always = ['simple-pick', 'simple-run', 'simple-results', 'share', 'view-switch'];
+
+  it('has unique ids and translated titles and bodies, none shared with the classic tour', () => {
+    const own = SIMPLE_TOUR_STEPS.map((s) => s.id);
+    expect(new Set(own).size).toBe(own.length);
+    for (const id of own) expect(TOUR_STEPS.map((s) => s.id)).not.toContain(id);
+    for (const lang of LANGS) {
+      const dict: Record<string, string> = DICTIONARIES[lang];
+      for (const s of SIMPLE_TOUR_STEPS) {
+        expect(dict[s.title], `${lang} ${s.title}`).toBeTruthy();
+        expect(dict[s.body], `${lang} ${s.body}`).toBeTruthy();
+      }
+      for (const k of [
+        'tour.simple.runNow',
+        'tour.simple.runHint',
+        'tour.simple.running',
+        'tour.simple.runFailed',
+        'tour.simple.manual',
+      ]) {
+        expect(dict[k], `${lang} ${k}`).toBeTruthy();
+      }
+    }
+  });
+
+  it('is four steps and one Advanced step, before and after a run', () => {
+    const before = ids(visibleSet(...always, 'simple-results-empty'));
+    const after = ids(visibleSet(...always, 'simple-result'));
+    expect(before).toEqual([
+      'simple-pick',
+      'simple-run',
+      'simple-preview',
+      'simple-share',
+      'simple-advanced',
+    ]);
+    expect(after).toEqual([
+      'simple-pick',
+      'simple-run',
+      'simple-result',
+      'simple-share',
+      'simple-advanced',
+    ]);
+  });
+
+  it('offers a run on the run step and ends on the Advanced switch with the manual link', () => {
+    expect(SIMPLE_TOUR_STEPS.find((s) => s.extra === 'run')?.id).toBe('simple-run');
+    const last = SIMPLE_TOUR_STEPS[SIMPLE_TOUR_STEPS.length - 1];
+    expect(last?.targets).toEqual(['view-switch']);
+    expect(last?.extra).toBe('manual');
+  });
+
+  it('moves from the run step to the result once results exist', () => {
+    const before = visibleSet(...always, 'simple-results-empty');
+    const after = visibleSet(...always, 'simple-result');
+    const run = SIMPLE_TOUR_STEPS.findIndex((s) => s.id === 'simple-run');
+    const preview = SIMPLE_TOUR_STEPS.findIndex((s) => s.id === 'simple-preview');
+    const result = SIMPLE_TOUR_STEPS.findIndex((s) => s.id === 'simple-result');
+    expect(findStep(SIMPLE_TOUR_STEPS, before, run, 1)).toBe(preview);
+    expect(findStep(SIMPLE_TOUR_STEPS, after, run, 1)).toBe(result);
+    expect(resolveStep(SIMPLE_TOUR_STEPS, after, preview)).toBe(result);
+    expect(stepCounter(SIMPLE_TOUR_STEPS, after, result)).toEqual({ n: 3, total: 5 });
+  });
+});
+
+describe('which tour starts (#158)', () => {
+  it('opens the Simple tour in place from Simple mode, whatever started it', () => {
+    for (const trigger of ['button', 'offer', 'link'] as const) {
+      expect(tourFor('simple', trigger)).toEqual({ kind: 'simple', showClassic: false });
+    }
+  });
+
+  it('opens the classic tour from Advanced; only the header button switches to classic', () => {
+    expect(tourFor('advanced', 'button')).toEqual({ kind: 'classic', showClassic: true });
+    // Old `?tour` links (classic or free fragment, or none) and the offer: as before #158.
+    expect(tourFor('advanced', 'link')).toEqual({ kind: 'classic', showClassic: false });
+    expect(tourFor('advanced', 'offer')).toEqual({ kind: 'classic', showClassic: false });
+  });
+});
+
+describe('Advanced settings manual links', () => {
+  it('point at sections that exist on both guide pages', () => {
+    for (const lang of LANGS) {
+      const html = readFileSync(lang === 'en' ? 'en/guide/index.html' : 'guide/index.html', 'utf8');
+      for (const section of ['advanced', 'advanced-free', 'advanced-classic'] as const) {
+        const href = manualHref(lang, section);
+        expect(href).toBe(`${guideHref(lang)}#${section}`);
+        expect(html, `${lang} #${section}`).toMatch(new RegExp(`\\bid="${section}"`));
+      }
+    }
+    expect(manualHref('ko')).toBe('/guide/#advanced');
   });
 });
 

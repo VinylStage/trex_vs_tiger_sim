@@ -65,6 +65,13 @@ export interface FreeMode {
   relocalize(): void;
   /** Whether a run is in progress. */
   isRunning(): boolean;
+  /** Whether results are shown. */
+  hasResult(): boolean;
+  /**
+   * Run now, as the Run button does (the Simple tour's "run it now", docs/TUTORIAL.md). Resolves
+   * true once fresh results are rendered, false when the run was refused, cancelled or failed.
+   */
+  runNow(): Promise<boolean>;
   /** Show Simple mode or the full free form (same config, same results). */
   setView(v: FreeView): void;
 }
@@ -170,7 +177,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   });
   const runBar = h(
     'div',
-    { class: 'run-bar' },
+    { class: 'run-bar', attrs: { 'data-tour': 'simple-run' } },
     h('div', { class: 'run-buttons' }, runBtn, cancelBtn),
     progress,
     statusEl,
@@ -202,7 +209,10 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
 
   // ---------- results panel ----------
   const resultsTitle = h('h2', { id: nextId('free-results-title'), attrs: { tabindex: '-1' } });
-  const emptyEl = h('p', { class: 'results-empty' });
+  const emptyEl = h('p', {
+    class: 'results-empty',
+    attrs: { 'data-tour': 'simple-results-empty' },
+  });
   const provisionalEl = h('p', { class: 'free-provisional' });
   const verdictEl = h('p', { class: 'verdict' });
   const precisionEl = h('p', { class: 'verdict-precision' });
@@ -252,7 +262,10 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     staleEl,
     h(
       'div',
-      { class: 'verdict-box', attrs: { 'aria-live': 'polite', 'aria-atomic': 'true' } },
+      {
+        class: 'verdict-box',
+        attrs: { 'aria-live': 'polite', 'aria-atomic': 'true', 'data-tour': 'simple-result' },
+      },
       provisionalEl,
       simple.bar,
       verdictEl,
@@ -270,7 +283,10 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   resultsBody.hidden = true;
   const resultsPanel = h(
     'section',
-    { class: 'panel results-panel', attrs: { 'aria-labelledby': resultsTitle.id } },
+    {
+      class: 'panel results-panel',
+      attrs: { 'aria-labelledby': resultsTitle.id, 'data-tour': 'simple-results' },
+    },
     resultsTitle,
     emptyEl,
     resultsBody,
@@ -954,6 +970,13 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     },
     relocalize,
     isRunning: () => running,
+    hasResult: () => result !== null,
+    runNow: async () => {
+      if (running) return false;
+      const before = result;
+      await run();
+      return result !== null && result !== before;
+    },
     setView: (v) => {
       if (v !== view) keepLinkSeed = false;
       view = v;

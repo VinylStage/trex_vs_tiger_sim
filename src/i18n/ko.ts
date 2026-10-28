@@ -445,6 +445,31 @@ export const ko = {
   'tour.finish.body':
     '이제 시나리오를 바꿔 직접 실행해 보세요. 모델의 가정과 각 파라미터의 의미 · 출처는 가이드에서 자세히 설명합니다.',
 
+  // Simple-mode tour (#158, docs/TUTORIAL.md)
+  'tour.simple.pick.title': '대결 고르기',
+  'tour.simple.pick.body':
+    '추천 대결을 누르면 양쪽 종과 수가 한 번에 정해집니다. 직접 고르려면 A 진영과 B 진영의 종을 고르고, 수는 빠른 선택 버튼이나 숫자로 정하세요. 같은 종끼리도 붙일 수 있습니다. ← → 키로 이동하고 Esc로 닫습니다.',
+  'tour.simple.run.title': '실행',
+  'tour.simple.run.body':
+    '“시뮬레이션 실행”을 누르면 같은 대결을 수백 번 반복해 계산합니다. 실행할 때마다 새 시드를 쓰고, 계산은 모두 이 브라우저 안에서 이뤄집니다.',
+  'tour.simple.runNow': '지금 실행해 보기',
+  'tour.simple.runHint': '지금 한 번 실행하면 다음 단계에서 실제 결과를 함께 읽어 볼 수 있습니다.',
+  'tour.simple.running': '실행 중… 끝나면 결과 단계로 넘어갑니다.',
+  'tour.simple.runFailed': '실행이 끝나지 않았습니다. 다시 누르거나 “다음”으로 계속하세요.',
+  'tour.simple.preview.title': '결과',
+  'tour.simple.preview.body':
+    '실행이 끝나면 이곳에 승률 막대, 한 판이 끝났을 때 양쪽에 남은 수, “다시 (새 판)” 버튼이 나타납니다. 투어를 마친 뒤 실행해 보세요.',
+  'tour.simple.result.title': '결과 읽기',
+  'tour.simple.result.body':
+    '막대는 양쪽 승률이고 가운데 회색은 무승부입니다. 아래 문장은 가장 많이 나온 결과와 그 95% 구간입니다. “한 판이 끝났을 때 (평균)”은 진영마다 끝까지 남음 · 이탈 · 전투 불능의 평균입니다. 진 쪽 무리가 대부분 이탈로 끝났다면 “사기가 한꺼번에 무너졌어요” 안내와 “왜?” 링크가 붙습니다. 세부 카드와 시드는 “자세히”에 있습니다.',
+  'tour.simple.share.title': '링크 공유',
+  'tour.simple.share.body':
+    '“설정 링크 복사”는 종, 수, 시드를 담은 주소를 복사합니다. 받은 사람이 열면 간단 모드로 열리고, 첫 실행이 같은 시드를 써서 같은 결과가 나옵니다. 결과 아래 “결과 공유”는 결과 카드 이미지와 결과 페이지 링크를 만듭니다.',
+  'tour.simple.advanced.title': '더 깊이: 고급 설정',
+  'tour.simple.advanced.body':
+    '이 스위치를 켜면 실행 횟수 · 시드 · 제한 시간 같은 공통 설정, 무리 버프의 효과별 스위치, 그리고 능력치 범위 표와 민감도 차트가 있는 티라노사우루스 대 호랑이 클래식 실험실을 쓸 수 있습니다. 항목마다 무엇을 하는지는 설명서에 정리해 두었습니다.',
+  'tour.simple.manual': '설명서: 고급 설정 읽기',
+
   'param.heavy.mass': '체중',
   'param.heavy.speed': '이동 속도',
   'param.heavy.turnRate': '선회 속도',
@@ -583,6 +608,8 @@ export const ko = {
   'view.advancedOff':
     '켜면 종 특성 범위, 실행 횟수, 시드 같은 세부 설정과 클래식 모델(대형 vs 무리)을 쓸 수 있습니다.',
   'view.advancedOn': '끄면 종과 수만 고르는 간단 모드로 돌아갑니다.',
+  'view.manual': '설명서',
+  'view.manualNewTab': '(새 탭에서 열림)',
   'simple.presets': '추천 대결',
   'simple.why': '배경:',
   'simple.quickCounts': '빠른 선택',

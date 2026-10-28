@@ -331,6 +331,12 @@ h1 {
   margin-top: 4px;
 }
 
+.toc ol ol {
+  margin-top: 4px;
+  padding-left: 1.4em;
+  list-style-type: lower-alpha;
+}
+
 .toc a {
   color: var(--fg);
   text-decoration: none;
