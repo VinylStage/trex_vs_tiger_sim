@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.21](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.20...trex-vs-tiger-sim-v0.2.21) (2026-10-28)
+
+
+### Features
+
+* **tour:** Simple-mode tour and an Advanced settings manual ([#158](https://github.com/VinylStage/trex_vs_tiger_sim/issues/158)) ([#159](https://github.com/VinylStage/trex_vs_tiger_sim/issues/159)) ([de275a6](https://github.com/VinylStage/trex_vs_tiger_sim/commit/de275a6f102ad1a15fc393005a052c4e31fe5a75))
+
 ## [0.2.20](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.19...trex-vs-tiger-sim-v0.2.20) (2026-10-28)
 
 
