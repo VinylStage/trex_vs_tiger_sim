@@ -59,6 +59,35 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.22',
+    date: '2026-10-28',
+    title: {
+      ko: '동물 도감이 열렸어요 🗂',
+      en: 'The species guide is open 🗂',
+    },
+    prs: [163],
+    items: [
+      {
+        cat: 'new',
+        refs: [162],
+        ko: '동물 도감(/species/)이 생겼어요. 동물마다 살았던 시기, 몸무게, 무리 생활 여부, 매달리기 가능 여부를 보여 주고 "해 보기"를 누르면 바로 대결이 열립니다.',
+        en: "A new species guide at /species/ lists each animal's era, mass, social life and whether it latches on, and its Try it button opens a match right away.",
+      },
+      {
+        cat: 'new',
+        refs: [162],
+        ko: '배우기 허브(/learn/)에서 가이드, 설명서, 모델, 파라미터, 도감을 한곳에 모아 볼 수 있어요.',
+        en: 'A new Learn hub at /learn/ gathers the guide, manual, model, parameters and species guide in one place.',
+      },
+      {
+        cat: 'improved',
+        refs: [162],
+        ko: '상단 메뉴를 "대결하기"와 "배우기"로 나눴어요. 소개와 패치 노트는 페이지 맨 아래로 옮겼습니다.',
+        en: 'The top menu is now split into Play and Learn; About and the patch notes moved to the footer.',
+      },
+    ],
+  },
+  {
     version: '0.2.21',
     date: '2026-10-28',
     title: {
