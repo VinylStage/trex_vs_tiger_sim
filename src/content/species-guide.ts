@@ -26,7 +26,7 @@ export const SPECIES_GUIDE: Readonly<Record<FreeSpeciesId, SpeciesGuideEntry>> =
   elephant: {
     scientific: 'Loxodonta africana',
     note: {
-      ko: '지금 살아 있는 가장 큰 육상 동물입니다. 엄니, 코, 밀어내는 힘을 공격 값 하나로 묶어 다루고, 두꺼운 피부는 무리 동물에게 받는 피해를 줄이는 상수로 반영합니다.',
+      ko: '지금 살아 있는 가장 큰 육상 동물입니다. 엄니, 코, 밀어내는 힘을 공격 값 하나로 묶어 다루고, 두꺼운 피부는 매달리는 동물에게 받는 피해를 줄이는 상수로 반영합니다.',
       en: 'The largest living land animal. Its tusks, trunk and pushing are folded into one strike value, and its thick skin into a constant that lowers the damage it takes from latching animals.',
     },
   },
@@ -54,8 +54,8 @@ export const SPECIES_GUIDE: Readonly<Record<FreeSpeciesId, SpeciesGuideEntry>> =
   homoErectus: {
     scientific: 'Homo erectus',
     note: {
-      ko: '약 190만 년 전부터 살았던 멸종 인류입니다. 다른 동물과 같은 조건으로, 옷 · 도구 · 무기 · 불 · 훈련 없이 평균 성인의 신체 능력만 모델링했습니다. 현생 인류는 다루지 않습니다.',
-      en: 'An extinct hominin that appeared about 1.9 million years ago. Like every other species it is modelled on an average adult’s physical capability only, without clothing, tools, weapons, fire or training. Living humans are not modelled.',
+      ko: '아프리카와 아시아에 살았던 멸종 인류입니다. 다른 동물과 같은 조건으로, 옷 · 도구 · 무기 · 불 · 훈련 없이 평균 성인의 신체 능력만 모델링했습니다. 현생 인류는 다루지 않습니다.',
+      en: 'An extinct hominin of Africa and Asia. Like every other species it is modelled on an average adult’s physical capability only, without clothing, tools, weapons, fire or training. Living humans are not modelled.',
     },
   },
   tiger: {

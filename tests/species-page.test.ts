@@ -121,6 +121,21 @@ describe('species registries behind the guide', () => {
     expect(yearsAgo(0.4, 'en')).toBe('400,000');
   });
 
+  it('types no numbers by hand: curated notes and page descriptions hold no digits', () => {
+    for (const id of FREE_SPECIES_IDS) {
+      for (const lang of LANGS)
+        expect(SPECIES_GUIDE[id].note[lang], `${id} ${lang}`).not.toMatch(/\d/);
+    }
+    for (const lang of LANGS) {
+      const src = readFileSync(join(ROOT, sourceOf(lang)), 'utf8');
+      const head = /<main[\s\S]*?<!-- species-guide -->/.exec(src)?.[0] ?? '';
+      const desc = /name="description"\s+content="([^"]*)"/.exec(src)?.[1] ?? '';
+      const visible = textOf(head.replace(/<time[\s\S]*?<\/time>/g, ''));
+      expect(desc, `${lang} description`).not.toMatch(/\d/);
+      expect(visible, `${lang} lead`).not.toMatch(/\d/);
+    }
+  });
+
   it('keeps the placeholder to the species guide', () => {
     expect(() =>
       expandSpeciesGuide(SPECIES_GUIDE_PLACEHOLDER, { lang: 'ko', page: 'about' }, 'x'),

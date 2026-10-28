@@ -147,7 +147,7 @@ const WORDS: Readonly<Record<Lang, Words>> = {
     ago: (from, to) => `약 ${from}~${to} 년 전`,
     whatIf: '만약에',
     whatIfNote:
-      '로스터의 다른 어떤 종과도 같은 시대에 살지 않았습니다. 이 종이 나오는 대결은 모두 “만약에”를 가정한 사고 실험입니다.',
+      '로스터의 다른 어떤 종과도 같은 시대에 살지 않았습니다. 다른 종과의 대결은 모두 “만약에”를 가정한 사고 실험입니다.',
     era: '시대',
     mass: '몸무게',
     massMode: (v) => `가장 흔한 값 ${v} kg`,
@@ -186,7 +186,7 @@ const WORDS: Readonly<Record<Lang, Words>> = {
     ago: (from, to) => `about ${from} to ${to} years ago`,
     whatIf: 'what-if',
     whatIfNote:
-      'It shared no time with any other species in the roster, so every matchup with it is a “what-if” thought experiment.',
+      'It shared no time with any other species in the roster, so every matchup with a different species is a “what-if” thought experiment.',
     era: 'Era',
     mass: 'Mass',
     massMode: (v) => `most likely ${v} kg`,
