@@ -4,10 +4,12 @@ import { h, uniqueId } from './dom';
 import { getLang, onLangChange, t, type MsgKey } from './i18n';
 import {
   DEMO_RUNS,
+  SIMPLE_TOUR_STEPS,
   TOUR_STEPS,
   findStep,
   guideHref,
   inflateRect,
+  manualHref,
   intersectRect,
   mergeRects,
   expandNow,
@@ -19,14 +21,45 @@ import {
   writeTourFlag,
   type Rect,
   type TourFlag,
+  type TourKind,
   type TourStep,
 } from './tour-model';
+
+/** The steps of each tour. */
+export function tourSteps(kind: TourKind): readonly TourStep[] {
+  return kind === 'simple' ? SIMPLE_TOUR_STEPS : TOUR_STEPS;
+}
+
+/** Words of a run button: the classic quick demo, or the Simple tour's "run it now" (#158). */
+interface RunWords {
+  button: MsgKey;
+  hint: MsgKey;
+  running: MsgKey;
+  failed: MsgKey;
+}
+const RUN_WORDS: Readonly<Record<'demo' | 'run', RunWords>> = {
+  demo: {
+    button: 'tour.demo',
+    hint: 'tour.demoHint',
+    running: 'tour.demoRunning',
+    failed: 'tour.demoFailed',
+  },
+  run: {
+    button: 'tour.simple.runNow',
+    hint: 'tour.simple.runHint',
+    running: 'tour.simple.running',
+    failed: 'tour.simple.runFailed',
+  },
+};
 
 /** What the tour needs from the app to offer the quick demo. */
 export interface TourHost {
   hasResults(): boolean;
   isRunning(): boolean;
-  /** Set the run count to DEMO_RUNS and run; resolves true once fresh results are rendered. */
+  /**
+   * Run for the tour (classic: the quick demo with DEMO_RUNS; Simple: a normal Simple run);
+   * resolves true once fresh results are rendered.
+   */
   runDemo(): Promise<boolean>;
 }
 
@@ -161,6 +194,7 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
   const noteEl = h('p', { class: 'tour-note' });
   const demoBtn = h('button', { class: 'btn btn-small tour-demo', attrs: { type: 'button' } });
   const guideLink = h('a', { class: 'tour-guide' });
+  const manualLink = h('a', { class: 'tour-guide' });
   const extraEl = h('div', { class: 'tour-extra' });
   const skipBtn = h('button', { class: 'btn btn-ghost btn-small', attrs: { type: 'button' } });
   const backBtn = h('button', { class: 'btn btn-small', attrs: { type: 'button' } });
@@ -282,16 +316,17 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
 
   function renderExtra(s: TourStep): void {
     const items: HTMLElement[] = [];
-    if (s.extra === 'demo') {
+    if (s.extra === 'demo' || s.extra === 'run') {
+      const words = RUN_WORDS[s.extra];
       let note: MsgKey | null = null;
       let showButton = false;
       if (demo === 'running') {
-        note = 'tour.demoRunning';
+        note = words.running;
         showButton = true;
       } else if (host.hasResults()) {
         note = 'tour.hasResults';
       } else if (!host.isRunning()) {
-        note = demo === 'failed' ? 'tour.demoFailed' : 'tour.demoHint';
+        note = demo === 'failed' ? words.failed : words.hint;
         showButton = true;
       }
       if (note) {
@@ -299,7 +334,7 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
         items.push(noteEl);
       }
       if (showButton) {
-        demoBtn.textContent = t('tour.demo', { n: DEMO_RUNS });
+        demoBtn.textContent = t(words.button, { n: DEMO_RUNS });
         setDisabled(demoBtn, demo === 'running');
         demoBtn.classList.toggle('is-busy', demo === 'running');
         items.push(demoBtn);
@@ -308,6 +343,10 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
       guideLink.href = guideHref(getLang());
       guideLink.textContent = t('tour.guide');
       items.push(guideLink);
+    } else if (s.extra === 'manual') {
+      manualLink.href = manualHref(getLang());
+      manualLink.textContent = t('tour.simple.manual');
+      items.push(manualLink);
     }
     // Re-attach only when the set of elements changes: detaching the focused demo button would
     // drop focus to the dialog (and keepFocusInside would then move it to Next).
@@ -536,11 +575,13 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
     else go(1);
   });
   guideLink.addEventListener('click', () => remember('completed'));
+  manualLink.addEventListener('click', () => remember('completed'));
   demoBtn.addEventListener('click', () => {
     if (isDisabled(demoBtn) || demo === 'running' || host.isRunning() || host.hasResults()) return;
+    const words = RUN_WORDS[step()?.extra === 'run' ? 'run' : 'demo'];
     demo = 'running';
     render();
-    live.textContent = t('tour.demoRunning');
+    live.textContent = t(words.running);
     host.runDemo().then(
       (ok) => demoFinished(ok),
       () => demoFinished(false),
@@ -550,11 +591,12 @@ export function createTour(host: TourHost, steps: readonly TourStep[] = TOUR_STE
   function demoFinished(ok: boolean): void {
     demo = ok ? 'idle' : 'failed';
     if (!open) return;
+    const extra = step()?.extra;
     // On success, go() and refresh() announce the step they move to.
-    if (ok && step()?.extra === 'demo') go(1);
+    if (ok && (extra === 'demo' || extra === 'run')) go(1);
     else refresh();
     // The page's own run status is inert behind the modal dialog, so announce the failure here.
-    if (!ok) live.textContent = t('tour.demoFailed');
+    if (!ok) live.textContent = t(RUN_WORDS[extra === 'run' ? 'run' : 'demo'].failed);
   }
 
   onLangChange(() => {

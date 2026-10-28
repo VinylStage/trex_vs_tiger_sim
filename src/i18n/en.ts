@@ -446,6 +446,31 @@ export const en: Dictionary = {
   'tour.finish.body':
     "Now change the scenario and run it yourself. The guide explains the model's assumptions and what every parameter means, with sources.",
 
+  // Simple-mode tour (#158, docs/TUTORIAL.md)
+  'tour.simple.pick.title': 'Pick a match-up',
+  'tour.simple.pick.body':
+    'A preset sets both species and counts in one tap. Or choose a species for side A and side B and set each count with the quick buttons or by typing a number. Both sides may be the same species. Use ← → to move and Esc to close.',
+  'tour.simple.run.title': 'Run',
+  'tour.simple.run.body':
+    'Run simulation repeats the same match-up hundreds of times. Every Run draws a new seed, and all the computing happens in this browser.',
+  'tour.simple.runNow': 'Run it now',
+  'tour.simple.runHint': 'Run once now and the next step reads a real result with you.',
+  'tour.simple.running': 'Running… the tour moves on to the result when it is done.',
+  'tour.simple.runFailed': 'The run did not finish. Try again, or press Next to continue.',
+  'tour.simple.preview.title': 'Results',
+  'tour.simple.preview.body':
+    'After a run this panel shows the win-share bar, how many of each side are left when a battle ends, and a Run again button. Try a run once the tour is over.',
+  'tour.simple.result.title': 'Reading the result',
+  'tour.simple.result.body':
+    'The bar splits the runs between the two sides, with draws in grey in the middle. The sentence below names the most common outcome and its 95% interval. “At the end of a battle” gives each side’s average still standing, fled and incapacitated. If most of the losing group fled, a note says its morale broke all at once, with a Why? link. The detailed cards and the seed are under Details.',
+  'tour.simple.share.title': 'Share a link',
+  'tour.simple.share.body':
+    'Copy settings link copies an address with the species, counts and seed. It opens in Simple mode, and its first run reuses that seed, so the other person gets the same result. Share result, below the result, makes a result card image and a result page link.',
+  'tour.simple.advanced.title': 'Going further: Advanced',
+  'tour.simple.advanced.body':
+    'Turn this on for the shared settings (runs, seed, time limit and more), a switch for each pack-buff effect, and the classic T. rex vs tiger lab with its trait range table and sensitivity chart. The manual explains every control.',
+  'tour.simple.manual': 'Manual: Advanced settings',
+
   'param.heavy.mass': 'Body mass',
   'param.heavy.speed': 'Speed',
   'param.heavy.turnRate': 'Turn rate',
@@ -587,8 +612,10 @@ export const en: Dictionary = {
   // Simple mode and the Advanced switch (#146, docs/design/RENEWAL-1.0.md §3.2)
   'view.advanced': 'Advanced',
   'view.advancedOff':
-    'Turn on for trait ranges, runs, seed and the other settings, and for the classic model (large vs group).',
+    'Turn on for runs, seed, time limit and the other shared settings, a switch for each pack-buff effect, and the classic T. rex vs tiger lab with its range table.',
   'view.advancedOn': 'Turn off to go back to Simple mode: just species and counts.',
+  'view.manual': 'Manual',
+  'view.manualNewTab': '(opens in a new tab)',
   'simple.presets': 'Presets',
   'simple.why': 'Background:',
   'simple.quickCounts': 'Quick picks',

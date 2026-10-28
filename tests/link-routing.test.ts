@@ -21,7 +21,12 @@ import {
   withSideSpecies,
 } from '../src/ui/free-form-model';
 import { defaultSimpleConfig, simpleCanShow, simpleRunConfig } from '../src/ui/simple-model';
-import { configFromHash, decodeConfig, hashFromConfig } from '../src/ui/share';
+import {
+  classicHashFromConfig,
+  configFromHash,
+  decodeConfig,
+  hashFromConfig,
+} from '../src/ui/share';
 import { freeConfigFromHash, hashFromFreeConfig } from '../src/ui/share-free';
 
 /*
@@ -584,4 +589,32 @@ describe('a link pasted into an open play page (hashchange, #154 review)', () =>
       expect(routeHashChange(hash, '?tour=1')).toBeNull();
     },
   );
+});
+
+describe('the classic address at the defaults (#158 review)', () => {
+  it('carries the bare v2 payload, so a copied classic link reopens classic', () => {
+    const hash = classicHashFromConfig(defaultConfig());
+    expect(hashFromConfig(defaultConfig())).toBe('');
+    expect(hash).toBe('#s=eyJ2IjoyfQ');
+    for (const search of ['', '?tour=1']) {
+      const route = routeLink(hash, search);
+      expect(route.mode).toBe('classic');
+      expect(route.config).toEqual(defaultConfig());
+      if (route.mode === 'classic') expect(route.check).toBeNull();
+    }
+    expect(routeHashChange(hash, '')).toEqual({ mode: 'classic', config: defaultConfig() });
+    expect(configFromHash(hash)).toEqual(defaultConfig());
+  });
+
+  it('writes exactly the old hash for every other config', () => {
+    const configs: ScenarioConfig[] = [
+      { ...defaultConfig(), runs: 100 },
+      { ...defaultConfig(), heavyCount: 3, packCount: 40, seed: 7 },
+      { ...defaultConfig(), morale: false },
+    ];
+    for (const c of configs) {
+      expect(classicHashFromConfig(c)).toBe(hashFromConfig(c));
+      expect(classicHashFromConfig(c)).not.toBe('');
+    }
+  });
 });

@@ -52,7 +52,7 @@ import {
   simpleKeepsAddress,
   type NavigationType,
 } from './simple-model';
-import { hashFromConfig } from './share';
+import { classicHashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
 import {
@@ -70,7 +70,15 @@ import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
 import './site-footer.css';
 import type { Tour } from './tour';
 import { createTourOffer } from './tour-offer';
-import { DEMO_RUNS, tourRequested, withoutTourParam } from './tour-model';
+import {
+  DEMO_RUNS,
+  manualHref,
+  tourFor,
+  tourRequested,
+  withoutTourParam,
+  type TourKind,
+  type TourTrigger,
+} from './tour-model';
 import { createVersionBadge, fillVersionFooter } from './version';
 import {
   formatShare,
@@ -260,14 +268,38 @@ export function startApp(root: HTMLElement): void {
     });
     box.checked = view === 'advanced';
     box.addEventListener('change', () => setView(box.checked ? 'advanced' : 'simple'));
+    // In Advanced mode a small link opens the guide's manual for the form shown (#158), in a new
+    // tab so the results on this page stay.
+    const manual =
+      view === 'advanced'
+        ? h(
+            'a',
+            {
+              class: 'view-manual',
+              attrs: {
+                href: manualHref(getLang(), mode === 'classic' ? 'advanced-classic' : 'advanced'),
+                target: '_blank',
+                rel: 'noopener',
+              },
+            },
+            h('span', { class: 'view-manual-icon', text: '?', attrs: { 'aria-hidden': 'true' } }),
+            h('span', { text: t('view.manual') }),
+            h('span', { class: 'visually-hidden', text: t('view.manualNewTab') }),
+          )
+        : null;
     return h(
       'div',
-      { class: 'view-switch' },
+      { class: 'view-switch', attrs: { 'data-tour': 'view-switch' } },
       h(
-        'label',
-        { class: 'view-switch-label', attrs: { for: id } },
-        box,
-        h('span', { text: t('view.advanced') }),
+        'div',
+        { class: 'view-switch-row' },
+        h(
+          'label',
+          { class: 'view-switch-label', attrs: { for: id } },
+          box,
+          h('span', { text: t('view.advanced') }),
+        ),
+        manual,
       ),
       h('small', {
         class: 'hint',
@@ -571,6 +603,9 @@ export function startApp(root: HTMLElement): void {
       writeUrl();
     },
     showToast,
+    // An open Simple tour leaves its results preview once results exist (also for runs it did not
+    // start), like the classic tour below.
+    onRunEnd: () => tours.simple?.refresh(),
     startHash,
     notice: newerLinkNote,
     view: view === 'simple' ? 'simple' : 'full',
@@ -653,7 +688,7 @@ export function startApp(root: HTMLElement): void {
     const fc = mode === 'free' ? free.getConfig() : null;
     const hash = fc
       ? hashFromFreeConfig(fc, { simple: view === 'simple' && simpleCanShow(fc) })
-      : hashFromConfig(config);
+      : classicHashFromConfig(config);
     if (hash === location.hash) return;
     history.replaceState(history.state, '', hash || `${location.pathname}${location.search}`);
   }
@@ -830,7 +865,7 @@ export function startApp(root: HTMLElement): void {
       renderProgress();
       renderCostNote();
       // An open tour leaves its results preview once results exist (also for runs it did not start).
-      tour?.refresh();
+      tours.classic?.refresh();
     }
   }
 
@@ -1120,9 +1155,10 @@ export function startApp(root: HTMLElement): void {
   });
 
   // ---------- guided tour ----------
-  // The tour loads on its first start (#80); the first-visit offer is a small startup module.
-  let tour: Tour | null = null;
-  let tourModule: Promise<Tour> | null = null;
+  // The tours load on their first start (#80); the first-visit offer is a small startup module.
+  // Simple mode has its own short tour (#158); the classic tour walks Advanced → classic.
+  const tours: Partial<Record<TourKind, Tour>> = {};
+  const tourModules = new Map<TourKind, Promise<Tour>>();
   let offer: ReturnType<typeof createTourOffer> = null;
   const tourHost = {
     hasResults: () => result !== null,
@@ -1136,29 +1172,47 @@ export function startApp(root: HTMLElement): void {
       return run();
     },
   };
-  const loadTour = (): Promise<Tour> =>
-    (tourModule ??= import('./tour').then(
-      (m) => (tour = m.createTour(tourHost)),
-      (err: unknown) => {
-        tourModule = null;
-        throw err;
-      },
-    ));
-  const startTour = (): void => {
+  // Simple's "run it now" is a normal Simple run (fresh seed, default run count).
+  const simpleTourHost = {
+    hasResults: () => free.hasResult(),
+    isRunning: () => free.isRunning(),
+    runDemo: () => free.runNow(),
+  };
+  const loadTour = (kind: TourKind): Promise<Tour> => {
+    let loading = tourModules.get(kind);
+    if (!loading) {
+      loading = import('./tour').then(
+        (m) =>
+          (tours[kind] = m.createTour(
+            kind === 'simple' ? simpleTourHost : tourHost,
+            m.tourSteps(kind),
+          )),
+        (err: unknown) => {
+          tourModules.delete(kind);
+          throw err;
+        },
+      );
+      tourModules.set(kind, loading);
+    }
+    return loading;
+  };
+  const startTour = (trigger: TourTrigger): void => {
+    if (tours.simple?.isOpen() || tours.classic?.isOpen()) return;
     offer?.remove();
     offer = null;
-    void loadTour().then(
+    const { kind, showClassic } = tourFor(view, trigger);
+    if (showClassic) show('advanced', 'classic');
+    void loadTour(kind).then(
       (t) => t.start(),
       () => undefined,
     );
   };
-  tourBtn.addEventListener('click', () => {
-    // The tour walks through the classic form and results (Advanced mode, classic).
-    show('advanced', 'classic');
-    startTour();
-  });
+  tourBtn.addEventListener('click', () => startTour('button'));
   // Warm the tour on intent, so a click opens it without a visible wait.
-  tourBtn.addEventListener('pointerenter', () => void loadTour().catch(() => undefined));
+  tourBtn.addEventListener(
+    'pointerenter',
+    () => void loadTour(tourFor(view, 'button').kind).catch(() => undefined),
+  );
 
   // Canvas text does not reflow when a web font arrives; redraw once Pretendard is ready.
   void document.fonts?.ready.then(() => {
@@ -1173,10 +1227,12 @@ export function startApp(root: HTMLElement): void {
     // Consume the deep link so a reload or a copied link does not restart the tour.
     const url = `${location.pathname}${withoutTourParam(location.search)}${location.hash}`;
     history.replaceState(history.state, '', url);
-    startTour();
+    startTour('link');
   } else {
-    offer = createTourOffer(startTour, () =>
-      document.querySelector<HTMLElement>('[data-tour="tour"]')?.focus({ preventScroll: true }),
+    offer = createTourOffer(
+      () => startTour('offer'),
+      () =>
+        document.querySelector<HTMLElement>('[data-tour="tour"]')?.focus({ preventScroll: true }),
     );
     if (offer) header.after(offer.el);
   }

@@ -6,7 +6,7 @@
     <title>How to use the simulator – T-Rex vs Tiger</title>
     <meta
       name="description"
-      content="Step-by-step guide to the T-Rex vs Tiger simulator: presets, parameter ranges, win probabilities, confidence intervals, sensitivity, replays and sharing."
+      content="How to use the simulator: Simple mode, every Advanced setting (pack buff, shared settings, classic lab), reading results and intervals, sharing and reproducing."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f7f6f3" media="(prefers-color-scheme: light)" />
@@ -31,12 +31,12 @@
           </nav>
           <h1>How to use the simulator: from your first run to reading the results</h1>
           <p class="lead">
-            A step-by-step walk through picking a preset, changing the assumptions, running the
-            simulation, reading the results and sharing them as a link. At the end you will find
-            three tutorial experiments to try yourself.
+            Get a first result in Simple mode, then learn what every Advanced setting does, how to
+            read each result card and chart, and how to share a run so others can reproduce it.
+            Three tutorial experiments at the end let you try it yourself.
           </p>
           <p class="page-meta">
-            Last updated <time datetime="2026-10-27">27 October 2026</time> · about a 10-minute read
+            Last updated <time datetime="2026-10-28">28 October 2026</time> · about a 20-minute read
           </p>
         </header>
 
@@ -45,13 +45,29 @@
           <ol>
             <li><a href="#before">Before you start</a></li>
             <li><a href="#layout">The screen at a glance</a></li>
-            <li><a href="#presets">Step 1: Pick the species or a matchup preset</a></li>
-            <li><a href="#scenario">Step 2: Set up the scenario</a></li>
-            <li><a href="#ranges">Step 3: Adjust parameter ranges</a></li>
-            <li><a href="#run">Step 4: Run and follow progress</a></li>
-            <li><a href="#results">Step 5: Read the results</a></li>
-            <li><a href="#replay">Step 6: Watch a battle replay</a></li>
-            <li><a href="#share">Step 7: Share a link</a></li>
+            <li><a href="#simple">Simple mode: pick, run, read</a></li>
+            <li>
+              <a href="#advanced">Advanced settings manual</a>
+              <ol>
+                <li><a href="#advanced-free">The free matchup form</a></li>
+                <li><a href="#advanced-traits">Trait ranges: min, mode and max</a></li>
+                <li><a href="#advanced-buff">Pack buff</a></li>
+                <li><a href="#advanced-globals">Global model constants</a></li>
+                <li><a href="#advanced-settings">Shared settings</a></li>
+                <li><a href="#advanced-budget">Work budget</a></li>
+                <li><a href="#advanced-classic">The classic lab</a></li>
+                <li><a href="#advanced-results">Reading the result cards</a></li>
+                <li><a href="#advanced-share">Sharing and reproducing</a></li>
+                <li><a href="#advanced-limits">Model limits and provisional calibration</a></li>
+              </ol>
+            </li>
+            <li><a href="#presets">Classic step 1: Pick the species or a matchup preset</a></li>
+            <li><a href="#scenario">Classic step 2: Set up the scenario</a></li>
+            <li><a href="#ranges">Classic step 3: Adjust parameter ranges</a></li>
+            <li><a href="#run">Classic step 4: Run and follow progress</a></li>
+            <li><a href="#results">Classic step 5: Read the results</a></li>
+            <li><a href="#replay">Classic step 6: Watch a battle replay</a></li>
+            <li><a href="#share">Classic step 7: Share a link</a></li>
             <li><a href="#tutorial">Tutorial: three experiments</a></li>
             <li><a href="#faq">Frequently asked questions</a></li>
             <li><a href="#troubleshooting">Troubleshooting</a></li>
@@ -64,10 +80,11 @@
             <p>
               The T-Rex vs Tiger Simulator explores one playground question with the Monte Carlo
               method: if N adult <i>Tyrannosaurus rex</i> met M adult tigers on an open plain, who
-              would win? Instead of showing a single fight, it draws plausible but uncertain traits
-              from the literature and from stated assumptions, simulates hundreds or thousands of
-              battles with slightly different values each time, and summarises them as probabilities
-              and distributions.
+              would win? It has since grown into a tool for pitting many species against each other,
+              from lions and wolves to elephants and mammoths. Instead of showing a single fight, it
+              draws plausible but uncertain traits from the literature and from stated assumptions,
+              simulates hundreds or thousands of battles with slightly different values each time,
+              and summarises them as probabilities and distributions.
             </p>
             <ul>
               <li>
@@ -99,21 +116,24 @@
             </p>
             <ul>
               <li>
-                <strong>Header</strong>: the title, a <em>Copy link</em> button that copies the
-                current settings as a URL, and the language button (<span lang="ko">한국어</span> ↔
-                English). Switching keeps your results and settings and moves the address to the
-                Korean (<code>/</code>) or English (<code>/en/</code>) version, so a bookmark or
-                shared link opens in the same language.
+                <strong>Header</strong>: the title, a <em>Copy settings link</em> button that copies
+                the current settings as a URL, the <em>Tutorial</em> button for the on-screen tour,
+                and the language button (<span lang="ko">한국어</span> ↔ English). Switching keeps
+                your results and settings and moves the address to the Korean (<code>/play/</code>)
+                or English (<code>/en/play/</code>) version, so a bookmark or shared link opens in
+                the same language.
               </li>
               <li>
-                <strong>Scenario panel</strong>: species, matchup presets, the basic settings (head
-                counts, number of runs, time limit and so on), the advanced parameter-range table,
-                and, pinned to the bottom of the panel, the <em>Run simulation</em> button with its
-                progress bar.
+                <strong>Settings panel</strong>: the <em>Advanced</em> switch sits at the top. Off,
+                you get <a href="#simple">Simple mode</a> with presets and each side’s species and
+                count; on, you get <a href="#advanced">every setting</a> of the free matchup or the
+                classic model. The <em>Run simulation</em> button and its progress bar are pinned to
+                the bottom of the panel.
               </li>
               <li>
-                <strong>Results panel</strong>: once a run finishes it shows a one-line verdict,
-                summary cards, four charts and an animated battle replay.
+                <strong>Results panel</strong>: once a run finishes it shows the win shares and the
+                verdict, what happened to each side, summary cards and a battle replay, plus four
+                charts in the classic model.
               </li>
               <li>
                 <strong>Footer</strong>: a reminder that this is an educational model, plus links to
@@ -122,8 +142,713 @@
             </ul>
           </section>
 
+          <section id="simple">
+            <h2>Simple mode: pick, run, read</h2>
+            <p>
+              Open the simulator without any settings in the link and you land in Simple mode. You
+              choose the species and the numbers; everything else runs at its default. On a first
+              visit, press <em>Start the tour</em> in the banner under the header, or the
+              <em>Tutorial</em> button at any time, for a five-step tour of exactly this screen.
+            </p>
+            <ol class="steps">
+              <li>
+                <strong>Choose a match-up.</strong> A <em>Presets</em> button sets both species and
+                counts at once and shows a line on why that match-up is there. To build your own,
+                pick a species for side A and side B. A species may face its own kind.
+              </li>
+              <li>
+                <strong>Set the numbers.</strong> Use the quick buttons (1 · 2 · 5 · 10 · 50 · 100 ·
+                1,000) or type a count: up to 5,000 per side and 5,500 in total. For species that
+                fight as a group (lion, wolf, spotted hyena, <i>Homo erectus</i>) the quick buttons
+                stop at 100, because a large group’s morale tends to break all at once; type a
+                number if you want more.
+              </li>
+              <li>
+                <strong>Run.</strong> Every press of <em>Run simulation</em> draws a fresh seed and
+                plays the match-up a few hundred times. Very large counts lower the number of runs
+                to fit the <a href="#advanced-budget">work budget</a>.
+              </li>
+              <li>
+                <strong>Read the result.</strong> The win-share bar (side A blue, side B orange,
+                draws grey) comes first, then a sentence naming the most common outcome with its 95%
+                interval. <em>At the end of a battle (mean)</em> lists, for each side, how many were
+                still standing, how many fled and how many were incapacitated on average; the three
+                add up to the side’s count. The run count, the seed and the summary cards sit under
+                <em>Details</em>.
+              </li>
+              <li>
+                <strong>The rout note.</strong> When a group that shares morale lost, and in those
+                losses 80% or more of it fled rather than being incapacitated, a note says its
+                morale broke all at once. That is not a bug: each departure and each incapacitated
+                ally lowered the others’ morale in a chain. The <em>Why?</em> link explains the
+                rule.
+              </li>
+              <li>
+                <strong>Share.</strong> <em>Copy settings link</em> copies an address holding the
+                species, counts and seed. It reopens in Simple mode, and its first run reuses the
+                seed, so whoever opens it sees the same numbers. <em>Share result</em> makes a
+                result card image and a result page link (<a href="#advanced-share"
+                  >sharing and reproducing</a
+                >).
+              </li>
+            </ol>
+            <p>
+              Runs, seed, time limit, the pack buff and the rest are hidden in Simple mode. To reach
+              them, switch on <a href="#advanced">Advanced</a>.
+            </p>
+          </section>
+
+          <section id="advanced">
+            <h2>Advanced settings manual</h2>
+            <p>
+              The <strong>Advanced</strong> switch at the top of the settings panel reveals every
+              setting Simple mode keeps out of the way. Your species, counts and results stay where
+              they are, and switching it off takes you back to Simple mode. Simple mode does not use
+              values you changed under Advanced and says so when there are any. The
+              <em>Manual</em> link next to the switch opens this section in a new tab.
+            </p>
+            <p>Under the switch you choose between two models.</p>
+            <ul>
+              <li>
+                <strong>Free matchup</strong>: a symmetric model in which either side can be any
+                species. Simple mode runs on it too. Everything from
+                <a href="#advanced-free">the free matchup form</a> to
+                <a href="#advanced-budget">the work budget</a> describes this form.
+              </li>
+              <li>
+                <strong>Classic (large vs group)</strong>: the original <i>T. rex</i> vs tiger model
+                this site started with. With its editable range table and sensitivity chart it works
+                as a lab for testing one assumption at a time (<a href="#advanced-classic"
+                  >the classic lab</a
+                >).
+              </li>
+            </ul>
+
+            <h3 id="advanced-free">The free matchup form</h3>
+            <dl class="facts">
+              <div>
+                <dt>Species of side A and side B</dt>
+                <dd>
+                  Chosen from one list grouped into living and extinct species. Each side holds one
+                  species, and both sides may hold the same one; such a match-up is labelled
+                  “Same-species match-up”, and over many runs both sides should win about equally
+                  often. Picking a new species resets that side’s trait ranges to the new species’
+                  presets.
+                </dd>
+              </div>
+              <div>
+                <dt>Count</dt>
+                <dd>
+                  1–5,000 per side and at most 5,500 together. If the total is too high, side B
+                  gives way.
+                </dd>
+              </div>
+              <div>
+                <dt>Species badges</dt>
+                <dd>
+                  <em>Social species / Solitary species</em> tells you whether the species can get
+                  the pack buff (lion, gray wolf, spotted hyena, <i>Homo erectus</i>).
+                  <em>Can latch onto large targets / Frontal strikes only</em> tells you whether it
+                  can grab and hold on (tiger, lion, wolf, hyena, <i>Homo erectus</i>). With a count
+                  of two or more, a third badge reads <em>Pack buff active</em>,
+                  <em>Pack buff off</em> or <em>Individuals act alone</em>.
+                </dd>
+              </div>
+              <div>
+                <dt><i>Homo erectus</i> note</dt>
+                <dd>
+                  Whenever <i>Homo erectus</i> is picked, a note says it is a thought experiment
+                  that compares physical capability only: no clothing, tools or weapons.
+                </dd>
+              </div>
+              <div>
+                <dt>Copy settings code</dt>
+                <dd>
+                  Copies the current settings as a code starting with <code>TVT3-</code>. Where to
+                  paste it is under <a href="#advanced-share">sharing and reproducing</a>.
+                </dd>
+              </div>
+            </dl>
+
+            <h3 id="advanced-traits">Trait ranges: min, mode and max</h3>
+            <p>
+              Every animal fights with its species’ <strong>20 individual traits</strong>, and no
+              trait is a single number. Each is a triangular distribution given by
+              <strong>min, mode and max</strong>: min and max bound the plausible values, and the
+              mode is the most plausible one. Each run draws one value per trait as that run’s
+              species average; with an individual variation (CV) above zero, the animals in that run
+              then scatter around it. A wide range therefore shows up as a wide spread of outcomes:
+              it is how “we are not sure about this number” enters the results.
+            </p>
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-free-traits"
+            >
+              <table>
+                <caption id="caption-free-traits">
+                  Individual traits in the free model
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Group</th>
+                    <th scope="col">Traits</th>
+                    <th scope="col">What they do</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Body</th>
+                    <td>Mass (kg), body radius (m)</td>
+                    <td>
+                      Health is proportional to mass, and the mass ratio decides who can latch on
+                      and who knocks whom back. The radius enters collisions and strike reach.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Movement</th>
+                    <td>Turn rate, sprint speed, cruise speed, sprint endurance, recovery time</td>
+                    <td>
+                      Within 60 m of its target an animal sprints and spends stamina; exhausted, it
+                      backs off to recover. Turn rate decides who gets the other into its strike
+                      cone first.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Strikes</th>
+                    <td>
+                      Strike force (kN), lethality (HP/kN), strike interval, reach, arc, accuracy
+                    </td>
+                    <td>
+                      An animal strikes whatever is in its frontal cone at a fixed interval. A hit
+                      deals force × lethality, scaled by a random factor between 0.7 and 1.3.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Latching</th>
+                    <td>Latch chance, latch endurance, latch damage (HP/s)</td>
+                    <td>
+                      Used only by species that can latch, and only on a target heavy enough (three
+                      times its own mass by default). For every other species they are fixed at
+                      neutral values and never read.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Shaking off, bleeding</th>
+                    <td>Shake rate (1/s), bleed rate (1/s)</td>
+                    <td>
+                      How readily an animal throws off riders, and how fast the wounds this side
+                      inflicts keep draining the other side’s health.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Morale</th>
+                    <td>Morale (0–1), morale loss (0–1)</td>
+                    <td>
+                      Below 0.2 an animal flees. Bigger wounds cost more morale; morale loss is what
+                      a group animal gives up when a nearby ally is incapacitated.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              Mass, speeds, strikes and the other per-animal traits take the individual variation;
+              body radius, lethality, bleed rate and the pack-buff traits are drawn once per run.
+              Most preset ranges rest on the same sources as the
+              <a href="/en/parameters/#species">species tables on the parameters page</a>. Traits
+              the classic model never needed for a role, such as stamina for the large animals, are
+              new assumptions.
+            </p>
+            <div class="note">
+              <p>
+                <strong>Can I edit the ranges on screen?</strong> Not yet. The free form uses the
+                chosen species’ preset ranges; a trait table is planned for the next round of the
+                redesign. A settings code or link that carries edited ranges is already honoured,
+                and the run uses its values. To change ranges one by one today, use the range table
+                in <a href="#advanced-classic">the classic lab</a>.
+              </p>
+            </div>
+
+            <h3 id="advanced-buff">Pack buff</h3>
+            <p>
+              The pack buff is a separate layer on top of the individual model. It only exists for a
+              social species with at least two on its side, and it switches on and off
+              <strong>for each animal</strong>, not for the side as a whole. It never adds raw
+              damage. What it changes is who attacks whom, from where, how often a grab succeeds and
+              how long courage holds.
+            </p>
+            <ul>
+              <li>
+                <strong>On</strong> when the species is social, at least one effect is switched on,
+                the animal is not fleeing, and another ally is inside its cohesion radius (about 60
+                m by default for lions, wolves and hyenas, about 30 m for <i>Homo erectus</i>).
+              </li>
+              <li>
+                <strong>Off</strong> when no ally has been inside the radius for longer than the
+                grace period (2 s by default), or when the animal flees or is incapacitated. A last
+                survivor fights on its own traits.
+              </li>
+              <li>
+                <strong>Solitary species</strong> (tiger, brown bear, <i>T. rex</i> and others)
+                never get it, however many there are. Crowding around one target makes them get in
+                each other’s way instead, which lowers their accuracy and latch chance.
+              </li>
+            </ul>
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-free-buff">
+              <table>
+                <caption id="caption-free-buff">
+                  The five pack-buff effects
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Switch</th>
+                    <th scope="col">What a buffed animal does</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Coordinated approach</th>
+                    <td>
+                      Against a much heavier opponent, the group spreads out around its rear and
+                      steps out of its frontal strike cone. With Coordinated approach on, buffed
+                      animals never obstruct each other.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Shared target</th>
+                    <td>
+                      Prefers the opponent allies are already fighting, and switches together when
+                      that opponent drops out.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Group latching</th>
+                    <td>
+                      The more allies already hold on, the likelier the next grab (up to twice the
+                      base chance), and the slower the held opponent turns.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Morale support and contagion</th>
+                    <td>
+                      Outnumbering the enemy nearby raises courage, being outnumbered lowers it (by
+                      at most 0.1). A nearby ally being incapacitated or fleeing costs morale, with
+                      a cap on how much can go at once. With morale &amp; routing off, this effect
+                      is off too.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Relief</th>
+                    <td>
+                      A tired rider lets go and hands its opponent to a fresh ally nearby instead of
+                      hanging on until exhausted.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              The switches appear when either side is a social species and apply to both sides. With
+              all of them off, a social species behaves exactly like a solitary one, so you can
+              measure how much the buff matters by running the same match-up both ways. Each social
+              species also carries six pack-buff traits (cohesion radius, group-latch gain, focus
+              bonus, morale support, rout shock and relief stamina), drawn from their ranges every
+              run. The <em>Pack-buff rules</em> disclosure in the form sums all of this up.
+            </p>
+
+            <h3 id="advanced-globals">Global model constants</h3>
+            <p>
+              Five assumptions are shared by both sides. Like the traits, each is drawn from a min,
+              mode and max every run; on screen they are fixed at their preset ranges for now.
+            </p>
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-free-globals"
+            >
+              <table>
+                <caption id="caption-free-globals">
+                  Global model constants and their preset ranges
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Constant</th>
+                    <th scope="col">Min / mode / max</th>
+                    <th scope="col">Meaning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Latch mass ratio</th>
+                    <td>2 / 3 / 5 ×</td>
+                    <td>A target must be at least this many times heavier to be latched onto.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Knock-back mass ratio</th>
+                    <td>1.5 / 2 / 4 ×</td>
+                    <td>
+                      A hit only sends the target reeling back to recover when the striker is at
+                      least this many times heavier.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Wound reference</th>
+                    <td>0.05 / 0.1 / 0.2</td>
+                    <td>
+                      Losing this share of maximum health in one blow costs the full wound-morale
+                      penalty; smaller wounds cost proportionally less.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Crowding interference</th>
+                    <td>0 / 0.1 / 0.3</td>
+                    <td>
+                      How much each extra ally on the same target that is not exempt by Coordinated
+                      approach cuts accuracy and latch chance.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Buff grace period</th>
+                    <td>0 / 2 / 5 s</td>
+                    <td>How long an animal outside the cohesion radius keeps its buff.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 id="advanced-settings">Shared settings</h3>
+            <div
+              class="table-wrap"
+              role="region"
+              tabindex="0"
+              aria-labelledby="caption-free-settings"
+            >
+              <table>
+                <caption id="caption-free-settings">
+                  Shared settings of the free form
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Setting</th>
+                    <th scope="col">Range (default)</th>
+                    <th scope="col">What it does</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Monte Carlo runs</th>
+                    <td>1–20,000 (500)</td>
+                    <td>
+                      How often the match-up is repeated. More runs narrow the 95% interval: near a
+                      50% share, 500 runs give about ±4.4 percentage points.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Seed</th>
+                    <td>0–4,294,967,295 (20261019)</td>
+                    <td>
+                      Where the random numbers start. The same seed with the same settings gives
+                      exactly the same results. Under Advanced the seed stays until you change it;
+                      Simple mode draws a new one for every run.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Arena side</th>
+                    <td>100–5,000 m (600 m)</td>
+                    <td>A square arena. An animal that flees across the edge leaves the battle.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Time limit</th>
+                    <td>30–3,600 s (1,200 s)</td>
+                    <td>
+                      A side wins the moment the other has no fighter left. If that has not happened
+                      by the time limit, or both sides run out at the same moment, it is a draw.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Individual variation (CV)</th>
+                    <td>0–0.3 (0.08)</td>
+                    <td>
+                      The coefficient of variation between animals within one run. At 0 every animal
+                      uses that run’s values exactly.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Sampling</th>
+                    <td>LHS (default) or simple random</td>
+                    <td>
+                      Latin hypercube sampling covers all the ranges more evenly for the same number
+                      of runs. Keep LHS unless you have a reason not to.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Morale &amp; routing</th>
+                    <td>On (default)</td>
+                    <td>
+                      On: an animal on either side whose morale falls below 0.2 flees. Off: nobody
+                      flees, everyone fights until incapacitated, and the pack buff’s morale effect
+                      is off as well.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 id="advanced-budget">Work budget</h3>
+            <p>
+              So that a single shared link can never freeze a browser, the amount of work per batch
+              is capped. Work is
+              <strong>runs × (time limit ÷ 0.1 s) × both sides’ total count</strong>, and a setup in
+              which the pack buff can act (a social species with any effect on) counts 2.5 times,
+              because it is heavier to compute. Above 5×10¹⁰ the number of runs is lowered to fit,
+              and the runs field shows the lowered value.
+            </p>
+            <p>
+              Take 1,000 wolves against 1,000 tigers at the default 1,200 s limit: one run is 12,000
+              steps × 2,000 animals × 2.5 = 60 million, so at most 833 runs fit. A shorter limit or
+              smaller counts leave room for more. In Simple mode, shrinking the counts again gives
+              you the full run count back.
+            </p>
+
+            <h3 id="advanced-classic">The classic lab</h3>
+            <p>
+              Choosing <strong>Classic (large vs group)</strong> opens the site’s original model.
+              One <strong>large animal</strong> species that fights alone (<i>T. rex</i>, elephant,
+              buffalo, brown bear, mammoth, <i>Homo erectus</i>) faces one
+              <strong>group animal</strong> species that attacks in numbers (tiger, lion, wolf,
+              hyena, <i>Homo erectus</i>), and the two roles follow different rules. It is a
+              different model from the free matchup, so the same pairing can give different numbers.
+            </p>
+            <ul>
+              <li>
+                <strong>Nine matchup presets</strong> and counts of 1–500 large and 1–5,000 group
+                animals, listed in <a href="#presets">classic step 1</a>.
+              </li>
+              <li>
+                <strong>Scenario settings</strong>: runs, time limit, arena, individual variation,
+                sampling, seed (with a Random button), group tactic (flank or direct) and morale.
+                Here morale and fleeing apply to the <em>group side only</em>. See
+                <a href="#scenario">classic step 2</a>.
+              </li>
+              <li>
+                <strong>The range table</strong>: all 22 parameters (11 per role) editable as min,
+                mode and max (<a href="#ranges">classic step 3</a>).
+              </li>
+              <li>
+                <strong>Results</strong>: verdict, summary cards with the exchange ratio, four
+                charts (outcomes, duration, survivors, sensitivity) and the replay (<a
+                  href="#results"
+                  >classic step 5</a
+                >).
+              </li>
+              <li>
+                <strong>Export · import settings</strong>: copy a code, save or load a .json file,
+                or paste a code or link. Pasting a free code (<code>TVT3-</code>) opens it in the
+                free form.
+              </li>
+            </ul>
+            <p>
+              The classic screen has its own step-by-step tour of every input and chart. Under
+              Advanced, the header’s <em>Tutorial</em> button switches to classic and starts it, and
+              it can run a quick 100-run demo so the result steps have something to show.
+            </p>
+
+            <h3 id="advanced-results">Reading the result cards</h3>
+            <p>
+              A free-matchup result under Advanced opens with the verdict sentence and its 95%
+              interval, the rout note when it applies, a reminder of the model’s limits and the
+              run’s basis (sides, runs, seed, compute time). The banner saying the free model is
+              still being calibrated is explained <a href="#advanced-limits">below</a>. The cards
+              that follow:
+            </p>
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-free-cards">
+              <table>
+                <caption id="caption-free-cards">
+                  Free-matchup result cards
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Card</th>
+                    <th scope="col">How to read it</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Side A wins, side B wins, draw</th>
+                    <td>
+                      The share of runs with that outcome and its Wilson 95% confidence interval.
+                      The interval covers the sampling error of a finite number of runs, not whether
+                      the assumptions are right.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Battle duration (median)</th>
+                    <td>The median time until the battle ended, with its 5–95% range.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Still standing, fled, incapacitated (mean)</th>
+                    <td>
+                      Per side, the average number still fighting at the end, gone, and
+                      incapacitated, each with its share of the side. They add up to the side’s
+                      count, and the winning side can lose some of its own too.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Pack buff active (mean)</th>
+                    <td>
+                      Only for a buffed social side of two or more. The large number is the average
+                      share of animal-time spent buffed; the small print is the median time during
+                      which at least one animal had the buff.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              <strong>The rout note</strong> appears only when the side that won fewer runs shares
+              morale (a social species of two or more, with morale &amp; routing and the
+              morale-support switch on) and, in the runs it lost, at least 80% of it fled rather
+              than being incapacitated. A solitary species never gets the note: each animal decides
+              to flee on its own, so there is no group morale to break.
+            </p>
+            <p>
+              <strong>The replay</strong> re-simulates one run with its seed. The
+              <em>representative battle</em> is, among the runs with the most common outcome, the
+              one whose duration is closest to the median; <em>Random battle</em> picks any run.
+              Animals with a body radius of 1 m or more are triangles pointing where they face,
+              smaller ones are dots; side A is blue and side B orange. A thin ring marks a buffed
+              animal, grey one that fled, and a cross one that is incapacitated. The shapes are
+              symbols for position and state, not pictures of animals.
+            </p>
+            <p>
+              The free matchup has no charts or sensitivity analysis yet. To see which assumption
+              drives a result, use the <a href="#results">charts and sensitivity chart</a> of the
+              classic lab.
+            </p>
+
+            <h3 id="advanced-share">Sharing and reproducing</h3>
+            <ul>
+              <li>
+                <strong>Settings links.</strong> Under Advanced, every change is written into the
+                address (<code>#s=…</code>), and <em>Copy settings link</em> copies it. A link made
+                under Advanced opens the free form; a classic link opens classic. Only links made in
+                Simple mode reopen in Simple mode.
+              </li>
+              <li>
+                <strong>Settings codes and files.</strong> <em>Copy settings code</em> gives a
+                <code>TVT3-</code> code in the free form and a <code>TVT2-</code> code in classic.
+                Under <em>Export · import settings</em> on the classic screen, a classic code
+                (<code>TVT2-</code>), a classic link or a .json file shows a preview first and is
+                applied only when you confirm it. A free code (<code>TVT3-</code>) or a free-matchup
+                link is applied straight away and opens in the free form.
+              </li>
+              <li>
+                <strong>Result links.</strong> <em>Share result</em> below a result makes a
+                <code>/r/</code> link with a snapshot of the numbers and the settings. The result
+                page saves a story (9:16) or square (1:1) card image, shares a text summary, and
+                offers <em>Run it yourself</em>.
+              </li>
+              <li>
+                <strong>Seeds.</strong> Links carry the seed, so the same browser engine (Chrome and
+                Edge, say) reproduces the result exactly. A different engine, such as Safari, may
+                let single battles diverge, but the win shares agree statistically.
+              </li>
+              <li>
+                <strong>Model versions.</strong> A free link records the model version, so after a
+                model change an old link still runs the version it was made with. A link from a
+                newer version than the page you have opens the defaults, with a note that reloading
+                fetches the newest version.
+              </li>
+            </ul>
+            <p>
+              A simulator opened with <em>Run it yourself</em> checks your run against the shared
+              snapshot, as long as you run it without changing anything, and reports one of the
+              following.
+            </p>
+            <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-repro">
+              <table>
+                <caption id="caption-repro">
+                  Reproduction check messages
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Message</th>
+                    <th scope="col">Meaning</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <th scope="row">Exactly the same</th>
+                    <td>
+                      The run count and every win count match the snapshot exactly, usually because
+                      the browser engine matches.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Reproduced</th>
+                    <td>The shared win shares fall inside this run’s 95% confidence intervals.</td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Differs</th>
+                    <td>
+                      Some shared win shares fall outside them. Try again with more runs before
+                      reading much into it.
+                    </td>
+                  </tr>
+                  <tr>
+                    <th scope="row">Not checked</th>
+                    <td>
+                      The settings were changed before the run, so there is nothing to compare.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <h3 id="advanced-limits">Model limits and provisional calibration</h3>
+            <p>
+              The free model is <strong>still being calibrated</strong>. Until a report compares its
+              win shares with the classic model on every match-up both can express, read its numbers
+              as provisional. If calibration changes the preset ranges, the model version goes up
+              and old links keep reproducing under their own version.
+            </p>
+            <ul>
+              <li>
+                Results follow from assumptions; they are not predictions. Many of these species
+                never met, and the interaction rules (latching, knock-back, bleeding, morale, the
+                pack buff) and a good share of the ranges are estimates rather than measurements.
+              </li>
+              <li>
+                One species per side, on a flat arena with no cover. Terrain, hiding places, the
+                motive of a hunt or a carcass, and herd defence (elephants, buffalo or mammoths
+                guarding their young) are not modelled yet.
+              </li>
+              <li>
+                Animals follow simple rules; they do not learn or change plans. The pack buff, too,
+                is a handful of rules distilled from observed hunting behaviour.
+              </li>
+              <li>
+                The 95% intervals reflect the number of runs only, not the chance that a range
+                itself is wrong.
+              </li>
+            </ul>
+            <p>
+              For the reasoning and the full list, see
+              <a href="/en/model/#limitations">the limitations on the model page</a>.
+            </p>
+          </section>
+
           <section id="presets">
-            <h2>Step 1: Pick the species or a matchup preset</h2>
+            <h2>Classic step 1: Pick the species or a matchup preset</h2>
+            <div class="note">
+              <p>
+                Steps 1 to 7 cover <a href="#advanced-classic">the classic lab</a>. To get there,
+                switch on <em>Advanced</em> and choose <em>Classic (large vs group)</em>.
+              </p>
+            </div>
             <p>
               At the top of the scenario panel, choose the species of the
               <strong>large animal</strong> (the side that fights alone) and of the
@@ -140,7 +865,7 @@
             <div class="table-wrap" role="region" tabindex="0" aria-labelledby="caption-presets">
               <table>
                 <caption id="caption-presets">
-                  The seven matchup presets
+                  The nine classic matchup presets
                 </caption>
                 <thead>
                   <tr>
@@ -244,7 +969,7 @@
           </section>
 
           <section id="scenario">
-            <h2>Step 2: Set up the scenario</h2>
+            <h2>Classic step 2: Set up the scenario</h2>
             <p>
               The fields below the presets let you fine-tune the scenario. A value outside the
               allowed range is moved to the nearest allowed value when you leave the field. Every
@@ -320,7 +1045,7 @@
           </section>
 
           <section id="ranges">
-            <h2>Step 3: Adjust parameter ranges</h2>
+            <h2>Classic step 3: Adjust parameter ranges</h2>
             <p>
               Open <em>Advanced: model parameter ranges</em> to see 22 parameters, 11 for the T-Rex
               and 11 for the tigers. Each parameter is not a single number but a triangular
@@ -355,7 +1080,7 @@
           </section>
 
           <section id="run">
-            <h2>Step 4: Run and follow progress</h2>
+            <h2>Classic step 4: Run and follow progress</h2>
             <ol class="steps">
               <li>
                 Press <strong>Run simulation</strong>. The button is pinned to the bottom of the
@@ -386,7 +1111,7 @@
           </section>
 
           <section id="results">
-            <h2>Step 5: Read the results</h2>
+            <h2>Classic step 5: Read the results</h2>
             <p>
               When the runs finish, the top of the results panel states the most likely outcome in
               one sentence, for example “T-Rex win probability 100.0% (95% CI 99.2%–100.0%)”. The
@@ -476,7 +1201,7 @@
           </section>
 
           <section id="replay">
-            <h2>Step 6: Watch a battle replay</h2>
+            <h2>Classic step 6: Watch a battle replay</h2>
             <p>
               Below the results you can watch one of the computed battles as an animation. The
               replay re-computes that battle with the same seed, so it unfolds exactly as the battle
@@ -510,12 +1235,12 @@
           </section>
 
           <section id="share">
-            <h2>Step 7: Share a link</h2>
+            <h2>Classic step 7: Share a link</h2>
             <p>
               Every change you make is written to the end of the URL in the address bar
               (<code>#s=…</code>).
-              <strong>Copy link</strong> puts that URL on your clipboard; whoever opens it gets
-              exactly your settings.
+              <strong>Copy settings link</strong> puts that URL on your clipboard; whoever opens it
+              gets exactly your settings.
             </p>
             <ul>
               <li>
@@ -525,8 +1250,9 @@
                 probabilities and distributions agree statistically.
               </li>
               <li>
-                Only settings that differ from the defaults are stored, which keeps links short.
-                With all defaults, the <code>#s=</code> part disappears.
+                Only settings that differ from the defaults are stored, which keeps links short. At
+                all defaults a short <code>#s=</code> marker remains, so the link still reopens the
+                classic simulator.
               </li>
               <li>
                 Browsers never send the part after <code>#</code> (the fragment) to the server, so
@@ -549,15 +1275,18 @@
               seed.
             </p>
             <p>
-              If you prefer to be guided on screen,
-              <a href="/en/play/?tour=1">start the interactive tour</a>. It highlights each input
-              and result chart on the simulator in turn and can run a quick 100-run demo. You can
-              reopen it at any time with the <em>Tutorial</em> button in the simulator header.
+              The experiments use <a href="#advanced-classic">the classic lab</a>. If you prefer to
+              be guided on screen,
+              <a href="/en/play/?tour=1">start the interactive classic tour</a>. It highlights each
+              input and result chart in turn and can run a quick 100-run demo. The
+              <em>Tutorial</em> button in the header opens the short Simple-mode tour while you are
+              in Simple mode, and this classic tour while you are under Advanced.
             </p>
             <h3>Experiment 1. Run the default scenario</h3>
             <ol class="steps">
               <li>
-                Open the simulator and press the <em>10 T-Rex vs 100 tigers (default)</em> preset.
+                Open the simulator, switch on <em>Advanced</em>, choose <em>Classic</em>, and press
+                the <em>10 T-Rex vs 100 tigers (default)</em> preset.
               </li>
               <li>
                 Press <em>Run simulation</em> and wait. It usually takes a few seconds to a few tens
@@ -607,8 +1336,8 @@
                 of assumptions, not on any single one.
               </li>
               <li>
-                When you find an interesting setup, save it with <em>Copy link</em> or send it to a
-                friend.
+                When you find an interesting setup, save it with <em>Copy settings link</em> or send
+                it to a friend.
               </li>
             </ol>
             <p>
