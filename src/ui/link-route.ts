@@ -4,8 +4,14 @@ import { defaultConfig, type ScenarioConfig } from '../sim/config';
 import type { FreeConfig } from '../sim/free/config';
 import { hasTourParam, hashHasAppState } from '../pages/routes';
 import { configFromHash } from './share';
-import { freeConfigFromHash, freeHashModelNewer } from './share-free';
-import { defaultSimpleConfig } from './simple-model';
+import {
+  freeConfigFromHash,
+  freeHashModelNewer,
+  freeModelVersion,
+  freePayloadFromHash,
+  freePayloadSimple,
+} from './share-free';
+import { defaultSimpleConfig, simpleCanShow } from './simple-model';
 
 /*
  * Link routing (docs/SHARING.md#link-routing): what a simulator fragment opens. The app reads its
@@ -14,7 +20,8 @@ import { defaultSimpleConfig } from './simple-model';
  * lobby (`/`, `/en/`) is first forwarded to the play page with its fragment unchanged
  * (`playForwardUrl` in src/pages/routes.ts), so it opens exactly as it did on `/` before.
  * A cold play page, with no app state to open, shows Simple mode (#146): no link the lobby
- * forwards is cold, so every old link opens as before.
+ * forwards is cold, so every old link opens as before. A link written by Simple mode carries the
+ * marker `ui: "simple"` (#154) and opens Simple again; no link made before #154 carries it.
  */
 
 /** What a fragment opens: the mode, its config and the shared snapshot of a "Run it yourself" link. */
@@ -27,15 +34,20 @@ export type LinkRoute =
       check: FreeResultSummary | null;
     }
   | { mode: 'classic'; config: ScenarioConfig; check: ResultSummary | null }
-  /** A cold play page: Simple mode on the free engine, at the default preset. */
-  | { mode: 'simple'; config: FreeConfig; check: null };
+  /**
+   * Simple mode on the free engine: a cold play page (the default preset, no check) or a link
+   * Simple mode wrote (its config, and the free reproduction check when `chk=` validates).
+   */
+  | { mode: 'simple'; config: FreeConfig; check: FreeResultSummary | null };
 
 /**
  * Route a location hash and query. A cold page (a fragment without app state, `hashHasAppState`,
  * and no `tour` parameter, `hasTourParam`) opens Simple mode. Otherwise a v3 payload
- * (`m: "free"`) opens free mode, and anything else (v1 and v2 payloads, a bare `#chk=`, a
- * malformed payload, a settings code in the fragment, the tour deep link without a fragment)
- * opens classic, with the defaults where the fragment holds no config.
+ * (`m: "free"`) opens Simple mode when it carries the Simple marker, names a model this build
+ * runs and Simple can show its config (`simpleCanShow`, #154), else free mode. Anything else (v1
+ * and v2 payloads, a bare `#chk=`, a malformed payload, a settings code in the fragment, the tour
+ * deep link without a fragment) opens classic, with the defaults where the fragment holds no
+ * config.
  */
 export function routeLink(hash: string, search: string): LinkRoute {
   if (!hashHasAppState(hash) && !hasTourParam(search)) {
@@ -43,13 +55,44 @@ export function routeLink(hash: string, search: string): LinkRoute {
   }
   const free = freeConfigFromHash(hash);
   if (free) {
+    const newerModel = freeHashModelNewer(hash);
+    const check = freeCheckFromHash(hash, free);
+    // Only a model this build runs: a newer or malformed `mv` opens the free defaults as before,
+    // marker or not (ADR-0008 §6).
+    const raw = freePayloadFromHash(hash);
+    const runsHere = raw !== null && freeModelVersion(raw) !== null;
+    if (runsHere && freePayloadSimple(raw) && simpleCanShow(free)) {
+      return { mode: 'simple', config: free, check };
+    }
     return {
       mode: 'free',
       config: free,
-      newerModel: freeHashModelNewer(hash),
-      check: freeCheckFromHash(hash, free),
+      newerModel,
+      check,
     };
   }
   const config = configFromHash(hash) ?? defaultConfig();
   return { mode: 'classic', config, check: checkFromHash(hash, config) };
+}
+
+/** What a fragment pasted into an open play page (`hashchange`) opens, if anything. */
+export type HashChangeRoute =
+  | { mode: 'simple'; config: FreeConfig }
+  | { mode: 'free'; config: FreeConfig }
+  | { mode: 'classic'; config: ScenarioConfig }
+  | null;
+
+/**
+ * The open page's answer to a changed fragment (#154 review): a Simple link opens Simple, as on
+ * load (`routeLink`); any other free link the free form; a classic payload classic. A fragment
+ * with no config the page can read (a plain anchor, a bare `#chk=`, a settings code, a malformed
+ * payload) changes nothing, as before.
+ */
+export function routeHashChange(hash: string, search: string): HashChangeRoute {
+  if (!hashHasAppState(hash)) return null;
+  const route = routeLink(hash, search);
+  if (route.mode === 'simple') return { mode: 'simple', config: route.config };
+  if (route.mode === 'free') return { mode: 'free', config: route.config };
+  const c = configFromHash(hash);
+  return c ? { mode: 'classic', config: c } : null;
 }

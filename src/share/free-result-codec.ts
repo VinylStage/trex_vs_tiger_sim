@@ -9,8 +9,10 @@ import {
   freeConfigFromObject,
   freeModelVersion,
   freePayloadFromHash,
+  freePayloadSimple,
   hashFromFreeConfig,
   isFreePayload,
+  type FreeLinkOptions,
 } from '../ui/share-free.ts';
 import {
   CHECK_KEY,
@@ -25,7 +27,8 @@ import {
  * Result links of free matchups (docs/SHARING.md#free-result-links, design §2.5):
  * `/r/?r=<base64url(JSON {v: 2, c, s})>` where `c` is the v3 config payload (`m: "free"`) and `s`
  * a per-side snapshot; `c` names its model version `mv` like a settings link (absent means 1,
- * ADR-0008). Version 1 links (classic, src/share/result-codec.ts) are untouched: they
+ * ADR-0008), and the Simple-mode marker `ui: "simple"` when a Simple run made it (#154), which
+ * only "Run it yourself" carries on. Version 1 links (classic, src/share/result-codec.ts) are untouched: they
  * are decoded by the very same `decodeResult`, so they stay bit-compatible. Pure and DOM-free;
  * it imports the config schema, never the simulator (tests/result-share.test.ts guards that).
  */
@@ -101,9 +104,13 @@ export function summarizeFree(config: FreeConfig, agg: FreeAggregate): FreeResul
   return s;
 }
 
-/** The `r` value of a free result link. */
-export function encodeFreeResult(config: FreeConfig, summary: FreeResultSummary): string {
-  const body = { v: FREE_RESULT_VERSION, c: freeConfigDiff(config), s: summary };
+/** The `r` value of a free result link (`opts.simple`: a Simple run made it, #154). */
+export function encodeFreeResult(
+  config: FreeConfig,
+  summary: FreeResultSummary,
+  opts: FreeLinkOptions = {},
+): string {
+  const body = { v: FREE_RESULT_VERSION, c: freeConfigDiff(config, opts), s: summary };
   return base64UrlEncode(JSON.stringify(body));
 }
 
@@ -165,7 +172,14 @@ export function validateFreeSummary(raw: unknown, config: FreeConfig): FreeResul
 /** A decoded result link of either model. */
 export type AnyDecodedResult =
   | { ok: true; kind: 'classic'; config: ScenarioConfig; summary: ResultSummary }
-  | { ok: true; kind: 'free'; config: FreeConfig; summary: FreeResultSummary }
+  | {
+      ok: true;
+      kind: 'free';
+      config: FreeConfig;
+      summary: FreeResultSummary;
+      /** `c` carries the Simple-mode marker (#154); not part of the config. */
+      simple: boolean;
+    }
   | { ok: false; error: ResultError; config: ScenarioConfig | FreeConfig | null };
 
 /**
@@ -195,7 +209,7 @@ export function decodeAnyResult(r: string | null): AnyDecodedResult {
   if (parsed['v'] !== FREE_RESULT_VERSION) return { ok: false, error: 'version', config };
   const summary = validateFreeSummary(parsed['s'], config);
   if (!summary) return { ok: false, error: 'summary', config };
-  return { ok: true, kind: 'free', config, summary };
+  return { ok: true, kind: 'free', config, summary, simple: freePayloadSimple(c) };
 }
 
 /** Decode the result of a query string (`?r=…`), either version. */
@@ -204,9 +218,16 @@ export function decodeAnyResultQuery(search: string): AnyDecodedResult {
   return decodeAnyResult(new URLSearchParams(search).get(RESULT_KEY));
 }
 
-/** Simulator fragment for "run it yourself" of a free result: `#s=<v3>&chk=<summary>`. */
-export function reproduceFreeHash(config: FreeConfig, summary: FreeResultSummary): string {
-  return `${hashFromFreeConfig(config)}&${CHECK_KEY}=${base64UrlEncode(JSON.stringify(summary))}`;
+/**
+ * Simulator fragment for "run it yourself" of a free result: `#s=<v3>&chk=<summary>`, with the
+ * Simple-mode marker in `s=` when `opts.simple` is set (the result link carried it, #154).
+ */
+export function reproduceFreeHash(
+  config: FreeConfig,
+  summary: FreeResultSummary,
+  opts: FreeLinkOptions = {},
+): string {
+  return `${hashFromFreeConfig(config, opts)}&${CHECK_KEY}=${base64UrlEncode(JSON.stringify(summary))}`;
 }
 
 /**

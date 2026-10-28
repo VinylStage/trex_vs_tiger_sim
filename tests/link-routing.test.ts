@@ -3,14 +3,26 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { playForwardUrl, playPagePath } from '../src/pages/routes';
-import { decodeAnyResultQuery, reproduceFreeHash } from '../src/share/free-result-codec';
+import {
+  decodeAnyResultQuery,
+  encodeFreeResult,
+  freeCheckFromHash,
+  reproduceFreeHash,
+} from '../src/share/free-result-codec';
 import { decodeResultQuery, encodeResult, reproduceHash } from '../src/share/result-codec';
 import { defaultConfig, type ScenarioConfig } from '../src/sim/config';
 import { FREE_MODEL_VERSION, defaultFreeConfig } from '../src/sim/free/config';
-import { routeLink } from '../src/ui/link-route';
-import { defaultSimpleConfig } from '../src/ui/simple-model';
+import { routeHashChange, routeLink } from '../src/ui/link-route';
+import {
+  withBuffSwitch,
+  withMorale,
+  withNumber,
+  withSideCount,
+  withSideSpecies,
+} from '../src/ui/free-form-model';
+import { defaultSimpleConfig, simpleCanShow, simpleRunConfig } from '../src/ui/simple-model';
 import { configFromHash, decodeConfig, hashFromConfig } from '../src/ui/share';
-import { freeConfigFromHash } from '../src/ui/share-free';
+import { freeConfigFromHash, hashFromFreeConfig } from '../src/ui/share-free';
 
 /*
  * Link routing (docs/SHARING.md#link-routing, #142). Every link made before the lobby pointed at
@@ -373,4 +385,203 @@ describe('Simple mode on the play page (#146)', () => {
       expect(r.config).toEqual(defaultConfig());
     }
   });
+});
+
+describe('Simple links (#154)', () => {
+  /** What a Simple Run writes: 8 wolves vs 1 brown bear, a fresh seed, everything else default. */
+  const RAN = simpleRunConfig(
+    withSideCount(
+      withSideSpecies(withSideSpecies(defaultSimpleConfig(), 0, 'wolf'), 1, 'brownBear'),
+      0,
+      8,
+    ),
+    123456,
+  );
+  const SIMPLE_HASH = hashFromFreeConfig(RAN, { simple: true });
+  const PLAIN_HASH = hashFromFreeConfig(RAN);
+  const decoded = (hash: string): unknown =>
+    JSON.parse(Buffer.from(hash.slice('#s='.length), 'base64url').toString());
+
+  it('marks the payload with one extra key, appended last; the rest is byte for byte the old link', () => {
+    const plain = JSON.stringify(decoded(PLAIN_HASH));
+    expect(JSON.stringify(decoded(SIMPLE_HASH))).toBe(`${plain.slice(0, -1)},"ui":"simple"}`);
+    // Without the option the encoder writes what it wrote before #154 (the fixtures' bytes).
+    expect(hashFromFreeConfig(defaultFreeConfig())).toBe(`#s=${OLD_FREE.defaults}`);
+    const edited = freeConfigFromHash(`#s=${OLD_FREE.edited}`);
+    expect(edited && hashFromFreeConfig(edited)).toBe(`#s=${OLD_FREE.edited}`);
+  });
+
+  it('decodes to the same config as the unmarked link: the engine, mv and seed never see it', () => {
+    expect(freeConfigFromHash(SIMPLE_HASH)).toEqual(freeConfigFromHash(PLAIN_HASH));
+    expect(freeConfigFromHash(SIMPLE_HASH)).toEqual(RAN);
+    expect(freeConfigFromHash(SIMPLE_HASH)?.mv).toBe(1);
+    expect(Object.keys(RAN)).not.toContain('ui');
+  });
+
+  it.each(['ko', 'en'] as const)(
+    'opens Simple with the same sides, counts and seed, through the %s lobby and directly',
+    (lang) => {
+      const lobby = lang === 'ko' ? '/' : '/en/';
+      const target = FORWARD[lang](`${ORIGIN}${lobby}${SIMPLE_HASH}`);
+      expect(target).toBe(`${playPagePath(lang)}${SIMPLE_HASH}`);
+      const want = { mode: 'simple', config: RAN, check: null };
+      expect(routeLink(new URL(target ?? '', ORIGIN).hash, '')).toEqual(want);
+      expect(routeLink(SIMPLE_HASH, '')).toEqual(want);
+    },
+  );
+
+  it('opens the same link without the marker in the free form, as before #154', () => {
+    expect(routeLink(PLAIN_HASH, '')).toEqual({
+      mode: 'free',
+      config: RAN,
+      newerModel: false,
+      check: null,
+    });
+  });
+
+  it('with the tour deep link opens Simple too (the tour is offered there as on any page)', () => {
+    expect(routeLink(SIMPLE_HASH, '?tour=1').mode).toBe('simple');
+  });
+
+  describe('Simple never opens a config it cannot show', () => {
+    const HIDDEN: [string, typeof RAN][] = [
+      ['an edited run count', withNumber(RAN, 'runs', 120)],
+      ['an edited arena', withNumber(RAN, 'arenaSize', 300)],
+      ['morale off', withMorale(RAN, false)],
+      ['a pack buff switched off', withBuffSwitch(RAN, 'focus', false)],
+      [
+        'an edited trait range',
+        {
+          ...RAN,
+          sides: [
+            {
+              ...RAN.sides[0],
+              params: { ...RAN.sides[0].params, mass: { min: 20, mode: 40, max: 60 } },
+            },
+            RAN.sides[1],
+          ],
+        },
+      ],
+    ];
+    it.each(HIDDEN)('a marked link with %s opens the free form', (_name, c) => {
+      expect(simpleCanShow(c)).toBe(false);
+      const r = routeLink(hashFromFreeConfig(c, { simple: true }), '');
+      expect(r.mode).toBe('free');
+      expect(r.config).toEqual(freeConfigFromHash(hashFromFreeConfig(c)));
+    });
+
+    it('a marked link with any seed opens Simple (the seed is shown, not hidden)', () => {
+      expect(
+        routeLink(hashFromFreeConfig(withNumber(RAN, 'seed', 7), { simple: true }), '').mode,
+      ).toBe('simple');
+    });
+  });
+
+  it('a marked link of a newer model opens the free defaults with its note, as before', () => {
+    const hash = `#s=${b64({ v: 3, m: 'free', mv: FREE_MODEL_VERSION + 1, a: { sp: 'lion', n: 3 }, ui: 'simple' })}`;
+    expect(routeLink(hash, '')).toEqual({
+      mode: 'free',
+      config: defaultFreeConfig(),
+      newerModel: true,
+      check: null,
+    });
+  });
+
+  it.each([0, 1.5, '1', null])(
+    'a marked link with the malformed mv %j opens the free defaults',
+    (mv) => {
+      const hash = `#s=${b64({ v: 3, m: 'free', mv, a: { sp: 'lion', n: 3 }, ui: 'simple' })}`;
+      expect(routeLink(hash, '')).toEqual({
+        mode: 'free',
+        config: defaultFreeConfig(),
+        newerModel: false,
+        check: null,
+      });
+    },
+  );
+
+  it.each([true, 1, 'Simple', 'free', ['simple']])(
+    'any other marker value (%j) is not the marker',
+    (ui) => {
+      const hash = `#s=${b64({ ...(decoded(PLAIN_HASH) as object), ui })}`;
+      expect(routeLink(hash, '').mode).toBe('free');
+    },
+  );
+
+  describe('result links of a Simple run', () => {
+    const SUMMARY = { n: 500, a: 120, b: 370, d: 10 };
+    const r = encodeFreeResult(RAN, SUMMARY, { simple: true });
+    const res = decodeAnyResultQuery(`?r=${r}`);
+
+    it('carry the marker in c, decode to the same config and offer Run it yourself in Simple', () => {
+      if (!res.ok || res.kind !== 'free') throw new Error('Simple result link does not decode');
+      expect(res.simple).toBe(true);
+      expect(res.config).toEqual(RAN);
+      const repro = reproduceFreeHash(res.config, res.summary, { simple: res.simple });
+      expect(routeLink(repro, '')).toEqual({ mode: 'simple', config: RAN, check: SUMMARY });
+      // The reproduction check compares configs, never the marker.
+      expect(freeCheckFromHash(repro, RAN)).toEqual(
+        freeCheckFromHash(reproduceFreeHash(RAN, SUMMARY), RAN),
+      );
+    });
+
+    it('leave old free result links and their Run it yourself byte for byte as before', () => {
+      if (!FREE_RESULT.ok || FREE_RESULT.kind !== 'free') throw new Error('unreachable');
+      expect(FREE_RESULT.simple).toBe(false);
+      expect(reproduceFreeHash(FREE_RESULT.config, FREE_RESULT.summary, { simple: false })).toBe(
+        FREE_REPRO,
+      );
+      const body = (x: string): { c: Record<string, unknown> } =>
+        JSON.parse(Buffer.from(x, 'base64url').toString()) as { c: Record<string, unknown> };
+      expect(body(encodeFreeResult(RAN, SUMMARY)).c).not.toHaveProperty('ui');
+      expect(body(r).c['ui']).toBe('simple');
+    });
+  });
+
+  it('"Try your own" on the result page still opens a cold play page, which is Simple', () => {
+    const src = read('src/share/result-page.ts');
+    expect(src.match(/link\(t\('result\.tryOwn'\), playPagePath\(lang\)\)/g)).toHaveLength(2);
+    for (const lang of ['ko', 'en'] as const) {
+      const u = new URL(`${ORIGIN}${playPagePath(lang)}`);
+      expect(routeLink(u.hash, u.search).mode).toBe('simple');
+    }
+  });
+});
+
+describe('a link pasted into an open play page (hashchange, #154 review)', () => {
+  const RAN = simpleRunConfig(
+    withSideCount(withSideSpecies(defaultSimpleConfig(), 0, 'wolf'), 0, 8),
+    99,
+  );
+
+  it('opens a Simple link in Simple, as on load', () => {
+    expect(routeHashChange(hashFromFreeConfig(RAN, { simple: true }), '')).toEqual({
+      mode: 'simple',
+      config: RAN,
+    });
+    const repro = reproduceFreeHash(RAN, { n: 500, a: 1, b: 499, d: 0 }, { simple: true });
+    expect(routeHashChange(repro, '')).toEqual({ mode: 'simple', config: RAN });
+  });
+
+  it('opens every other free link in the free form and a classic one in classic, as before', () => {
+    expect(routeHashChange(hashFromFreeConfig(RAN), '')).toEqual({ mode: 'free', config: RAN });
+    const hidden = withMorale(RAN, false);
+    expect(routeHashChange(hashFromFreeConfig(hidden, { simple: true }), '')?.mode).toBe('free');
+    expect(routeHashChange(`#s=${NEWER}`, '')).toEqual({
+      mode: 'free',
+      config: defaultFreeConfig(),
+    });
+    expect(routeHashChange(V2_HASH, '')).toEqual({ mode: 'classic', config: V2_CONFIG });
+    expect(routeHashChange(`#s=${V1}`, '')).toEqual({ mode: 'classic', config: decodeConfig(V1) });
+    // A malformed payload opened the classic defaults before, and still does.
+    expect(routeHashChange('#s=%%', '')).toEqual({ mode: 'classic', config: defaultConfig() });
+  });
+
+  it.each(['', '#', '#main', '#faq', '#chk=x', DEFAULT_REPRO, `#TVT3-${OLD_FREE.defaults}`])(
+    'changes nothing for %j, as before',
+    (hash) => {
+      expect(routeHashChange(hash, '')).toBeNull();
+      expect(routeHashChange(hash, '?tour=1')).toBeNull();
+    },
+  );
 });

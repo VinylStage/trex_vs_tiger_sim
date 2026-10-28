@@ -598,6 +598,8 @@ export const en: Dictionary = {
     'Values changed under Advanced are not used here: a Run in Simple mode uses the defaults for everything except species and counts.',
   'simple.seedNote':
     'Every Run uses a new seed. The seed goes into the address, so a shared link reproduces the result.',
+  'simple.linkSeedNote':
+    'The next Run uses this link’s seed ({seed}), so everyone who opens the link gets the same result.',
   'simple.barLabel': 'Win shares: {a} {pa}, draw {pd}, {b} {pb}',
   'simple.breakdown': 'At the end of a battle (mean)',
   'simple.standing': 'Still standing',

@@ -34,12 +34,26 @@ import {
  *
  * `mv` is the model version (ADR-0008). Absent means 1, and the encoder writes it only when it is
  * not 1, so every link of model 1 is byte-identical to the links made before `mv` existed.
+ *
+ * `ui: "simple"` (#154) marks a link written by Simple mode, appended last. It is not part of the
+ * config: the decoder never reads it into `FreeConfig`, so the engine, `mv` and the reproduction
+ * check never see it, and builds before #154 ignore it like any unknown key. Only the link
+ * routing reads it (`freePayloadSimple`, src/ui/link-route.ts).
  */
 
 export const FREE_SHARE_VERSION = 3;
 export const FREE_MODE_MARKER = 'free';
 /** Copy/paste code prefix of a free config (`TVT2-` stays the legacy one). */
 export const FREE_CODE_PREFIX = `TVT${FREE_SHARE_VERSION}-`;
+/** Payload key and value of the Simple-mode marker (#154, docs/SHARING.md#simple-links). */
+export const SIMPLE_KEY = 'ui';
+export const SIMPLE_MARKER = 'simple';
+
+/** How a free config is written into a link. */
+export interface FreeLinkOptions {
+  /** Append the Simple-mode marker (`ui: "simple"`). The caller decides when Simple can show it. */
+  simple?: boolean;
+}
 
 const SCALARS = [
   'runs',
@@ -77,8 +91,14 @@ function sideDiff(side: SideConfig): Record<string, unknown> {
   return out;
 }
 
-/** Minimal JSON-able form of a free config (always carries `v`, `m` and both sides). */
-export function freeConfigDiff(config: FreeConfig): Record<string, unknown> {
+/**
+ * Minimal JSON-able form of a free config (always carries `v`, `m` and both sides), with the
+ * Simple-mode marker last when `opts.simple` is set.
+ */
+export function freeConfigDiff(
+  config: FreeConfig,
+  opts: FreeLinkOptions = {},
+): Record<string, unknown> {
   const d = defaultFreeConfig();
   const out: Record<string, unknown> = { v: FREE_SHARE_VERSION, m: FREE_MODE_MARKER };
   if (config.mv !== 1) out['mv'] = config.mv;
@@ -93,17 +113,22 @@ export function freeConfigDiff(config: FreeConfig): Record<string, unknown> {
   );
   if (g) out['g'] = g;
   for (const k of SCALARS) if (config[k] !== d[k]) out[k] = config[k];
+  if (opts.simple) out[SIMPLE_KEY] = SIMPLE_MARKER;
   return out;
 }
 
-export function encodeFreeConfig(config: FreeConfig): string {
-  return base64UrlEncode(JSON.stringify(freeConfigDiff(config)));
+export function encodeFreeConfig(config: FreeConfig, opts: FreeLinkOptions = {}): string {
+  return base64UrlEncode(JSON.stringify(freeConfigDiff(config, opts)));
 }
 
 /** Location hash of a free config; never empty, so a free link always opens in free mode. */
-export function hashFromFreeConfig(config: FreeConfig): string {
-  return `#${SHARE_KEY}=${encodeFreeConfig(config)}`;
+export function hashFromFreeConfig(config: FreeConfig, opts: FreeLinkOptions = {}): string {
+  return `#${SHARE_KEY}=${encodeFreeConfig(config, opts)}`;
 }
+
+/** Whether a free payload carries the Simple-mode marker (`ui: "simple"`, exactly). */
+export const freePayloadSimple = (raw: Record<string, unknown>): boolean =>
+  raw[SIMPLE_KEY] === SIMPLE_MARKER;
 
 const isObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
