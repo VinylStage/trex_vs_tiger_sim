@@ -11,7 +11,7 @@ import {
   type PageId,
 } from './routes.ts';
 import { renderSiteFooter, SITE_FOOTER_PLACEHOLDER } from './site-footer.ts';
-import { logoAttrs, navItems, type SiteNavItem } from './site-shell.ts';
+import { logoAttrs, navGroupsOf, navItems, type SiteNavItem } from './site-shell.ts';
 
 export { logoAttrs, SITE_LOGO, type SiteNavItem } from './site-shell.ts';
 
@@ -55,15 +55,30 @@ export function renderAppLogo(): string {
 export function renderSiteHeader(lang: Lang, current: PageId | null): string {
   const d = DICTIONARIES[lang];
   const other = otherLang(lang);
-  const nav = siteNavItems(lang, current)
-    .map((item) => {
-      const a: Record<string, string> = {
-        class: 'site-nav-link',
-        href: item.href,
-        'data-page': item.page,
-      };
-      if (item.current) a['aria-current'] = 'page';
-      return `            <li><a ${attrs(a)}>${escapeHtml(item.label)}</a></li>`;
+  const link = (item: SiteNavItem, indent: string): string => {
+    const a: Record<string, string> = {
+      class: item.head ? 'site-nav-link site-nav-head' : 'site-nav-link',
+      href: item.href,
+      'data-page': item.page,
+    };
+    if (item.current) a['aria-current'] = 'page';
+    return `${indent}<a ${attrs(a)}>${escapeHtml(item.label)}</a>`;
+  };
+  const nav = navGroupsOf(siteNavItems(lang, current))
+    .map(([head, children]) => {
+      const lines = [
+        `            <li class="site-nav-group" data-group="${head.group}">`,
+        link(head, '              '),
+      ];
+      if (children.length > 0) {
+        lines.push(
+          `              <ul class="site-nav-sub" aria-label="${escapeHtml(head.label)}">`,
+          ...children.map((c) => `                <li>${link(c, '')}</li>`),
+          '              </ul>',
+        );
+      }
+      lines.push('            </li>');
+      return lines.join('\n');
     })
     .join('\n');
   const switchHref = pagePath(current ?? 'simulator', other);

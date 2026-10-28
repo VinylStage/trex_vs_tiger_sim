@@ -1,5 +1,5 @@
-import type { Triangular } from './params';
-import type { Rng } from './rng';
+import type { Triangular } from './params.ts';
+import type { Rng } from './rng.ts';
 
 /** Inverse CDF of the triangular distribution. `u` in [0, 1]. */
 export function triangularInv(u: number, t: Triangular): number {

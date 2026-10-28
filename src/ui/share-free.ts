@@ -8,10 +8,10 @@ import {
   sanitizeFreeConfig,
   type FreeConfig,
   type SideConfig,
-} from '../sim/free/config';
-import { buffRanges, traitRanges } from '../sim/free/species';
-import { BUFF_TRAIT_IDS, TRAIT_IDS } from '../sim/free/traits';
-import type { Triangular } from '../sim/params';
+} from '../sim/free/config.ts';
+import { buffRanges, traitRanges } from '../sim/free/species.ts';
+import { BUFF_TRAIT_IDS, TRAIT_IDS } from '../sim/free/traits.ts';
+import type { Triangular } from '../sim/params.ts';
 import {
   MAX_SHARE_LENGTH,
   SHARE_KEY,
@@ -19,7 +19,7 @@ import {
   base64UrlEncode,
   payloadFromHash,
   tupleRange,
-} from './share';
+} from './share.ts';
 
 /*
  * Share payload v3 for free-model configs (docs/design/FREE-MATCHUPS.md §2.4, §2.5): the same

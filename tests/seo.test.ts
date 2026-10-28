@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { afterAll, describe, expect, it } from 'vitest';
 import {
   CONTENT_PAGES,
+  LEARN_CHILDREN,
   SITE_ORIGIN,
   canonicalUrl,
   parsePagePath,
@@ -275,20 +276,24 @@ describe.each(ROUTES)('$file generated head', ({ page, lang, html, input, built 
     it('has a breadcrumb and an article node with the page’s heading and modification date', () => {
       const graph = graphOf(built);
       const crumbs = nodeOf(graph, 'BreadcrumbList')['itemListElement'] as Node[];
+      const underLearn = LEARN_CHILDREN.includes(page);
       expect(crumbs.map((c) => [c['position'], c['name'], c['item']])).toEqual([
         [1, DICTIONARIES[lang]['app.shortTitle'], canonicalUrl('simulator', lang)],
-        [2, DICTIONARIES[lang][`nav.${page}`], url],
+        ...(underLearn ? [[2, DICTIONARIES[lang]['nav.learn'], canonicalUrl('learn', lang)]] : []),
+        [underLearn ? 3 : 2, DICTIONARIES[lang][`nav.${page}`], url],
       ]);
       // Structured data must match visible content: the page shows the same trail.
       const trail = /<nav class="eyebrow breadcrumb"[\s\S]*?<\/nav>/.exec(html)?.[0] ?? '';
       expect(
         [...trail.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/g)].map((m) => textOf(m[1] ?? '')),
       ).toEqual(crumbs.map((c) => c['name']));
-      const type = ['guide', 'model', 'parameters'].includes(page)
+      const type = ['guide', 'model', 'parameters', 'species'].includes(page)
         ? 'TechArticle'
         : page === 'about'
           ? 'AboutPage'
-          : 'WebPage';
+          : page === 'learn'
+            ? 'CollectionPage'
+            : 'WebPage';
       const article = nodeOf(graph, type);
       const h1 = /<h1>([\s\S]*?)<\/h1>/.exec(html)?.[1] ?? '';
       const visibleDate = /<p class="page-meta">[\s\S]*?<time datetime="([^"]+)">/.exec(html)?.[1];
@@ -302,6 +307,17 @@ describe.each(ROUTES)('$file generated head', ({ page, lang, html, input, built 
         author: { '@type': 'Person', '@id': PERSON.id, name: 'VinylStage' },
       });
       expect((article['headline'] as string).length).toBeLessThanOrEqual(110);
+      if (page === 'learn') {
+        const parts = article['hasPart'] as Node[];
+        expect(parts.map((p) => p['url'])).toEqual(
+          LEARN_CHILDREN.map((p) => canonicalUrl(p, lang)),
+        );
+        expect(parts.map((p) => p['name'])).toEqual(
+          LEARN_CHILDREN.map((p) => DICTIONARIES[lang][`nav.${p}` as 'nav.guide']),
+        );
+      } else {
+        expect(article['hasPart']).toBeUndefined();
+      }
     });
   }
 

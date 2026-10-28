@@ -1,5 +1,5 @@
-import { DT } from './engine';
-import { PARAMS, type ParamId, type Triangular } from './params';
+import { DT } from './engine.ts';
+import { PARAMS, type ParamId, type Triangular } from './params.ts';
 import {
   DEFAULT_HEAVY,
   DEFAULT_PACK,
@@ -9,7 +9,7 @@ import {
   speciesRanges,
   type HeavySpeciesId,
   type PackSpeciesId,
-} from './species';
+} from './species.ts';
 
 export type SamplingMethod = 'lhs' | 'random';
 export type PackTactic = 'flank' | 'direct';

@@ -11,7 +11,9 @@ import {
   BLOG_URL,
   CONTENT_PAGES,
   FOOTER_LINKS,
+  LEARN_CHILDREN,
   LINKTREE_URL,
+  NAV_GROUPS,
   NAV_PAGES,
   REPO_URL,
   SITE_ORIGIN,
@@ -24,6 +26,7 @@ import {
   playPageLang,
   playPagePath,
   switchedAppUrl,
+  breadcrumbTrail,
 } from '../src/pages/routes';
 import { LANGS } from '../src/ui/i18n';
 import { NAV_LABEL_KEYS, footerItems, relocalizeLinks, siteNavItems } from '../src/ui/site-nav';
@@ -168,10 +171,62 @@ describe('site navigation', () => {
   });
 });
 
+describe('site navigation groups (RENEWAL §3.1)', () => {
+  it('has a Play group with the lobby and a Learn group with the hub and its children', () => {
+    expect(NAV_GROUPS.map((g) => [g.id, [...g.pages]])).toEqual([
+      ['play', ['simulator']],
+      ['learn', ['learn', 'guide', 'model', 'parameters', 'species']],
+    ]);
+    expect(NAV_PAGES).toEqual(NAV_GROUPS.flatMap((g) => g.pages));
+    expect(LEARN_CHILDREN).toEqual(['guide', 'model', 'parameters', 'species']);
+  });
+
+  it('marks each group head and gives every item its group', () => {
+    const items = siteNavItems('ko', 'species');
+    expect(items.filter((i) => i.head).map((i) => i.page)).toEqual(['simulator', 'learn']);
+    expect(items.map((i) => i.group)).toEqual([
+      'play',
+      'learn',
+      'learn',
+      'learn',
+      'learn',
+      'learn',
+    ]);
+    expect(items.filter((i) => i.current).map((i) => i.page)).toEqual(['species']);
+  });
+
+  it('renders the groups as nested lists, links in header (focus) order', () => {
+    const html = renderSiteHeader('en', 'model');
+    expect(html).toContain('<li class="site-nav-group" data-group="play">');
+    expect(html).toContain('<li class="site-nav-group" data-group="learn">');
+    expect(html).toContain(
+      '<a class="site-nav-link site-nav-head" href="/en/learn/" data-page="learn">Learn</a>',
+    );
+    expect(html).toContain('<ul class="site-nav-sub" aria-label="Learn">');
+    const order = [...html.matchAll(/data-page="([^"]+)"/g)].map((m) => m[1]);
+    expect(order).toEqual(NAV_PAGES);
+    expect(html.match(/aria-current="page"/g)).toHaveLength(1);
+  });
+
+  it('puts the learn hub between home and its children in the breadcrumb trail', () => {
+    for (const p of LEARN_CHILDREN) {
+      expect(breadcrumbTrail(p as Exclude<typeof p, 'simulator'>)).toEqual([
+        'simulator',
+        'learn',
+        p,
+      ]);
+    }
+    expect(breadcrumbTrail('learn')).toEqual(['simulator', 'learn']);
+    expect(breadcrumbTrail('about')).toEqual(['simulator', 'about']);
+    expect(breadcrumbTrail('patch-notes')).toEqual(['simulator', 'patch-notes']);
+  });
+});
+
 describe('site footer', () => {
-  it('links about, privacy, license, the source code, the blog and Linktree', () => {
+  it('links about, patch notes, privacy, license, the source code, the blog and Linktree', () => {
     expect(FOOTER_LINKS.map((l) => l.id)).toEqual([
       'about',
+      'patch-notes',
       'privacy',
       'license',
       'source',
@@ -180,6 +235,7 @@ describe('site footer', () => {
     ]);
     expect(footerItems('ko').map((i) => i.href)).toEqual([
       '/about/',
+      '/patch-notes/',
       '/privacy/',
       '/license/',
       REPO_URL,
@@ -188,6 +244,7 @@ describe('site footer', () => {
     ]);
     expect(footerItems('en').map((i) => i.href)).toEqual([
       '/en/about/',
+      '/en/patch-notes/',
       '/en/privacy/',
       '/en/license/',
       REPO_URL,
@@ -200,6 +257,7 @@ describe('site footer', () => {
     const rel = Object.fromEntries(FOOTER_LINKS.map((l) => [l.id, l.rel ?? null]));
     expect(rel).toEqual({
       about: null,
+      'patch-notes': null,
       privacy: null,
       license: null,
       source: 'noopener',

@@ -8,9 +8,10 @@
 > - 모든 기본값에 근거 수준(L 문헌, D 유도, S 추정, U 미검증)을 달았고, 시뮬레이터의 파라미터 표에도 표시합니다. 행동에 관한 값은 모든 종에서 추정입니다.
 > - 종 상수 두 개: `hide`(무리에게 받는 피해 배율, 코끼리 0.3, 물소 · 불곰 0.5, 티라노사우루스 1)와 `radius`(무리 동물 몸 반경, 호랑이 · 사자 0.8 m, 하이에나 0.6 m, 늑대 0.5 m). 난수를 쓰지 않고, 티라노사우루스 · 호랑이에서는 정확히 항등이라 예전 공유 링크(v1)가 비트 단위로 같은 결과를 냅니다.
 > - 야생에서 관찰된 대결(코끼리–사자, 물소–사자, 물소–하이에나, 불곰–늑대, 불곰–호랑이)에는 배지가 붙고, 티라노사우루스와의 대결은 “서로 만난 적 없는 종”으로 표시됩니다.
+> - 종 도감 페이지(`/species/`)는 이 등록부에서 빌드할 때 만들어지며, 다른 어떤 종과도 시대가 겹치지 않는 종(지금은 티라노사우루스)에 "만약에" 표시를 붙입니다(#162).
 > - 자유 대결 모델(#50)용으로 모든 종이 같은 개체 특성 20개와, 사회성 종(사자 · 늑대 · 하이에나 · 호모 에렉투스)만 쓰는 무리 버프 특성 6개를 갖습니다(§11). 기존 역할에 있던 값은 기존 등록부에서 그대로 읽고, 새 값에는 근거 수준과 범위를 달았습니다. 기존 엔진과 v1/v2 결과는 바뀌지 않습니다.
 
-Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#species`, `/en/parameters/#species`) repeat the presets and are checked against the registry by `tests/pages.test.ts`. The research behind this document, including the phase-2 and deferred species and the change plan, is in [research/SPECIES.md](research/SPECIES.md).
+Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#species`, `/en/parameters/#species`) repeat the presets and are checked against the registry by `tests/pages.test.ts`. The species guide (`/species/`, `/en/species/`, #162) is generated from the registries at build time and checked by `tests/species-page.test.ts` ([PAGES.md](PAGES.md#species-guide)); adding a species to `FREE_SPECIES` adds its section there, and the test then asks for its entry in `src/content/species-guide.ts` (scientific name and a short note, both languages). The research behind this document, including the phase-2 and deferred species and the change plan, is in [research/SPECIES.md](research/SPECIES.md).
 
 ## Contents
 
@@ -447,6 +448,7 @@ Findings from the mammoth and _Homo erectus_ runs:
 - The one hominin, the extinct _Homo erectus_, is modelled unclothed, with no tools, weapons, fire or trained skill, from an average adult's physical capability. Every matchup with it shows the thought-experiment note under the badge (`matchup.thoughtExperiment`: a physical-capability thought experiment that does not depict or endorse real violence), and the model and parameter pages repeat it. Wording stays neutral (incapacitated, fled), with the scientific name only.
 - Every species carries `adSafe`; a living-human species would be `false` and its matchups would load no ads ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)). All current species are `true`.
 - The replay keeps abstract glyphs and role colours for every species (heavy = blue triangle scaled from the species body radius, exactly 7 m for _T. rex_; pack = orange dot sized from `radius`); no gore.
+- The species guide tags a species **만약에 / what-if** (design R15 (a)) when it shared no time with any other species in the roster, by the same era rule (`erasNeverMet`, the era part of `matchupClass`). Today that is _T. rex_ alone; a what-if species added later (capybara, emperor penguin) needs a different rule, which R15 leaves to batch B.
 - Only pairings separated by geological time (_T. rex_) are labelled "never met"; a recently extinct species without a sourced overlap is "no recorded overlap" (`unrecorded`). Documented pairings link to sourced notes. Elephant and mammoth copy mentions tusks only as anatomy.
 - Korean UI strings never put a particle after a species name; English strings use singular/plural forms chosen with `Intl.PluralRules`. Korean head counts use the counter `명` for _Homo erectus_ and `마리` for every animal (`speciesCounter`, the `{counter}` and `{heavyCounter}` placeholders); English has none.
 

@@ -84,6 +84,7 @@ export const appId = (lang: Lang): string => `${canonicalUrl('simulator', lang)}
 
 /** schema.org type of each content page's main node. */
 export const PAGE_TYPE: Readonly<Record<Exclude<PageId, 'simulator'>, string>> = {
+  learn: 'CollectionPage',
   guide: 'TechArticle',
   model: 'TechArticle',
   parameters: 'TechArticle',
@@ -91,6 +92,7 @@ export const PAGE_TYPE: Readonly<Record<Exclude<PageId, 'simulator'>, string>> =
   'patch-notes': 'WebPage',
   privacy: 'WebPage',
   license: 'WebPage',
+  species: 'TechArticle',
 };
 
 /** Topics of the simulator, as Wikidata entities (SEO_GEO §2.3, checked 2026-10-19). */

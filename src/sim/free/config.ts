@@ -9,16 +9,16 @@ import {
   triangular,
   type SamplingMethod,
   type ScenarioConfig,
-} from '../config';
-import { DT } from '../engine';
-import type { Triangular } from '../params';
+} from '../config.ts';
+import { DT } from '../engine.ts';
+import type { Triangular } from '../params.ts';
 import {
   FREE_SPECIES,
   FREE_SPECIES_IDS,
   buffRanges,
   traitRanges,
   type FreeSpeciesId,
-} from './species';
+} from './species.ts';
 import {
   BUFF_TRAITS,
   BUFF_TRAIT_BOUNDS,
@@ -31,7 +31,7 @@ import {
   fixed,
   type BuffTraitId,
   type TraitId,
-} from './traits';
+} from './traits.ts';
 
 /**
  * Free-model scenario (docs/design/FREE-MATCHUPS.md §2). Two symmetric sides, any species on

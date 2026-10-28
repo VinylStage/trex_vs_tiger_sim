@@ -12,6 +12,29 @@
   list-style: none;
 }
 
+/* Two groups (Play, Learn): each a head link, then its children; a rule separates the groups. */
+.site-nav-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 4px;
+  min-width: 0;
+}
+
+.site-nav-group + .site-nav-group {
+  padding-left: 6px;
+  border-left: 1px solid var(--border);
+}
+
+.site-nav-sub {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
 .site-nav-link {
   display: inline-flex;
   align-items: center;
@@ -30,6 +53,11 @@
   color: var(--fg);
 }
 
+.site-nav-head {
+  color: var(--fg);
+  font-weight: 700;
+}
+
 .site-nav-link[aria-current='page'] {
   background: var(--surface-2);
   color: var(--fg);
@@ -37,8 +65,16 @@
 }
 
 @media (max-width: 560px) {
-  .site-nav-list {
+  .site-nav-list,
+  .site-nav-group,
+  .site-nav-sub {
     gap: 2px;
+  }
+
+  /* The groups may wrap onto two rows here, so the bold head link marks a group, not a rule. */
+  .site-nav-group + .site-nav-group {
+    padding-left: 0;
+    border-left: 0;
   }
 
   .site-nav-link {
@@ -50,7 +86,9 @@
 
 /* 320–360 px: one line in Korean; the longer English labels may wrap to a second line. */
 @media (max-width: 360px) {
-  .site-nav-list {
+  .site-nav-list,
+  .site-nav-group,
+  .site-nav-sub {
     gap: 0;
   }
 

@@ -1,6 +1,8 @@
 import {
+  LEARN_CHILDREN,
   NAV_LABEL_KEYS,
   SITE_ORIGIN,
+  breadcrumbTrail,
   canonicalUrl,
   pagePath,
   playPagePath,
@@ -125,6 +127,16 @@ function articleNode(input: HeadInput, page: Exclude<PageId, 'simulator'>, url: 
   };
   // The visible "last updated" date, never a git date, so the markup matches the page.
   if (input.facts.updated) node['dateModified'] = input.facts.updated;
+  // The learn hub collects the pages under it (the ones its breadcrumb children pass through).
+  if (page === 'learn') {
+    const d = DICTIONARIES[input.lang];
+    node['hasPart'] = LEARN_CHILDREN.map((p) => ({
+      '@type': PAGE_TYPE[p as Exclude<PageId, 'simulator'>],
+      '@id': `${canonicalUrl(p, input.lang)}#main`,
+      url: canonicalUrl(p, input.lang),
+      name: d[NAV_LABEL_KEYS[p]],
+    }));
+  }
   return node;
 }
 
@@ -133,15 +145,12 @@ function breadcrumbNode(input: HeadInput, page: Exclude<PageId, 'simulator'>, ur
   return {
     '@type': 'BreadcrumbList',
     '@id': `${url}#breadcrumb`,
-    itemListElement: [
-      {
-        '@type': 'ListItem',
-        position: 1,
-        name: d['app.shortTitle'],
-        item: canonicalUrl('simulator', input.lang),
-      },
-      { '@type': 'ListItem', position: 2, name: d[NAV_LABEL_KEYS[page]], item: url },
-    ],
+    itemListElement: breadcrumbTrail(page).map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: p === 'simulator' ? d['app.shortTitle'] : d[NAV_LABEL_KEYS[p]],
+      item: p === page ? url : canonicalUrl(p, input.lang),
+    })),
   };
 }
 

@@ -842,6 +842,92 @@ tbody tr:last-child > * {
 
 /* Footer: src/ui/site-footer.css. */
 
+/* ---------- learn hub and species guide (docs/PAGES.md#learn-hub, #species-guide) ---------- */
+
+.learn-list {
+  padding-left: 0 !important;
+  list-style: none;
+}
+
+.learn-list > li + li {
+  margin-top: 14px;
+}
+
+.learn-list > li > a {
+  font-weight: 700;
+}
+
+.learn-list > li > p {
+  margin: 2px 0 0;
+  color: var(--fg);
+}
+
+.page-body > .sp-card {
+  padding: 18px 20px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.page-body > .sp-card + .sp-card {
+  margin-top: 20px;
+}
+
+.sp-card-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.sp-card-head h2 {
+  padding-top: 0;
+  margin-bottom: 2px;
+}
+
+.sp-glyph {
+  flex: none;
+  fill: var(--accent);
+}
+
+.sp-sci {
+  margin: 0 !important;
+  color: var(--muted);
+}
+
+.sp-whatif {
+  vertical-align: middle;
+}
+
+.sp-facts {
+  margin-bottom: 4px;
+}
+
+.sp-card h3 {
+  margin-top: 18px;
+}
+
+.sp-held {
+  color: var(--muted);
+}
+
+.sp-try {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+.sp-try-note {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.sp-table td,
+.sp-table th {
+  white-space: nowrap;
+}
+
 @media (max-width: 560px) {
   body {
     font-size: 0.96875rem;

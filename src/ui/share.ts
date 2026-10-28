@@ -1,6 +1,6 @@
-import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/config';
-import { PARAMS } from '../sim/params';
-import { speciesRanges } from '../sim/species';
+import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/config.ts';
+import { PARAMS } from '../sim/params.ts';
+import { speciesRanges } from '../sim/species.ts';
 
 /** URL fragment key: `#s=<base64url(JSON)>`. */
 export const SHARE_KEY = 's';

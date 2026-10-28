@@ -499,6 +499,19 @@ export const COEXISTING_MATCHUPS: readonly { heavy: HeavySpeciesId; pack: PackSp
   { heavy: 'mammoth', pack: 'wolf' },
 ];
 
+/**
+ * Whether two eras are separated by geological time: two extinct species whose ranges do not
+ * overlap, or an extinct species gone at least `NEVER_MET_MA` ago and a living one. The era part
+ * of `matchupClass` (`neverMet`), without its documented and coexisting exceptions; the species
+ * guide uses it for the what-if tag (docs/SPECIES.md §9). Pure.
+ */
+export function erasNeverMet(a: Era, b: Era): boolean {
+  if (a === 'extant' && b === 'extant') return false;
+  if (a !== 'extant' && b !== 'extant') return !(a.toMa <= b.fromMa && b.toMa <= a.fromMa);
+  const extinct = a === 'extant' ? (b as Exclude<Era, 'extant'>) : a;
+  return extinct.toMa >= NEVER_MET_MA;
+}
+
 /** Classify a pairing (see `MatchupClass`). */
 export function matchupClass(h: HeavySpeciesId, p: PackSpeciesId): MatchupClass {
   if (DOCUMENTED_MATCHUPS.some((m) => m.heavy === h && m.pack === p)) return 'documented';
@@ -506,11 +519,8 @@ export function matchupClass(h: HeavySpeciesId, p: PackSpeciesId): MatchupClass 
   const a = HEAVY_SPECIES[h].era;
   const b = PACK_SPECIES[p].era;
   if (a === 'extant' && b === 'extant') return 'undocumented';
-  if (a !== 'extant' && b !== 'extant') {
-    return a.toMa <= b.fromMa && b.toMa <= a.fromMa ? 'undocumented' : 'neverMet';
-  }
-  const extinct = a === 'extant' ? (b as Exclude<Era, 'extant'>) : a;
-  return extinct.toMa >= NEVER_MET_MA ? 'neverMet' : 'unrecorded';
+  if (erasNeverMet(a, b)) return 'neverMet';
+  return a === 'extant' || b === 'extant' ? 'unrecorded' : 'undocumented';
 }
 
 /** docs/SPECIES.md anchor for a documented pairing, or null. */

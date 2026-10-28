@@ -1,6 +1,6 @@
-import { FREE_FRAME_STRIDE, FreeState, type FreeTrace } from '../../sim/free/engine';
-import { GLYPH, heavyLengthForRadius } from './glyphs';
-import { frameIndex, lerp, lerpAngle } from './interp';
+import { FREE_FRAME_STRIDE, FreeState, type FreeTrace } from '../../sim/free/engine.ts';
+import { GLYPH, heavyLengthForRadius } from './glyphs.ts';
+import { frameIndex, lerp, lerpAngle } from './interp.ts';
 
 /*
  * The free-matchup replay model (design §6 "Replay", #50 item 3b): positions, headings, states

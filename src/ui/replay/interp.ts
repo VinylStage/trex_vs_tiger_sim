@@ -2,7 +2,7 @@
 
 export const lerp = (a: number, b: number, f: number): number => a + (b - a) * f;
 
-export { clamp } from '../../sim/config';
+export { clamp } from '../../sim/config.ts';
 
 /** Shortest-arc angle interpolation (2D slerp): constant angular speed. */
 export function lerpAngle(a: number, b: number, f: number): number {

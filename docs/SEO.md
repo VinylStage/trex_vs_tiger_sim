@@ -6,6 +6,7 @@
 > - 사이트 이름은 한국어 **티렉스 대 호랑이**, 영어 **T-Rex vs Tiger**로 통일합니다(한국어 별칭 "티라노사우루스 vs 호랑이").
 > - 페이지 원본 HTML에는 제목·설명·아이콘·매니페스트 링크만 직접 씁니다. canonical, hreflang(`x-default`는 **영어**), Open Graph(언어별 1200×630 카드), Twitter `summary_large_image`, JSON-LD는 빌드할 때 `vite.seo.ts`가 하나의 레지스트리와 각 페이지 본문에서 만들어 넣습니다. FAQPage는 화면에 보이는 FAQ가 있는 페이지(`/`, `/en/`, 사용 방법)에만, 보이는 문장 그대로 넣습니다.
 > - `sitemap.xml`, `robots.txt`, `llms.txt`, `llms-full.txt`도 빌드 때 생성합니다. 안내 페이지의 `lastmod`와 JSON-LD `dateModified`는 화면에 보이는 "최종 수정" 날짜 그 자체이고, 날짜를 표시하지 않는 시뮬레이터만 원본을 마지막으로 바꾼 커밋 날짜를 씁니다. 날짜를 올리지 않고 페이지를 커밋하면 빌드가 경고합니다. Cloudflare Pages는 깊이 1로 클론하므로 빌드가 먼저 `git fetch --unshallow`를 실행합니다.
+> - 배우기 허브(`/learn/`, `/en/learn/`, `CollectionPage`)와 종 도감(`/species/`, `/en/species/`)이 색인 페이지에 들어 있습니다. 사용 방법 · 모델 설명 · 파라미터 · 종 도감의 이동 경로와 BreadcrumbList는 "홈 › 배우기 › 페이지" 3단계입니다(#162).
 > - 시뮬레이터 페이지도 정적 HTML에 `<h1>`과 다른 언어 링크를 담고 있어, JavaScript를 실행하지 않는 크롤러도 제목을 읽습니다. 안내 페이지에는 JSON-LD와 같은 이동 경로(breadcrumb)를 화면에 표시합니다.
 > - 알 수 없는 주소는 `404.html`(영어 경로는 `en/404.html`)이 상태 코드 404로 응답합니다.
 > - 릴리스가 나오면 IndexNow 워크플로가 프로덕션에 새 버전이 올라온 것을 확인한 뒤 사이트맵의 URL을 제출합니다.
@@ -37,6 +38,7 @@ The research behind these decisions, with sources, is [docs/research/SEO_GEO.md]
 | Page        | Korean          | English            |
 | ----------- | --------------- | ------------------ |
 | Simulator   | `/`             | `/en/`             |
+| Learn hub   | `/learn/`       | `/en/learn/`       |
 | Guide       | `/guide/`       | `/en/guide/`       |
 | Model       | `/model/`       | `/en/model/`       |
 | Parameters  | `/parameters/`  | `/en/parameters/`  |
@@ -44,6 +46,7 @@ The research behind these decisions, with sources, is [docs/research/SEO_GEO.md]
 | Patch notes | `/patch-notes/` | `/en/patch-notes/` |
 | Privacy     | `/privacy/`     | `/en/privacy/`     |
 | License     | `/license/`     | `/en/license/`     |
+| Species     | `/species/`     | `/en/species/`     |
 | Not found   | `/404.html`     | `/en/404.html`     |
 | Play (app)  | `/play/`        | `/en/play/`        |
 
@@ -77,18 +80,20 @@ The web app manifest uses 티렉스 대 호랑이 ([BRANDING.md](BRANDING.md)). 
 
 Pattern: `<topic> – <site name>`. Titles are at most 60 characters, descriptions 50–165 characters, every one unique; English titles are shorter. They are written once, in each page's own `<title>` and `<meta name="description">`; `og:title`, `twitter:title`, `og:description`, `twitter:description`, the JSON-LD `name`/`description`, `llms.txt` and `llms-full.txt` are all read from there at build time.
 
-| Page        | Korean title                                                         | English title                                               |
-| ----------- | -------------------------------------------------------------------- | ----------------------------------------------------------- |
-| `/`, `/en/` | 티렉스 대 호랑이 시뮬레이터 – 티라노사우루스 vs 호랑이, 누가 이길까? | T-Rex vs Tiger Simulator – who wins, T. rex or tigers?      |
-| play        | 시뮬레이터 실행 – 티렉스 대 호랑이                                   | Run the simulator – T-Rex vs Tiger                          |
-| guide       | 사용 방법: 단계별 가이드와 튜토리얼 – 티렉스 대 호랑이               | How to use the simulator – T-Rex vs Tiger                   |
-| model       | 모델 설명: 몬테카를로 에이전트 기반 전투 모델 – 티렉스 대 호랑이     | Model explained (Monte Carlo, agent-based) – T-Rex vs Tiger |
-| parameters  | 파라미터와 출처: 22개 능력치와 시나리오 설정 – 티렉스 대 호랑이      | Parameters and sources – T-Rex vs Tiger                     |
-| about       | 소개 · 문의: 오픈 소스 교육용 시뮬레이터 – 티렉스 대 호랑이          | About and contact – T-Rex vs Tiger                          |
-| patch-notes | 패치노트: 버전별 업데이트 소식 – 티렉스 대 호랑이                    | Patch notes: what changed in each version – T-Rex vs Tiger  |
-| privacy     | 개인정보처리방침 – 티렉스 대 호랑이                                  | Privacy policy – T-Rex vs Tiger                             |
-| license     | 라이선스: MIT와 오픈 소스 고지 – 티렉스 대 호랑이                    | License (MIT) and notices – T-Rex vs Tiger                  |
-| 404         | 페이지를 찾을 수 없습니다 (404) – 티렉스 대 호랑이                   | Page not found (404) – T-Rex vs Tiger                       |
+| Page        | Korean title                                                         | English title                                                |
+| ----------- | -------------------------------------------------------------------- | ------------------------------------------------------------ |
+| `/`, `/en/` | 티렉스 대 호랑이 시뮬레이터 – 티라노사우루스 vs 호랑이, 누가 이길까? | T-Rex vs Tiger Simulator – who wins, T. rex or tigers?       |
+| play        | 시뮬레이터 실행 – 티렉스 대 호랑이                                   | Run the simulator – T-Rex vs Tiger                           |
+| guide       | 사용 방법: 단계별 가이드와 튜토리얼 – 티렉스 대 호랑이               | How to use the simulator – T-Rex vs Tiger                    |
+| model       | 모델 설명: 몬테카를로 에이전트 기반 전투 모델 – 티렉스 대 호랑이     | Model explained (Monte Carlo, agent-based) – T-Rex vs Tiger  |
+| parameters  | 파라미터와 출처: 22개 능력치와 시나리오 설정 – 티렉스 대 호랑이      | Parameters and sources – T-Rex vs Tiger                      |
+| about       | 소개 · 문의: 오픈 소스 교육용 시뮬레이터 – 티렉스 대 호랑이          | About and contact – T-Rex vs Tiger                           |
+| patch-notes | 패치노트: 버전별 업데이트 소식 – 티렉스 대 호랑이                    | Patch notes: what changed in each version – T-Rex vs Tiger   |
+| privacy     | 개인정보처리방침 – 티렉스 대 호랑이                                  | Privacy policy – T-Rex vs Tiger                              |
+| license     | 라이선스: MIT와 오픈 소스 고지 – 티렉스 대 호랑이                    | License (MIT) and notices – T-Rex vs Tiger                   |
+| learn       | 배우기: 몬테카를로 시뮬레이션 학습 안내 – 티렉스 대 호랑이           | Learn: Monte Carlo simulation, explained – T-Rex vs Tiger    |
+| species     | 종 도감: 시뮬레이터의 동물과 멸종 종 – 티렉스 대 호랑이              | Species guide: the animals in the simulator – T-Rex vs Tiger |
+| 404         | 페이지를 찾을 수 없습니다 (404) – 티렉스 대 호랑이                   | Page not found (404) – T-Rex vs Tiger                        |
 
 The lobby's `<title>` is the dictionary string `app.documentTitle`, the title `/` ranked with before the play page existed. The play page's title is `play.documentTitle`, which the app also sets as `document.title`.
 
@@ -142,7 +147,7 @@ In `npm run dev` the same head is injected and the four text files are served by
 
 ## Head tags
 
-Generated for every indexable page (the 16 URLs in the sitemap), inserted right after `</title>`:
+Generated for every indexable page (the 20 URLs in the sitemap), inserted right after `</title>`:
 
 | Tag                                                                                          | Value                                                                                                            |
 | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
@@ -169,16 +174,17 @@ One `<script type="application/ld+json">` per indexable page with an `@graph`:
 | `WebSite`               | all                                   | `@id` `…/#website`, url `/`, name 티렉스 대 호랑이, alternateName [T-Rex vs Tiger, 티라노사우루스 vs 호랑이], inLanguage [ko, en], publisher → Person                                                                                                                                                                                                               |
 | `Person`                | all                                   | `@id` `https://link.vinylims.com/#person`, name VinylStage, url `https://github.com/VinylStage`, sameAs Linktree, blog, GitHub                                                                                                                                                                                                                                      |
 | `WebApplication`        | `/`, `/en/`                           | name/alternateName, url, description, inLanguage, applicationCategory `EducationalApplication`, applicationSubCategory `Simulation`, operatingSystem `Any`, browserRequirements, `isAccessibleForFree`, offers price 0 (KRW/USD), softwareVersion, license page, image, `about` Wikidata topics (Tyrannosaurus, Tiger, Monte Carlo method). **No** rating or review |
-| `TechArticle`           | guide, model, parameters              | headline = the page's `<h1>`, name = title, description, inLanguage, image, author (Person with name and url), publisher, isPartOf WebSite, about → the app, `mainEntityOfPage`, `dateModified` (the page's visible "last updated" date, the same value as its `lastmod`)                                                                                           |
+| `TechArticle`           | guide, model, parameters, species     | headline = the page's `<h1>`, name = title, description, inLanguage, image, author (Person with name and url), publisher, isPartOf WebSite, about → the app, `mainEntityOfPage`, `dateModified` (the page's visible "last updated" date, the same value as its `lastmod`)                                                                                           |
 | `AboutPage` / `WebPage` | about / privacy, license, patch notes | Same properties as the article node; an article type would misdescribe a privacy policy or a license text                                                                                                                                                                                                                                                           |
-| `BreadcrumbList`        | every content page                    | 1 = site short name → the app of that language, 2 = the page's nav label → the page. The page shows the same trail above its `<h1>` (`<nav class="eyebrow breadcrumb">`, tested against this node)                                                                                                                                                                  |
+| `CollectionPage`        | learn (ko, en)                        | Same properties as the article node, plus `hasPart`: one node per page under the hub (guide, model, parameters, species; `LEARN_CHILDREN`) with its type, `@id` `…#main`, url and nav label (#162)                                                                                                                                                                  |
+| `BreadcrumbList`        | every content page                    | `breadcrumbTrail(page)` in `src/pages/routes.ts`: 1 = site short name → the lobby of that language, then for the pages under the learn hub (`LEARN_CHILDREN`) 2 = 배우기 / Learn → the hub, and last the page's nav label → the page. The page shows the same trail above its `<h1>` (`<nav class="eyebrow breadcrumb">`, tested against this node)                 |
 | `FAQPage`               | `/`, `/en/`, guide (ko, en)           | Only where a visible `<section id="faq">` exists. Questions = its `<h3>`s, answers = the visible text up to the next `<h3>`, character for character. Google no longer shows FAQ rich results (SEO_GEO §2.1); the value is for other consumers                                                                                                                      |
 
 CSP: a `<script>` whose type is not JavaScript is a data block and is never executed, so `script-src` does not apply and no hash or nonce is needed (SEO_GEO §2.2, verified in Chromium; the browser check below shows zero CSP violations). `jsonForScript` writes `<`, `>`, `&` as `<` etc., so the JSON can never contain `</script`. `tests/seo.test.ts` fails on any other inline script, except the lobby's link forwarder, whose SHA-256 must be in the CSP ([SHARING.md](SHARING.md#link-routing)).
 
 ## Sitemap and lastmod
 
-`/sitemap.xml` lists every indexable URL: 8 pages × 2 languages, never `/reset/` or a 404 page. Each `<url>` has its three `xhtml:link` alternates (x-default = English) and, when known, `<lastmod>`. No `<priority>`/`<changefreq>` (Google ignores them).
+`/sitemap.xml` lists every indexable URL: 10 pages × 2 languages, never `/reset/` or a 404 page. Each `<url>` has its three `xhtml:link` alternates (x-default = English) and, when known, `<lastmod>`. No `<priority>`/`<changefreq>` (Google ignores them).
 
 **lastmod.** One date per page, shared by the sitemap `<lastmod>`, the JSON-LD `dateModified` and `llms-full.txt` (`pageLastmod` in `src/seo/sitemap.ts`), so structured data always matches what the reader sees:
 
@@ -222,7 +228,7 @@ Sitemap: https://trex-vs-tiger.vinylims.com/sitemap.xml
 
 ## llms.txt and llms-full.txt
 
-- `/llms.txt` (llmstxt.org format): H1 site name; a blockquote with the Korean and English simulator descriptions; notes (the disclaimer in both languages, "runs in your browser", author and source, a pointer to `llms-full.txt`); then `## 한국어 페이지` and `## English pages`, each linking all 8 pages as `- [nav label](URL): meta description`.
+- `/llms.txt` (llmstxt.org format): H1 site name; a blockquote with the Korean and English simulator descriptions; notes (the disclaimer in both languages, "runs in your browser", author and source, a pointer to `llms-full.txt`); then `## 한국어 페이지` and `## English pages`, each linking all 10 pages as `- [nav label](URL): meta description`.
 - `/llms-full.txt`: every indexable page's readable text, Korean first, each with URL, language, last modified (when known) and description. Content pages contribute their `<main>` (navigation, the breadcrumb and the table of contents dropped, headings as `#`, lists as `-`, tables as Markdown tables, `<pre>` as fenced code, links as `[text](absolute URL)` resolved against the page's canonical URL); the lobby contributes the static intro and FAQ. About 140 KB.
 - Google Search ignores both files (SEO_GEO §5.2); other agents and Lighthouse's agentic audit use them. Markdown copies per page (`/model/index.md`) are not generated.
 
@@ -269,7 +275,7 @@ Local, before pushing:
 
 ```bash
 npm run check                  # typecheck, lint, format, tests (tests/seo.test.ts, tests/pages.test.ts)
-npm run build                  # log: [plugin trexsim:seo] lastmod for 16/16 pages (14 from the visible date, 2 from git; …)
+npm run build                  # log: [plugin trexsim:seo] lastmod for 20/20 pages (18 from the visible date, 2 from git; …)
 ls dist/404.html dist/en/404.html dist/sitemap.xml dist/robots.txt dist/llms.txt dist/llms-full.txt
 node -e "for (const f of process.argv.slice(1)) { const h = require('fs').readFileSync(f, 'utf8'); const m = [...h.matchAll(/<script type=\"application\/ld\+json\">(.*?)<\/script>/g)]; m.forEach((x) => JSON.parse(x[1])); console.log(f, m.length) }" dist/index.html dist/en/guide/index.html
 ```
@@ -318,6 +324,6 @@ These need dashboards and cannot be done in code. 코드로 할 수 없고 대�
 
 | Test                  | Checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `tests/seo.test.ts`   | For all 16 pages, the generated head (canonical, hreflang with x-default = en, OG, OG image 1200×630 with alt, Twitter, manifest/icons kept); only JSON-LD inline scripts, JSON parses, no `</script`; WebSite and Person on every page; WebApplication (no rating) on the app; BreadcrumbList equal to the visible breadcrumb; article node with headline = `<h1>` and dateModified = the visible page-meta date, which every content page must show; sitemap lastmod = that same date (`pageLastmod`), stale-date detection (`visibleDateIsStale`); FAQPage exactly where a visible FAQ exists, equal to the visible text and, on the app, to the `faq.*` dictionary strings; verification tags on `/` only; sitemap URL set = registry = build entries, alternates, lastmod present/omitted; robots.txt rules; llms.txt layout and links; llms-full.txt with absolute Markdown links; HTML-to-text; 404 path detection and URL rewriting; git dates in a real repository, a shallow clone and after `unshallow`; IndexNow key file, workflow triggers, permissions and the release-please call |
+| `tests/seo.test.ts`   | For all 20 pages, the generated head (canonical, hreflang with x-default = en, OG, OG image 1200×630 with alt, Twitter, manifest/icons kept); only JSON-LD inline scripts, JSON parses, no `</script`; WebSite and Person on every page; WebApplication (no rating) on the app; BreadcrumbList equal to the visible breadcrumb; article node with headline = `<h1>` and dateModified = the visible page-meta date, which every content page must show; sitemap lastmod = that same date (`pageLastmod`), stale-date detection (`visibleDateIsStale`); FAQPage exactly where a visible FAQ exists, equal to the visible text and, on the app, to the `faq.*` dictionary strings; verification tags on `/` only; sitemap URL set = registry = build entries, alternates, lastmod present/omitted; robots.txt rules; llms.txt layout and links; llms-full.txt with absolute Markdown links; HTML-to-text; 404 path detection and URL rewriting; git dates in a real repository, a shallow clone and after `unshallow`; IndexNow key file, workflow triggers, permissions and the release-please call |
 | `tests/pages.test.ts` | Title/description length and uniqueness; sources hand-write no canonical/hreflang/og/twitter; static head (icon, apple-touch-icon, manifest, theme colours); 404 pages (noindex, nav, links, root-absolute URLs); `_headers` CSP on unknown paths; content pages: visible breadcrumb named like the nav; simulator pages: exactly one static `<h1>` (`app.title`) in the static header, a static link to the other language, every text node in the static header, intro, FAQ and footer bound to a message key, the same ordered key list in `index.html` and `en/index.html`, every `intro.*`/`faq.*` message used once; privacy pages name `trexsim.lang` (deleted on load) and `trexsim.tour`; the rest as in [PAGES.md](PAGES.md#drift-guard)                                                                                                                                                                                                                                                                                                                                                |
 | `tests/site.test.ts`  | Path helpers, `pageLang`, footer links, `findHtmlEntries` including `404.html`, `dropLegacyStorage`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |

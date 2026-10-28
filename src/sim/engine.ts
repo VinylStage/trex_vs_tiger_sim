@@ -1,5 +1,5 @@
-import type { ScenarioConfig } from './config';
-import { individualFactor } from './distributions';
+import type { ScenarioConfig } from './config.ts';
+import { individualFactor } from './distributions.ts';
 import {
   DeathCause,
   EVENT_NONE,
@@ -10,11 +10,11 @@ import {
   damageByte,
   type EventLogLimits,
   type EventStats,
-} from './events';
-import { PARAMS, PARAM_INDEX as P } from './params';
-import { Rng, deriveSeed } from './rng';
-import { HEAVY_SPECIES, PACK_SPECIES, boundsTable, type HeavySpeciesId } from './species';
-import { SpatialGrid } from './spatial';
+} from './events.ts';
+import { PARAMS, PARAM_INDEX as P } from './params.ts';
+import { Rng, deriveSeed } from './rng.ts';
+import { HEAVY_SPECIES, PACK_SPECIES, boundsTable, type HeavySpeciesId } from './species.ts';
+import { SpatialGrid } from './spatial.ts';
 
 /** Fixed integration step in seconds. */
 export const DT = 0.1;
