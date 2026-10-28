@@ -12,7 +12,7 @@ import {
 import { decodeResultQuery, encodeResult, reproduceHash } from '../src/share/result-codec';
 import { defaultConfig, type ScenarioConfig } from '../src/sim/config';
 import { FREE_MODEL_VERSION, defaultFreeConfig } from '../src/sim/free/config';
-import { routeLink } from '../src/ui/link-route';
+import { routeHashChange, routeLink } from '../src/ui/link-route';
 import {
   withBuffSwitch,
   withMorale,
@@ -546,4 +546,42 @@ describe('Simple links (#154)', () => {
       expect(routeLink(u.hash, u.search).mode).toBe('simple');
     }
   });
+});
+
+describe('a link pasted into an open play page (hashchange, #154 review)', () => {
+  const RAN = simpleRunConfig(
+    withSideCount(withSideSpecies(defaultSimpleConfig(), 0, 'wolf'), 0, 8),
+    99,
+  );
+
+  it('opens a Simple link in Simple, as on load', () => {
+    expect(routeHashChange(hashFromFreeConfig(RAN, { simple: true }), '')).toEqual({
+      mode: 'simple',
+      config: RAN,
+    });
+    const repro = reproduceFreeHash(RAN, { n: 500, a: 1, b: 499, d: 0 }, { simple: true });
+    expect(routeHashChange(repro, '')).toEqual({ mode: 'simple', config: RAN });
+  });
+
+  it('opens every other free link in the free form and a classic one in classic, as before', () => {
+    expect(routeHashChange(hashFromFreeConfig(RAN), '')).toEqual({ mode: 'free', config: RAN });
+    const hidden = withMorale(RAN, false);
+    expect(routeHashChange(hashFromFreeConfig(hidden, { simple: true }), '')?.mode).toBe('free');
+    expect(routeHashChange(`#s=${NEWER}`, '')).toEqual({
+      mode: 'free',
+      config: defaultFreeConfig(),
+    });
+    expect(routeHashChange(V2_HASH, '')).toEqual({ mode: 'classic', config: V2_CONFIG });
+    expect(routeHashChange(`#s=${V1}`, '')).toEqual({ mode: 'classic', config: decodeConfig(V1) });
+    // A malformed payload opened the classic defaults before, and still does.
+    expect(routeHashChange('#s=%%', '')).toEqual({ mode: 'classic', config: defaultConfig() });
+  });
+
+  it.each(['', '#', '#main', '#faq', '#chk=x', DEFAULT_REPRO, `#TVT3-${OLD_FREE.defaults}`])(
+    'changes nothing for %j, as before',
+    (hash) => {
+      expect(routeHashChange(hash, '')).toBeNull();
+      expect(routeHashChange(hash, '?tour=1')).toBeNull();
+    },
+  );
 });

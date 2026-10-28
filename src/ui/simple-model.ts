@@ -49,13 +49,15 @@ export function matchingPreset(c: FreeConfig): FreePreset | undefined {
 }
 
 /**
- * The config a Simple run uses: the config's species and counts, the given seed, the matching
+ * The config a Simple run uses: the config's model version, species and counts, the given seed, the matching
  * preset's run count if it names one, and every setting Simple does not show at its default
  * (trait ranges, buff switches, globals, runs, arena, time limit, CV, sampling, morale). The work
  * budget lowers the run count as for any free config.
  */
 export function simpleRunConfig(c: FreeConfig, seed: number): FreeConfig {
   return sanitizeFreeConfig({
+    // The model version is not a setting: a Simple run keeps the one its config names (ADR-0008).
+    mv: c.mv,
     sides: c.sides.map((s) => ({ species: s.species, count: s.count })),
     seed,
     runs: simpleRuns(c),
@@ -97,6 +99,21 @@ export function hasHiddenEdits(c: FreeConfig): boolean {
  * cannot display; a marked link with hidden edits opens the free form of Advanced mode instead.
  */
 export const simpleCanShow = (c: FreeConfig): boolean => !hasHiddenEdits(c);
+
+/** How the page was loaded (`PerformanceNavigationTiming.type`), or undefined when unknown. */
+export type NavigationType = 'navigate' | 'reload' | 'back_forward' | 'prerender' | undefined;
+
+/**
+ * Whether a page opened in Simple from a Simple link keeps the link's seed for its first Run
+ * (#154): only when the link was just opened. A reload or a back/forward visit of a play page
+ * shows the address the page itself wrote after its last Run, so that Run would only repeat;
+ * those draw a fresh seed (R3). So does the language fallback, which reloads the other
+ * language's play page with the same address (`referrer` is a play page); the in-place language
+ * switch keeps the page and its armed seed.
+ */
+export function armLinkSeed(nav: NavigationType, referrerIsPlayPage: boolean): boolean {
+  return nav !== 'reload' && nav !== 'back_forward' && !referrerIsPlayPage;
+}
 
 /** A uniformly random seed in the seed range (R3: a fresh seed per Run). */
 export function freshSeed(random: () => number = cryptoRandom): number {

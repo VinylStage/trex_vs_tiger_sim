@@ -17,6 +17,7 @@ import {
 import { freeConfigFromHash, hashFromFreeConfig } from '../src/ui/share-free';
 import {
   COUNT_CHIPS,
+  armLinkSeed,
   countChips,
   defaultSimpleConfig,
   freshSeed,
@@ -234,5 +235,19 @@ describe('which configs a Simple link may mark (#154)', () => {
   it('keeps the link-seed note in both languages, with the seed placeholder', () => {
     expect(ko['simple.linkSeedNote']).toContain('{seed}');
     expect(en['simple.linkSeedNote']).toContain('{seed}');
+  });
+});
+
+describe('the link seed is armed only on a fresh open (#154 review)', () => {
+  it('arms on a navigation (or when the browser does not say), not on reload or back/forward', () => {
+    expect(armLinkSeed('navigate', false)).toBe(true);
+    expect(armLinkSeed('prerender', false)).toBe(true);
+    expect(armLinkSeed(undefined, false)).toBe(true);
+    expect(armLinkSeed('reload', false)).toBe(false);
+    expect(armLinkSeed('back_forward', false)).toBe(false);
+  });
+
+  it('does not arm on the language fallback (opened from a play page)', () => {
+    expect(armLinkSeed('navigate', true)).toBe(false);
   });
 });

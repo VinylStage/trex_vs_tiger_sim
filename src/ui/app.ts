@@ -45,13 +45,17 @@ import {
 } from './i18n';
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import type { ReplayView } from './replay';
-import { routeLink } from './link-route';
-import { simpleCanShow, simpleKeepsAddress } from './simple-model';
-import { configFromHash, hashFromConfig } from './share';
+import { routeHashChange, routeLink } from './link-route';
+import {
+  armLinkSeed,
+  simpleCanShow,
+  simpleKeepsAddress,
+  type NavigationType,
+} from './simple-model';
+import { hashFromConfig } from './share';
 import { defaultFreeConfig } from '../sim/free/config';
 import { createFreeMode } from './free-mode';
 import {
-  freeConfigFromHash,
   freeHashModelNewer,
   freeInputModelNewer,
   hashFromFreeConfig,
@@ -60,7 +64,7 @@ import {
 import { copyText } from '../share/share-ui';
 import { createConfigTransfer } from './config-transfer';
 import { createReproduceCheck, createResultShare } from './result-share';
-import { hashHasAppState, pageLang, pagePath, switchedAppUrl } from '../pages/routes';
+import { hashHasAppState, pageLang, pagePath, playPageLang, switchedAppUrl } from '../pages/routes';
 import { logoAttrs } from '../pages/site-shell';
 import { createSiteNav, relocalizeLinks, renderFooterLinks } from './site-nav';
 import './site-footer.css';
@@ -97,6 +101,23 @@ interface ReplayState {
   run: number;
   loading: boolean;
   error?: string;
+}
+
+/** How this page load happened (`PerformanceNavigationTiming.type`), if the browser says. */
+function navigationType(): NavigationType {
+  const nav = performance.getEntriesByType('navigation')[0] as
+    PerformanceNavigationTiming | undefined;
+  return nav?.type;
+}
+
+/** Whether the page was opened from a play page of this site (the language fallback). */
+function referrerIsPlayPage(): boolean {
+  try {
+    const r = new URL(document.referrer);
+    return r.origin === location.origin && playPageLang(r.pathname) !== null;
+  } catch {
+    return false;
+  }
 }
 
 export function startApp(root: HTMLElement): void {
@@ -553,8 +574,12 @@ export function startApp(root: HTMLElement): void {
     startHash,
     notice: newerLinkNote,
     view: view === 'simple' ? 'simple' : 'full',
-    // A Simple link (not a cold page) keeps its seed for the first Run, so it reproduces (#154).
-    linkSeed: startRoute.mode === 'simple' && hashHasAppState(startHash),
+    // A Simple link (not a cold page) keeps its seed for the first Run, so it reproduces (#154),
+    // unless this load is a reload, a back/forward visit or the language fallback (armLinkSeed).
+    linkSeed:
+      startRoute.mode === 'simple' &&
+      hashHasAppState(startHash) &&
+      armLinkSeed(navigationType(), referrerIsPlayPage()),
   });
 
   clear(root);
@@ -1069,20 +1094,27 @@ export function startApp(root: HTMLElement): void {
   });
 
   window.addEventListener('hashchange', () => {
-    const fc = freeConfigFromHash(location.hash);
     holdNewerLink(freeHashModelNewer(location.hash));
     if (keepNewerLink) announce(t('free.newerModel'));
-    // A link opens as it does on load: a free link in the free form, any other in classic.
-    if (fc) {
-      free.setConfig(fc);
+    // A link opens as it does on load (routeHashChange): a Simple link in Simple with its seed
+    // armed for the next Run (#154), any other free link in the free form, a classic one in classic.
+    const next = routeHashChange(location.hash, location.search);
+    if (!next) return;
+    if (next.mode === 'simple') {
+      show('simple', 'free');
+      free.setConfig(next.config, { linkSeed: true });
+      simpleLinked = true;
+      writeUrl();
+      return;
+    }
+    if (next.mode === 'free') {
+      free.setConfig(next.config);
       setMode('free');
       return;
     }
-    const c = configFromHash(location.hash);
-    if (!c) return;
     setMode('classic');
-    config = c;
-    form.setConfig(c);
+    config = next.config;
+    form.setConfig(next.config);
     updateStale();
     syncNames();
   });

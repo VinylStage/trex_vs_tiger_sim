@@ -56,7 +56,11 @@ export interface FreeMode {
   configPanel: HTMLElement;
   resultsPanel: HTMLElement;
   getConfig(): FreeConfig;
-  setConfig(c: FreeConfig): void;
+  /**
+   * Replace the config. `linkSeed`: it came from a Simple link pasted into the open page (#154),
+   * so the next Simple Run keeps its seed, as on a page opened with that link.
+   */
+  setConfig(c: FreeConfig, opts?: { linkSeed?: boolean }): void;
   /** Re-render every text in the current language (results stay). */
   relocalize(): void;
   /** Whether a run is in progress. */
@@ -941,10 +945,10 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     configPanel,
     resultsPanel,
     getConfig: () => structuredClone(cfg),
-    setConfig: (c) => {
-      keepLinkSeed = false;
+    setConfig: (c, o) => {
+      keepLinkSeed = view === 'simple' && o?.linkSeed === true;
       cfg = sanitizeFreeConfig(c);
-      requestedRuns = c.runs;
+      requestedRuns = view === 'simple' ? simpleRuns(cfg) : c.runs;
       buildView();
       updateStale();
     },

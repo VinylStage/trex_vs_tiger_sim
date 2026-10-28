@@ -599,7 +599,7 @@ export const en: Dictionary = {
   'simple.seedNote':
     'Every Run uses a new seed. The seed goes into the address, so a shared link reproduces the result.',
   'simple.linkSeedNote':
-    'The next Run uses this link’s seed ({seed}), so it reproduces the shared result. After that, every Run uses a new seed.',
+    'The next Run uses this link’s seed ({seed}), so everyone who opens the link gets the same result.',
   'simple.barLabel': 'Win shares: {a} {pa}, draw {pd}, {b} {pb}',
   'simple.breakdown': 'At the end of a battle (mean)',
   'simple.standing': 'Still standing',

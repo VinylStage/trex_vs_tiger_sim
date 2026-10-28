@@ -74,3 +74,25 @@ export function routeLink(hash: string, search: string): LinkRoute {
   const config = configFromHash(hash) ?? defaultConfig();
   return { mode: 'classic', config, check: checkFromHash(hash, config) };
 }
+
+/** What a fragment pasted into an open play page (`hashchange`) opens, if anything. */
+export type HashChangeRoute =
+  | { mode: 'simple'; config: FreeConfig }
+  | { mode: 'free'; config: FreeConfig }
+  | { mode: 'classic'; config: ScenarioConfig }
+  | null;
+
+/**
+ * The open page's answer to a changed fragment (#154 review): a Simple link opens Simple, as on
+ * load (`routeLink`); any other free link the free form; a classic payload classic. A fragment
+ * with no config the page can read (a plain anchor, a bare `#chk=`, a settings code, a malformed
+ * payload) changes nothing, as before.
+ */
+export function routeHashChange(hash: string, search: string): HashChangeRoute {
+  if (!hashHasAppState(hash)) return null;
+  const route = routeLink(hash, search);
+  if (route.mode === 'simple') return { mode: 'simple', config: route.config };
+  if (route.mode === 'free') return { mode: 'free', config: route.config };
+  const c = configFromHash(hash);
+  return c ? { mode: 'classic', config: c } : null;
+}

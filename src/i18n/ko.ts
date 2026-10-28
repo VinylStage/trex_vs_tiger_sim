@@ -593,7 +593,7 @@ export const ko = {
   'simple.seedNote':
     '실행할 때마다 새 시드로 계산합니다. 시드는 주소에 담기므로 링크를 공유하면 같은 결과가 재현됩니다.',
   'simple.linkSeedNote':
-    '다음 실행은 이 링크의 시드({seed})로 계산하므로 공유된 결과가 그대로 재현됩니다. 그다음부터는 실행할 때마다 새 시드를 씁니다.',
+    '다음 실행은 이 링크의 시드({seed})를 써서, 링크를 연 사람 모두 같은 결과를 얻습니다.',
   'simple.barLabel': '승률: {a} {pa}, 무승부 {pd}, {b} {pb}',
   'simple.breakdown': '한 판이 끝났을 때 (평균)',
   'simple.standing': '끝까지 남음',
