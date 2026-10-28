@@ -13,6 +13,8 @@
 //   trex-tiger    T. rex vs tiger on both engines, same counts, seed and run count
 //   classic       every classic preset (src/ui/form.ts PRESETS) on both engines
 //   presets       every Simple-mode preset (src/sim/free/presets.ts) on the free engine
+//   species-notes the SPECIES.md §7 match-ups that are not classic presets, on both engines
+//   interference  the free T. rex vs tiger runs with crowding (`interference`) switched off
 //   symmetry      mirror matches and side swaps on the free engine
 //   monotonic     win share against head count on the free engine
 
@@ -77,6 +79,31 @@ function diffInterval(a, b) {
     lo: d - Math.sqrt((a.p - a.lo) ** 2 + (b.hi - b.p) ** 2),
     hi: d + Math.sqrt((a.hi - a.p) ** 2 + (b.p - b.lo) ** 2),
   };
+}
+
+/**
+ * Interval for pA − pB when both shares come from the same n runs (A wins, B wins and draws are
+ * one multinomial sample, so the two shares are negatively correlated and `diffInterval` would be
+ * too narrow). Wald interval with Var(p̂A − p̂B) = (pA + pB − (pA − pB)²) / n.
+ */
+function pairedDiffInterval(a, b, n) {
+  const d = a.p - b.p;
+  const half = Z * Math.sqrt(Math.max(0, a.p + b.p - d * d) / n);
+  return { d, lo: d - half, hi: d + half };
+}
+
+// Sanity check on a symmetric split (pA = pB = 0.5, no draws, n = 1,000): each share's half-width
+// is about 3.1 pp (1.96 × √(0.25 / 1000)), and since B = 1 − A the difference A − B moves twice as
+// far as either share, so its paired half-width must be about 6.2 pp. The independent-samples
+// interval would give about 4.4 pp (√2 × 3.1), which is the error this function avoids.
+{
+  const share = wilson(500, 1000);
+  const shareHalf = (share.hi - share.lo) / 2;
+  const paired = pairedDiffInterval({ p: 0.5 }, { p: 0.5 }, 1000);
+  const pairedHalf = (paired.hi - paired.lo) / 2;
+  if (Math.abs(shareHalf - 0.031) > 0.0005 || Math.abs(pairedHalf - 2 * shareHalf) > 0.0005) {
+    throw new Error(`paired interval check failed: ${shareHalf} / ${pairedHalf}`);
+  }
 }
 
 const quantiles = (values) => {
@@ -326,7 +353,7 @@ sections['symmetry'] = () => {
   ].map((m) => {
     const free = runFree(m);
     logRow(label(m), free);
-    return { match: m, free, diff: diffInterval(free.a, free.b) };
+    return { match: m, free, diff: pairedDiffInterval(free.a, free.b, free.runs) };
   });
   const swaps = [
     [
@@ -353,13 +380,13 @@ sections['symmetry'] = () => {
       diff: diffInterval(fx.a, fy.b),
     };
   });
-  // Recheck of the one mirror whose interval missed 0 at 1,000 runs (wolf): 4,000 runs at the
-  // default seed and at two others.
+  // Supporting evidence for the mirror with the largest gap at 1,000 runs (wolf): 4,000 runs at
+  // the default seed and at two others.
   const rechecks = [SEED, 1, 2].map((seed) => {
     const m = { a: 'wolf', b: 'wolf', na: 1, nb: 1, runs: runsOf(4000), seed };
     const free = runFree(m);
     logRow(`${label(m)} seed ${seed}`, free);
-    return { match: m, free, diff: diffInterval(free.a, free.b) };
+    return { match: m, free, diff: pairedDiffInterval(free.a, free.b, free.runs) };
   });
   return { mirrors, swaps, rechecks };
 };

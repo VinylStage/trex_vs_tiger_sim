@@ -139,7 +139,7 @@ if (S['symmetry']) {
       'A wins',
       'B wins',
       'Draws',
-      'A − B (pp)',
+      'A − B (pp, paired)',
       '0 inside?',
       'Median s',
       'Rout %',
@@ -160,7 +160,7 @@ if (S['symmetry']) {
     out('### Mirror recheck (free engine)');
     out();
     table(
-      ['Mirror', 'Seed', 'Runs', 'A wins', 'B wins', 'A − B (pp)', '0 inside?'],
+      ['Mirror', 'Seed', 'Runs', 'A wins', 'B wins', 'A − B (pp, paired)', '0 inside?'],
       S['symmetry'].rechecks.map((r) => [
         match(r.match),
         r.match.seed,

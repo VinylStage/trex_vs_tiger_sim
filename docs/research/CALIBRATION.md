@@ -4,7 +4,7 @@
 >
 > - 자유 대결 엔진(쉬운 모드의 기본)을 클래식 엔진과 같은 종, 같은 마릿수, 같은 시드(20261019), 같은 실행 수로 비교하고, 자유 엔진만의 점검(거울전, 진영 바꾸기, 마릿수에 따른 단조성)과 쉬운 모드 프리셋의 근거 점검을 했습니다. 측정 스크립트는 `scripts/calibration/`에, 원자료는 `calibration-results.json`에 있습니다.
 > - **티라노 vs 호랑이:** 자유 엔진의 결과는 클래식의 기본 전술 `flank`(뒤로 돌아 들어감)보다 `direct`(곧장 달려듦)에 훨씬 가깝습니다. 자유 모델에서 혼자 사는 호랑이는 포위하지 않기 때문입니다(설계 의도). 그래서 티라노 1 대 호랑이 20에서 호랑이 승률이 클래식 46.3%에서 자유 1.8%로 떨어집니다. 또 자유 모델의 호랑이는 거의 이탈하지 않고(이탈 비율 3–12%, 클래식 52–93%) 전투 불능이 될 때까지 싸웁니다. 앞의 것은 예상된 모델 차이이고, 뒤의 것은 보정 문제일 수 있어 #169로 올렸습니다(소유자 결정 필요).
-> - **구조 점검은 통과:** 같은 종 거울전 14개 모두 50:50(늑대 1:1 한 개가 1,000회에서 구간을 벗어났지만, 같은 시드 4,000회에서는 차이가 구간 경계까지 줄고 다른 시드 두 개에서는 차이가 없음), 진영 바꾸기 3쌍 모두 같음, 마릿수 4개 곡선 모두 단조 증가.
+> - **구조 점검은 통과:** 같은 종 거울전 14개 모두 50:50(두 진영 승률 차이의 95% 구간이 모두 0을 포함), 진영 바꾸기 3쌍 모두 같음, 마릿수 4개 곡선 모두 단조 증가.
 > - **보정 문제로 보이는 것:** 호모 에렉투스 1마리가 어떤 육식동물과의 1:1에서도 한 번도 이기지 못하고 늘 이탈함(#167), 늑대 대 물소 곡선이 9–13마리에서 평평해지지 않음(#168), 혼자 사는 동물이 훨씬 큰 상대 앞에서도 거의 이탈하지 않음(#169). 파라미터 페이지에 자유 모델 항목이 없음(#170). 이미 알려진 1:1 이탈 100%와 보류 프리셋 3개(R4)는 그대로입니다.
 > - **R1 "잠정 모델" 안내:** 기준(보정 보고서 + 소유자 승인 + 안내에 대한 결정, 그리고 가이드 · 모델 · 파라미터 페이지의 자유 모델 설명)을 아직 다 채우지 못했으므로 **지금은 내리지 말 것을 권합니다.** 소유자가 이 보고서를 승인하고, #170(파라미터 페이지)을 마치고, #169를 결정하면 내릴 수 있습니다. UI는 바꾸지 않았습니다.
 
@@ -44,7 +44,7 @@ Every number below is a statement about the two models under their assumptions, 
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Pack tactic `flank` (default) or `direct`                 | No tactic switch: every agent approaches directly; only a social side's pack buff adds a coordinated rear approach (E1) | Classic is run with **both** tactics. For a solitary pack species (tiger), classic `direct` is the closest analogue; for a social one, the free buff sits between the two. |
 | Heavies never flee                                        | Every agent can flee (D5)                                                                                               | Classic rout shares count no fled heavies.                                                                                                                                 |
-| Morale shock when any pack animal nearby is incapacitated | Shock only through the pack buff of social species (§4.5); morale loss scales with damage                               | Tigers rout far less in free (§3).                                                                                                                                         |
+| Morale shock when any pack animal nearby is incapacitated | Shock only through the pack buff of social species (FREE-MATCHUPS.md §4.5); morale loss scales with damage              | Tigers rout far less in free (§3).                                                                                                                                         |
 | Only the pack side latches, always                        | Latch only by `canLatch` species onto a target ≥ `R_latch` (2–5×) heavier                                               | Tiger vs brown bear becomes a strike duel.                                                                                                                                 |
 | Heavy hit always detaches and knocks back                 | Knock-back only when the striker is ≥ `K_knock` (1.5–4×) heavier                                                        | Mostly the same for big-vs-small match-ups.                                                                                                                                |
 | 22 sampled parameters                                     | 57                                                                                                                      | Same seed does not mean paired runs: the two batches are independent samples.                                                                                              |
@@ -52,7 +52,8 @@ Every number below is a statement about the two models under their assumptions, 
 **Metrics** (identical definitions on both engines, cross-checked against `aggregateFree` and `routShare` on every free batch):
 
 - **Win share** of each side and draws, with the Wilson 95 % interval. A free side wins when the other has no active agent; a classic heavy side wins when no pack animal is active, the pack side when every heavy is incapacitated.
-- **Free − classic**: the difference of side A's win shares in percentage points with Newcombe's hybrid score 95 % interval (independent samples).
+- **Free − classic** (and the side swaps of §6): the difference of side A's win shares in percentage points with Newcombe's hybrid score 95 % interval. The two batches are independent samples, so this interval applies.
+- **A − B in a mirror match**: the difference of the two sides' win shares within **one** batch. A wins, B wins and draws come from the same runs (one multinomial sample) and are negatively correlated, so the interval is the paired Wald interval with variance (pA + pB − (pA − pB)²) / n. At pA ≈ pB ≈ 0.5 and n = 1,000 its half-width is about 6.2 pp, twice the 3.1 pp of each share; an independent-samples interval would be about √2 too narrow. The script checks this on a synthetic 50/50 split before it runs anything.
 - **Median duration** in seconds over all runs.
 - **Rout share**: the losing side's fled ÷ (fled + incapacitated), pooled over decided runs (`routShare`, `src/sim/free/aggregate.ts`; PRESETS.md).
 
@@ -220,30 +221,32 @@ The match-ups of [SPECIES.md §7](../SPECIES.md#7-calibration-notes) that are no
 
 ### Mirror matches (free engine)
 
-| Mirror                            | Runs |           A wins |           B wins | Draws |         A − B (pp) | 0 inside? | Median s | Rout % |
-| --------------------------------- | ---: | ---------------: | ---------------: | ----: | -----------------: | --------: | -------: | -----: |
-| _T. rex_ 1 v _T. rex_ 1           | 1000 | 49.8 (46.7–52.9) | 49.9 (46.8–53.0) |   0.3 | -0.1 (-4.5 to 4.3) |       yes |       97 |   99.9 |
-| elephant 1 v elephant 1           | 1000 | 49.4 (46.3–52.5) | 50.5 (47.4–53.6) |   0.1 | -1.1 (-5.5 to 3.3) |       yes |      153 |   99.9 |
-| buffalo 1 v buffalo 1             | 1000 | 49.3 (46.2–52.4) | 50.5 (47.4–53.6) |   0.2 | -1.2 (-5.6 to 3.2) |       yes |       73 |  100.0 |
-| brown bear 1 v brown bear 1       | 1000 | 50.9 (47.8–54.0) | 48.9 (45.8–52.0) |   0.2 | +2.0 (-2.4 to 6.4) |       yes |       76 |  100.0 |
-| mammoth 1 v mammoth 1             | 1000 | 49.4 (46.3–52.5) | 50.5 (47.4–53.6) |   0.1 | -1.1 (-5.5 to 3.3) |       yes |      142 |  100.0 |
-| tiger 1 v tiger 1                 | 1000 | 50.3 (47.2–53.4) | 49.1 (46.0–52.2) |   0.6 | +1.2 (-3.2 to 5.6) |       yes |       22 |  100.0 |
-| lion 1 v lion 1                   | 1000 | 49.4 (46.3–52.5) | 49.7 (46.6–52.8) |   0.9 | -0.3 (-4.7 to 4.1) |       yes |       23 |  100.0 |
-| wolf 1 v wolf 1                   | 1000 | 52.2 (49.1–55.3) | 46.6 (43.5–49.7) |   1.2 | +5.6 (1.2 to 10.0) |    **no** |       24 |  100.0 |
-| hyena 1 v hyena 1                 | 1000 | 51.1 (48.0–54.2) | 47.3 (44.2–50.4) |   1.6 | +3.8 (-0.6 to 8.2) |       yes |       22 |   99.9 |
-| _H. erectus_ 1 v _H. erectus_ 1   | 1000 | 50.2 (47.1–53.3) | 49.7 (46.6–52.8) |   0.1 | +0.5 (-3.9 to 4.9) |       yes |      233 |    0.0 |
-| tiger 5 v tiger 5                 | 1000 | 48.5 (45.4–51.6) | 51.5 (48.4–54.6) |   0.0 | -3.0 (-7.4 to 1.4) |       yes |       32 |  100.0 |
-| lion 5 v lion 5                   | 1000 | 48.9 (45.8–52.0) | 51.1 (48.0–54.2) |   0.0 | -2.2 (-6.6 to 2.2) |       yes |       24 |  100.0 |
-| wolf 8 v wolf 8                   | 1000 | 50.4 (47.3–53.5) | 49.6 (46.5–52.7) |   0.0 | +0.8 (-3.6 to 5.2) |       yes |       22 |  100.0 |
-| _H. erectus_ 10 v _H. erectus_ 10 | 1000 | 51.0 (47.9–54.1) | 49.0 (45.9–52.1) |   0.0 | +2.0 (-2.4 to 6.4) |       yes |      109 |   72.0 |
+| Mirror                            | Runs |           A wins |           B wins | Draws |  A − B (pp, paired) | 0 inside? | Median s | Rout % |
+| --------------------------------- | ---: | ---------------: | ---------------: | ----: | ------------------: | --------: | -------: | -----: |
+| _T. rex_ 1 v _T. rex_ 1           | 1000 | 49.8 (46.7–52.9) | 49.9 (46.8–53.0) |   0.3 |  -0.1 (-6.3 to 6.1) |       yes |       97 |   99.9 |
+| elephant 1 v elephant 1           | 1000 | 49.4 (46.3–52.5) | 50.5 (47.4–53.6) |   0.1 |  -1.1 (-7.3 to 5.1) |       yes |      153 |   99.9 |
+| buffalo 1 v buffalo 1             | 1000 | 49.3 (46.2–52.4) | 50.5 (47.4–53.6) |   0.2 |  -1.2 (-7.4 to 5.0) |       yes |       73 |  100.0 |
+| brown bear 1 v brown bear 1       | 1000 | 50.9 (47.8–54.0) | 48.9 (45.8–52.0) |   0.2 |  +2.0 (-4.2 to 8.2) |       yes |       76 |  100.0 |
+| mammoth 1 v mammoth 1             | 1000 | 49.4 (46.3–52.5) | 50.5 (47.4–53.6) |   0.1 |  -1.1 (-7.3 to 5.1) |       yes |      142 |  100.0 |
+| tiger 1 v tiger 1                 | 1000 | 50.3 (47.2–53.4) | 49.1 (46.0–52.2) |   0.6 |  +1.2 (-5.0 to 7.4) |       yes |       22 |  100.0 |
+| lion 1 v lion 1                   | 1000 | 49.4 (46.3–52.5) | 49.7 (46.6–52.8) |   0.9 |  -0.3 (-6.5 to 5.9) |       yes |       23 |  100.0 |
+| wolf 1 v wolf 1                   | 1000 | 52.2 (49.1–55.3) | 46.6 (43.5–49.7) |   1.2 | +5.6 (-0.6 to 11.8) |       yes |       24 |  100.0 |
+| hyena 1 v hyena 1                 | 1000 | 51.1 (48.0–54.2) | 47.3 (44.2–50.4) |   1.6 |  +3.8 (-2.3 to 9.9) |       yes |       22 |   99.9 |
+| _H. erectus_ 1 v _H. erectus_ 1   | 1000 | 50.2 (47.1–53.3) | 49.7 (46.6–52.8) |   0.1 |  +0.5 (-5.7 to 6.7) |       yes |      233 |    0.0 |
+| tiger 5 v tiger 5                 | 1000 | 48.5 (45.4–51.6) | 51.5 (48.4–54.6) |   0.0 |  -3.0 (-9.2 to 3.2) |       yes |       32 |  100.0 |
+| lion 5 v lion 5                   | 1000 | 48.9 (45.8–52.0) | 51.1 (48.0–54.2) |   0.0 |  -2.2 (-8.4 to 4.0) |       yes |       24 |  100.0 |
+| wolf 8 v wolf 8                   | 1000 | 50.4 (47.3–53.5) | 49.6 (46.5–52.7) |   0.0 |  +0.8 (-5.4 to 7.0) |       yes |       22 |  100.0 |
+| _H. erectus_ 10 v _H. erectus_ 10 | 1000 | 51.0 (47.9–54.1) | 49.0 (45.9–52.1) |   0.0 |  +2.0 (-4.2 to 8.2) |       yes |      109 |   72.0 |
 
 ### Mirror recheck (free engine)
 
-| Mirror          |     Seed | Runs |           A wins |           B wins |         A − B (pp) | 0 inside? |
+| Mirror          |     Seed | Runs |           A wins |           B wins | A − B (pp, paired) | 0 inside? |
 | --------------- | -------: | ---: | ---------------: | ---------------: | -----------------: | --------: |
-| wolf 1 v wolf 1 | 20261019 | 4000 | 50.5 (48.9–52.0) | 48.3 (46.7–49.8) |  +2.2 (0.0 to 4.4) |    **no** |
-| wolf 1 v wolf 1 |        1 | 4000 | 49.5 (47.9–51.0) | 49.8 (48.3–51.3) | -0.3 (-2.5 to 1.9) |       yes |
-| wolf 1 v wolf 1 |        2 | 4000 | 49.2 (47.7–50.7) | 49.8 (48.3–51.4) | -0.6 (-2.8 to 1.6) |       yes |
+| wolf 1 v wolf 1 | 20261019 | 4000 | 50.5 (48.9–52.0) | 48.3 (46.7–49.8) | +2.2 (-0.9 to 5.3) |       yes |
+| wolf 1 v wolf 1 |        1 | 4000 | 49.5 (47.9–51.0) | 49.8 (48.3–51.3) | -0.3 (-3.4 to 2.8) |       yes |
+| wolf 1 v wolf 1 |        2 | 4000 | 49.2 (47.7–50.7) | 49.8 (48.3–51.4) | -0.6 (-3.7 to 2.5) |       yes |
+
+The rechecks are supporting evidence only; the pass above does not depend on them.
 
 ### Side swaps (free engine)
 
@@ -253,7 +256,7 @@ The match-ups of [SPECIES.md §7](../SPECIES.md#7-calibration-notes) that are no
 | brown bear 1 v wolf 10 / wolf 10 v brown bear 1 | 1000 |    64.1 (61.1–67.0) |           62.4 (59.4–65.3) | +1.7 (-2.5 to 5.9) |       yes |
 | _T. rex_ 1 v tiger 10 / tiger 10 v _T. rex_ 1   | 1000 |    99.0 (98.2–99.5) |           99.6 (99.0–99.8) | -0.6 (-1.5 to 0.2) |       yes |
 
-- **Mirror matches: pass.** 13 of 14 intervals for A − B contain 0. The one miss, one wolf against one (+5.6 points at 1,000 runs), is within what 14 tests at 95 % produce by chance: at 4,000 runs on the same seed the difference shrinks to the edge of its interval, and on two other seeds it is 0.3 and 0.6 points with 0 well inside. The simultaneous resolution (FREE-MATCHUPS.md §4.6) holds.
+- **Mirror matches: pass, 14 of 14.** Every paired interval for A − B contains 0. The largest gap, one wolf against one (+5.6 pp, −0.6 to 11.8 at 1,000 runs), was rerun as supporting evidence: +2.2 pp (−0.9 to 5.3) at 4,000 runs on the same seed, and −0.3 and −0.6 pp on two other seeds. The simultaneous resolution (FREE-MATCHUPS.md §4.6) holds.
 - **Side swaps: pass.** The P8 runs 5 tigers v 5 lions and 10 wolves v 1 brown bear, and 1 _T. rex_ v 10 tigers, give the same result in either order within the interval. In 5 v 5 the lions win about 57–59 % and the tigers about 41–43 % in either order.
 - **One on one, the loser flees** in practically every mirror (rout share 99.9–100 %), except _H. erectus_ (0 %), whose weak blows rarely move morale. Already recorded in PRESETS.md; part of R4.
 
@@ -310,8 +313,6 @@ The match-ups of [SPECIES.md §7](../SPECIES.md#7-calibration-notes) that are no
 | elephant 1 v lion 30 |  300 | 92.0 (88.4–94.6) |   8.0 (5.4–11.6) |      125 |   95.7 |   ok |
 | elephant 1 v lion 40 |  300 | 86.3 (82.0–89.8) | 13.7 (10.2–18.0) |      113 |   96.2 |   ok |
 | elephant 1 v lion 60 |  300 | 73.3 (68.1–78.0) | 26.7 (22.0–31.9) |       97 |   97.0 |   ok |
-
-Generated from docs/research/calibration-results.json (commit 12b5968, v22.22.0).
 
 - **Monotonic in count: pass.** In all four sweeps the larger side's win share never drops by more than its interval allows between neighbouring counts.
 - **Wolf-vs-buffalo plateau guard: passes the test, not the design's wording.** `tests/free-buff.test.ts` requires p(12) ≥ ½ p(24); measured p(12) = 30.8 %, p(25) = 53.2 %. FREE-MATCHUPS.md §5.3 asks the curve to "keep its plateau inside 9–13" [MacNulty 2014]; the measured curve keeps climbing at about the same slope past 13. The model measures "incapacitated or fled within 20 minutes", the field data capture per hunt, so only the shape compares. Filed as **#168** to decide what the guard should require.
@@ -434,3 +435,5 @@ node scripts/calibration/run.mjs --only trex-tiger --out /tmp/t.json   # one sec
 ```
 
 Sections: `trex-tiger`, `classic`, `presets`, `species-notes`, `interference`, `symmetry`, `monotonic`. Every batch has a fixed seed, so a rerun on the same commit gives the same numbers within the same JavaScript engine (MODEL.md §2.2). Measured with Node v22.22.0. When the free engine changes (a new `mv`), rerun both scripts, update the tables and recheck §8 and §10.
+
+The tables in this report: generated from docs/research/calibration-results.json (commit 12b5968, v22.22.0).
