@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.20](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.19...trex-vs-tiger-sim-v0.2.20) (2026-10-28)
+
+
+### Features
+
+* **share:** links from a Simple run reopen in Simple ([#154](https://github.com/VinylStage/trex_vs_tiger_sim/issues/154)) ([#155](https://github.com/VinylStage/trex_vs_tiger_sim/issues/155)) ([10d0467](https://github.com/VinylStage/trex_vs_tiger_sim/commit/10d0467b9bc4eaa1cc585ba94e6d0d98dab51bca))
+
 ## [0.2.19](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.18...trex-vs-tiger-sim-v0.2.19) (2026-10-27)
 
 
