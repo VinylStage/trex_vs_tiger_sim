@@ -49,6 +49,21 @@ Epic: #20.
 
 Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md). It covers the play/learn split, Simple and Advanced modes, the streamer session loop with live variable cards, the new-animal batches, ads readiness and the milestones M1–M8. Live chat is tracked separately in #118 and does not gate 1.0. The owner answered the blocking decisions on 2026-10-26 (§12 decision record); milestone issues track the work.
 
+### M2 — play/learn split, Simple mode, usability (epic #125)
+
+| Item                                                    | Issue     | Status                                                                                                       |
+| ------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------ |
+| Lobby `/` and the app at `/play/`, old links forwarded  | #142      | Done (#143, v0.2.18)                                                                                         |
+| Simple mode with an Advanced switch                     | #146      | Done (#151, v0.2.19)                                                                                         |
+| Simple links reopen in Simple                           | #154      | Done (#155, v0.2.20)                                                                                         |
+| Simple tour and the Advanced settings manual            | #158      | Done (#159, v0.2.21)                                                                                         |
+| `/learn/` hub, Play/Learn nav groups, `/species/` guide | #162      | Done (#163, v0.2.22)                                                                                         |
+| P8 calibration report and model-page section            | #166      | Done in review: [docs/research/CALIBRATION.md](docs/research/CALIBRATION.md); awaits the owner's sign-off    |
+| P8 free model on the parameters page                    | #170      | Open                                                                                                         |
+| R1 "provisional model" banner decision                  | #166      | Recommendation: keep until the sign-off, #170 and #169 are done (CALIBRATION.md §10); owner decides          |
+| Usability test (5–8 people, 18–35) and anonymous survey | #166      | Kit ready in [docs/research/USABILITY.md](docs/research/USABILITY.md); the owner runs it, results not in yet |
+| Free-model calibration follow-ups                       | #167–#169 | Open (#169 needs an owner decision)                                                                          |
+
 ## Later (candidates, not committed)
 
 - Sharing P2 (#51): per-bucket pre-generated OG images (species pair × outcome tier; needs a build-time PNG rasterizer, an owner decision on a dev dependency), QR codes, Kakao SDK, compressed links, challenge links
