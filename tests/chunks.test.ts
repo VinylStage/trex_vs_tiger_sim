@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { CHUNKS_PER_WORKER, estimateRemainingMs, poolSize, splitRuns } from '../src/ui/chunks';
+import {
+  CHUNKS_PER_WORKER,
+  MAX_CHUNK_RUNS,
+  estimateRemainingMs,
+  poolSize,
+  splitRuns,
+} from '../src/ui/chunks';
 import { costLevel, estimateTotalMs } from '../src/ui/cost';
 import { durationHistogram } from '../src/ui/charts';
 import { orderRange } from '../src/ui/form';
@@ -27,6 +33,16 @@ describe('splitRuns', () => {
     expect(chunks.length).toBeGreaterThanOrEqual(8 * CHUNKS_PER_WORKER - 1);
     expect(chunks.length).toBeLessThanOrEqual(8 * CHUNKS_PER_WORKER);
     expect(splitRuns(3, 8)).toHaveLength(3);
+  });
+
+  it('caps chunks at MAX_CHUNK_RUNS so a more urgent job waits at most one small chunk (#175)', () => {
+    const chunks = splitRuns(20000, 3);
+    expect(chunks).toHaveLength(20000 / MAX_CHUNK_RUNS);
+    for (const c of chunks) expect(c.end - c.start).toBe(MAX_CHUNK_RUNS);
+    expect(splitRuns(2000, 3).every((c) => c.end - c.start <= MAX_CHUNK_RUNS)).toBe(true);
+    // Below the cap the split is unchanged, so small batches still use every worker.
+    expect(splitRuns(200, 3)).toHaveLength(12);
+    expect(splitRuns(20, 8)).toHaveLength(20);
   });
 
   it('handles degenerate input', () => {

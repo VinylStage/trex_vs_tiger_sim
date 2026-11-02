@@ -7,24 +7,17 @@ import { packFreeSummaries } from '../sim/free/montecarlo';
 import { packSummaries, type AggregateResult } from '../sim/montecarlo';
 import type { WorkerRequest, WorkerResponse } from '../workers/protocol';
 import workerUrl from '../workers/sim.worker.ts?worker&url';
-import { estimateRemainingMs, poolSize, splitRuns, type RunRange } from './chunks';
+import { poolSize } from './chunks';
+import {
+  CancelledError,
+  Priority,
+  Scheduler,
+  type Job,
+  type PoolProgress,
+  type TaskRequest,
+} from './scheduler';
 
-export interface PoolProgress {
-  done: number;
-  total: number;
-  elapsedMs: number;
-  /** null until enough runs finished to extrapolate. */
-  etaMs: number | null;
-}
-
-export class CancelledError extends Error {
-  constructor() {
-    super('cancelled');
-    this.name = 'CancelledError';
-  }
-}
-
-const PROGRESS_THROTTLE_MS = 100;
+export { CancelledError, Priority, type PoolProgress } from './scheduler';
 
 /** The subset of the Trusted Types API used here (not in TypeScript's DOM lib yet). */
 interface TrustedTypesLike {
@@ -63,31 +56,6 @@ function spawnWorker(): Worker {
   return new Worker(workerScript, { type: 'module' });
 }
 
-interface Chunk {
-  range: RunRange;
-  done: number;
-}
-
-interface RunJob {
-  /** A legacy config, or a free-model one (the worker dispatches on `mode: 'free'`). */
-  config: ScenarioConfig | FreeConfig;
-  queue: RunRange[];
-  inFlight: Map<number, Chunk>;
-  completedRuns: number;
-  summaries: (RunSummary | FreeRunSummary)[];
-  startedAt: number;
-  lastReport: number;
-  onProgress: (p: PoolProgress) => void;
-  resolve: (s: (RunSummary | FreeRunSummary)[]) => void;
-  reject: (e: Error) => void;
-}
-
-interface AggregateJob {
-  jobId: number;
-  resolve: (a: AggregateResult | FreeAggregate) => void;
-  reject: (e: Error) => void;
-}
-
 interface ReplayJob {
   jobId: number;
   resolve: (t: BattleTrace | FreeTrace) => void;
@@ -95,121 +63,89 @@ interface ReplayJob {
 }
 
 /**
- * Fixed-size pool of simulation workers. Runs are split into small contiguous chunks that idle
- * workers pull from a queue, so uneven battle lengths still balance across cores.
- * Results do not depend on the pool size: every run is seeded by its index.
+ * The page's simulation workers: a `Scheduler` of warm run workers (small chunks, chunk-level
+ * preemption, src/ui/scheduler.ts) plus one replay worker. `run`/`aggregate` are the foreground
+ * job of the Simple and Advanced batches: a new one supersedes the previous one, which rejects
+ * with CancelledError while every run worker stays warm. A newer replay still terminates the old
+ * replay worker. Results do not depend on the pool size or
+ * the chunk size: every run is seeded by its index and summaries come back in run order.
  */
 export class SimPool {
   readonly size: number;
-  private workers: Worker[] = [];
+  /** Background jobs at their own priority (they are not superseded by `run`). */
+  readonly scheduler: Scheduler;
   private replayWorker: Worker | null = null;
   private nextJobId = 1;
-  private job: RunJob | null = null;
+  private foreground: Job<unknown> | null = null;
   private replayJob: ReplayJob | null = null;
-  private aggJob: AggregateJob | null = null;
 
-  /** `spawn` creates one worker; the tests pass a fake (tests/pool.test.ts). */
+  /** `spawn` creates one worker; the tests pass a fake (tests/pool-jobs.test.ts). */
   constructor(
     size = poolSize(globalThis.navigator?.hardwareConcurrency),
     private readonly spawn: () => Worker = spawnWorker,
   ) {
     this.size = size;
+    this.scheduler = new Scheduler(size, spawn);
   }
 
   get running(): boolean {
-    return this.job !== null || this.aggJob !== null;
+    return this.foreground !== null;
   }
 
   /** Run every Monte Carlo run of `config`. Rejects with CancelledError if cancelled. */
-  run(config: ScenarioConfig, onProgress: (p: PoolProgress) => void): Promise<RunSummary[]> {
-    return this.start(config, onProgress) as Promise<RunSummary[]>;
+  run(
+    config: ScenarioConfig,
+    onProgress: (p: PoolProgress) => void,
+    priority: Priority = Priority.WhatIf,
+  ): Promise<RunSummary[]> {
+    return this.own(() => this.scheduler.submitRuns(config, priority, onProgress)) as Promise<
+      RunSummary[]
+    >;
   }
 
   /** Run every run of a free-model config (src/sim/free) on the same workers. */
-  runFree(config: FreeConfig, onProgress: (p: PoolProgress) => void): Promise<FreeRunSummary[]> {
-    return this.start(config, onProgress) as Promise<FreeRunSummary[]>;
-  }
-
-  private start(
-    config: ScenarioConfig | FreeConfig,
+  runFree(
+    config: FreeConfig,
     onProgress: (p: PoolProgress) => void,
-  ): Promise<(RunSummary | FreeRunSummary)[]> {
-    this.cancel();
-    const chunks = splitRuns(config.runs, this.size);
-    return new Promise<(RunSummary | FreeRunSummary)[]>((resolve, reject) => {
-      const job: RunJob = {
-        config,
-        queue: chunks,
-        inFlight: new Map(),
-        completedRuns: 0,
-        summaries: [],
-        startedAt: performance.now(),
-        lastReport: 0,
-        onProgress,
-        resolve,
-        reject,
-      };
-      this.job = job;
-      if (chunks.length === 0) {
-        this.finish(job);
-        return;
-      }
-      const wanted = Math.min(this.size, chunks.length);
-      while (this.workers.length < wanted) this.workers.push(this.createRunWorker());
-      for (const w of this.workers.slice(0, wanted)) this.dispatch(w, job);
-    });
+    priority: Priority = Priority.WhatIf,
+  ): Promise<FreeRunSummary[]> {
+    return this.own(() => this.scheduler.submitRuns(config, priority, onProgress)) as Promise<
+      FreeRunSummary[]
+    >;
   }
 
   /**
-   * Aggregate the summaries of a finished run in one of the (now idle) run workers, so the
-   * Spearman sensitivities and quantiles never block the main thread. The result is the same
-   * object `aggregate(config, buildDesign(config), summaries)` returns on the main thread.
+   * Aggregate the summaries of a finished run in an idle run worker, so the Spearman
+   * sensitivities and quantiles never block the main thread. The result is the same object
+   * `aggregate(config, buildDesign(config), summaries)` returns on the main thread.
    */
   aggregate(config: ScenarioConfig, summaries: readonly RunSummary[]): Promise<AggregateResult> {
-    this.cancel();
-    const worker = this.workers[0] ?? this.createRunWorker();
-    if (this.workers.length === 0) this.workers.push(worker);
-    const jobId = this.nextJobId++;
     const packed = packSummaries(summaries);
-    return new Promise<AggregateResult>((resolve, reject) => {
-      this.aggJob = {
-        jobId,
-        resolve: resolve as (a: AggregateResult | FreeAggregate) => void,
-        reject,
-      };
-      const msg: WorkerRequest = { type: 'aggregate', jobId, config, summaries: packed };
-      worker.postMessage(msg, [packed.buffer]);
-    });
+    return this.aggregateTask((jobId) => ({
+      msg: { type: 'aggregate', jobId, config, summaries: packed },
+      transfer: [packed.buffer],
+    })) as Promise<AggregateResult>;
   }
 
   /** `aggregate` for a free-model batch (src/sim/free/aggregate.ts), also in a worker. */
   aggregateFree(config: FreeConfig, summaries: readonly FreeRunSummary[]): Promise<FreeAggregate> {
-    this.cancel();
-    const worker = this.workers[0] ?? this.createRunWorker();
-    if (this.workers.length === 0) this.workers.push(worker);
-    const jobId = this.nextJobId++;
     const packed = packFreeSummaries(summaries);
-    return new Promise<FreeAggregate>((resolve, reject) => {
-      this.aggJob = {
-        jobId,
-        resolve: resolve as (a: AggregateResult | FreeAggregate) => void,
-        reject,
-      };
-      const msg: WorkerRequest = { type: 'aggregate-free', jobId, config, summaries: packed };
-      worker.postMessage(msg, [packed.buffer]);
-    });
+    return this.aggregateTask((jobId) => ({
+      msg: { type: 'aggregate-free', jobId, config, summaries: packed },
+      transfer: [packed.buffer],
+    })) as Promise<FreeAggregate>;
   }
 
-  /** Abort the current Monte Carlo job (workers are terminated and recreated on demand). */
+  /** Abort the foreground job. Its queued chunks are dropped; no worker is terminated. */
   cancel(): void {
-    const job = this.job;
-    const agg = this.aggJob;
-    if (!job && !agg) return;
-    this.job = null;
-    this.aggJob = null;
-    this.terminateRunWorkers();
-    job?.reject(new CancelledError());
-    agg?.reject(new CancelledError());
+    const job = this.foreground;
+    this.foreground = null;
+    job?.cancel();
+  }
+
+  /** The page was hidden or shown: idle workers are released after a long hide. */
+  setHidden(hidden: boolean): void {
+    this.scheduler.setHidden(hidden);
   }
 
   /** Re-simulate one run with a full trace. A newer replay request supersedes an older one. */
@@ -240,8 +176,10 @@ export class SimPool {
     });
   }
 
+  /** Terminate every worker (page unload). */
   dispose(): void {
     this.cancel();
+    this.scheduler.dispose();
     this.replayWorker?.terminate();
     this.replayWorker = null;
     if (this.replayJob) {
@@ -250,14 +188,37 @@ export class SimPool {
     }
   }
 
-  private createRunWorker(): Worker {
-    const w = this.spawn();
-    w.onmessage = (e: MessageEvent<WorkerResponse>) => this.onRunMessage(w, e.data);
-    w.onerror = (e) => {
-      e.preventDefault();
-      this.fail(new Error(e.message || 'worker failed to start'));
+  private aggregateTask(task: TaskRequest): Promise<AggregateResult | FreeAggregate> {
+    return this.own(() => this.scheduler.submit({ priority: Priority.WhatIf, tasks: [task] })).then(
+      (results) => {
+        const r = results[0];
+        if (r?.type === 'aggregate' || r?.type === 'aggregate-free') return r.agg;
+        throw new Error('unexpected worker response');
+      },
+    );
+  }
+
+  /**
+   * Cancel the previous foreground job, then submit the new one, so the old job's queued chunks
+   * cannot take a free worker first.
+   */
+  private own<T>(submit: () => Job<T>): Promise<T> {
+    this.cancel();
+    const job = submit();
+    this.foreground = job;
+    const clear = (): void => {
+      if (this.foreground === job) this.foreground = null;
     };
-    return w;
+    return job.promise.then(
+      (r) => {
+        clear();
+        return r;
+      },
+      (e: unknown) => {
+        clear();
+        throw e;
+      },
+    );
   }
 
   private createReplayWorker(): Worker {
@@ -283,90 +244,5 @@ export class SimPool {
       job?.reject(new Error(e.message || 'worker failed to start'));
     };
     return w;
-  }
-
-  private dispatch(worker: Worker, job: RunJob): void {
-    const range = job.queue.shift();
-    if (!range) return;
-    const jobId = this.nextJobId++;
-    job.inFlight.set(jobId, { range, done: 0 });
-    const msg: WorkerRequest = {
-      type: 'run',
-      jobId,
-      config: job.config,
-      start: range.start,
-      end: range.end,
-    };
-    worker.postMessage(msg);
-  }
-
-  private onRunMessage(worker: Worker, msg: WorkerResponse): void {
-    const agg = this.aggJob;
-    if (agg && msg.jobId === agg.jobId) {
-      if (msg.type === 'aggregate' || msg.type === 'aggregate-free') {
-        this.aggJob = null;
-        agg.resolve(msg.agg);
-      } else if (msg.type === 'error') {
-        this.fail(new Error(msg.message));
-      }
-      return;
-    }
-    const job = this.job;
-    if (!job) return;
-    const chunk = job.inFlight.get(msg.jobId);
-    if (!chunk) return;
-    switch (msg.type) {
-      case 'progress':
-        chunk.done = msg.done;
-        this.report(job, false);
-        break;
-      case 'result':
-        job.inFlight.delete(msg.jobId);
-        job.completedRuns += chunk.range.end - chunk.range.start;
-        for (const s of msg.summaries) job.summaries.push(s);
-        if (job.queue.length > 0) this.dispatch(worker, job);
-        if (job.inFlight.size === 0 && job.queue.length === 0) this.finish(job);
-        else this.report(job, false);
-        break;
-      case 'error':
-        this.fail(new Error(msg.message));
-        break;
-      case 'replay':
-      case 'aggregate':
-      case 'aggregate-free':
-        break;
-    }
-  }
-
-  private report(job: RunJob, force: boolean): void {
-    const now = performance.now();
-    if (!force && now - job.lastReport < PROGRESS_THROTTLE_MS) return;
-    job.lastReport = now;
-    let done = job.completedRuns;
-    for (const c of job.inFlight.values()) done += c.done;
-    const total = job.config.runs;
-    const elapsedMs = now - job.startedAt;
-    job.onProgress({ done, total, elapsedMs, etaMs: estimateRemainingMs(done, total, elapsedMs) });
-  }
-
-  private finish(job: RunJob): void {
-    this.report(job, true);
-    this.job = null;
-    job.resolve(job.summaries);
-  }
-
-  private fail(err: Error): void {
-    const job = this.job;
-    const agg = this.aggJob;
-    this.job = null;
-    this.aggJob = null;
-    this.terminateRunWorkers();
-    job?.reject(err);
-    agg?.reject(err);
-  }
-
-  private terminateRunWorkers(): void {
-    for (const w of this.workers) w.terminate();
-    this.workers = [];
   }
 }

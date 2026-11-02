@@ -8,14 +8,21 @@ export interface RunRange {
 export const CHUNKS_PER_WORKER = 4;
 
 /**
- * Split `runs` into contiguous chunks for `workers` workers (≈ runs / (workers × 4) each, ≥ 1).
- * The chunks cover `[0, runs)` exactly once, in order.
+ * Largest chunk: the scheduler preempts at chunk boundaries (src/ui/scheduler.ts), so a more
+ * urgent job waits at most one chunk of this many runs per worker.
+ */
+export const MAX_CHUNK_RUNS = 25;
+
+/**
+ * Split `runs` into contiguous chunks for `workers` workers (≈ runs / (workers × 4) each, at least
+ * 1, at most `MAX_CHUNK_RUNS`). The chunks cover `[0, runs)` exactly once, in order. Results do
+ * not depend on the split: every run is seeded by its index.
  */
 export function splitRuns(runs: number, workers: number): RunRange[] {
   const n = Math.max(0, Math.floor(runs));
   const w = Math.max(1, Math.floor(workers));
   if (n === 0) return [];
-  const size = Math.max(1, Math.ceil(n / (w * CHUNKS_PER_WORKER)));
+  const size = Math.min(MAX_CHUNK_RUNS, Math.max(1, Math.ceil(n / (w * CHUNKS_PER_WORKER))));
   const out: RunRange[] = [];
   for (let start = 0; start < n; start += size) {
     out.push({ start, end: Math.min(n, start + size) });
