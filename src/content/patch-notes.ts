@@ -59,6 +59,29 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.23',
+    date: '2026-11-02',
+    title: {
+      ko: '북극곰이 얼음을 깨고 왔어요 🐻‍❄️',
+      en: 'A polar bear breaks the ice 🐻‍❄️',
+    },
+    prs: [198, 192, 193, 195],
+    items: [
+      {
+        cat: 'new',
+        refs: [184, 198],
+        ko: '새 동물 북극곰이 들어왔어요. 간단 모드에 "북극곰 대 불곰" 대결이 생겼고, 동물 도감에서도 만날 수 있어요. 자유 대결 전용입니다.',
+        en: 'New animal: the polar bear. Simple mode gets a polar bear vs brown bear match, and the bear has its own entry in the species guide. It lives in free matchups only.',
+      },
+      {
+        cat: 'improved',
+        refs: [173, 176, 177],
+        ko: '눈에 보이지는 않지만, 다음에 올 실시간 변수 카드를 위한 바닥 공사를 마쳤어요. 카드 목록, 리플레이 이어붙이기, 전투 장면 감지가 준비됐습니다.',
+        en: 'Behind the scenes, the groundwork for the upcoming live variable cards is in: the card list, seamless replay swaps and battle-moment detection.',
+      },
+    ],
+  },
+  {
     version: '0.2.22',
     date: '2026-10-28',
     title: {

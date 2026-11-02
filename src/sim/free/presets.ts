@@ -215,6 +215,18 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     },
     hold: HELD,
   },
+  {
+    id: 'polar-bear-brown-bear',
+    name: { ko: '북극곰 vs 불곰', en: 'Polar bear vs brown bear' },
+    a: { sp: 'polarBear', n: 1 },
+    b: { sp: 'brownBear', n: 1 },
+    tags: ['popular'],
+    why: {
+      ko: '북극에서는 두 곰의 서식지가 맞닿아 있고, 두 종 사이의 잡종 곰도 기록되어 있습니다.',
+      en: 'Their ranges meet in the Arctic, where hybrid bears have been recorded.',
+    },
+    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
+  },
 ];
 
 /** Presets Simple mode may show: every preset not on hold. */

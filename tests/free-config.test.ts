@@ -106,6 +106,14 @@ describe('sanitizeFreeConfig', () => {
     expect(m.sides[0].params).toEqual(m.sides[1].params);
   });
 
+  it('accepts a species without a legacy entry, preset from its own sheet', () => {
+    const c = sanitizeFreeConfig({ sides: [{ species: 'polarBear' }, { species: 'tiger' }] });
+    expect(c.sides[0].species).toBe('polarBear');
+    expect(c.sides[0].params).toEqual(traitRanges('polarBear'));
+    expect(c.sides[0].buff).toEqual(buffRanges('polarBear'));
+    expect(sanitizeFreeConfig(c)).toEqual(c);
+  });
+
   it('falls back to the default species and drops unknown keys', () => {
     const c = sanitizeFreeConfig({
       sides: [{ species: 'dragon', evil: 1 }, { species: '__proto__' }],

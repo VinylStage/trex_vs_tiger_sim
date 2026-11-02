@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.23](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.22...trex-vs-tiger-sim-v0.2.23) (2026-11-02)
+
+
+### Features
+
+* **free:** variable-card catalogue versioned by mv ([#173](https://github.com/VinylStage/trex_vs_tiger_sim/issues/173)) ([#192](https://github.com/VinylStage/trex_vs_tiger_sim/issues/192)) ([85f47f8](https://github.com/VinylStage/trex_vs_tiger_sim/commit/85f47f8af9f07a12a4de2dff1a80e2f136947173))
+* **replay:** battle events derived from frames ([#176](https://github.com/VinylStage/trex_vs_tiger_sim/issues/176)) ([#195](https://github.com/VinylStage/trex_vs_tiger_sim/issues/195)) ([28f87ed](https://github.com/VinylStage/trex_vs_tiger_sim/commit/28f87ed8ff492d585d284029fd49bdee5b48983e))
+* **replay:** seamless trace swap at the playhead (startAt) ([#177](https://github.com/VinylStage/trex_vs_tiger_sim/issues/177)) ([#193](https://github.com/VinylStage/trex_vs_tiger_sim/issues/193)) ([2ad04fd](https://github.com/VinylStage/trex_vs_tiger_sim/commit/2ad04fd2a168ae3f7f98df238d1887631fa51a0e))
+* **species:** add the polar bear ([#184](https://github.com/VinylStage/trex_vs_tiger_sim/issues/184)) ([#198](https://github.com/VinylStage/trex_vs_tiger_sim/issues/198)) ([168e742](https://github.com/VinylStage/trex_vs_tiger_sim/commit/168e742ff8dc29ffc41e1b2e811b6738abd42d58))
+
 ## [0.2.22](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.21...trex-vs-tiger-sim-v0.2.22) (2026-10-28)
 
 

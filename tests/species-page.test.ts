@@ -188,6 +188,14 @@ describe.each(LANGS)('species guide (%s)', (lang) => {
     expect(f['social']).toBe(String(s.social));
     expect(f['canLatch']).toBe(String(s.canLatch));
     expect(f['classic']).toBe(classicRoles(id).join(' '));
+    const classicText = textOf(/<dd data-k="classic"[^>]*>([\s\S]*?)<\/dd>/.exec(c)?.[1] ?? '');
+    // A species with no legacy entry still says so, rather than leaving the row empty.
+    expect(classicText.length, `${id} classic role text`).toBeGreaterThan(0);
+    if (classicRoles(id).length === 0) {
+      expect(classicText).toBe(
+        lang === 'ko' ? '없음 (자유 대결 전용)' : 'none (free matchups only)',
+      );
+    }
     expect(c).toContain(`>${s.traits.mass.evidence ?? 'S'}</abbr>`);
   });
 

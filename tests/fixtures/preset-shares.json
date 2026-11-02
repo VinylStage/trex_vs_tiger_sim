@@ -144,6 +144,19 @@
       "medianS": 25.6,
       "rout": 0.9822222222222222,
       "close": true
+    },
+    {
+      "id": "polar-bear-brown-bear",
+      "matchup": "polarBear 1 v brownBear 1",
+      "wins": [164, 35, 1],
+      "share": {
+        "a": 0.82,
+        "b": 0.175,
+        "draw": 0.005
+      },
+      "medianS": 70.85,
+      "rout": 1,
+      "close": false
     }
   ]
 }
