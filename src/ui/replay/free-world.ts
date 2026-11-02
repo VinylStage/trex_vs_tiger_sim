@@ -30,6 +30,28 @@ export function freeSideGlyph(radiusM: number): FreeSideGlyph {
     : { glyph: 'dot', sizeM: radiusM };
 }
 
+/** A render-only glyph scale: finite and positive, otherwise 1 (#177). */
+export const validGlyphScale = (scale: number): number =>
+  Number.isFinite(scale) && scale > 0 ? scale : 1;
+
+/**
+ * On-screen glyph size at `pxPerM`: triangle length and the radius used for dots, the buff
+ * ring and the × mark, in CSS px. The floors keep a glyph visible when zoomed out; `scale`
+ * (the Giant card's render-only factor, 1 = as simulated) applies after them, so it always shows.
+ */
+export function freeGlyphPx(
+  g: FreeSideGlyph,
+  pxPerM: number,
+  lod: boolean,
+  scale = 1,
+): { tri: boolean; len: number; r: number } {
+  const tri = g.glyph === 'triangle';
+  const k = validGlyphScale(scale);
+  const len = Math.max(lod ? GLYPH.minHeavyPx * 0.6 : GLYPH.minHeavyPx, g.sizeM * pxPerM) * k;
+  const r = tri ? len * 0.42 : Math.max(GLYPH.minPackPx, g.sizeM * pxPerM) * k;
+  return { tri, len, r };
+}
+
 /**
  * Whether dots switch to level-of-detail squares at `scale` px/m: the classic rule, the same
  * zoom threshold for every species (a reference 0.8 m radius below 3 CSS px; docs/REPLAY.md §6).

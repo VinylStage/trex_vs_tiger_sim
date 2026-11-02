@@ -3,7 +3,13 @@ import { h, uniqueId } from './dom';
 import { formatDuration, formatFixed } from './format';
 import { t } from './i18n';
 import { makeViewport, type Viewport } from './replay/draw';
-import { FreeWorld, freeLod, type FreeSideGlyph } from './replay/free-world';
+import {
+  FreeWorld,
+  freeGlyphPx,
+  freeLod,
+  validGlyphScale,
+  type FreeSideGlyph,
+} from './replay/free-world';
 import { GLYPH, heavyTriangle } from './replay/glyphs';
 import { blend, readReplayTheme, type ReplayTheme } from './replay/theme';
 import {
@@ -60,6 +66,56 @@ interface Paints {
   dead: string;
 }
 
+/** Options of `FreeReplayView.load`. */
+export interface FreeLoadOptions {
+  /** Play from the start once loaded (default true; never under reduced motion). */
+  autoplay?: boolean;
+  /**
+   * Swap to the trace at this replay time (s) instead of starting over: the camera, the
+   * timeline position and the playback state carry over (RENEWAL-1.0 §10.2 point 2, #177).
+   * `autoplay` is not consulted then.
+   */
+  startAt?: number;
+}
+
+/** What `load` does to the view state; pure, so the no-options path is pinned by a test. */
+export interface FreeLoadPlan {
+  time: number;
+  playing: boolean;
+  /** Snap the camera to the new trace (false: keep it and let it ease). */
+  snapCamera: boolean;
+  /** Cancel a pending resume-on-visible (a new trace from the start does). */
+  releaseAutoPause: boolean;
+  /** Back to glyphs at their simulated size (a swap keeps a Giant card's scale). */
+  resetGlyphScale: boolean;
+}
+
+export function freeLoadPlan(
+  duration: number,
+  opts: FreeLoadOptions,
+  current: { hasWorld: boolean; playing: boolean; reducedMotion: boolean },
+): FreeLoadPlan {
+  const at = opts.startAt;
+  if (at === undefined || !Number.isFinite(at)) {
+    const autoplay = opts.autoplay ?? true;
+    return {
+      time: 0,
+      playing: autoplay && !current.reducedMotion && duration > 0,
+      snapCamera: true,
+      releaseAutoPause: true,
+      resetGlyphScale: true,
+    };
+  }
+  const time = Math.min(duration, Math.max(0, at));
+  return {
+    time,
+    playing: current.playing && time < duration,
+    snapCamera: !current.hasWorld,
+    releaseAutoPause: false,
+    resetGlyphScale: false,
+  };
+}
+
 function clockText(seconds: number): string {
   return seconds >= 0 && seconds < 59.95
     ? t('time.sec', { s: formatFixed(seconds, 1) })
@@ -79,6 +135,8 @@ export class FreeReplayView {
   private readonly legend: HTMLUListElement;
   private readonly labels: { el: HTMLElement; text: () => string }[] = [];
   private world: FreeWorld | null = null;
+  /** Render-only glyph size factor per side (the Giant card, #177); physics is untouched. */
+  private glyphScale: [number, number] = [1, 1];
   private sideNames: [string, string] = ['', ''];
   private time = 0;
   private playing = false;
@@ -214,22 +272,41 @@ export class FreeReplayView {
     this.relocalize();
   }
 
-  /** Show a trace from the start; autoplays unless the viewer prefers reduced motion. */
-  load(trace: FreeTrace, sideNames: [string, string], autoplay = true): void {
+  /**
+   * Show a trace from the start; autoplays unless the viewer prefers reduced motion. With
+   * `startAt`, swap to it at that time instead, keeping camera, position and playback.
+   */
+  load(trace: FreeTrace, sideNames: [string, string], opts: FreeLoadOptions = {}): void {
     const world = new FreeWorld(trace);
+    const plan = freeLoadPlan(world.duration, opts, {
+      hasWorld: this.world !== null,
+      playing: this.playing,
+      reducedMotion: this.motionQuery.matches,
+    });
     this.world = world;
     this.sideNames = sideNames;
-    this.time = 0;
-    world.update(0);
+    this.time = plan.time;
+    world.update(plan.time);
     this.slider.max = String(world.duration);
-    this.slider.value = '0';
-    this.snapCamera();
-    this.autoPause.release();
-    this.playing = autoplay && !this.motionQuery.matches && world.duration > 0;
-    this.lastTs = 0;
+    this.slider.value = String(plan.time);
+    if (plan.snapCamera) this.snapCamera();
+    else this.settled = false;
+    if (plan.releaseAutoPause) this.autoPause.release();
+    if (plan.resetGlyphScale) this.glyphScale = [1, 1];
+    this.playing = plan.playing;
+    if (plan.snapCamera) this.lastTs = 0;
     this.relocalize();
     this.draw();
     this.schedule();
+  }
+
+  /**
+   * Draw one side's glyphs `scale` times their size (render only; the body radius and so the
+   * physics stay as simulated). For the Giant card (RENEWAL-1.0 appendix B, card 13).
+   */
+  setGlyphScale(side: 0 | 1, scale: number): void {
+    this.glyphScale[side] = validGlyphScale(scale);
+    this.draw();
   }
 
   clear(): void {
@@ -497,9 +574,7 @@ export class FreeReplayView {
     const g: FreeSideGlyph = w.glyphs[side];
     const from = side === 0 ? 0 : w.nA;
     const to = side === 0 ? w.nA : w.n;
-    const tri = g.glyph === 'triangle';
-    const len = Math.max(lod ? GLYPH.minHeavyPx * 0.6 : GLYPH.minHeavyPx, g.sizeM * vp.scale);
-    const r = tri ? len * 0.42 : Math.max(GLYPH.minPackPx, g.sizeM * vp.scale);
+    const { tri, len, r } = freeGlyphPx(g, vp.scale, lod, this.glyphScale[side]);
     const sx = (i: number): number => vp.ox + (w.x[i] as number) * vp.scale;
     const sy = (i: number): number => vp.oy + (w.y[i] as number) * vp.scale;
     const color = paints.side[side];
