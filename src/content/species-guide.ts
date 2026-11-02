@@ -86,4 +86,11 @@ export const SPECIES_GUIDE: Readonly<Record<FreeSpeciesId, SpeciesGuideEntry>> =
       en: 'It lives in large clans and hunts by long chases. Its bite force has been measured, and it competes with lions for food.',
     },
   },
+  polarBear: {
+    scientific: 'Ursus maritimus',
+    note: {
+      ko: '북극의 바다얼음 위에서 혼자 사는 가장 큰 곰입니다. 몸무게와 달리는 속도는 문헌 값이고 무는 힘은 측정된 적이 없어 추정입니다. 어린 바다코끼리를 사냥하지만, 다 자란 바다코끼리는 버거운 상대로 알려져 있습니다.',
+      en: 'The largest bear, a solitary hunter on Arctic sea ice. Its mass and running speed come from the literature; its bite force has never been measured and is assumed. It hunts young walruses, while adult walruses are known to be too formidable for it.',
+    },
+  },
 };

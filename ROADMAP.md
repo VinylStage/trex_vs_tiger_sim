@@ -80,13 +80,19 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | What-if shift display                                   | #182  | Open           |
 | Live battle mode                                        | #183  | Open           |
 
+### M6 — animals batch A
+
+| Item                                             | Issue | Status                                                                                                                                |
+| ------------------------------------------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Polar bear (first free-only species, preset #17) | #184  | Done in review: source sheet, plumbing, preset and calibration ([CALIBRATION.md §13](docs/research/CALIBRATION.md#13-polar-bear-184)) |
+
 ## Later (candidates, not committed)
 
 - Sharing P2 (#51): per-bucket pre-generated OG images (species pair × outcome tier; needs a build-time PNG rasterizer, an owner decision on a dev dependency), QR codes, Kakao SDK, compressed links, challenge links
 
 - Terrain / obstacles (currently pure open field)
 - Species calibration follow-ups (buffalo vs hyenas, first-heavy-death metric M3)
-- Phase-2 species (Giganotosaurus, Allosaurus, polar bear, dromaeosaurids, African wild dog), see docs/research/SPECIES.md
+- Phase-2 species (Giganotosaurus, Allosaurus, dromaeosaurids, African wild dog), see docs/research/SPECIES.md; the polar bear moved to M6 (#184)
 - Sobol-index sensitivity analysis (currently Spearman rank correlation)
 - Export results as CSV/JSON
 - WebAssembly engine if profiling shows JS is the bottleneck for >10k agents

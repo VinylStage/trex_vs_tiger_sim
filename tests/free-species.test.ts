@@ -39,6 +39,22 @@ import {
 
 const SOCIAL: readonly FreeSpeciesId[] = ['lion', 'wolf', 'hyena', 'homoErectus'];
 const LATCHERS: readonly FreeSpeciesId[] = ['tiger', 'lion', 'wolf', 'hyena', 'homoErectus'];
+/** Species with no legacy entry, built by `defineFreeSpecies` (docs/SPECIES.md §11.5). */
+const FREE_ONLY: readonly FreeSpeciesId[] = ['polarBear'];
+/** `FREE_SPECIES_IDS` as first shipped: ids are append-only (RENEWAL-1.0 §5.3 step 4). */
+const SHIPPED_IDS: readonly FreeSpeciesId[] = [
+  'trex',
+  'elephant',
+  'buffalo',
+  'brownBear',
+  'mammoth',
+  'homoErectus',
+  'tiger',
+  'lion',
+  'wolf',
+  'hyena',
+  'polarBear',
+];
 
 describe('trait lists', () => {
   it('keeps the column order of design §2.2 and §5.3', () => {
@@ -66,13 +82,18 @@ describe('trait lists', () => {
 });
 
 describe('free species registry', () => {
-  it('lists every legacy species once', () => {
+  it('lists every legacy species once, then the free-only species', () => {
     const legacy = new Set<string>([...HEAVY_SPECIES_IDS, ...Object.keys(PACK_SPECIES)]);
-    expect(new Set(FREE_SPECIES_IDS)).toEqual(legacy);
-    expect(FREE_SPECIES_IDS).toHaveLength(legacy.size);
+    for (const id of legacy) expect(FREE_SPECIES_IDS, id).toContain(id);
+    expect(FREE_SPECIES_IDS.filter((id) => !legacy.has(id))).toEqual([...FREE_ONLY]);
+    expect(new Set(FREE_SPECIES_IDS).size).toBe(FREE_SPECIES_IDS.length);
     for (const id of FREE_SPECIES_IDS) expect(FREE_SPECIES[id].id).toBe(id);
     expect(isFreeSpecies('lion')).toBe(true);
     expect(isFreeSpecies('dragon')).toBe(false);
+  });
+
+  it('only appends ids: every shipped id keeps its position', () => {
+    expect(FREE_SPECIES_IDS.slice(0, SHIPPED_IDS.length)).toEqual([...SHIPPED_IDS]);
   });
 
   it.each(FREE_SPECIES_IDS)('%s has every trait, ordered, within bounds', (id) => {
@@ -273,6 +294,56 @@ function sheetOf(id: FreeSpeciesId): FreeSpeciesSheet {
     buff: buff as FreeSpeciesSheet['buff'],
   };
 }
+
+describe('polar bear (docs/SPECIES.md §4.11, research/SPECIES.md §5.5)', () => {
+  const pb = FREE_SPECIES.polarBear;
+  const bb = FREE_SPECIES.brownBear;
+
+  it('is a living, ad-safe, solitary striker with no legacy entry', () => {
+    expect(pb.era).toBe('extant');
+    expect(pb.adSafe).toBe(true);
+    expect([pb.social, pb.canLatch]).toEqual([false, false]);
+    expect(isHeavySpecies('polarBear')).toBe(false);
+    expect(isPackSpecies('polarBear')).toBe(false);
+  });
+
+  it('takes mass and speed from the literature and is heavier than the brown bear', () => {
+    expect(pb.traits.mass).toEqual({ range: { min: 250, mode: 450, max: 800 }, evidence: 'L' });
+    expect(pb.traits.sprintSpeed).toEqual({ range: { min: 6, mode: 9, max: 11.1 }, evidence: 'L' });
+    expect(pb.traits.mass.range.mode).toBeGreaterThan(bb.traits.mass.range.mode);
+  });
+
+  it('derives its body radius (and so its glyph) from mass: the brown bear scaled by mass^(1/3)', () => {
+    const scaled = (k: 'min' | 'mode' | 'max') =>
+      Math.round(
+        20 *
+          bb.traits.bodyRadius.range[k] *
+          Math.cbrt(pb.traits.mass.range[k] / bb.traits.mass.range[k]),
+      ) / 20;
+    expect(pb.traits.bodyRadius).toEqual({
+      range: { min: scaled('min'), mode: scaled('mode'), max: scaled('max') },
+      evidence: 'D',
+    });
+  });
+
+  it('shares the brown bear behaviour rows and constants ("mechanically like the brown bear")', () => {
+    for (const k of [
+      'sprintEndurance',
+      'recoveryTime',
+      'strikeLethality',
+      'strikeInterval',
+      'strikeArc',
+      'strikeAccuracy',
+      'shakeRate',
+      'bleed',
+      'morale',
+      'moraleLoss',
+    ] as const) {
+      expect(pb.traits[k], k).toEqual(bb.traits[k]);
+    }
+    expect(pb.constants).toEqual(bb.constants);
+  });
+});
 
 describe('standalone constructor', () => {
   it.each(FREE_SPECIES_IDS)('rebuilds %s from its own sheet, without the legacy registry', (id) => {

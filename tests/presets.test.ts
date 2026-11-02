@@ -15,7 +15,8 @@ import {
   type FreePreset,
   type PresetMeasure,
 } from '../src/sim/free/presets';
-import { FREE_SPECIES } from '../src/sim/free/species';
+import { FREE_SPECIES, FREE_SPECIES_IDS } from '../src/sim/free/species';
+import { isHeavySpecies, isPackSpecies } from '../src/sim/species';
 import { bannedIn } from './banned-words';
 
 /**
@@ -142,6 +143,18 @@ describe('preset registry', () => {
       FREE_PRESETS.filter((p) => !p.hold).map((p) => p.id),
     );
     expect(readyPresets().length).toBeGreaterThan(0);
+  });
+
+  it('shows at least one preset in Simple mode for every species added after the free model', () => {
+    // RENEWAL-1.0 §5.3 step 8: a new species ships with a ready preset (docs/SPECIES.md §11.5).
+    const freeOnly = FREE_SPECIES_IDS.filter((id) => !isHeavySpecies(id) && !isPackSpecies(id));
+    expect(freeOnly).toContain('polarBear');
+    for (const id of freeOnly) {
+      expect(
+        readyPresets().some((p) => p.a.sp === id || p.b.sp === id),
+        id,
+      ).toBe(true);
+    }
   });
 });
 

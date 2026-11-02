@@ -115,6 +115,8 @@ interface Words {
   classic: string;
   heavy: string;
   pack: string;
+  /** A species with no legacy entry (docs/SPECIES.md §11.5) has no classic role. */
+  freeOnly: string;
   presets: string;
   noPresets: string;
   held: string;
@@ -166,6 +168,7 @@ const WORDS: Readonly<Record<Lang, Words>> = {
     classic: '클래식 모드 역할',
     heavy: '대형 동물 쪽',
     pack: '무리 동물 쪽',
+    freeOnly: '없음 (자유 대결 전용)',
     presets: '이 종이 나오는 추천 대결',
     noPresets: '아직 이 종이 나오는 추천 대결은 없습니다.',
     held: '점검 중이라 간단 모드에는 아직 보이지 않음',
@@ -206,6 +209,7 @@ const WORDS: Readonly<Record<Lang, Words>> = {
     classic: 'Classic mode role',
     heavy: 'heavy side',
     pack: 'pack side',
+    freeOnly: 'none (free matchups only)',
     presets: 'Presets with this species',
     noPresets: 'No preset uses this species yet.',
     held: 'being checked, not yet shown in Simple mode',
@@ -307,9 +311,10 @@ function speciesSection(id: FreeSpeciesId, lang: Lang): string {
     radius.min === radius.max
       ? `${num('bodyRadius.mode', radius.mode)} m (${w.sizeFixed})`
       : `${rangeText('bodyRadius', radius, 'm')} (${w.sizeMode(num('bodyRadius.mode', radius.mode))})`;
-  const roles = classicRoles(id)
-    .map((r) => w[r])
-    .join(lang === 'ko' ? ', ' : ' and ');
+  const roles =
+    classicRoles(id)
+      .map((r) => w[r])
+      .join(lang === 'ko' ? ', ' : ' and ') || w.freeOnly;
   const presets = presetsWith(id);
   const presetList =
     presets.length === 0

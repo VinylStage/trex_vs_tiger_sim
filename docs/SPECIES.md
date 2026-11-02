@@ -10,6 +10,7 @@
 > - 야생에서 관찰된 대결(코끼리–사자, 물소–사자, 물소–하이에나, 불곰–늑대, 불곰–호랑이)에는 배지가 붙고, 티라노사우루스와의 대결은 “서로 만난 적 없는 종”으로 표시됩니다.
 > - 종 도감 페이지(`/species/`)는 이 등록부에서 빌드할 때 만들어지며, 다른 어떤 종과도 시대가 겹치지 않는 종(지금은 티라노사우루스)에 "만약에" 표시를 붙입니다(#162).
 > - 자유 대결 모델(#50)용으로 모든 종이 같은 개체 특성 20개와, 사회성 종(사자 · 늑대 · 하이에나 · 호모 에렉투스)만 쓰는 무리 버프 특성 6개를 갖습니다(§11). 기존 역할에 있던 값은 기존 등록부에서 그대로 읽고, 새 값에는 근거 수준과 범위를 달았습니다. 기존 엔진과 v1/v2 결과는 바뀌지 않습니다.
+> - 북극곰(#184)은 기존 등록부에 없는 첫 종으로, 자유 대결에만 나옵니다(§4.11). 자체 근거표에서 바로 만들었고(몸무게 · 속도 L, 몸 반경은 몸무게에서 유도한 D, 나머지 행동 값은 불곰과 같은 S), 추천 대결 "북극곰 vs 불곰"이 쉬운 모드에 나옵니다. 클래식 모드와 기존 결과는 바뀌지 않습니다.
 
 Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#species`, `/en/parameters/#species`) repeat the presets and are checked against the registry by `tests/pages.test.ts`. The species guide (`/species/`, `/en/species/`, #162) is generated from the registries at build time and checked by `tests/species-page.test.ts` ([PAGES.md](PAGES.md#species-guide)); adding a species to `FREE_SPECIES` adds its section there, and the test then asks for its entry in `src/content/species-guide.ts` (scientific name and a short note, both languages). The research behind this document, including the phase-2 and deferred species and the change plan, is in [research/SPECIES.md](research/SPECIES.md).
 
@@ -59,8 +60,9 @@ Each species carries, besides its eleven preset triangles:
 | Woolly mammoth         | `mammoth`     | heavy | 0.4–0.004 Ma | tusk/trample    |   0.25 | Ice-age megaherbivore with frozen-carcass data | Good mass; speed and weapon **D/S**        |
 | _Homo erectus_ (heavy) | `homoErectus` | heavy | 1.9–0.11 Ma  | bare hands      |      1 | Owner request (#47): a hominin on both sides   | Mass **L**; strike force **D**; rest **S** |
 | _Homo erectus_ (pack)  | `homoErectus` | pack  | 1.9–0.11 Ma  | radius 0.3 m    |      — | Many hominins vs one heavy                     | Mass **L**; rest **S**                     |
+| Polar bear             | `polarBear`   | free  | extant       | bite/paw        |    0.5 | Batch A of the 1.0 renewal (#184), §4.11       | Good mass and speed; strike **S**          |
 
-**Phase 2** (no new mechanics needed, weaker data): Giganotosaurus, Allosaurus, polar bear, Deinonychus (with Velociraptor and Utahraptor variants), African wild dog. **Deferred** until new mechanics exist (§8): Nile crocodile, Spinosaurus, Komodo dragon. Their research tables are in [research/SPECIES.md](research/SPECIES.md) §5.
+The polar bear exists in free matchups only (§4.11, §11.5); the classic role registry and every classic link are unchanged. **Phase 2** (no new mechanics needed, weaker data): Giganotosaurus, Allosaurus, Deinonychus (with Velociraptor and Utahraptor variants), African wild dog. **Deferred** until new mechanics exist (§8): Nile crocodile, Spinosaurus, Komodo dragon. Their research tables are in [research/SPECIES.md](research/SPECIES.md) §5.
 
 The UI offers these matchup presets: 10 _T. rex_ vs 100 tigers (default), 1 vs 10 tigers, 5 elephants vs 30 lions, 1 buffalo vs 6 lions, 1 buffalo vs 15 hyenas, 1 brown bear vs 8 wolves, 1 brown bear vs 1 tiger, 1 woolly mammoth vs 12 wolves, 1 _T. rex_ vs 100 _Homo erectus_ (`PRESETS` in `src/ui/form.ts`).
 
@@ -319,6 +321,37 @@ Unchanged from MODEL.md §5.2. One additional documented interaction is worth a 
 | `pack.moraleLoss`      | 0–1  | 0.04 |    0.1 |  0.18 | **S** | —                                                                                                             |
 | _constant_ `radius`    | m    |      |    0.3 |       | **S** | Body contact radius: half the shoulder width plus clearance.                                                  |
 
+### 4.11 Polar bear (free model only, #184)
+
+The first species without a legacy entry: the classic engine does not offer it, and its free entry is built from its own source sheet with `defineFreeSpecies` (§11.5). The full sheet, with the free trait names, the sensitivity range of every **S** value and its measured swing, is in [research/SPECIES.md §5.5](research/SPECIES.md#55-polar-bear-heavy-phase-2-shipped-in-the-free-model-184); the calibration is in [research/CALIBRATION.md §13](research/CALIBRATION.md#13-polar-bear-184).
+
+- **Evidence.** Adult males 300–800 kg, females 150–300 kg; up to about 40 km/h (an estimate); usual travel 5.5 km/h [WP: Polar bear]. It hunts young walruses; adults are too formidable [WP: Polar bear]. No bite force is published in the table used for the BFQ formula (§3.2), so strike force is **S**.
+- **Model.** Mechanically like the brown bear: solitary (no pack buff), strikes in a frontal cone and does not latch. Every behaviour row and both constants (`hide` 0.5, `intimidation` 1) are the brown bear's. Only mass, speed, strike force, reach and body radius differ.
+- **Glyph.** Body radius is the brown bear's scaled by (mass ratio)^(1/3) (**D**), and the replay sizes the glyph from it: a dot of 0.95 m at the mode, larger than the brown bear's 0.75 m. Runs whose sampled radius reaches 1 m draw triangles, as the buffalo's top value does.
+- **Content check.** `adSafe`: yes. Era: extant. Overlap: with every living species "no recorded encounter"; with the brown bear the ranges meet in the Arctic and wild hybrids are recorded [WP: Polar bear], which is the preset's "Why?", not a recorded fight; with _T. rex_ "never met"; with the woolly mammoth and _H. erectus_ "no recorded overlap". No what-if tag. Korean counter 마리; text-share symbol 🐻‍❄️.
+- **Preset.** `polar-bear-brown-bear`, 1 v 1 (design §6 #17), ready in Simple mode through the one-on-one rout override ([PRESETS.md](PRESETS.md#overrides-and-holds)).
+
+| Free trait        | Unit  |   min |  mode |   max | Basis | Source / rationale                                                  |
+| ----------------- | ----- | ----: | ----: | ----: | :---: | ------------------------------------------------------------------- |
+| `mass`            | kg    |   250 |   450 |   800 |   L   | Adult males 300–800 kg, females 150–300 kg (via Wikipedia).         |
+| `bodyRadius`      | m     |  0.75 |  0.95 |   1.1 |   D   | Brown bear 0.6 / 0.75 / 0.9 m × (mass ratio)^(1/3).                 |
+| `turnRate`        | deg/s |    50 |   100 |   180 | **S** | Heavier than the brown bear (60–200).                               |
+| `sprintSpeed`     | m/s   |     6 |     9 |  11.1 |   L   | Up to about 40 km/h (estimate, via Wikipedia).                      |
+| `cruiseSpeed`     | m/s   |     1 |   1.5 |     2 |   L   | Usual travel 5.5 km/h (via Wikipedia); ends ±0.5 m/s.               |
+| `sprintEndurance` | s     |    20 |    45 |   120 | **S** | Brown bear.                                                         |
+| `recoveryTime`    | s     |    45 |    90 |   180 | **S** | Brown bear.                                                         |
+| `strikeForce`     | kN    |   0.8 |   1.5 |   3.5 | **S** | Brown bear scaled by mass^0.57; no BFQ published in the table used. |
+| `strikeLethality` | HP/kN |     4 |     8 |    12 | **S** | Shared mapping.                                                     |
+| `strikeInterval`  | s     |   0.8 |   1.5 |     3 | **S** | Brown bear: alternating swipes and bites.                           |
+| `strikeReach`     | m     |   1.3 |   1.6 |     2 | **S** | Geometry: radius + head and forelimb.                               |
+| `strikeArc`       | deg   |    45 |    70 |   100 | **S** | Brown bear: forelimb swipes widen the frontal arc.                  |
+| `strikeAccuracy`  | p     |   0.3 |  0.45 |  0.65 | **S** | Brown bear.                                                         |
+| `shakeRate`       | 1/s   |   0.1 |  0.25 |   0.5 | **S** | Brown bear.                                                         |
+| `bleed`           | 1/s   | 0.001 | 0.003 | 0.006 | **S** | Brown bear (claws).                                                 |
+| `morale`          | 0–1   |  0.55 |  0.75 |   0.9 | **S** | Brown bear.                                                         |
+| `moraleLoss`      | 0–1   |  0.02 |  0.05 |   0.1 | **S** | Shared heavy placeholder (read only by social species).             |
+| latch traits      |       |       |       |       |   –   | Inactive (neutral, §11.1): the polar bear does not latch.           |
+
 ## 5. Documented match-ups
 
 The matchup badge marks a pairing **documented** when field observations exist (`DOCUMENTED_MATCHUPS` in `src/sim/species.ts`), **never met** only when geological time separates the species (every _T. rex_ pairing: both eras dated and disjoint, or an extinct species gone for at least 5 Ma against a living one), **no recorded encounters** (`undocumented`) when they lived at the same time and place, and **기록된 조우 없음 / No recorded overlap** (`unrecorded`) when a recently extinct species meets a living one whose overlap is not established. Extant species carry no first-appearance date, so the sourced overlaps are listed in `COEXISTING_MATCHUPS` (below); every other pairing of the mammoth or _H. erectus_ with a living species is `unrecorded`, never "never met". The badge links to the matching section of the model page (`/model/#matchup-<anchor>`). Documented match-ups are still heavily simplified.
@@ -542,7 +575,7 @@ The free model ([design](design/FREE-MATCHUPS.md), [ADR-0007](adr/0007-symmetric
 - **Mapped traits are read, not copied.** Every trait a legacy role already had comes from that role's preset at run time: heavy `mass`, `bodyRadius`, `turnRate`, `speed` → `sprintSpeed`, `bite*` → `strike*`, `shakeRate`; pack `mass`, `sprintSpeed`, `cruiseSpeed`, `sprintEndurance`, `recoveryTime`, `latchChance`, `latchEndurance`, `dps` → `latchDps`, `bleed`, `morale`, `moraleLoss`, and the constant `radius` → a fixed `bodyRadius` triangle. Their evidence tags carry over. The constants `hide` and `intimidation` carry over for former heavies and are 1 for former pack species.
 - **_Homo erectus_** merges its two presets: body (`bodyRadius`), `turnRate`, strike and shake-off from the heavy row; running, stamina, grip (latch), bleed and morale from the pack row. Mass is identical in both. `sprintSpeed` uses the pack row (6–9 m/s, a sprint with stamina) rather than the heavy `speed` (a speed held over a whole fight).
 - **`era` and `adSafe`** are read from the legacy entry too. The two _Homo erectus_ entries share one era, and the species is ad-safe only when both entries are. Free mode groups its species pickers by `era` (extant or extinct); `freeMatchupAdSafe(config)` is true only when the species on both sides are ad-safe ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)).
-- **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_. Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
+- **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_. Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger, polar bear. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
 - **`canLatch`** (design §4.2): tiger, lion, wolf, hyena, _Homo erectus_. The others fight with strikes only.
 - **Inactive traits** (latch traits of a species that cannot latch, pack-buff traits of a non-social species) hold neutral values (0, or 1 s for `latchEndurance`) with no evidence tag. They only keep the design matrix layout independent of the species.
 - **Bounds** are shared by all species in the free model (`TRAIT_BOUNDS`): the union of the legacy heavy and pack bounds, with strike reach widened down to 0.3 m. The legacy per-species bounds stay as they are for the legacy engine.
@@ -602,14 +635,14 @@ Sources and the calibration guard are in design §2.3 and §5: [Stander 1992], [
 
 ### 11.5 Species without a legacy entry
 
-Every species above has a legacy entry, and its free entry reads from it (§11.1). A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
+Every species above except the polar bear has a legacy entry, and its free entry reads from it (§11.1). The polar bear (§4.11, #184) is the first species built the way this section describes. A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
 
 - **Registry.** Append the id to `FREE_SPECIES_IDS` (append-only, never renamed) and build its entry with the standalone constructor `defineFreeSpecies(id, sheet)` in `src/sim/free/species.ts`. The sheet (`FreeSpeciesSheet`) holds everything the free model reads: `era`, `adSafe`, `social`, `canLatch`, the constants `hide` and `intimidation`, one preset row `[min, mode, max, evidence]` per individual trait, and the six pack-buff rows of a social species (`buff: null` otherwise). Latch rows are given only when the species can latch. Inactive traits get the neutral values of §11.1. The constructor throws when the rows do not match the flags.
 - **Same as a derived entry.** `tests/free-species.test.ts` rebuilds every current entry from its own sheet with the constructor and checks that the result equals the registry entry, so a standalone species reaches the engine in exactly the form a derived one does.
 - **Names and counters.** `speciesName`, `speciesShort`, `teamLabel` and `speciesCounter` in `src/ui/i18n.ts` take an id of either registry (`AnySpeciesId`). The typecheck therefore fails until both dictionaries (`src/i18n/ko.ts`, `en.ts`) have `species.<id>`, `species.<id>.one` and `species.<id>.other`. The Korean counter is `마리` unless `KO_COUNTERS` names another one (§9).
 - **Text-share symbol.** `SPECIES_EMOJI` in `src/share/result-text.ts` is keyed by free species id. A species without an entry falls back to 🔷 for side A and 🔶 for side B ([SHARING.md](SHARING.md)). The side decides, not the species' classic role: `tests/free-result.test.ts` puts the mammoth, a classic heavy, on side B and expects 🔶.
-- **Tests with fixed lists.** Some registry tests compare the roster with hard-coded lists. The PR that adds the first free-only species updates them:
-  - `tests/free-species.test.ts`, "lists every legacy species once": always. It checks that the free ids and the legacy ids are the same set; it becomes a check that every legacy id is a free id, plus the list of free-only ids.
+- **Tests with fixed lists.** Some registry tests compare the roster with hard-coded lists. The PR that adds the first free-only species (the polar bear, #184) updated the first; each later species checks the rest:
+  - `tests/free-species.test.ts`, "lists every legacy species once, then the free-only species": always. It checks that every legacy id is a free id and compares the remaining ids with `FREE_ONLY`; "only appends ids" compares the head of the roster with `SHIPPED_IDS`. Append the new id to both lists.
   - `tests/free-species.test.ts`, the `SOCIAL` and `LATCHERS` lists ("marks the social group hunters and the latching species"): when the species is social or can latch.
   - `tests/free-species.test.ts`, "keeps the extinct group of the species pickers": when its `era` is a range.
   - `tests/result-share.test.ts`, "keys the text-share symbols by free species id": the fallback list (`mammoth`, `homoErectus`), when the species has no `SPECIES_EMOJI` entry.
