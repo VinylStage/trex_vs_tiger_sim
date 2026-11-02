@@ -817,7 +817,7 @@ export function simulateFreeBattle(
   // none: with an empty or absent log the runner is never built and the check below never passes.
   let ivDue = -1;
   let ivApply: ((step: number) => number) | null = null;
-  if ((opts?.interventions?.length ?? 0) > 0 || opts?.inspect) {
+  if (opts !== undefined && ((opts.interventions?.length ?? 0) > 0 || opts.inspect)) {
     const log = sanitizeInterventions(opts.interventions, maxSteps, config.mv, config);
     const runner = interventionRunner(
       compileInterventions(log, config.mv, maxSteps),
