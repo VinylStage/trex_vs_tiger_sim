@@ -70,7 +70,7 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | ------------------------------------------------------- | ----- | -------------- |
 | Variable-card catalogue versioned by `mv`               | #173  | Done in review |
 | Tick-indexed intervention hook                          | #174  | Open           |
-| Priority scheduler over warm workers                    | #175  | Open           |
+| Priority scheduler over warm workers                    | #175  | Done in review |
 | Battle events derived from frames                       | #176  | Done in review |
 | Seamless trace swap at the playhead                     | #177  | Done in review |
 | Replay with interventions and a warm live worker        | #178  | Open           |

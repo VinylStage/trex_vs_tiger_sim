@@ -105,33 +105,40 @@ describe('SimPool.run', () => {
     expect((await p).length).toBe(4);
   });
 
-  it('rejects with CancelledError on cancel, terminates the workers and ignores late answers', async () => {
+  it('rejects with CancelledError on cancel, keeps the workers and ignores late answers', async () => {
     const { pool, workers } = setup(2);
     const p = pool.run(config(20), () => undefined);
     pool.cancel();
     await expect(p).rejects.toBeInstanceOf(CancelledError);
-    expect(workers.every((w) => w.terminated)).toBe(true);
+    expect(workers.some((w) => w.terminated)).toBe(false);
     expect(() => answerRuns(workers)).not.toThrow();
+    // Only the two chunks in flight at the cancel were ever sent.
+    expect(workers.flatMap((w) => w.posted)).toHaveLength(2);
     expect(pool.running).toBe(false);
   });
 
-  it('a new run cancels the previous one', async () => {
+  it('a new run cancels the previous one on the same warm workers', async () => {
     const { pool, workers } = setup(2);
     const first = pool.run(config(20), () => undefined);
     const second = pool.run(config(4), () => undefined);
     await expect(first).rejects.toBeInstanceOf(CancelledError);
-    answerRuns(workers.filter((w) => !w.terminated));
+    answerRuns(workers);
     expect((await second).length).toBe(4);
+    expect(workers).toHaveLength(2);
+    expect(workers.some((w) => w.terminated)).toBe(false);
   });
 
-  it('rejects with the worker’s message when a chunk fails', async () => {
+  it('rejects with the worker’s message when a chunk fails, and the worker stays warm', async () => {
     const { pool, workers } = setup(2);
     const p = pool.run(config(20), () => undefined);
     const w = workers[0] as FakeWorker;
     const msg = w.last();
     w.emit({ type: 'error', jobId: msg?.jobId ?? -1, message: 'boom' });
     await expect(p).rejects.toThrow('boom');
-    expect(workers.every((x) => x.terminated)).toBe(true);
+    expect(workers.some((x) => x.terminated)).toBe(false);
+    const next = pool.run(config(3), () => undefined);
+    answerRuns(workers);
+    expect((await next).length).toBe(3);
   });
 
   it('rejects when a worker fails to start', async () => {

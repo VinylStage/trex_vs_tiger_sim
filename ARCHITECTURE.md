@@ -57,7 +57,7 @@ flowchart LR
         i18n@{ shape: rect, label: "i18n.ts<br/>runtime: t(), setLang" }
         charts@{ shape: rect, label: "charts.ts<br/>canvas charts" }
         replay@{ shape: rect, label: "replay.ts + replay/* (lazy)<br/>v2 renderer (prepare, world,<br/>draw, camera, timeline)" }
-        pool@{ shape: rect, label: "pool.ts<br/>worker pool" }
+        pool@{ shape: rect, label: "pool.ts · scheduler.ts<br/>warm workers, priority queue" }
         helpers@{ shape: rect, label: "chunks.ts · cost.ts<br/>dom.ts · format.ts" }
         nav@{ shape: rect, label: "site-nav.ts<br/>header nav" }
         tour@{ shape: rect, label: "tour.ts (lazy) · tour-offer.ts · tour-model.ts<br/>guided tour" }
@@ -183,7 +183,7 @@ sequenceDiagram
     User->>UI: Configure counts / ranges, click Run
     UI->>UI: validate + clamp config, write URL #s=
     UI->>Pool: start(config)
-    Pool->>Worker: {config, runStart, runEnd} per chunk
+    Pool->>Worker: {config, runStart, runEnd} per chunk (≤ 25 runs), most urgent job first
     loop each run in chunk
         Worker->>Worker: design row = LHS(seed)[run]
         Worker->>Worker: simulate battle(seed ⊕ run)
@@ -206,8 +206,17 @@ sequenceDiagram
 - Master seed `S` (uint32, in the URL).
 - Sampling design (LHS permutation matrix) is generated from `S` and rebuilt identically in every worker; run `i` uses row `i`.
 - Battle `i` uses PRNG seeded with `splitmix32(S ⊕ hash(i))`.
-- Therefore results are identical for a given URL regardless of the number of workers or chunk boundaries.
+- Therefore results are identical for a given URL regardless of the number of workers or chunk boundaries. The scheduler also returns the summaries in run order, whatever order the chunks finish in.
 - Free-model links also name the model version they run under (`mv`, absent means 1), so a link's results are identical per model version ([ADR-0008](docs/adr/0008-live-interventions-and-model-version.md), [SHARING.md](docs/SHARING.md#model-version-mv)).
+
+### Workers and scheduling
+
+`src/ui/scheduler.ts` (#175, [RENEWAL-1.0 §10.7](docs/design/RENEWAL-1.0.md#107-session-compute-ownership-scheduler-cpu)) owns the run workers: at most `poolSize()` of them (`hardwareConcurrency − 1`, 1–8), spawned on demand and then kept warm.
+
+- **Jobs and priorities.** A job is a list of tasks, one worker message each: the chunks of a batch (`submitRuns`, `splitRuns` in `chunks.ts`, at most `MAX_CHUNK_RUNS` = 25 runs per chunk) or a single aggregate. Each job has a priority from P0 (live re-simulation) through P1 what-if, P2 live chance and P3 next-match batch to P4 speculative work. An idle worker always takes the next task of the most urgent job, the oldest first within a priority.
+- **Preemption at chunk boundaries.** Nothing is interrupted. A more urgent job takes each worker as soon as that worker finishes its current chunk.
+- **Cancel and supersede.** Cancelling drops the job's queued tasks and discards its in-flight answers when they arrive. No worker is terminated. Workers end only on unload (`dispose()`, or the page going away), after 5 minutes hidden (`setHidden`, wired to `visibilitychange` in `app.ts`; idle workers go at once, busy ones when they run out of work), or when one crashes (`onerror`; its job rejects and the other jobs move to a new worker). An `error` message from a task rejects only that job.
+- **`SimPool`** (`pool.ts`) keeps today's interface for the Simple and Advanced batches: `run`/`runFree`/`aggregate` are the foreground job at P1, and a new one supersedes the previous one. With one job at a time this behaves like the old pool. Background jobs go to `pool.scheduler` directly and are not superseded. The replay worker is outside the scheduler and keeps its rule: a newer replay terminates the old replay worker and starts a fresh one, so a long replay never delays the next (the warm live worker is #178).
 
 ## 4. Simulation model (summary)
 
