@@ -66,9 +66,19 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 
 ### M3 — live variable cards (epic #126)
 
-| Item                                          | Issue | Status                              |
-| --------------------------------------------- | ----- | ----------------------------------- |
-| Seamless trace swap at the playhead (startAt) | #177  | Done in review; glyph scale hook in |
+| Item                                                    | Issue | Status         |
+| ------------------------------------------------------- | ----- | -------------- |
+| Variable-card catalogue versioned by `mv`               | #173  | Done in review |
+| Tick-indexed intervention hook                          | #174  | Open           |
+| Priority scheduler over warm workers                    | #175  | Open           |
+| Battle events derived from frames                       | #176  | Open           |
+| Seamless trace swap at the playhead                     | #177  | Done in review |
+| Replay with interventions and a warm live worker        | #178  | Open           |
+| Branch hook and live-chance job                         | #179  | Open           |
+| `live` log in v3 config and free result link v3         | #180  | Open           |
+| Re-simulation gate, card-pause budget, pre-battle cards | #181  | Open           |
+| What-if shift display                                   | #182  | Open           |
+| Live battle mode                                        | #183  | Open           |
 
 ## Later (candidates, not committed)
 

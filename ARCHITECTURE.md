@@ -222,6 +222,8 @@ The play page opens in **Simple mode** (#146, [PAGES.md](docs/PAGES.md#simple-mo
 
 The free model's matchup presets (`src/sim/free/presets.ts`) are pure data. A test measures each one on the free engine and checks it against a committed fixture and the rout check ([PRESETS.md](docs/PRESETS.md)).
 
+The free model's variable cards (`src/sim/free/cards.ts`, #173) are pure data too: append-only card ids whose index is the wire code, a catalogue per model version (`CARDS_BY_MV`, ADR-0008) and a seeded draw of 3 eligible cards per pause. The engine does not apply them yet ([MODEL.md §3.9](docs/MODEL.md#39-variable-cards-free-model)).
+
 ### Pack animal behaviour state machine
 
 Applies to every pack species (tiger, lion, wolf, hyena, Homo erectus); the per-species numbers come from `species.ts`.
