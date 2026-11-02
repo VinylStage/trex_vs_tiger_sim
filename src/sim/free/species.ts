@@ -46,6 +46,7 @@ export const FREE_SPECIES_IDS = [
   'lion',
   'wolf',
   'hyena',
+  'polarBear',
 ] as const;
 export type FreeSpeciesId = (typeof FREE_SPECIES_IDS)[number];
 
@@ -418,6 +419,34 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
     },
     CARNIVORE_BUFF(120, 0.3, 0.5, 0.06),
   ),
+  // The first species without a legacy entry (docs/SPECIES.md §4.11, research/SPECIES.md §5.5).
+  polarBear: defineFreeSpecies('polarBear', {
+    era: 'extant',
+    adSafe: true,
+    social: false,
+    canLatch: false,
+    constants: { hide: 0.5, intimidation: 1 },
+    traits: {
+      mass: [250, 450, 800, 'L'],
+      bodyRadius: [0.75, 0.95, 1.1, 'D'],
+      turnRate: [50, 100, 180, 'S'],
+      sprintSpeed: [6, 9, 11.1, 'L'],
+      cruiseSpeed: [1, 1.5, 2, 'L'],
+      sprintEndurance: [20, 45, 120, 'S'],
+      recoveryTime: [45, 90, 180, 'S'],
+      strikeForce: [0.8, 1.5, 3.5, 'S'],
+      strikeLethality: [4, 8, 12, 'S'],
+      strikeInterval: [0.8, 1.5, 3, 'S'],
+      strikeReach: [1.3, 1.6, 2, 'S'],
+      strikeArc: [45, 70, 100, 'S'],
+      strikeAccuracy: [0.3, 0.45, 0.65, 'S'],
+      shakeRate: [0.1, 0.25, 0.5, 'S'],
+      bleed: [0.001, 0.003, 0.006, 'S'],
+      morale: [0.55, 0.75, 0.9, 'S'],
+      moraleLoss: HEAVY_MORALE_LOSS,
+    },
+    buff: null,
+  }),
 };
 
 export const isFreeSpecies = (v: unknown): v is FreeSpeciesId =>

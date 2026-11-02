@@ -6,8 +6,10 @@
 // Dev-only. It loads the shipped engines from src/ through Vite's SSR module loader (Vite is
 // already a dev dependency), so it needs no other package and adds nothing to the site bundle.
 // Every batch uses a fixed seed, so a rerun on the same commit and JavaScript engine gives the
-// same numbers. The default writes docs/research/calibration-results.json; `--quick` cuts every
-// run count to a tenth for a smoke test and writes nothing unless --out is given.
+// same numbers. The default writes docs/research/calibration-results.json, and `--only <section>`
+// alone writes docs/research/calibration-<section>.json instead, so one section never replaces
+// the whole committed file; `--quick` cuts every run count to a tenth for a smoke test and writes
+// nothing unless --out is given.
 //
 // Sections:
 //   trex-tiger    T. rex vs tiger on both engines, same counts, seed and run count
@@ -17,6 +19,8 @@
 //   interference  the free T. rex vs tiger runs with crowding (`interference`) switched off
 //   symmetry      mirror matches and side swaps on the free engine
 //   monotonic     win share against head count on the free engine
+//   polar-bear    the add-a-species checks for the polar bear (#184): mirror, count sweeps, the
+//                 brown bear and tiger comparisons, flight, one-at-a-time sensitivity
 
 import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -38,7 +42,13 @@ const option = (name) => {
 };
 const QUICK = flag('--quick');
 const ONLY = option('--only');
-const OUT = option('--out') ?? (QUICK ? undefined : DEFAULT_OUT);
+const OUT =
+  option('--out') ??
+  (QUICK
+    ? undefined
+    : ONLY
+      ? path.join(ROOT, 'docs', 'research', `calibration-${ONLY}.json`)
+      : DEFAULT_OUT);
 const runsOf = (n) => (QUICK ? Math.max(20, Math.round(n / 10)) : n);
 
 const server = await createServer({
@@ -58,6 +68,7 @@ const freeMc = await load('/src/sim/free/montecarlo.ts');
 const freeAgg = await load('/src/sim/free/aggregate.ts');
 const freeEngine = await load('/src/sim/free/engine.ts');
 const presetsMod = await load('/src/sim/free/presets.ts');
+const speciesMod = await load('/src/sim/free/species.ts');
 const formMod = await load('/src/ui/form.ts');
 const stats = await load('/src/sim/stats.ts');
 
@@ -178,10 +189,10 @@ function runClassic({ a, b, na, nb, runs, morale = true }, tactic = 'flank') {
   return record(`classic-${tactic}`, c.runs, rows, [c.heavyCount, c.packCount]);
 }
 
-function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED }) {
+function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED, paramsA }) {
   const c = freeConfig.sanitizeFreeConfig({
     sides: [
-      { species: a, count: na },
+      { species: a, count: na, ...(paramsA === undefined ? {} : { params: paramsA }) },
       { species: b, count: nb },
     ],
     runs,
@@ -210,7 +221,7 @@ function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED }) {
 }
 
 const label = (m) =>
-  `${m.a} ${m.na} v ${m.b} ${m.nb}${m.morale === false ? ' (morale off)' : ''}${m.globals ? ' (globals)' : ''}`;
+  `${m.a} ${m.na} v ${m.b} ${m.nb}${m.morale === false ? ' (morale off)' : ''}${m.globals ? ' (globals)' : ''}${m.paramsA ? ` (${Object.keys(m.paramsA).join(', ')} pinned)` : ''}`;
 
 function log(line) {
   stdout.write(`${line}\n`);
@@ -405,6 +416,87 @@ sections['monotonic'] = () => {
     buffaloLions: sweep('buffalo', 'lion', [1, 2, 3, 4, 6, 8, 10], 500),
     elephantLions: sweep('elephant', 'lion', [5, 10, 20, 30, 40, 60], 300),
   };
+};
+
+// The polar bear (#184), the first species without a legacy entry: RENEWAL-1.0 §5.3 step 5 and
+// the brown bear and tiger comparisons. Side A is the polar bear, except in the brown bear's
+// reference rows and the second order of each swap.
+sections['polar-bear'] = () => {
+  const one = (m) => {
+    const free = runFree(m);
+    logRow(label(m), free);
+    return { match: m, free };
+  };
+  const PB = 'polarBear';
+  const mirrors = [
+    { a: PB, b: PB, na: 1, nb: 1, runs: runsOf(1000) },
+    { a: PB, b: PB, na: 3, nb: 3, runs: runsOf(1000) },
+  ].map((m) => {
+    const r = one(m);
+    return { ...r, diff: pairedDiffInterval(r.free.a, r.free.b, r.free.runs) };
+  });
+  // Count sweeps: wolves and tigers against one polar bear (side B varies), and polar bears
+  // against one T. rex (side A varies).
+  const sweeps = {
+    wolves: [1, 2, 4, 6, 8, 10, 12, 16, 20, 25, 30].map((nb) =>
+      one({ a: PB, b: 'wolf', na: 1, nb, runs: runsOf(500) }),
+    ),
+    tigers: [1, 2, 3, 4, 5, 6].map((nb) =>
+      one({ a: PB, b: 'tiger', na: 1, nb, runs: runsOf(500) }),
+    ),
+    vsTrex: [1, 2, 4, 6, 8, 10, 12, 16].map((na) =>
+      one({ a: PB, b: 'trex', na, nb: 1, runs: runsOf(500) }),
+    ),
+  };
+  // The sanity check: the polar bear next to the brown bear, against each other and against the
+  // same opponents, in both side orders where the order could matter.
+  const pairs = [
+    [
+      { a: PB, b: 'brownBear', na: 1, nb: 1 },
+      { a: 'brownBear', b: PB, na: 1, nb: 1 },
+    ],
+    [
+      { a: PB, b: 'tiger', na: 1, nb: 1 },
+      { a: 'tiger', b: PB, na: 1, nb: 1 },
+    ],
+  ].map(([x, y]) => {
+    const fx = one({ ...x, runs: runsOf(1000) });
+    const fy = one({ ...y, runs: runsOf(1000) });
+    return { first: fx, second: fy, diff: diffInterval(fx.free.a, fy.free.b) };
+  });
+  const sanity = [
+    ['brownBear', 'tiger', 1],
+    [PB, 'wolf', 8],
+    ['brownBear', 'wolf', 8],
+    [PB, 'lion', 1],
+    ['brownBear', 'lion', 1],
+    [PB, 'buffalo', 1],
+    ['brownBear', 'buffalo', 1],
+  ].map(([a, b, nb]) => one({ a, b, na: 1, nb, runs: runsOf(1000) }));
+  // Flight (#169, unchanged here): one polar bear against much larger single opponents.
+  const flight = [
+    ['trex', 1],
+    ['elephant', 1],
+    ['mammoth', 1],
+  ].map(([b, nb]) => one({ a: PB, b, na: 1, nb, runs: runsOf(1000) }));
+  // One-at-a-time sensitivity of every S trait: polar bear 1 v brown bear 1 with the trait pinned
+  // at its preset min, then at its max, every other input at its preset.
+  const preset = speciesMod.FREE_SPECIES[PB].traits;
+  const sTraits = Object.entries(preset).filter(([, t]) => t.evidence === 'S');
+  const base = one({ a: PB, b: 'brownBear', na: 1, nb: 1, runs: runsOf(1000) });
+  const sensitivity = sTraits.map(([k, t]) => {
+    const at = (v) =>
+      one({
+        a: PB,
+        b: 'brownBear',
+        na: 1,
+        nb: 1,
+        runs: runsOf(1000),
+        paramsA: { [k]: { min: v, mode: v, max: v } },
+      });
+    return { trait: k, range: t.range, low: at(t.range.min), high: at(t.range.max) };
+  });
+  return { mirrors, sweeps, pairs, sanity, flight, sensitivity: { base, traits: sensitivity } };
 };
 
 // --- run ---

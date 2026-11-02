@@ -149,6 +149,18 @@ describe('share link v3', () => {
     expect(freeConfigFromHash(hashFromFreeConfig(d))).toEqual(d);
   });
 
+  it('round-trips a species without a legacy entry (polar bear), edited ranges included', () => {
+    const c = sanitizeFreeConfig({
+      sides: [
+        { species: 'polarBear', count: 2, params: { mass: { min: 300, mode: 500, max: 700 } } },
+        { species: 'brownBear', count: 3 },
+      ],
+    });
+    expect(c.sides[0].species).toBe('polarBear');
+    expect(c.sides[0].params.mass).toEqual({ min: 300, mode: 500, max: 700 });
+    expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
+  });
+
   it('carries v: 3 and the mode marker, and never an empty hash', () => {
     const json = JSON.parse(
       Buffer.from(encodeFreeConfig(defaultFreeConfig()), 'base64url').toString(),
