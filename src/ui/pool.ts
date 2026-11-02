@@ -66,7 +66,8 @@ interface ReplayJob {
  * The page's simulation workers: a `Scheduler` of warm run workers (small chunks, chunk-level
  * preemption, src/ui/scheduler.ts) plus one replay worker. `run`/`aggregate` are the foreground
  * job of the Simple and Advanced batches: a new one supersedes the previous one, which rejects
- * with CancelledError while every worker stays warm. Results do not depend on the pool size or
+ * with CancelledError while every run worker stays warm. A newer replay still terminates the old
+ * replay worker. Results do not depend on the pool size or
  * the chunk size: every run is seeded by its index and summaries come back in run order.
  */
 export class SimPool {
@@ -157,14 +158,12 @@ export class SimPool {
     return this.startReplay({ type: 'replay-free', jobId: 0, config, run }) as Promise<FreeTrace>;
   }
 
-  /**
-   * The superseded request rejects at once and its answer is ignored when it arrives; the warm
-   * worker then answers the new request (it handles messages in order).
-   */
   private startReplay(
     req: Extract<WorkerRequest, { type: 'replay' | 'replay-free' }>,
   ): Promise<BattleTrace | FreeTrace> {
     if (this.replayJob) {
+      this.replayWorker?.terminate();
+      this.replayWorker = null;
       this.replayJob.reject(new CancelledError());
       this.replayJob = null;
     }

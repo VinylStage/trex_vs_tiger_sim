@@ -208,7 +208,7 @@ describe('cancel and supersede keep the workers warm', () => {
     await keep.promise;
   });
 
-  it('SimPool: superseding a run, an aggregate or a replay never terminates a worker', async () => {
+  it('SimPool: superseding a run or an aggregate never terminates a run worker', async () => {
     const workers: FakeWorker[] = [];
     const pool = new SimPool(3, () => {
       const w = new FakeWorker();
@@ -228,9 +228,12 @@ describe('cancel and supersede keep the workers warm', () => {
       await Promise.resolve();
     }
     expect((await second).length).toBe(40);
-    // Three run workers and one replay worker, all still alive.
-    expect(workers).toHaveLength(4);
-    expect(workers.some((w) => w.terminated)).toBe(false);
+    // Three run workers, all still alive. The replay worker is outside the scheduler and keeps
+    // main's rule: a newer replay terminates the old replay worker and starts a fresh one.
+    expect(workers).toHaveLength(5);
+    const replayWorkers = workers.filter((w) => w.posted.some((m) => m.type === 'replay'));
+    expect(replayWorkers.map((w) => w.terminated)).toEqual([true, false]);
+    expect(workers.filter((w) => !replayWorkers.includes(w)).some((w) => w.terminated)).toBe(false);
     void replay2.catch(() => undefined);
     pool.dispose();
     expect(workers.every((w) => w.terminated)).toBe(true);

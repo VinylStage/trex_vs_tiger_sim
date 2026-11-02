@@ -191,17 +191,15 @@ describe('SimPool.replay', () => {
     await expect(p).resolves.toBe(trace);
   });
 
-  it('a newer replay supersedes the older one: CancelledError, same warm worker', async () => {
+  it('a newer replay supersedes the older one: CancelledError, fresh worker', async () => {
     const { pool, workers } = setup(2);
     const first = pool.replay(config(10), 1);
-    const w = workers[0] as FakeWorker;
-    const firstId = w.last()?.jobId ?? -1;
     const second = pool.replay(config(10), 2);
     await expect(first).rejects.toBeInstanceOf(CancelledError);
-    expect(workers).toHaveLength(1);
-    expect(w.terminated).toBe(false);
-    // The worker answers the superseded request first; that answer is ignored.
-    w.emit({ type: 'replay', jobId: firstId, trace: {} as BattleTrace });
+    expect((workers[0] as FakeWorker).terminated).toBe(true);
+    const w = workers[1] as FakeWorker;
+    // An answer for the superseded job id is ignored.
+    w.emit({ type: 'replay', jobId: -5, trace });
     w.emit({ type: 'replay', jobId: w.last()?.jobId ?? -1, trace });
     await expect(second).resolves.toBe(trace);
   });
