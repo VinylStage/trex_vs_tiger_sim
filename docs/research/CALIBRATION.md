@@ -444,7 +444,7 @@ The tables in this report: generated from docs/research/calibration-results.json
 
 ## 13. Polar bear (#184)
 
-Measured 2026-11-02 on the #184 branch at `ee0d729` (engines unchanged, model version `mv` 1). The polar bear is the first species without a legacy entry (docs/SPECIES.md §4.11), so it runs on the free engine only and has no classic comparison. These are the add-a-species checks of [RENEWAL-1.0 §5.3](../design/RENEWAL-1.0.md#53-add-a-species-pipeline-definition-of-done) step 5, a sanity check against the brown bear and the tiger, its flight behaviour under the current model (#169, not changed here) and a one-at-a-time sensitivity sweep of its **S** values. Raw data: `calibration-polar-bear.json` (section `polar-bear`); §1–§12 and `calibration-results.json` are unchanged. Method and metrics as in §2: seed 20261019, every other input at its preset.
+Measured 2026-11-02 on the #184 branch at `bec0201` (engines unchanged, model version `mv` 1). The polar bear is the first species without a legacy entry (docs/SPECIES.md §4.11), so it runs on the free engine only and has no classic comparison. These are the add-a-species checks of [RENEWAL-1.0 §5.3](../design/RENEWAL-1.0.md#53-add-a-species-pipeline-definition-of-done) step 5, a sanity check against the brown bear and the tiger, its flight behaviour under the current model (#169, not changed here) and a one-at-a-time sensitivity sweep of its **S** values. Raw data: `calibration-polar-bear.json` (section `polar-bear`); §1–§12 and `calibration-results.json` are unchanged. Method and metrics as in §2: seed 20261019, every other input at its preset.
 
 ### Mirror matches
 
@@ -557,4 +557,4 @@ Polar bear 1 v brown bear 1 (the preset), 1,000 runs per row: each **S** trait o
 
 **Preset.** `polar-bear-brown-bear` (design §6 #17): polar bear 82.0 %, median 70.9 s, rout share 100 % in the fixture (200 runs). Not close; ready in Simple mode through the one-on-one override, as `tiger-bear` and `trex-mirror` ([PRESETS.md](../PRESETS.md#overrides-and-holds)).
 
-The tables in this section: generated from docs/research/calibration-polar-bear.json (commit ee0d729, v22.22.0).
+The tables in this section: generated from docs/research/calibration-polar-bear.json (commit bec0201, v22.22.0).
