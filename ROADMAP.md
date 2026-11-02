@@ -64,6 +64,22 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | Usability test (5–8 people, 18–35) and anonymous survey | #166      | Kit ready in [docs/research/USABILITY.md](docs/research/USABILITY.md); the owner runs it, results not in yet |
 | Free-model calibration follow-ups                       | #167–#169 | Open (#169 needs an owner decision)                                                                          |
 
+### M3 — live variable cards (epic #126)
+
+| Item                                                    | Issue | Status         |
+| ------------------------------------------------------- | ----- | -------------- |
+| Variable-card catalogue versioned by `mv`               | #173  | Done in review |
+| Tick-indexed intervention hook                          | #174  | Open           |
+| Priority scheduler over warm workers                    | #175  | Open           |
+| Battle events derived from frames                       | #176  | Open           |
+| Seamless trace swap at the playhead                     | #177  | Open           |
+| Replay with interventions and a warm live worker        | #178  | Open           |
+| Branch hook and live-chance job                         | #179  | Open           |
+| `live` log in v3 config and free result link v3         | #180  | Open           |
+| Re-simulation gate, card-pause budget, pre-battle cards | #181  | Open           |
+| What-if shift display                                   | #182  | Open           |
+| Live battle mode                                        | #183  | Open           |
+
 ## Later (candidates, not committed)
 
 - Sharing P2 (#51): per-bucket pre-generated OG images (species pair × outcome tier; needs a build-time PNG rasterizer, an owner decision on a dev dependency), QR codes, Kakao SDK, compressed links, challenge links
