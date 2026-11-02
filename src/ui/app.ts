@@ -134,6 +134,8 @@ export function startApp(root: HTMLElement): void {
   // Same text as the static <title> of this language's play page (tests/pages.test.ts).
   document.title = t('play.documentTitle');
   const pool = new SimPool();
+  // Workers stay warm between runs; a long hide releases the idle ones (src/ui/scheduler.ts).
+  document.addEventListener('visibilitychange', () => pool.setHidden(document.hidden));
   // A cold page (no app state, no tour deep link) opens Simple mode (#146), and so does a link
   // Simple mode wrote (#154). Any other v3 link (`#s=` with `m: "free"`) opens the free form of
   // Advanced mode; every other link opens classic (D1). Old links that land on the lobby reach

@@ -7,6 +7,7 @@
 > - `SpatialGrid.nearest`가 동물이 있는 칸의 경계 상자 안만 찾도록 바꿔서 엔진이 대규모 전투에서 최대 1.36배 빨라졌습니다. 같은 시드의 결과는 그대로입니다.
 > - 워커 수 기본값은 논리 코어 수 − 1(최소 1, 최대 8)입니다.
 > - 웹 글꼴이 바뀔 때 생기던 레이아웃 이동(CLS)은 글자 폭을 맞춘 대체 글꼴로 거의 0이 되었고, 언어 전환과 시작 시 긴 작업도 줄었습니다.
+> - 우선순위 스케줄러(#175)로 워커를 미리 데워 둔 채 재사용합니다. 작업을 취소하거나 새 작업으로 바꿔도 워커를 끄지 않으며, 한 덩어리는 최대 25회입니다. 배치 실행 시간은 측정 오차 범위 안에서 그대로입니다.
 > - 그 뒤 본문 최대 폭을 `ch`(숫자 0의 폭) 단위로 정하면서 글꼴이 바뀌는 순간 폭이 넓어져 이동이 다시 생겼습니다(#138). 폭을 `em`으로 바꿔서 12개 페이지·화면 조합의 합계가 0.0524에서 0.0034로 줄었습니다.
 
 This page records what issue #24 changed for speed and responsiveness and the before/after numbers. The investigation, the original baselines and the full list of candidate changes are in [research/PERFORMANCE.md](research/PERFORMANCE.md).
@@ -59,6 +60,29 @@ The gain grows with the battle size because routed tigers flee farther from occu
 ## Worker count
 
 The pool now starts `hardwareConcurrency − 1` workers (at least 1, at most 8; 3 when the core count is unknown), see `poolSize` in `src/ui/chunks.ts`. On the 4-core test machine, 3 workers finished a 50v1000 × 40-run job as fast as 4 (5.7–6.0 s vs 5.2–6.3 s), and only the 4-worker runs showed unattributed 56–155 ms main-thread stalls ([research §2.2](research/PERFORMANCE.md#22-monte-carlo-wall-time-vs-worker-count-chromium-real-app-navigatorhardwareconcurrency-overridden)). Leaving one core keeps the page, the replay and (later) ad scripts responsive. Results do not depend on the worker count: per-run seeds come from `(masterSeed, runIndex)`.
+
+## Scheduler and warm workers (#175)
+
+The run workers now sit behind a priority scheduler (`src/ui/scheduler.ts`, [ARCHITECTURE §3](../ARCHITECTURE.md#workers-and-scheduling)). Cancelling or superseding a batch no longer terminates the workers, so the next batch starts on warm, JIT-compiled workers. Chunks are capped at `MAX_CHUNK_RUNS` = 25 runs so a more urgent job waits at most one small chunk. Below the cap the split is unchanged (about `workers × 4` chunks), so small and heavy batches are chunked exactly as before and only batches above about 300 runs (at 3 workers) get more, smaller chunks.
+
+**Results.** Unchanged: every run is still seeded by its index, and the scheduler now returns summaries in run order. Before, the pool concatenated them in the order chunks finished. `tests/scheduler.test.ts` runs the one-on-one presets through `SimPool` at 1, 3 and 8 workers, with a fake worker that runs the real free engine and answers in a scrambled order. The summaries equal `runAllFree` and the wins and median match `tests/fixtures/preset-shares.json`. A one-off run of the same check over all 11 presets at 1 and 8 workers also matched the fixture. Every golden test passes unchanged.
+
+**Batch wall time.** `SimPool` from `main` and from this branch were bundled side by side (rolldown) and driven against the real `sim.worker.ts` in Node `worker_threads`, 3 workers, alternating old and new. Cold is a fresh pool's first batch (3 rounds). Warm is the median of 7 batches on a pool that has already run one. The table shows the median, with the range in brackets, in ms. Node v22.22.0 on the 4 vCPU machine above. Other jobs were running on it (load average 6–8), so the spread is wide.
+
+| Batch                         | Chunks (old → new) | Cold, old              | Cold, new              | Warm, old             | Warm, new             | Warm new / old |
+| ----------------------------- | ------------------ | ---------------------- | ---------------------- | --------------------- | --------------------- | -------------: |
+| free lion 1 v tiger 1 × 2,000 | 12 → 80            | 1,154 [1,137–1,179]    | 1,030 [1,020–1,351]    | 415 [380–765]         | 365 [292–565]         |           0.88 |
+| free 1 v 1 × 20,000           | 12 → 800           | 5,314 [5,292–6,450]    | 5,169 [3,793–5,194]    | 5,155 [3,005–5,603]   | 4,299 [3,411–7,337]   |           0.83 |
+| free lion 5 v tiger 5 × 500   | 12 → 20            | 3,173 [2,838–3,346]    | 3,607 [3,172–3,767]    | 716 [416–979]         | 691 [534–1,147]       |           0.97 |
+| classic 1 v 1 × 20,000        | 12 → 800           | 14,230 [10,753–16,125] | 10,747 [10,506–17,871] | 11,337 [6,457–20,931] | 12,594 [6,551–17,536] |           1.11 |
+| classic 10 v 100 × 500        | 12 → 20            | 4,830 [2,090–5,228]    | 4,087 [1,789–4,658]    | 2,068 [1,302–2,252]   | 2,134 [1,316–2,584]   |           1.03 |
+| classic 50 v 1,000 × 40       | 10 → 10 (control)  | 5,548 [5,445–5,627]    | 5,821 [5,672–5,833]    | 3,510 [2,925–4,704]   | 3,933 [3,191–4,418]   |           1.12 |
+
+The last row is chunked identically on both branches, so its 1.12 shows the noise on this machine. An earlier session of the same benchmark gave warm ratios of 0.97, 1.14, 0.70, 0.99, 0.95 and 0.98 for the six rows, and a third gave 0.81 for free 1 v 1 × 20,000. None of the rows moved consistently in either direction.
+
+To isolate the cost of the extra messages, the worst case (free 1 v 1 × 20,000, about 0.3 ms per run, 800 instead of 4 chunks) ran on **one** worker: warm 6,011 ms [5,122–6,471] old vs 6,372 ms [6,011–6,859] new, median of 9. That is about 6 %, or roughly 0.45 ms per extra chunk round trip, and it only shows up when single runs are this cheap. A default batch (500 runs, 12 → 20 chunks) adds 8 round trips, which is well inside the noise. Workers that stay warm across batches save the cold-start cost the old `cancel()` paid on every supersede: compare the cold and warm columns.
+
+The harness is not committed (it needs the bundled `main` pool next to the branch). To repeat it, bundle `src/workers/sim.worker.ts` and both `SimPool` versions, with the `?worker&url` import stubbed, and run the worker under a `self` shim on `worker_threads`.
 
 ## Font swap
 
