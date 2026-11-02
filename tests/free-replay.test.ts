@@ -10,12 +10,14 @@ import {
 } from '../src/sim/free/engine';
 import type { FreeSpeciesId } from '../src/sim/free/species';
 import { designRow } from '../src/sim/sampling';
-import { freeKeyAction } from '../src/ui/free-replay';
+import { freeKeyAction, freeLoadPlan } from '../src/ui/free-replay';
 import {
   FREE_TRIANGLE_RADIUS,
   FreeWorld,
+  freeGlyphPx,
   freeLod,
   freeSideGlyph,
+  validGlyphScale,
 } from '../src/ui/replay/free-world';
 import { GLYPH, heavyLengthForRadius } from '../src/ui/replay/glyphs';
 import { isChord } from '../src/ui/replay/timeline';
@@ -175,5 +177,125 @@ describe('free replay keys', () => {
     // Ctrl+F and Cmd+F find in page, not the view toggle.
     expect(isChord({ key: 'f', ctrlKey: true, altKey: false, metaKey: false })).toBe(true);
     expect(isChord({ key: 'f', ctrlKey: false, altKey: false, metaKey: true })).toBe(true);
+  });
+});
+
+describe('free replay trace swap (#177)', () => {
+  const { trace } = battle('wolf', 6, 'tiger', 1, 1);
+  const k = Math.floor(trace.frames.length / 2);
+  const swapAt = (trace.frames[k] as (typeof trace.frames)[number]).t;
+  // A fork at the swap time: the frames up to it are shared, every later one has diverged.
+  const fork: FreeTrace = {
+    ...trace,
+    frames: trace.frames.map((f, i) => {
+      if (i <= k) return f;
+      const agents = Float32Array.from(f.agents, (v, j) => (j % FREE_FRAME_STRIDE < 2 ? v + 3 : v));
+      return { t: f.t + 0.25, agents, buffed: f.buffed.slice() };
+    }),
+  };
+
+  it('shows the same scene at every time before the swap for two traces sharing a prefix', () => {
+    const a = new FreeWorld(trace);
+    const b = new FreeWorld(fork);
+    const before = trace.frames.slice(0, k).flatMap((f, i) => {
+      const next = trace.frames[i + 1] as (typeof trace.frames)[number];
+      return [f.t, (f.t + next.t) / 2];
+    });
+    for (const time of [...before, swapAt]) {
+      a.update(time);
+      b.update(time);
+      expect(b.x).toEqual(a.x);
+      expect(b.y).toEqual(a.y);
+      expect(b.head).toEqual(a.head);
+      expect(b.state).toEqual(a.state);
+      expect(b.buffed).toEqual(a.buffed);
+      expect(b.fightBox()).toEqual(a.fightBox());
+    }
+    // Past the swap the fork shows its own frames.
+    const late = (trace.frames[k + 1] as (typeof trace.frames)[number]).t;
+    a.update(late);
+    b.update(late);
+    expect(b.x).not.toEqual(a.x);
+  });
+
+  it('loads from the start as before when no options are given', () => {
+    const idle = { hasWorld: false, playing: false, reducedMotion: false };
+    const fresh = {
+      time: 0,
+      playing: true,
+      snapCamera: true,
+      releaseAutoPause: true,
+      resetGlyphScale: true,
+    };
+    expect(freeLoadPlan(42, {}, idle)).toEqual(fresh);
+    // A trace that replaces another one, mid-playback, still starts over.
+    expect(freeLoadPlan(42, {}, { hasWorld: true, playing: true, reducedMotion: false })).toEqual(
+      fresh,
+    );
+    expect(freeLoadPlan(42, {}, { ...idle, hasWorld: true })).toEqual(fresh);
+    expect(freeLoadPlan(42, {}, { ...idle, reducedMotion: true })).toEqual({
+      ...fresh,
+      playing: false,
+    });
+    expect(freeLoadPlan(0, {}, idle)).toEqual({ ...fresh, playing: false });
+    expect(freeLoadPlan(42, { autoplay: false }, idle)).toEqual({ ...fresh, playing: false });
+    expect(freeLoadPlan(42, { autoplay: true }, idle)).toEqual(fresh);
+  });
+
+  it('swaps at the playhead and keeps camera, position and playback', () => {
+    const live = { hasWorld: true, playing: true, reducedMotion: false };
+    expect(freeLoadPlan(60, { startAt: 12.5 }, live)).toEqual({
+      time: 12.5,
+      playing: true,
+      snapCamera: false,
+      releaseAutoPause: false,
+      resetGlyphScale: false,
+    });
+    // Paused stays paused, whatever autoplay says; a playback the viewer started under
+    // reduced motion keeps playing.
+    expect(
+      freeLoadPlan(60, { startAt: 12.5, autoplay: true }, { ...live, playing: false }),
+    ).toEqual({
+      time: 12.5,
+      playing: false,
+      snapCamera: false,
+      releaseAutoPause: false,
+      resetGlyphScale: false,
+    });
+    expect(freeLoadPlan(60, { startAt: 12.5 }, { ...live, reducedMotion: true }).playing).toBe(
+      true,
+    );
+    // A fork that ends before the playhead stops at its end.
+    expect(freeLoadPlan(10, { startAt: 12.5 }, live)).toMatchObject({ time: 10, playing: false });
+    expect(freeLoadPlan(60, { startAt: -1 }, live).time).toBe(0);
+    // Nothing on screen yet: the camera has nothing to carry over.
+    expect(freeLoadPlan(60, { startAt: 12.5 }, { ...live, hasWorld: false }).snapCamera).toBe(true);
+    // A non-finite time is ignored: a plain load.
+    expect(freeLoadPlan(60, { startAt: Number.NaN }, live).time).toBe(0);
+  });
+
+  it('has a render-only glyph scale that leaves the default size untouched', () => {
+    const tri = freeSideGlyph(2.5);
+    const dot = freeSideGlyph(0.5);
+    for (const lod of [false, true]) {
+      for (const pxPerM of [0.5, 4, 40]) {
+        const len = Math.max(lod ? GLYPH.minHeavyPx * 0.6 : GLYPH.minHeavyPx, tri.sizeM * pxPerM);
+        expect(freeGlyphPx(tri, pxPerM, lod)).toEqual({ tri: true, len, r: len * 0.42 });
+        expect(freeGlyphPx(dot, pxPerM, lod).r).toBe(Math.max(GLYPH.minPackPx, 0.5 * pxPerM));
+        const big = freeGlyphPx(tri, pxPerM, lod, 1.5);
+        expect(big.len).toBeCloseTo(len * 1.5, 9);
+        expect(freeGlyphPx(dot, pxPerM, lod, 1.5).r).toBeCloseTo(
+          Math.max(GLYPH.minPackPx, 0.5 * pxPerM) * 1.5,
+          9,
+        );
+      }
+    }
+    for (const bad of [0, -2, Number.NaN, Infinity]) expect(validGlyphScale(bad)).toBe(1);
+    // The world, and so the physics radius it reads, does not change.
+    const w = new FreeWorld(trace);
+    expect(w.glyphs).toEqual([
+      freeSideGlyph(trace.meta.radius[0]),
+      freeSideGlyph(trace.meta.radius[1]),
+    ]);
   });
 });
