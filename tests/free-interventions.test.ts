@@ -14,6 +14,7 @@ import {
 } from '../src/sim/free/engine';
 import {
   MAX_INTERVENTIONS,
+  MAX_INTERVENTION_INPUT,
   compileInterventions,
   durationTicks,
   mulProduct,
@@ -167,6 +168,14 @@ describe('sanitizeInterventions', () => {
     expect(out).toHaveLength(MAX_INTERVENTIONS);
     expect(out.map((e) => e.tick)).toEqual(Array.from({ length: MAX_INTERVENTIONS }, (_, k) => k));
   });
+
+  it('rejects an input longer than MAX_INTERVENTION_INPUT without scanning it', () => {
+    const raw: unknown[] = [[1, code('focus'), 0]];
+    raw.length = MAX_INTERVENTION_INPUT + 1;
+    expect(sanitizeInterventions(raw, maxSteps, 1, on)).toEqual([]);
+    raw.length = MAX_INTERVENTION_INPUT;
+    expect(sanitizeInterventions(raw, maxSteps, 1, on)).toEqual([iv(1, 'focus', 0)]);
+  });
 });
 
 describe('compiled log and combined multiplier', () => {
@@ -217,6 +226,8 @@ describe('empty log', () => {
         const plain = runOf(config, run, undefined, true);
         expect(runOf(config, run, {}, true)).toEqual(plain);
         expect(runOf(config, run, { interventions: [] }, true)).toEqual(plain);
+        const nul = { interventions: null } as unknown as FreeBattleOptions;
+        expect(runOf(config, run, nul, true)).toEqual(plain);
         // Every entry is dropped: a morale card with morale off, a tick past the end.
         const off = sanitizeFreeConfig({ ...config, morale: false });
         expect(

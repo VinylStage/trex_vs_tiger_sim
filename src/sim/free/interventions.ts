@@ -23,6 +23,9 @@ export interface Intervention {
 /** Longest log a run accepts (§10.1 bounds). */
 export const MAX_INTERVENTIONS = 64;
 
+/** Longest raw log looked at; a longer input is rejected whole rather than scanned. */
+export const MAX_INTERVENTION_INPUT = 4096;
+
 /** Bounds of the combined `mul` multiplier per side and field, before the field clamps (§10.1). */
 export const MUL_MIN = 0.5;
 export const MUL_MAX = 2;
@@ -51,7 +54,7 @@ export function sanitizeInterventions(
   mv: number,
   config: Pick<FreeConfig, 'morale'>,
 ): Intervention[] {
-  if (!Array.isArray(raw)) return [];
+  if (!Array.isArray(raw) || raw.length > MAX_INTERVENTION_INPUT) return [];
   const out: Intervention[] = [];
   for (const r of raw as unknown[]) {
     const e = entryOf(r);
