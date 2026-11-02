@@ -64,11 +64,21 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | Usability test (5–8 people, 18–35) and anonymous survey | #166      | Kit ready in [docs/research/USABILITY.md](docs/research/USABILITY.md); the owner runs it, results not in yet |
 | Free-model calibration follow-ups                       | #167–#169 | Open (#169 needs an owner decision)                                                                          |
 
-### M3 — live variables
+### M3 — live variable cards (epic #126)
 
-| Item                                                 | Issue | Status                                                           |
-| ---------------------------------------------------- | ----- | ---------------------------------------------------------------- |
-| Battle events derived from frames (`free-events.ts`) | #176  | In review: pure module and tests; wired into the live UI by #183 |
+| Item                                                    | Issue | Status         |
+| ------------------------------------------------------- | ----- | -------------- |
+| Variable-card catalogue versioned by `mv`               | #173  | Done in review |
+| Tick-indexed intervention hook                          | #174  | Open           |
+| Priority scheduler over warm workers                    | #175  | Open           |
+| Battle events derived from frames                       | #176  | Done in review |
+| Seamless trace swap at the playhead                     | #177  | Done in review |
+| Replay with interventions and a warm live worker        | #178  | Open           |
+| Branch hook and live-chance job                         | #179  | Open           |
+| `live` log in v3 config and free result link v3         | #180  | Open           |
+| Re-simulation gate, card-pause budget, pre-battle cards | #181  | Open           |
+| What-if shift display                                   | #182  | Open           |
+| Live battle mode                                        | #183  | Open           |
 
 ## Later (candidates, not committed)
 

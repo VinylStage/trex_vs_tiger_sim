@@ -438,6 +438,35 @@ This models the observation that tigers avoid injurious fights. The thresholds a
 
 **Free matchups.** The free model (design: [FREE-MATCHUPS.md §4.5, §5.2](design/FREE-MATCHUPS.md#45-fleeing)) gives both sides morale, so any species can rout. Wounds cost morale in proportion to the damage. In a social species (lion, wolf, spotted hyena, _H. erectus_), a nearby ally that is incapacitated or routs also costs the buffed members morale, so a whole group can break at once. Free results therefore show per side the mean still standing, fled and incapacitated, with each one's share of the side's count. When the side that won fewer runs is a group that shares morale, meaning a social species of two or more with `morale` and the pack buff's morale effect on, and at least 80 % (**[speculative]**) of it fled in the runs it lost, a notice says the group's morale broke at once (`routNotice` in `src/sim/free/aggregate.ts`). The rout share is fled ÷ (fled + incapacitated) of the losing side over decided runs (`routShare`). One on one, the loser flees in practically every run. Solitary animals fielded together also flee, but each on its own morale: 5 tigers against 5 lions lose 210 of 500 runs, and in those runs 99.9 % of the tigers flee rather than being incapacitated (seed 20261019). Neither case has group morale to break, so neither gets the notice. The Simple-mode presets are checked against the same measure ([PRESETS.md](PRESETS.md)).
 
+### 3.9 Variable cards (free model)
+
+The free model has a catalogue of variable cards for the live battle (design: [RENEWAL-1.0.md §4.3, §10.1 and Appendix B](design/RENEWAL-1.0.md#appendix-b-variable-card-specification); [ADR-0008](adr/0008-live-interventions-and-model-version.md)). The catalogue is pure data in `src/sim/free/cards.ts`; the engine does not apply cards yet (the intervention hook is #174), so no result changes and `mv` stays 1.
+
+- **Codes and versions.** `CARD_IDS` is append-only, and a card's index is its wire code: an intervention log stores `[tick, card, side]`, never the effects. `CARDS_BY_MV` holds one catalogue per model version. Retuning a card is a new `mv`, with the old catalogue kept, so old links keep their cards.
+- **Ops.** `mul` multiplies a trait (speed, accuracy, power, turn) for the card's duration and is recomputed from the base value on every start or expiry. `scale`, `add`, `addFracMax` and `setMax` change a state value (HP, max HP, stamina, morale) once, with clamps, and are never undone. A card with a finite duration holds only `mul` ops (catalogue test), so nothing ever needs undoing. An instant card has `durationS: null`, like a rest-of-battle card, because it has nothing that stays active.
+- **Packs.** The realistic pack is on by default; the what-if pack (Giant size, Pocket size) is opt-in, and those cards carry the "만약에 / what-if" label in their names (owner decision R8). The morale cards (Rallying cry, Shaken) need morale on.
+- **Draw.** `drawCards` offers 3 distinct eligible cards per pause, by a partial Fisher–Yates shuffle over the eligible codes in code order, with an sfc32 stream seeded by `deriveSeed(deriveSeed(seed, matchIndex, pauseIndex), rerollCount)`. `seed` is the cup seed or the match seed. The four inputs are folded in two steps because `deriveSeed` takes one stream and one salt. The same inputs always offer the same cards, so the offer reproduces from a link; changing the draw would change what a link offers and is therefore a new `mv`.
+- **Magnitudes** are **[speculative]** game assumptions, not biology:
+
+| #   | Card (ko / en)                 | Side | Ops                                                     | Duration | Needs   |
+| --- | ------------------------------ | ---- | ------------------------------------------------------- | -------- | ------- |
+| 0   | 폭우 / Downpour                | both | speed ×0.8, accuracy ×0.85                              | rest     | –       |
+| 1   | 한밤중 / Pitch dark            | both | accuracy ×0.8                                           | rest     | –       |
+| 2   | 진흙탕 / Mud field             | both | speed ×0.7, turn ×0.8                                   | rest     | –       |
+| 3   | 폭염 / Heatwave                | both | stamina ×0.5                                            | instant  | –       |
+| 4   | 숨 고르기 / Second wind        | one  | stamina set to max                                      | instant  | –       |
+| 5   | 응원 함성 / Rallying cry       | one  | morale +0.2                                             | instant  | morale  |
+| 6   | 기세 꺾임 / Shaken             | one  | morale −0.2                                             | instant  | morale  |
+| 7   | 집중력 / Focus                 | one  | accuracy ×1.2 (capped at `maxAccuracy`)                 | 20 s     | –       |
+| 8   | 괴력 / Power surge             | one  | power ×1.3                                              | 20 s     | –       |
+| 9   | 아드레날린 / Adrenaline        | one  | speed ×1.25                                             | 15 s     | –       |
+| 10  | 재정비 / Regroup               | one  | HP + 0.15 × max HP, active agents only                  | instant  | –       |
+| 11  | 흥분 / Agitation               | one  | speed ×1.15, accuracy ×0.9                              | rest     | –       |
+| 12  | 거대화 / Giant size (what-if)  | one  | max HP ×1.5, HP ×1.5 (instant); power ×1.5, speed ×0.85 | rest     | what-if |
+| 13  | 꼬마화 / Pocket size (what-if) | one  | max HP ×0.6, HP ×0.6 (instant); speed ×1.3              | rest     | what-if |
+
+The # column is the wire code (zero-based), not the design's 1-based row number. Card text is in `src/i18n/ko.ts` and `en.ts` under `card.<id>.name` and `card.<id>.effect`, and `tests/free-cards.test.ts` runs it through the same banned-words check as the presets.
+
 ## 4. Constants
 
 These are fixed in `engine.ts`. They are not sampled and not editable in the UI. The pack contact radius is a species constant (§2.7; 0.8 m for the tiger).
