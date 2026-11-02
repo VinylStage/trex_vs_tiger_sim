@@ -1039,6 +1039,7 @@ simulateFreeBattle(config, row, run, trace, opts?: { interventions?: readonly In
 ```
 
 - **Hook.** At the top of the tick loop (`free/engine.ts:646`): `if (iv.length) applyDue(step)`. With an empty list no branch is taken, no RNG is drawn, no array is allocated and no arithmetic changes, so results stay bit-identical.
+  - As built (#174), the guard and the due check are folded into one comparison, `if (step === ivDue)`, with `ivDue = −1` for an empty log. A pair with no active op gets its base value back exactly, without the field clamp. [MODEL.md §3.9](../MODEL.md#39-variable-cards-free-model) has the details.
 - **Applying entries due at `step`**, in log order:
   1. Instant ops (`scale`, `add`, `addFracMax`, `setMax`) change the current state at once, with clamps. They are never undone.
   2. If any `mul` op starts or expires at this step, the affected (side, field) pairs are recomputed.

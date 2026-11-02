@@ -37,6 +37,7 @@ A v3 link (`#s=` with `m: "free"`) carries no model version. After any such chan
    - The log is a list of `[tick, card, side]` entries (at most 64, sorted by tick) in the link's optional `live` field. It is applied at the top of the tick loop, and trait effects are recomputed from base values on every start or expiry, never reverted.
    - No card draws random numbers in 1.0. Future randomized cards use a new stream. The branch hook for the live win chance reseeds only when it is set.
    - With an empty log the hook takes no branch, draws no random number and changes no arithmetic, so every result stays bit-identical and `mv` stays 1.
+   - Implemented in #174: `src/sim/free/interventions.ts` (`sanitizeInterventions`, the compiled log) and the hook in `simulateFreeBattle`. The semantics are in [MODEL.md §3.9](../MODEL.md#39-variable-cards-free-model), and `tests/free-interventions.test.ts` pins them.
 8. **Goldens.** No golden fixture is ever regenerated. The social-species golden (`tests/free-golden-social.test.ts`) joins the free golden before any engine change of the renewal, so the pack-buff layer is pinned for `mv` 1 as well.
 
 ## Alternatives considered

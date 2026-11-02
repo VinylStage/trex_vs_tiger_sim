@@ -2,7 +2,16 @@ import { individualFactor } from '../distributions.ts';
 import { CONSTANTS, DT } from '../engine.ts';
 import { Rng, deriveSeed } from '../rng.ts';
 import { SpatialGrid } from '../spatial.ts';
+import type { TraitField } from './cards.ts';
 import { FREE_PARAM_INDEX, type FreeConfig, type GlobalId } from './config.ts';
+import {
+  compileInterventions,
+  mulProduct,
+  sanitizeInterventions,
+  type CompiledEntry,
+  type CompiledLog,
+  type Intervention,
+} from './interventions.ts';
 import { FREE_SPECIES } from './species.ts';
 import { TRAITS, TRAIT_BOUNDS, type TraitId } from './traits.ts';
 
@@ -194,14 +203,180 @@ const DRAWN: readonly TraitId[] = TRAITS.filter((t) => t.individual).map((t) => 
 const LATCH_DRAWN = new Set<TraitId>(['latchChance', 'latchEndurance', 'latchDps']);
 
 /**
+ * Per-agent arrays an intervention reads or changes (the engine's own arrays, not copies). The
+ * trait arrays `turn`, `sprint`, `cruise`, `hitDmg` and `acc` are written only at spawn, which
+ * lets a `mul` op recompute them from base copies (RENEWAL-1.0 §10.1 precondition).
+ */
+export interface FreeAgentView {
+  readonly side: Uint8Array;
+  readonly state: Uint8Array;
+  readonly turn: Float64Array;
+  readonly sprint: Float64Array;
+  readonly cruise: Float64Array;
+  readonly hitDmg: Float64Array;
+  readonly acc: Float64Array;
+  readonly hp: Float64Array;
+  readonly maxHp: Float64Array;
+  readonly stamina: Float64Array;
+  readonly morale: Float64Array;
+}
+
+export interface FreeBattleOptions {
+  /**
+   * Intervention log (RENEWAL-1.0 §10.1). It is sanitized against the run's `maxSteps`,
+   * `config.mv` and `config.morale` (`sanitizeInterventions`) before use. Empty or absent, the
+   * engine takes no branch, draws no random number and allocates nothing for it.
+   */
+  interventions?: readonly Intervention[];
+  /**
+   * Read-only inspection for tests: `at(step, view)` runs at the start of each listed tick, after
+   * that tick's interventions and before anything else of the tick. It must not write the view.
+   */
+  inspect?: { ticks: readonly number[]; at: (step: number, view: FreeAgentView) => void };
+}
+
+const TURN_BOUNDS = [TRAIT_BOUNDS.turnRate[0] * DEG, TRAIT_BOUNDS.turnRate[1] * DEG] as const;
+const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
+
+/**
+ * Applies a compiled log to the agents of one run. Built only for a non-empty log (or an
+ * inspection), so an empty log costs nothing. `apply(step)` runs at an event tick and returns the
+ * next event tick, or −1 when none is left.
+ *
+ * Order at a tick (§10.1): first the instant ops of every entry due, in log order; then every
+ * (side, field) pair with a `mul` op starting or expiring is recomputed from base:
+ * `base × clamp(∏ k, 0.5, 2)`, then the field clamp (TRAIT_BOUNDS, and `maxAccuracy` for
+ * accuracy). With no op active the base value is restored exactly. Nothing is ever reverted, so
+ * overlapping durations cannot erase each other.
+ *
+ * Incapacitated agents (fallen, or left the arena) are never changed. Instant ops change active
+ * agents only (not routed ones); trait multipliers also reach routed agents, which still move.
+ */
+function interventionRunner(
+  log: CompiledLog,
+  a: FreeAgentView,
+  lethality: readonly number[],
+  maxSteps: number,
+  inspect: FreeBattleOptions['inspect'],
+): { first: number; apply: (step: number) => number } {
+  const n = a.side.length;
+  const looks = new Set(
+    (inspect?.ticks ?? []).filter((t) => Number.isInteger(t) && t >= 0 && t < maxSteps),
+  );
+  const events = [...new Set([...log.events, ...looks])].sort((p, q) => p - q);
+  let cursor = 0;
+  let entry = 0;
+  // Base copies, taken on the first `mul` op of a field. The arrays are spawn-only, so the copy
+  // holds the spawn values whenever it is taken.
+  let bTurn: Float64Array | null = null;
+  let bSprint: Float64Array | null = null;
+  let bCruise: Float64Array | null = null;
+  let bHitDmg: Float64Array | null = null;
+  let bAcc: Float64Array | null = null;
+  const recompute = (s: 0 | 1, field: TraitField, step: number): void => {
+    const p = mulProduct(log.muls, s, field, step);
+    for (let i = 0; i < n; i++) {
+      if (a.side[i] !== s || (a.state[i] as number) >= FreeState.Dead) continue;
+      if (field === 'speed') {
+        const bs = (bSprint as Float64Array)[i] as number;
+        const bc = (bCruise as Float64Array)[i] as number;
+        if (p === null) {
+          a.sprint[i] = bs;
+          a.cruise[i] = bc;
+        } else {
+          const sp = clamp(bs * p, TRAIT_BOUNDS.sprintSpeed[0], TRAIT_BOUNDS.sprintSpeed[1]);
+          a.sprint[i] = sp;
+          a.cruise[i] = Math.min(
+            sp,
+            clamp(bc * p, TRAIT_BOUNDS.cruiseSpeed[0], TRAIT_BOUNDS.cruiseSpeed[1]),
+          );
+        }
+      } else if (field === 'accuracy') {
+        const b = (bAcc as Float64Array)[i] as number;
+        a.acc[i] =
+          p === null
+            ? b
+            : Math.min(
+                CONSTANTS.maxAccuracy,
+                clamp(b * p, TRAIT_BOUNDS.strikeAccuracy[0], TRAIT_BOUNDS.strikeAccuracy[1]),
+              );
+      } else if (field === 'power') {
+        const b = (bHitDmg as Float64Array)[i] as number;
+        const l = lethality[s] as number;
+        a.hitDmg[i] =
+          p === null
+            ? b
+            : clamp(b * p, TRAIT_BOUNDS.strikeForce[0] * l, TRAIT_BOUNDS.strikeForce[1] * l);
+      } else {
+        const b = (bTurn as Float64Array)[i] as number;
+        a.turn[i] = p === null ? b : clamp(b * p, TURN_BOUNDS[0], TURN_BOUNDS[1]);
+      }
+    }
+  };
+  const apply = (step: number): number => {
+    // 1. Instant ops of the entries due, in log order.
+    while (entry < log.entries.length && (log.entries[entry] as CompiledEntry).tick === step) {
+      const e = log.entries[entry] as CompiledEntry;
+      entry++;
+      for (let i = 0; i < n; i++) {
+        const s = a.side[i] as number;
+        if ((e.side !== 2 && s !== e.side) || (a.state[i] as number) >= FreeState.Routed) continue;
+        for (const op of e.def.ops) {
+          if (op.op === 'mul') continue;
+          if (op.op === 'setMax') {
+            a.stamina[i] = 1;
+          } else if (op.op === 'add') {
+            a.morale[i] = clamp((a.morale[i] as number) + op.k, 0, 1);
+          } else if (op.op === 'addFracMax') {
+            a.hp[i] = (a.hp[i] as number) + op.k * (a.maxHp[i] as number);
+          } else if (op.field === 'stamina') {
+            a.stamina[i] = clamp((a.stamina[i] as number) * op.k, 0, 1);
+          } else if (op.field === 'morale') {
+            a.morale[i] = clamp((a.morale[i] as number) * op.k, 0, 1);
+          } else if (op.field === 'maxHp') {
+            a.maxHp[i] = (a.maxHp[i] as number) * op.k;
+          } else {
+            a.hp[i] = (a.hp[i] as number) * op.k;
+          }
+        }
+        // hp ≤ maxHp once the card's ops are done, so scaling maxHp before hp never cuts hp.
+        a.hp[i] = Math.min(a.hp[i] as number, a.maxHp[i] as number);
+      }
+    }
+    // 2. (side, field) pairs whose product changes: a `mul` op starts or expires now.
+    const sides: [Set<TraitField>, Set<TraitField>] = [new Set(), new Set()];
+    for (const m of log.muls) {
+      if (m.start !== step && m.end !== step) continue;
+      if (m.start === step) {
+        if (m.field === 'speed' && bSprint === null) {
+          bSprint = a.sprint.slice();
+          bCruise = a.cruise.slice();
+        } else if (m.field === 'accuracy' && bAcc === null) bAcc = a.acc.slice();
+        else if (m.field === 'power' && bHitDmg === null) bHitDmg = a.hitDmg.slice();
+        else if (m.field === 'turn' && bTurn === null) bTurn = a.turn.slice();
+      }
+      if (m.side !== 1) sides[0].add(m.field);
+      if (m.side !== 0) sides[1].add(m.field);
+    }
+    for (const s of [0, 1] as const) for (const f of sides[s]) recompute(s, f, step);
+    if (looks.has(step)) inspect?.at(step, a);
+    cursor++;
+    return cursor < events.length ? (events[cursor] as number) : -1;
+  };
+  return { first: events.length > 0 ? (events[0] as number) : -1, apply };
+}
+
+/**
  * Simulate one free battle.
  * @param row run-level values, one design row ordered like FREE_PARAMS
+ * @param opts intervention log (and test inspection); absent or empty changes nothing
  */
 export function simulateFreeBattle(
   config: FreeConfig,
   row: ArrayLike<number>,
   run: number,
   trace = false,
+  opts?: FreeBattleOptions,
 ): FreeBattleOutput {
   const C = CONSTANTS;
   const F = FREE_CONSTANTS;
@@ -638,12 +813,30 @@ export function simulateFreeBattle(
     frames.push({ t, agents: f, buffed: b });
   };
 
+  // Interventions (RENEWAL-1.0 §10.1). `ivDue` is the next tick with something to apply, −1 when
+  // none: with an empty or absent log the runner is never built and the check below never passes.
+  let ivDue = -1;
+  let ivApply: ((step: number) => number) | null = null;
+  if ((opts?.interventions !== undefined && opts.interventions.length > 0) || opts?.inspect) {
+    const log = sanitizeInterventions(opts.interventions, maxSteps, config.mv, config);
+    const runner = interventionRunner(
+      compileInterventions(log, config.mv, maxSteps),
+      { side, state, turn, sprint, cruise, hitDmg, acc, hp, maxHp, stamina, morale },
+      lethality,
+      maxSteps,
+      opts.inspect,
+    );
+    ivDue = runner.first;
+    ivApply = runner.apply;
+  }
+
   const killed = [0, 0];
   let outcome: FreeOutcomeCode = FreeOutcome.Draw;
   let step = 0;
   if (trace) record(0);
 
   for (; step < maxSteps; step++) {
+    if (step === ivDue) ivDue = (ivApply as (step: number) => number)(step);
     // Spatial index and per-target counts from the snapshot.
     (grids[0] as SpatialGrid).rebuild(
       nA,
