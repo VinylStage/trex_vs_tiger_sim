@@ -474,6 +474,9 @@ describe('text share', () => {
     for (const id of Object.keys(SPECIES_EMOJI)) expect(isFreeSpecies(id), id).toBe(true);
     const withFallback = FREE_SPECIES_IDS.filter((id) => !Object.hasOwn(SPECIES_EMOJI, id));
     expect(withFallback).toEqual(['mammoth', 'homoErectus']);
+    // A species without a legacy entry gets its symbol the same way (docs/SPECIES.md §11.5).
+    expect(speciesEmoji('polarBear', 'heavy')).toBe('🐻‍❄️');
+    expect(speciesEmoji('polarBear', 'pack')).toBe('🐻‍❄️');
     for (const id of withFallback) {
       expect(speciesEmoji(id, 'heavy')).toBe('🔷');
       expect(speciesEmoji(id, 'pack')).toBe('🔶');

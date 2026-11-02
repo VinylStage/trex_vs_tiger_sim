@@ -1,6 +1,7 @@
 // Prints the Markdown tables of docs/research/CALIBRATION.md from the committed results.
 //
 //   node scripts/calibration/tables.mjs [results.json]
+//   node scripts/calibration/tables.mjs docs/research/calibration-polar-bear.json
 //
 // Dev-only, no dependencies. The report's tables are pasted from this output, so a rerun of
 // run.mjs followed by this script shows exactly which numbers moved.
@@ -26,6 +27,7 @@ const NAMES = {
   wolf: 'wolf',
   hyena: 'hyena',
   homoErectus: '_H. erectus_',
+  polarBear: 'polar bear',
 };
 
 const pct = (x) =>
@@ -224,6 +226,101 @@ if (S['monotonic']) {
       }),
     );
   }
+}
+
+/** A step in a count sweep: the varying side's share may not drop by more than both intervals allow. */
+function stepCheck(rows, i, side) {
+  if (i === 0) return '';
+  const z = 1.959963984540054;
+  const prev = rows[i - 1].free[side];
+  const cur = rows[i].free[side];
+  const se = Math.sqrt(
+    (prev.p * (1 - prev.p)) / rows[i - 1].free.runs + (cur.p * (1 - cur.p)) / rows[i].free.runs,
+  );
+  return cur.p - prev.p < -z * se ? '**drop**' : 'ok';
+}
+
+const freeRow = (r) => [
+  match(r.match),
+  r.free.runs,
+  ci(r.free.a),
+  ci(r.free.b),
+  pct(r.free.draw.p),
+  sec(r.free.duration.p50),
+  pct(r.free.rout),
+];
+const FREE_HEAD = ['Match-up', 'Runs', 'A wins', 'B wins', 'Draws', 'Median s', 'Rout %'];
+
+if (S['polar-bear']) {
+  const pb = S['polar-bear'];
+  out('### Polar bear: mirror matches');
+  out();
+  table(
+    ['Mirror', 'Runs', 'A wins', 'B wins', 'Draws', 'A − B (pp, paired)', '0 inside?', 'Median s'],
+    pb.mirrors.map((r) => [
+      match(r.match),
+      r.free.runs,
+      ci(r.free.a),
+      ci(r.free.b),
+      pct(r.free.draw.p),
+      diff(r.diff),
+      r.diff.lo <= 0 && r.diff.hi >= 0 ? 'yes' : '**no**',
+      sec(r.free.duration.p50),
+    ]),
+  );
+  for (const [key, rows] of Object.entries(pb.sweeps)) {
+    // The varying side is B, except in the sweep of polar bears against one T. rex.
+    const side = key === 'vsTrex' ? 'a' : 'b';
+    out(`### Polar bear: count sweep ${key} (side ${side.toUpperCase()} varies)`);
+    out();
+    table(
+      [...FREE_HEAD, 'Step'],
+      rows.map((r, i) => [...freeRow(r), stepCheck(rows, i, side)]),
+    );
+  }
+  out('### Polar bear: side swaps');
+  out();
+  table(
+    [
+      'Pair',
+      'Runs',
+      'First order: A wins',
+      'Swapped: same species wins',
+      'Difference (pp)',
+      '0 inside?',
+    ],
+    pb.pairs.map((r) => [
+      `${match(r.first.match)} / ${match(r.second.match)}`,
+      r.first.free.runs,
+      ci(r.first.free.a),
+      ci(r.second.free.b),
+      diff(r.diff),
+      r.diff.lo <= 0 && r.diff.hi >= 0 ? 'yes' : '**no**',
+    ]),
+  );
+  out('### Polar bear: next to the brown bear');
+  out();
+  table(FREE_HEAD, pb.sanity.map(freeRow));
+  out('### Polar bear: much larger opponents');
+  out();
+  table(FREE_HEAD, pb.flight.map(freeRow));
+  out('### Polar bear: one-at-a-time sensitivity (polar bear 1 v brown bear 1)');
+  out();
+  const base = pb.sensitivity.base.free;
+  table(
+    ['Trait (S)', 'Range', 'A wins at min', 'A wins at max', 'Swing (pp)', 'Median s (min / max)'],
+    [
+      ['all at preset', '–', ci(base.a), ci(base.a), '–', sec(base.duration.p50)],
+      ...pb.sensitivity.traits.map((t) => [
+        `\`${t.trait}\``,
+        `${t.range.min} – ${t.range.max}`,
+        ci(t.low.free.a),
+        ci(t.high.free.a),
+        `${t.high.free.a.p - t.low.free.a.p >= 0 ? '+' : ''}${pct(t.high.free.a.p - t.low.free.a.p)}`,
+        `${sec(t.low.free.duration.p50)} / ${sec(t.high.free.duration.p50)}`,
+      ]),
+    ],
+  );
 }
 
 out(

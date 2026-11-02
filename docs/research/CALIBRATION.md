@@ -6,6 +6,7 @@
 > - **티라노 vs 호랑이:** 자유 엔진의 결과는 클래식의 기본 전술 `flank`(뒤로 돌아 들어감)보다 `direct`(곧장 달려듦)에 훨씬 가깝습니다. 자유 모델에서 혼자 사는 호랑이는 포위하지 않기 때문입니다(설계 의도). 그래서 티라노 1 대 호랑이 20에서 호랑이 승률이 클래식 46.3%에서 자유 1.8%로 떨어집니다. 또 자유 모델의 호랑이는 거의 이탈하지 않고(이탈 비율 3–12%, 클래식 52–93%) 전투 불능이 될 때까지 싸웁니다. 앞의 것은 예상된 모델 차이이고, 뒤의 것은 보정 문제일 수 있어 #169로 올렸습니다(소유자 결정 필요).
 > - **구조 점검은 통과:** 같은 종 거울전 14개 모두 50:50(두 진영 승률 차이의 95% 구간이 모두 0을 포함), 진영 바꾸기 3쌍 모두 같음, 마릿수 4개 곡선 모두 단조 증가.
 > - **보정 문제로 보이는 것:** 호모 에렉투스 1마리가 어떤 육식동물과의 1:1에서도 한 번도 이기지 못하고 늘 이탈함(#167), 늑대 대 물소 곡선이 9–13마리에서 평평해지지 않음(#168), 혼자 사는 동물이 훨씬 큰 상대 앞에서도 거의 이탈하지 않음(#169). 파라미터 페이지에 자유 모델 항목이 없음(#170). 이미 알려진 1:1 이탈 100%와 보류 프리셋 3개(R4)는 그대로입니다.
+> - **북극곰(#184, §13):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 3개 모두 단조, 진영 바꾸기 같음. 불곰보다 두 배 무거워 1:1에서 불곰에 83% 이기고, 호랑이 · 사자 · 늑대 · 물소 상대로 모두 불곰 이상입니다. 이 차이는 대부분 추정값(공격 힘 · 간격 · 정확도, 사기)에 달려 있습니다. 이탈 모델(#169)은 바꾸지 않았고, 북극곰도 훨씬 큰 티라노 앞에서는 진 경우의 28%만 이탈합니다.
 > - **R1 "잠정 모델" 안내:** 기준(보정 보고서 + 소유자 승인 + 안내에 대한 결정, 그리고 가이드 · 모델 · 파라미터 페이지의 자유 모델 설명)을 아직 다 채우지 못했으므로 **지금은 내리지 말 것을 권합니다.** 소유자가 이 보고서를 승인하고, #170(파라미터 페이지)을 마치고, #169를 결정하면 내릴 수 있습니다. UI는 바꾸지 않았습니다.
 
 Status: measured 2026-10-28 on `main` at `12b5968` (v0.2.22), engines unchanged by this report. Issue [#166](https://github.com/VinylStage/trex_vs_tiger_sim/issues/166), part of [#125](https://github.com/VinylStage/trex_vs_tiger_sim/issues/125). Design: [RENEWAL-1.0.md §3.2](../design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode) (minimum P8 pass, owner decision R1) and [FREE-MATCHUPS.md §8](../design/FREE-MATCHUPS.md#8-phased-implementation-plan) (phase P8). **Not signed off by the owner yet.**
@@ -26,6 +27,7 @@ Every number below is a statement about the two models under their assumptions, 
 10. [The R1 "provisional model" banner](#10-the-r1-provisional-model-banner)
 11. [Owner decisions](#11-owner-decisions)
 12. [Reproducing](#12-reproducing)
+13. [Polar bear (#184)](#13-polar-bear-184)
 
 ## 1. Questions
 
@@ -432,8 +434,127 @@ node scripts/calibration/run.mjs            # about 10 minutes on one core; writ
 node scripts/calibration/tables.mjs         # prints every table in this report
 node scripts/calibration/run.mjs --quick    # a tenth of the runs, writes nothing: a smoke test
 node scripts/calibration/run.mjs --only trex-tiger --out /tmp/t.json   # one section
+node scripts/calibration/run.mjs --only polar-bear   # writes docs/research/calibration-polar-bear.json (§13)
+node scripts/calibration/tables.mjs docs/research/calibration-polar-bear.json
 ```
 
-Sections: `trex-tiger`, `classic`, `presets`, `species-notes`, `interference`, `symmetry`, `monotonic`. Every batch has a fixed seed, so a rerun on the same commit gives the same numbers within the same JavaScript engine (MODEL.md §2.2). Measured with Node v22.22.0. When the free engine changes (a new `mv`), rerun both scripts, update the tables and recheck §8 and §10.
+Sections: `trex-tiger`, `classic`, `presets`, `species-notes`, `interference`, `symmetry`, `monotonic`, and `polar-bear` (§13). `--only <section>` without `--out` writes `calibration-<section>.json`, so one section never replaces the committed results. A full run writes every section, `polar-bear` included, to `calibration-results.json`, and `presets` then also measures `polar-bear-brown-bear`. Every batch has a fixed seed, so a rerun on the same commit gives the same numbers within the same JavaScript engine (MODEL.md §2.2). Measured with Node v22.22.0. When the free engine changes (a new `mv`), rerun both scripts, update the tables and recheck §8 and §10.
 
 The tables in this report: generated from docs/research/calibration-results.json (commit 12b5968, v22.22.0).
+
+## 13. Polar bear (#184)
+
+Measured 2026-11-02 on the #184 branch at `ee0d729` (engines unchanged, model version `mv` 1). The polar bear is the first species without a legacy entry (docs/SPECIES.md §4.11), so it runs on the free engine only and has no classic comparison. These are the add-a-species checks of [RENEWAL-1.0 §5.3](../design/RENEWAL-1.0.md#53-add-a-species-pipeline-definition-of-done) step 5, a sanity check against the brown bear and the tiger, its flight behaviour under the current model (#169, not changed here) and a one-at-a-time sensitivity sweep of its **S** values. Raw data: `calibration-polar-bear.json` (section `polar-bear`); §1–§12 and `calibration-results.json` are unchanged. Method and metrics as in §2: seed 20261019, every other input at its preset.
+
+### Mirror matches
+
+| Mirror                      | Runs |           A wins |           B wins | Draws | A − B (pp, paired) | 0 inside? | Median s |
+| --------------------------- | ---: | ---------------: | ---------------: | ----: | -----------------: | --------: | -------: |
+| polar bear 1 v polar bear 1 | 1000 | 49.7 (46.6–52.8) | 50.1 (47.0–53.2) |   0.2 | -0.4 (-6.6 to 5.8) |       yes |       72 |
+| polar bear 3 v polar bear 3 | 1000 | 49.9 (46.8–53.0) | 50.1 (47.0–53.2) |   0.0 | -0.2 (-6.4 to 6.0) |       yes |       81 |
+
+### Count sweeps
+
+One polar bear against wolves and against tigers (side B varies), and polar bears against one _T. rex_ (side A varies). "Step" flags a drop in the varying side's share larger than both intervals allow, the §6 rule.
+
+| Match-up               | Runs |             A wins |           B wins | Draws | Median s | Rout % | Step |
+| ---------------------- | ---: | -----------------: | ---------------: | ----: | -------: | -----: | ---: |
+| polar bear 1 v wolf 1  |  500 | 100.0 (99.2–100.0) |    0.0 (0.0–0.8) |   0.0 |       36 |   80.2 |      |
+| polar bear 1 v wolf 2  |  500 |   98.6 (97.1–99.3) |    0.8 (0.3–2.0) |   0.6 |      128 |   87.7 |   ok |
+| polar bear 1 v wolf 4  |  500 |   97.0 (95.1–98.2) |    2.6 (1.5–4.4) |   0.4 |      154 |   95.6 |   ok |
+| polar bear 1 v wolf 6  |  500 |   94.8 (92.5–96.4) |    5.2 (3.6–7.5) |   0.0 |       91 |   96.8 |   ok |
+| polar bear 1 v wolf 8  |  500 |   92.6 (90.0–94.6) |   7.4 (5.4–10.0) |   0.0 |       80 |   97.3 |   ok |
+| polar bear 1 v wolf 10 |  500 |   88.0 (84.9–90.6) |  12.0 (9.4–15.1) |   0.0 |       71 |   97.5 |   ok |
+| polar bear 1 v wolf 12 |  500 |   86.0 (82.7–88.8) | 14.0 (11.2–17.3) |   0.0 |       66 |   97.7 |   ok |
+| polar bear 1 v wolf 16 |  500 |   77.2 (73.3–80.7) | 22.8 (19.3–26.7) |   0.0 |       59 |   97.9 |   ok |
+| polar bear 1 v wolf 20 |  500 |   69.6 (65.4–73.5) | 30.2 (26.3–34.4) |   0.2 |       54 |   97.8 |   ok |
+| polar bear 1 v wolf 25 |  500 |   60.0 (55.6–64.2) | 40.0 (35.8–44.4) |   0.0 |       52 |   97.8 |   ok |
+| polar bear 1 v wolf 30 |  500 |   51.8 (47.4–56.1) | 48.2 (43.9–52.6) |   0.0 |       48 |   97.9 |   ok |
+
+| Match-up               | Runs |           A wins |           B wins | Draws | Median s | Rout % | Step |
+| ---------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: | ---: |
+| polar bear 1 v tiger 1 |  500 | 97.8 (96.1–98.8) |    2.2 (1.2–3.9) |   0.0 |       34 |  100.0 |      |
+| polar bear 1 v tiger 2 |  500 | 74.0 (70.0–77.7) | 25.8 (22.2–29.8) |   0.2 |       44 |  100.0 |   ok |
+| polar bear 1 v tiger 3 |  500 | 50.0 (45.6–54.4) | 49.6 (45.2–54.0) |   0.4 |       46 |  100.0 |   ok |
+| polar bear 1 v tiger 4 |  500 | 31.8 (27.9–36.0) | 68.2 (64.0–72.1) |   0.0 |       42 |   99.9 |   ok |
+| polar bear 1 v tiger 5 |  500 | 21.4 (18.0–25.2) | 78.6 (74.8–82.0) |   0.0 |       38 |   99.9 |   ok |
+| polar bear 1 v tiger 6 |  500 |  12.4 (9.8–15.6) | 87.4 (84.2–90.0) |   0.2 |       35 |   99.9 |   ok |
+
+| Match-up                   | Runs |           A wins |             B wins | Draws | Median s | Rout % | Step |
+| -------------------------- | ---: | ---------------: | -----------------: | ----: | -------: | -----: | ---: |
+| polar bear 1 v _T. rex_ 1  |  500 |    0.0 (0.0–0.8) | 100.0 (99.2–100.0) |   0.0 |       64 |   27.8 |      |
+| polar bear 2 v _T. rex_ 1  |  500 |    0.0 (0.0–0.8) | 100.0 (99.2–100.0) |   0.0 |       74 |   25.7 |   ok |
+| polar bear 4 v _T. rex_ 1  |  500 |    0.2 (0.0–1.1) |  99.8 (98.9–100.0) |   0.0 |       94 |   23.3 |   ok |
+| polar bear 6 v _T. rex_ 1  |  500 |    3.0 (1.8–4.9) |   97.0 (95.1–98.2) |   0.0 |      117 |   20.5 |   ok |
+| polar bear 8 v _T. rex_ 1  |  500 |   8.2 (6.1–10.9) |   91.6 (88.8–93.7) |   0.2 |      137 |   17.7 |   ok |
+| polar bear 10 v _T. rex_ 1 |  500 | 15.4 (12.5–18.8) |   84.6 (81.2–87.5) |   0.0 |      154 |   17.3 |   ok |
+| polar bear 12 v _T. rex_ 1 |  500 | 25.2 (21.6–29.2) |   74.8 (70.8–78.4) |   0.0 |      173 |   17.1 |   ok |
+| polar bear 16 v _T. rex_ 1 |  500 | 46.6 (42.3–51.0) |   53.4 (49.0–57.7) |   0.0 |      182 |   16.8 |   ok |
+
+### Side swaps
+
+| Pair                                                      | Runs | First order: A wins | Swapped: same species wins |    Difference (pp) | 0 inside? |
+| --------------------------------------------------------- | ---: | ------------------: | -------------------------: | -----------------: | --------: |
+| polar bear 1 v brown bear 1 / brown bear 1 v polar bear 1 | 1000 |    83.4 (81.0–85.6) |           82.4 (79.9–84.6) | +1.0 (-2.3 to 4.3) |       yes |
+| polar bear 1 v tiger 1 / tiger 1 v polar bear 1           | 1000 |    97.3 (96.1–98.1) |           96.4 (95.1–97.4) | +0.9 (-0.7 to 2.5) |       yes |
+
+### Next to the brown bear
+
+The same opponents against one brown bear, for comparison (the polar bear rows of the side swaps above give its duels with the brown bear and the tiger).
+
+| Match-up                 | Runs |           A wins |           B wins | Draws | Median s | Rout % |
+| ------------------------ | ---: | ---------------: | ---------------: | ----: | -------: | -----: |
+| brown bear 1 v tiger 1   | 1000 | 78.2 (75.5–80.6) | 21.0 (18.6–23.6) |   0.8 |       32 |  100.0 |
+| polar bear 1 v wolf 8    | 1000 | 91.5 (89.6–93.1) |   8.5 (6.9–10.4) |   0.0 |       75 |   97.3 |
+| brown bear 1 v wolf 8    | 1000 | 69.8 (66.9–72.6) | 30.2 (27.4–33.1) |   0.0 |       68 |   96.9 |
+| polar bear 1 v lion 1    | 1000 | 96.1 (94.7–97.1) |    3.9 (2.9–5.3) |   0.0 |       38 |   99.9 |
+| brown bear 1 v lion 1    | 1000 | 74.8 (72.0–77.4) | 24.5 (21.9–27.3) |   0.7 |       36 |  100.0 |
+| polar bear 1 v buffalo 1 | 1000 | 19.9 (17.5–22.5) | 80.0 (77.4–82.4) |   0.1 |       71 |   99.9 |
+| brown bear 1 v buffalo 1 | 1000 |    6.6 (5.2–8.3) | 93.2 (91.5–94.6) |   0.2 |       73 |   96.5 |
+
+### Much larger opponents
+
+| Match-up                  | Runs |        A wins |             B wins | Draws | Median s | Rout % |
+| ------------------------- | ---: | ------------: | -----------------: | ----: | -------: | -----: |
+| polar bear 1 v _T. rex_ 1 | 1000 | 0.0 (0.0–0.4) | 100.0 (99.6–100.0) |   0.0 |       64 |   28.1 |
+| polar bear 1 v elephant 1 | 1000 | 0.6 (0.3–1.3) |   99.4 (98.7–99.7) |   0.0 |       82 |   77.3 |
+| polar bear 1 v mammoth 1  | 1000 | 0.4 (0.2–1.0) |   99.6 (99.0–99.8) |   0.0 |       82 |   69.6 |
+
+### One-at-a-time sensitivity
+
+Polar bear 1 v brown bear 1 (the preset), 1,000 runs per row: each **S** trait of the polar bear pinned at its preset min, then at its max. The swing is the change in the polar bear's win share from min to max. The constant `hide` (0.5) cannot be pinned through a config and only scales damage from a latcher, which the brown bear is not.
+
+| Trait (S)         |         Range |    A wins at min |    A wins at max | Swing (pp) | Median s (min / max) |
+| ----------------- | ------------: | ---------------: | ---------------: | ---------: | -------------------: |
+| all at preset     |             – | 83.4 (81.0–85.6) | 83.4 (81.0–85.6) |          – |                   71 |
+| `turnRate`        |      50 – 180 | 83.4 (81.0–85.6) | 83.4 (81.0–85.6) |       +0.0 |              71 / 71 |
+| `sprintEndurance` |      20 – 120 | 79.3 (76.7–81.7) | 83.7 (81.3–85.9) |       +4.4 |              71 / 71 |
+| `recoveryTime`    |      45 – 180 | 83.4 (81.0–85.6) | 83.4 (81.0–85.6) |       +0.0 |              71 / 71 |
+| `strikeForce`     |     0.8 – 3.5 | 55.2 (52.1–58.3) | 94.9 (93.4–96.1) |      +39.7 |              84 / 65 |
+| `strikeLethality` |        4 – 12 | 61.1 (58.0–64.1) | 91.7 (89.8–93.3) |      +30.6 |              81 / 67 |
+| `strikeInterval`  |       0.8 – 3 | 96.4 (95.1–97.4) | 66.0 (63.0–68.9) |      -30.4 |              64 / 79 |
+| `strikeReach`     |       1.3 – 2 | 83.1 (80.7–85.3) | 83.4 (81.0–85.6) |       +0.3 |              71 / 71 |
+| `strikeArc`       |      45 – 100 | 83.4 (81.0–85.6) | 83.4 (81.0–85.6) |       +0.0 |              71 / 71 |
+| `strikeAccuracy`  |    0.3 – 0.65 | 68.7 (65.8–71.5) | 91.3 (89.4–92.9) |      +22.6 |              78 / 67 |
+| `shakeRate`       |     0.1 – 0.5 | 83.4 (81.0–85.6) | 83.4 (81.0–85.6) |       +0.0 |              71 / 71 |
+| `bleed`           | 0.001 – 0.006 | 83.4 (81.0–85.6) | 83.4 (81.0–85.6) |       +0.0 |              71 / 71 |
+| `morale`          |    0.55 – 0.9 | 70.7 (67.8–73.4) | 90.7 (88.7–92.3) |      +20.0 |              70 / 72 |
+| `moraleLoss`      |    0.02 – 0.1 | 83.4 (81.0–85.6) | 83.4 (81.0–85.6) |       +0.0 |              71 / 71 |
+
+### Verdicts
+
+| Check (RENEWAL-1.0 §5.3 step 5)  | Result                                                                                                                                                                                                                                |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mirror 50/50 within the interval | **Pass.** 1 v 1: −0.4 pp (−6.6 to 5.8); 3 v 3: −0.2 pp (−6.4 to 6.0), paired interval.                                                                                                                                                |
+| Win share monotonic in count     | **Pass.** No drop in any of the three sweeps: the wolves reach about 50 % at 30 (against the brown bear they cross it at 12–16, §6), tigers at 3, and 16 polar bears bring one _T. rex_ to 46.6 %.                                    |
+| Side order                       | **Pass.** Both swaps agree within the interval (+1.0 and +0.9 pp).                                                                                                                                                                    |
+| Documented interactions          | **Nothing to compare.** The only recorded interaction in the sources (young walruses hunted, adults too formidable, [WP]) involves a species not in the roster; no field record of the polar bear against a roster species was found. |
+| Rout check for social species    | Not applicable: the polar bear is solitary.                                                                                                                                                                                           |
+
+**Sanity against the brown bear and the tiger.** The polar bear is about twice the brown bear's mass at the mode (450 vs 220 kg), with a higher strike-force mode (1.5 vs 1.2 kN), and everything else equal. The model ranks it accordingly: it beats the brown bear in 83 % of duels in either side order, and against every shared opponent it does at least as well as the brown bear: tiger 97 vs 78 %, lion 96 vs 75 %, eight wolves 92 vs 70 %, buffalo 20 vs 7 %. The ordering follows from the inputs; its size rests mostly on unmeasured values (strike force, lethality, interval and accuracy, and morale each swing the duel by 20–40 pp). No single **S** value at either end of its range makes the brown bear the favourite (the lowest is 55.2 %, strike force at 0.8 kN); joint pessimistic values were not tested. There is no field record of an adult polar bear fighting a brown bear or a tiger to check the strength against.
+
+**Flight (#169).** The flight model is unchanged; this records how the polar bear behaves under it. Against an opponent of similar size the loser flees in practically every decided run (rout share 99.9–100 % against the brown bear, the tiger and the lion, as for every duel in §6). Against a much larger opponent the losing polar bear mostly fights on until incapacitated: it flees in 28 % of its losses to one _T. rex_, but in 77 % of its losses to an elephant and 70 % to a mammoth. That matches the pattern #169 describes for the tiger (solitary animals rarely flee a much larger opponent), less strongly against the two proboscideans. The decision on #169 applies to it unchanged.
+
+**Preset.** `polar-bear-brown-bear` (design §6 #17): polar bear 82.0 %, median 70.9 s, rout share 100 % in the fixture (200 runs). Not close; ready in Simple mode through the one-on-one override, as `tiger-bear` and `trex-mirror` ([PRESETS.md](../PRESETS.md#overrides-and-holds)).
+
+The tables in this section: generated from docs/research/calibration-polar-bear.json (commit ee0d729, v22.22.0).
