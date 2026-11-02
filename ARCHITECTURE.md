@@ -151,6 +151,8 @@ Testing rule (#61): every module with branching logic has a test that imports it
 | `src/ui/dom.ts`, `src/ui/announce.ts`                        | (element factory and live region; no decisions)                                                                                       |
 | `src/main*.ts`, `src/share/result-page-*.ts`, `src/reset.ts` | (entries: register the words, start the page)                                                                                         |
 
+`src/ui/replay/free-events.ts` (battle events derived from free-trace frames: first contact, incapacitation and rout clusters, encirclement, morale break, still standing, the decisive moment; [REPLAY.md §14](docs/REPLAY.md#battle-events-derived-from-frames), #176) is pure and has no DOM shell yet; the live UI (#183) will read it.
+
 ### Entry points (multi-page build)
 
 `vite.pages.ts` `findHtmlEntries()` turns every `index.html` in the repository into a build input, so a new page needs no config change ([docs/PAGES.md](docs/PAGES.md)).

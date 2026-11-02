@@ -64,6 +64,12 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | Usability test (5–8 people, 18–35) and anonymous survey | #166      | Kit ready in [docs/research/USABILITY.md](docs/research/USABILITY.md); the owner runs it, results not in yet |
 | Free-model calibration follow-ups                       | #167–#169 | Open (#169 needs an owner decision)                                                                          |
 
+### M3 — live variables
+
+| Item                                                 | Issue | Status                                                           |
+| ---------------------------------------------------- | ----- | ---------------------------------------------------------------- |
+| Battle events derived from frames (`free-events.ts`) | #176  | In review: pure module and tests; wired into the live UI by #183 |
+
 ## Later (candidates, not committed)
 
 - Sharing P2 (#51): per-bucket pre-generated OG images (species pair × outcome tier; needs a build-time PNG rasterizer, an owner decision on a dev dependency), QR codes, Kakao SDK, compressed links, challenge links
