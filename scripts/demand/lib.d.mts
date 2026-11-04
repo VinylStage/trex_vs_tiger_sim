@@ -30,7 +30,23 @@ export interface ScoredRow {
   rank: number;
 }
 
+export type Tier = 'high' | 'mid' | 'low';
+
+export interface PublishedScore {
+  id: string;
+  rank: number;
+  /** Integer, 0–100. */
+  score: number;
+  coverage: number;
+  /** Reddit and Wikipedia parts only; YouTube parts are never published. */
+  parts: Partial<Record<SourceKey, number | null>>;
+}
+
 export const USER_AGENT: string;
+export const TIERS: readonly Tier[];
+export const UNPUBLISHED_SOURCES: readonly SourceKey[];
+export function rankTiers(values: readonly (number | null | undefined)[]): (Tier | null)[];
+export function publishScores(scored: readonly ScoredRow[]): PublishedScore[];
 export const WEIGHTS: Weights;
 export function monthWindow(today: Date, n?: number): MonthWindow;
 export function wikiPageviewsUrl(lang: string, title: string, window: MonthWindow): string;

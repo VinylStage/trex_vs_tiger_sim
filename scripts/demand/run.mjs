@@ -1,6 +1,6 @@
 // Demand pulls for docs/research/DEMAND.md (RENEWAL-1.0.md §5.3 step 1, #190).
 //
-//   YOUTUBE_API_KEY=… node scripts/demand/run.mjs [--today YYYY-MM-DD] [--refresh]
+//   YOUTUBE_API_KEY=… node scripts/demand/run.mjs [--today YYYY-MM-DD] [--refresh] [--cache-only]
 //                                                  [--max-search 60] [--out <file.json>]
 //
 // Dev-only, no dependencies: Node's built-in fetch against three public APIs, no HTML pages.
@@ -13,9 +13,16 @@
 // date, UTC). Species and search terms come from scripts/demand/species.json. Raw responses are
 // cached under scripts/demand/.cache/ (gitignored) so a rerun spends no quota; entries older than
 // 30 days are deleted at start, which also keeps YouTube API data within its 30-day storage limit.
-// The results file (default docs/research/demand-results.json) holds only totals per species and
-// source, never a key or per-video data. The key is added to a request URL at send time only and
-// redacted from every error message. Behind an HTTP proxy, set NODE_USE_ENV_PROXY=1.
+// --cache-only answers every call from that cache and fails a call that is not in it (no network,
+// no key needed), for regenerating the results file from a run still inside the 30 days.
+//
+// The results file (default docs/research/demand-results.json) holds Wikipedia and Reddit totals
+// per species, and for YouTube only a popularity tier per species and language (`rankTiers`):
+// no view count, no totalResults estimate, no YouTube part of the score. The combined score uses
+// the YouTube view sums in memory and is written as an integer without its YouTube parts
+// (`publishScores`). YouTube figures exist only in the gitignored cache, for at most 30 days.
+// The key is added to a request URL at send time only and redacted from every error message.
+// Behind an HTTP proxy, set NODE_USE_ENV_PROXY=1.
 
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
@@ -33,6 +40,8 @@ import {
   parseWikiPageviews,
   parseYoutubeSearch,
   parseYoutubeVideos,
+  publishScores,
+  rankTiers,
   redact,
   sum,
   wikiPageviewsUrl,
@@ -56,11 +65,13 @@ const option = (name) => {
   return i >= 0 ? args[i + 1] : undefined;
 };
 const REFRESH = args.includes('--refresh');
+const CACHE_ONLY = args.includes('--cache-only');
 const TODAY = option('--today') ?? new Date().toISOString().slice(0, 10);
 const MAX_SEARCH = Number(option('--max-search') ?? 60);
 const OUT = option('--out') ?? path.join(ROOT, 'docs', 'research', 'demand-results.json');
 const KEY = env.YOUTUBE_API_KEY || undefined;
 
+if (REFRESH && CACHE_ONLY) throw new Error('--refresh and --cache-only exclude each other');
 if (!/^\d{4}-\d{2}-\d{2}$/.test(TODAY)) throw new Error(`--today must be YYYY-MM-DD`);
 const window = monthWindow(new Date(`${TODAY}T00:00:00Z`));
 const { species } = JSON.parse(readFileSync(path.join(HERE, 'species.json'), 'utf8'));
@@ -104,6 +115,7 @@ async function getJson(source, url, { withKey = false, allow404 = false } = {}) 
       // not cached yet
     }
   }
+  if (CACHE_ONLY) throw new Error(`${source}: not in the cache (--cache-only)`);
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     await throttle(source);
     const target = withKey ? `${url}&key=${encodeURIComponent(KEY)}` : url;
@@ -199,7 +211,7 @@ async function youtube(sp, lang) {
   );
   if (search.cached) quota.cachedSearch++;
   else quota.searchCalls++;
-  const { totalResults, videoIds } = parseYoutubeSearch(search.body);
+  const { videoIds } = parseYoutubeSearch(search.body);
   let topViews = 0;
   if (videoIds.length) {
     const videos = await getJson('youtube', `${YT_BASE}/videos?${youtubeVideosParams(videoIds)}`, {
@@ -209,7 +221,8 @@ async function youtube(sp, lang) {
     else quota.videosCalls++;
     topViews = parseYoutubeVideos(videos.body).topViews;
   }
-  return { query, totalResults, videos: videoIds.length, topViews };
+  // In memory only: the score and the tiers use it, the results file never sees it.
+  return { topViews };
 }
 
 async function guarded(label, fn) {
@@ -240,8 +253,10 @@ function uncachedSearches() {
   return n;
 }
 
-let youtubeEnabled = Boolean(KEY);
-if (!KEY) {
+let youtubeEnabled = Boolean(KEY) || CACHE_ONLY;
+if (CACHE_ONLY) {
+  log('cache only: no network calls');
+} else if (!KEY) {
   errors.push('youtube: YOUTUBE_API_KEY is not set, YouTube skipped');
 } else {
   const pending = uncachedSearches();
@@ -252,6 +267,7 @@ if (!KEY) {
   }
 }
 
+// `rows` keeps the YouTube figures in memory for the score; `published` is what gets written.
 const rows = [];
 for (const sp of species) {
   log(`${sp.id}`);
@@ -290,6 +306,15 @@ const scores = combinedScores(
   })),
 );
 
+const LANGS = ['en', 'ko'];
+const ytTiers = Object.fromEntries(
+  LANGS.map((lang) => [lang, rankTiers(rows.map((r) => r.youtube[lang]?.topViews ?? null))]),
+);
+const published = rows.map((r, i) => ({
+  ...r,
+  youtube: Object.fromEntries(LANGS.map((lang) => [lang, ytTiers[lang][i]])),
+}));
+
 const result = {
   runDate: TODAY,
   window,
@@ -297,7 +322,7 @@ const result = {
     wiki: 'Wikimedia REST per-article pageviews, all-access, agent=user, daily summed by month; totals sum the listed articles',
     reddit: `Arctic Shift posts/search/aggregate, r/${SUBREDDIT}, title keyword search, monthly`,
     youtube:
-      'YouTube Data API search.list (type=video, order=viewCount, maxResults=10, published in the window) and videos.list statistics; topViews sums the ten view counts; totalResults is the API estimate',
+      "YouTube Data API search.list (type=video, order=viewCount, maxResults=10, published in the window) and videos.list statistics; only a tier per species and language is published (high / mid / low = top / middle / bottom third of the species by the ten videos' summed views); the figures stay in the local cache",
   },
   weights: WEIGHTS,
   youtubeQuota: {
@@ -306,8 +331,8 @@ const result = {
     datasetUnits:
       (quota.searchCalls + quota.cachedSearch) * 100 + quota.videosCalls + quota.cachedVideos,
   },
-  species: rows,
-  scores,
+  species: published,
+  scores: publishScores(scores),
   errors,
 };
 

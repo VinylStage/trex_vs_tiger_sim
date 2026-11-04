@@ -236,6 +236,52 @@ export function combinedScores(rows, weights = WEIGHTS) {
   return scored.map((r, i) => ({ ...r, rank: i + 1 }));
 }
 
+/** YouTube popularity tiers, most popular first (DEMAND.md "YouTube tiers"). */
+export const TIERS = Object.freeze(['high', 'mid', 'low']);
+
+/**
+ * Coarse popularity tier per value, by rank thirds: the values present are ranked (largest
+ * first, ties keep input order), and position `i` of `n` gets `TIERS[floor(3 * i / n)]`, so
+ * the top third is `high`, the middle third `mid` and the bottom third `low` (19 species:
+ * 7 / 6 / 6). `null` (no data) stays `null`. Only the tier is published, never the value, so
+ * no YouTube figure can be read back from it.
+ */
+export function rankTiers(values) {
+  const present = [];
+  values.forEach((v, i) => {
+    if (v === null || v === undefined) return;
+    if (!Number.isFinite(v) || v < 0) throw new Error(`rankTiers: bad value ${v}`);
+    present.push(i);
+  });
+  const order = [...present].sort((a, b) => values[b] - values[a] || a - b);
+  const tiers = values.map(() => null);
+  order.forEach((idx, pos) => {
+    tiers[idx] = TIERS[Math.floor((3 * pos) / order.length)];
+  });
+  return tiers;
+}
+
+/** Sources whose figures may not be published (their parts are dropped from the output). */
+export const UNPUBLISHED_SOURCES = Object.freeze(['youtubeEn', 'youtubeKo']);
+
+/**
+ * The committed form of `combinedScores` rows: the score rounded to an integer, the rank and
+ * coverage, and only the parts of sources whose figures are public (Reddit, Wikipedia). With
+ * YouTube's parts gone and the score coarsened to whole points, the YouTube share of a score
+ * cannot be backed out from the published Reddit and Wikipedia numbers beyond a coarse band.
+ */
+export function publishScores(scored) {
+  return scored.map((r) => ({
+    id: r.id,
+    rank: r.rank,
+    score: Math.round(r.score),
+    coverage: r.coverage,
+    parts: Object.fromEntries(
+      Object.entries(r.parts).filter(([k]) => !UNPUBLISHED_SOURCES.includes(k)),
+    ),
+  }));
+}
+
 /** 1234 → "1.2k", 1234567 → "1.23M"; null → "–". For tables only. */
 export function compact(n) {
   if (n === null || n === undefined) return '–';
