@@ -1,0 +1,194 @@
+{
+  "species": [
+    {
+      "id": "trex",
+      "group": "sim",
+      "issue": null,
+      "en": "Tyrannosaurus rex",
+      "ko": "티라노사우루스",
+      "wiki": { "en": ["Tyrannosaurus"], "ko": ["티라노사우루스"] },
+      "reddit": "tyrannosaurus OR trex OR \"t rex\"",
+      "youtube": { "en": "t rex vs", "ko": "티라노사우루스 vs" }
+    },
+    {
+      "id": "elephant",
+      "group": "sim",
+      "issue": null,
+      "en": "African bush elephant",
+      "ko": "아프리카코끼리",
+      "wiki": { "en": ["Elephant"], "ko": ["코끼리"] },
+      "reddit": "elephant OR elephants",
+      "youtube": { "en": "elephant vs", "ko": "코끼리 vs" }
+    },
+    {
+      "id": "buffalo",
+      "group": "sim",
+      "issue": null,
+      "en": "African buffalo",
+      "ko": "아프리카물소",
+      "wiki": { "en": ["African buffalo"], "ko": ["아프리카물소"] },
+      "reddit": "buffalo OR buffalos OR buffaloes",
+      "youtube": { "en": "buffalo vs", "ko": "물소 vs" }
+    },
+    {
+      "id": "brownBear",
+      "group": "sim",
+      "issue": null,
+      "en": "Brown bear",
+      "ko": "불곰",
+      "wiki": { "en": ["Brown bear"], "ko": ["불곰"] },
+      "reddit": "grizzly OR \"brown bear\" OR kodiak",
+      "youtube": { "en": "grizzly bear vs", "ko": "불곰 vs" }
+    },
+    {
+      "id": "mammoth",
+      "group": "sim",
+      "issue": null,
+      "en": "Woolly mammoth",
+      "ko": "털매머드",
+      "wiki": { "en": ["Woolly mammoth"], "ko": ["털매머드"] },
+      "reddit": "mammoth OR mammoths",
+      "youtube": { "en": "mammoth vs", "ko": "매머드 vs" }
+    },
+    {
+      "id": "homoErectus",
+      "group": "sim",
+      "issue": null,
+      "en": "Homo erectus",
+      "ko": "호모 에렉투스",
+      "wiki": { "en": ["Homo erectus"], "ko": ["호모 에렉투스"] },
+      "reddit": "\"homo erectus\"",
+      "youtube": { "en": "homo erectus vs", "ko": "호모 에렉투스 vs" }
+    },
+    {
+      "id": "tiger",
+      "group": "sim",
+      "issue": null,
+      "en": "Tiger",
+      "ko": "호랑이",
+      "wiki": { "en": ["Tiger"], "ko": ["호랑이"] },
+      "reddit": "tiger OR tigers",
+      "youtube": { "en": "tiger vs", "ko": "호랑이 vs" }
+    },
+    {
+      "id": "lion",
+      "group": "sim",
+      "issue": null,
+      "en": "Lion",
+      "ko": "사자",
+      "wiki": { "en": ["Lion"], "ko": ["사자"] },
+      "reddit": "lion OR lions",
+      "youtube": { "en": "lion vs", "ko": "사자 vs" }
+    },
+    {
+      "id": "wolf",
+      "group": "sim",
+      "issue": null,
+      "en": "Gray wolf",
+      "ko": "회색늑대",
+      "wiki": { "en": ["Wolf"], "ko": ["회색늑대"] },
+      "reddit": "wolf OR wolves",
+      "youtube": { "en": "wolf vs", "ko": "늑대 vs" }
+    },
+    {
+      "id": "hyena",
+      "group": "sim",
+      "issue": null,
+      "en": "Spotted hyena",
+      "ko": "점박이하이에나",
+      "wiki": { "en": ["Hyena"], "ko": ["하이에나"] },
+      "reddit": "hyena OR hyenas",
+      "youtube": { "en": "hyena vs", "ko": "하이에나 vs" }
+    },
+    {
+      "id": "polarBear",
+      "group": "sim",
+      "issue": 184,
+      "en": "Polar bear",
+      "ko": "북극곰",
+      "wiki": { "en": ["Polar bear"], "ko": ["북극곰"] },
+      "reddit": "\"polar bear\" OR \"polar bears\"",
+      "youtube": { "en": "polar bear vs", "ko": "북극곰 vs" }
+    },
+    {
+      "id": "spinosaurus",
+      "group": "candidate",
+      "issue": 185,
+      "en": "Spinosaurus",
+      "ko": "스피노사우루스",
+      "wiki": { "en": ["Spinosaurus"], "ko": ["스피노사우루스"] },
+      "reddit": "spinosaurus OR spino",
+      "youtube": { "en": "spinosaurus vs", "ko": "스피노사우루스 vs" }
+    },
+    {
+      "id": "hippo",
+      "group": "candidate",
+      "issue": 186,
+      "en": "Hippopotamus",
+      "ko": "하마",
+      "wiki": { "en": ["Hippopotamus"], "ko": ["하마"] },
+      "reddit": "hippo OR hippos OR hippopotamus",
+      "youtube": { "en": "hippo vs", "ko": "하마 vs" }
+    },
+    {
+      "id": "whiteRhino",
+      "group": "candidate",
+      "issue": 187,
+      "en": "White rhinoceros",
+      "ko": "흰코뿔소",
+      "wiki": { "en": ["Rhinoceros"], "ko": ["코뿔소"] },
+      "reddit": "rhino OR rhinos OR rhinoceros",
+      "youtube": { "en": "rhino vs", "ko": "코뿔소 vs" }
+    },
+    {
+      "id": "raptor",
+      "group": "candidate",
+      "issue": 188,
+      "en": "Raptor pack (Utahraptor, Velociraptor)",
+      "ko": "랩터 무리",
+      "wiki": { "en": ["Velociraptor", "Utahraptor"], "ko": ["벨로키랍토르", "유타랍토르"] },
+      "reddit": "velociraptor OR velociraptors OR utahraptor OR raptor OR raptors",
+      "youtube": { "en": "velociraptor vs", "ko": "랩터 vs" }
+    },
+    {
+      "id": "triceratops",
+      "group": "candidate",
+      "issue": 189,
+      "en": "Triceratops",
+      "ko": "트리케라톱스",
+      "wiki": { "en": ["Triceratops"], "ko": ["트리케라톱스"] },
+      "reddit": "triceratops",
+      "youtube": { "en": "triceratops vs", "ko": "트리케라톱스 vs" }
+    },
+    {
+      "id": "gorilla",
+      "group": "candidate",
+      "issue": 129,
+      "en": "Gorilla",
+      "ko": "고릴라",
+      "wiki": { "en": ["Gorilla"], "ko": ["고릴라"] },
+      "reddit": "gorilla OR gorillas",
+      "youtube": { "en": "gorilla vs", "ko": "고릴라 vs" }
+    },
+    {
+      "id": "capybara",
+      "group": "candidate",
+      "issue": 129,
+      "en": "Capybara",
+      "ko": "카피바라",
+      "wiki": { "en": ["Capybara"], "ko": ["카피바라"] },
+      "reddit": "capybara OR capybaras",
+      "youtube": { "en": "capybara vs", "ko": "카피바라 vs" }
+    },
+    {
+      "id": "emperorPenguin",
+      "group": "candidate",
+      "issue": 129,
+      "en": "Emperor penguin",
+      "ko": "황제펭귄",
+      "wiki": { "en": ["Emperor penguin"], "ko": ["황제펭귄"] },
+      "reddit": "\"emperor penguin\" OR \"emperor penguins\"",
+      "youtube": { "en": "emperor penguin vs", "ko": "황제펭귄 vs" }
+    }
+  ]
+}
