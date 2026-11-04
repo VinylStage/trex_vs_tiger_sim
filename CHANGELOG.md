@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.24](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.23...trex-vs-tiger-sim-v0.2.24) (2026-11-04)
+
+
+### Features
+
+* **free:** tick-indexed intervention hook with deterministic recomputation ([#174](https://github.com/VinylStage/trex_vs_tiger_sim/issues/174)) ([#200](https://github.com/VinylStage/trex_vs_tiger_sim/issues/200)) ([6d49806](https://github.com/VinylStage/trex_vs_tiger_sim/commit/6d498060f97809b1e56249a131517d9a9b735b3c))
+* **ui:** priority scheduler over warm workers ([#175](https://github.com/VinylStage/trex_vs_tiger_sim/issues/175)) ([#201](https://github.com/VinylStage/trex_vs_tiger_sim/issues/201)) ([8f9764d](https://github.com/VinylStage/trex_vs_tiger_sim/commit/8f9764dc4a0e968bd12d89b15a70fe38b8d1dd8e))
+
 ## [0.2.23](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.22...trex-vs-tiger-sim-v0.2.23) (2026-11-02)
 
 
