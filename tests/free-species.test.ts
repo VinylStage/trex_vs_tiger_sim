@@ -40,7 +40,7 @@ import {
 const SOCIAL: readonly FreeSpeciesId[] = ['lion', 'wolf', 'hyena', 'homoErectus'];
 const LATCHERS: readonly FreeSpeciesId[] = ['tiger', 'lion', 'wolf', 'hyena', 'homoErectus'];
 /** Species with no legacy entry, built by `defineFreeSpecies` (docs/SPECIES.md §11.5). */
-const FREE_ONLY: readonly FreeSpeciesId[] = ['polarBear'];
+const FREE_ONLY: readonly FreeSpeciesId[] = ['polarBear', 'hippo'];
 /** `FREE_SPECIES_IDS` as first shipped: ids are append-only (RENEWAL-1.0 §5.3 step 4). */
 const SHIPPED_IDS: readonly FreeSpeciesId[] = [
   'trex',
@@ -54,6 +54,7 @@ const SHIPPED_IDS: readonly FreeSpeciesId[] = [
   'wolf',
   'hyena',
   'polarBear',
+  'hippo',
 ];
 
 describe('trait lists', () => {
@@ -342,6 +343,51 @@ describe('polar bear (docs/SPECIES.md §4.11, research/SPECIES.md §5.5)', () =>
       expect(pb.traits[k], k).toEqual(bb.traits[k]);
     }
     expect(pb.constants).toEqual(bb.constants);
+  });
+});
+
+describe('hippopotamus (docs/SPECIES.md §4.12, research/SPECIES.md §5.18)', () => {
+  const h = FREE_SPECIES.hippo;
+  const buffalo = FREE_SPECIES.buffalo;
+  const elephant = FREE_SPECIES.elephant;
+
+  it('is a living, ad-safe, solitary striker with no legacy entry and a thick hide', () => {
+    expect(h.era).toBe('extant');
+    expect(h.adSafe).toBe(true);
+    expect([h.social, h.canLatch]).toEqual([false, false]);
+    expect(isHeavySpecies('hippo')).toBe(false);
+    expect(isPackSpecies('hippo')).toBe(false);
+    // Skin about 6 cm thick: latch damage scaled like the elephant's.
+    expect(h.constants).toEqual({ hide: 0.3, intimidation: 1 });
+    expect(h.constants.hide).toBe(elephant.constants.hide);
+  });
+
+  it('takes mass from the literature and sits between the buffalo and the elephant', () => {
+    expect(h.traits.mass).toEqual({ range: { min: 1300, mode: 1500, max: 3200 }, evidence: 'L' });
+    expect(h.traits.mass.range.mode).toBeGreaterThan(buffalo.traits.mass.range.mode);
+    expect(h.traits.mass.range.mode).toBeLessThan(elephant.traits.mass.range.mode);
+  });
+
+  it('turns the unverified top speed and bite into S rows around the reported figures', () => {
+    // About 8 m/s (30 km/h) is claimed but unmeasured (Hutchinson & Pringle 2024): the S maximum.
+    expect(h.traits.sprintSpeed).toEqual({ range: { min: 4, mode: 6, max: 8.3 }, evidence: 'S' });
+    // 8.1 kN reported for one female on television, never published: the S mode.
+    expect(h.traits.strikeForce).toEqual({ range: { min: 4, mode: 8, max: 15 }, evidence: 'S' });
+    // No row keeps a U tag: every unverified value became S with a range (RENEWAL-1.0 §5.2).
+    for (const k of TRAIT_IDS) expect(h.traits[k].evidence, k).not.toBe('U');
+  });
+
+  it('derives its body radius (and so its glyph) from mass: the buffalo scaled by mass^(1/3)', () => {
+    const scaled = (k: 'min' | 'mode' | 'max') =>
+      Math.round(
+        20 *
+          buffalo.traits.bodyRadius.range[k] *
+          Math.cbrt(h.traits.mass.range[k] / buffalo.traits.mass.range[k]),
+      ) / 20;
+    expect(h.traits.bodyRadius).toEqual({
+      range: { min: scaled('min'), mode: scaled('mode'), max: scaled('max') },
+      evidence: 'D',
+    });
   });
 });
 

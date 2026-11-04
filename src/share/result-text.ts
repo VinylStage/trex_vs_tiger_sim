@@ -32,6 +32,7 @@ export const SPECIES_EMOJI: Readonly<Partial<Record<FreeSpeciesId, string>>> = {
   wolf: '🐺',
   hyena: '🐾',
   polarBear: '🐻‍❄️',
+  hippo: '🦛',
 };
 export const FALLBACK_EMOJI: Readonly<Record<'heavy' | 'pack', string>> = {
   heavy: '🔷',

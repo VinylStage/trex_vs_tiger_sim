@@ -82,10 +82,11 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 
 ### M6 — animals batch A
 
-| Item                                                        | Issue | Status                                                                                                                                |
-| ----------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Polar bear (first free-only species, preset #17)            | #184  | Done in review: source sheet, plumbing, preset and calibration ([CALIBRATION.md §13](docs/research/CALIBRATION.md#13-polar-bear-184)) |
-| Demand scripts (API-based pulls) and the first demand table | #190  | Done in review: `scripts/demand/`, [docs/research/DEMAND.md](docs/research/DEMAND.md); rerun every quarter                            |
+| Item                                                                 | Issue | Status                                                                                                                                                                                          |
+| -------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Polar bear (first free-only species, preset #17)                     | #184  | Done in review: source sheet, plumbing, preset and calibration ([CALIBRATION.md §13](docs/research/CALIBRATION.md#13-polar-bear-184))                                                           |
+| Hippopotamus (new source sheet, preset #16; #15 waits for the rhino) | #186  | Done in review: source sheet (top speed and bite U → S), plumbing, preset and calibration ([CALIBRATION.md §14](docs/research/CALIBRATION.md#14-hippopotamus-186)); flight re-checked with #169 |
+| Demand scripts (API-based pulls) and the first demand table          | #190  | Done in review: `scripts/demand/`, [docs/research/DEMAND.md](docs/research/DEMAND.md); rerun every quarter                                                                                      |
 
 ## Later (candidates, not committed)
 

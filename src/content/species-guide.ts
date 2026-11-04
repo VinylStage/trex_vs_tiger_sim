@@ -93,4 +93,11 @@ export const SPECIES_GUIDE: Readonly<Record<FreeSpeciesId, SpeciesGuideEntry>> =
       en: 'The largest bear, a solitary hunter on Arctic sea ice. Its mass and running speed come from the literature; its bite force has never been measured and is assumed. It hunts young walruses, while adult walruses are known to be too formidable for it.',
     },
   },
+  hippo: {
+    scientific: 'Hippopotamus amphibius',
+    note: {
+      ko: '아프리카의 강과 호수에 사는 대형 초식동물로, 낮에는 물속에서 쉬고 밤에 뭍으로 나와 풀을 뜯습니다. 몸무게와 걸음새(빨리 달릴 때도 속보를 쓰며 잠깐 네 발이 모두 뜸)는 문헌 값이고, 최고 속도와 무는 힘은 검증된 측정이 없어 추정입니다.',
+      en: 'A large grazer of African rivers and lakes that rests in the water by day and feeds on land at night. Its mass and gait (it trots even when running fast, with brief moments when all four feet are off the ground) come from the literature; its top speed and bite force have no verified measurement and are assumed.',
+    },
+  },
 };

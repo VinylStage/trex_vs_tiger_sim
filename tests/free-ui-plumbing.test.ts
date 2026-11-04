@@ -161,6 +161,18 @@ describe('share link v3', () => {
     expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
   });
 
+  it('round-trips the hippo on side B against an elephant, edited ranges included', () => {
+    const c = sanitizeFreeConfig({
+      sides: [
+        { species: 'elephant', count: 1 },
+        { species: 'hippo', count: 2, params: { strikeForce: { min: 5, mode: 9, max: 12 } } },
+      ],
+    });
+    expect(c.sides[1].species).toBe('hippo');
+    expect(c.sides[1].params.strikeForce).toEqual({ min: 5, mode: 9, max: 12 });
+    expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
+  });
+
   it('carries v: 3 and the mode marker, and never an empty hash', () => {
     const json = JSON.parse(
       Buffer.from(encodeFreeConfig(defaultFreeConfig()), 'base64url').toString(),

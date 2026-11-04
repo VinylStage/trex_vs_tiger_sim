@@ -7,6 +7,7 @@
 > - **구조 점검은 통과:** 같은 종 거울전 14개 모두 50:50(두 진영 승률 차이의 95% 구간이 모두 0을 포함), 진영 바꾸기 3쌍 모두 같음, 마릿수 4개 곡선 모두 단조 증가.
 > - **보정 문제로 보이는 것:** 호모 에렉투스 1마리가 어떤 육식동물과의 1:1에서도 한 번도 이기지 못하고 늘 이탈함(#167), 늑대 대 물소 곡선이 9–13마리에서 평평해지지 않음(#168), 혼자 사는 동물이 훨씬 큰 상대 앞에서도 거의 이탈하지 않음(#169). 파라미터 페이지에 자유 모델 항목이 없음(#170). 이미 알려진 1:1 이탈 100%와 보류 프리셋 3개(R4)는 그대로입니다.
 > - **북극곰(#184, §13):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 3개 모두 단조, 진영 바꾸기 같음. 불곰보다 두 배 무거워 1:1에서 불곰에 83% 이기고, 호랑이 · 사자 · 늑대 · 물소 상대로 모두 불곰 이상입니다. 이 차이는 대부분 추정값(공격 힘 · 간격 · 정확도, 사기)에 달려 있습니다. 이탈 모델(#169)은 바꾸지 않았고, 북극곰도 훨씬 큰 티라노 앞에서는 진 경우의 28%만 이탈합니다.
+> - **하마(#186, §14):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게가 물소와 코끼리 사이(1.5톤)라 물소 · 곰에는 92–99% 이기고 코끼리에는 16%, 매머드에는 10%만 이깁니다. 사자는 16–20마리가 되어야 다 자란 하마와 비슷해지는데, 사자 무리가 어른 하마를 드물게만 사냥한다는 기록과 맞습니다. 검증되지 않은 두 값 중 최고 속도는 결과에 거의 영향이 없고(+1.7%p), 무는 힘은 가장 큰 영향 중 하나입니다(+29.9%p). 이탈 모델(#169)은 바꾸지 않았습니다.
 > - **R1 "잠정 모델" 안내:** 기준(보정 보고서 + 소유자 승인 + 안내에 대한 결정, 그리고 가이드 · 모델 · 파라미터 페이지의 자유 모델 설명)을 아직 다 채우지 못했으므로 **지금은 내리지 말 것을 권합니다.** 소유자가 이 보고서를 승인하고, #170(파라미터 페이지)을 마치고, #169를 결정하면 내릴 수 있습니다. UI는 바꾸지 않았습니다.
 
 Status: measured 2026-10-28 on `main` at `12b5968` (v0.2.22), engines unchanged by this report. Issue [#166](https://github.com/VinylStage/trex_vs_tiger_sim/issues/166), part of [#125](https://github.com/VinylStage/trex_vs_tiger_sim/issues/125). Design: [RENEWAL-1.0.md §3.2](../design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode) (minimum P8 pass, owner decision R1) and [FREE-MATCHUPS.md §8](../design/FREE-MATCHUPS.md#8-phased-implementation-plan) (phase P8). **Not signed off by the owner yet.**
@@ -28,6 +29,7 @@ Every number below is a statement about the two models under their assumptions, 
 11. [Owner decisions](#11-owner-decisions)
 12. [Reproducing](#12-reproducing)
 13. [Polar bear (#184)](#13-polar-bear-184)
+14. [Hippopotamus (#186)](#14-hippopotamus-186)
 
 ## 1. Questions
 
@@ -436,9 +438,11 @@ node scripts/calibration/run.mjs --quick    # a tenth of the runs, writes nothin
 node scripts/calibration/run.mjs --only trex-tiger --out /tmp/t.json   # one section
 node scripts/calibration/run.mjs --only polar-bear   # writes docs/research/calibration-polar-bear.json (§13)
 node scripts/calibration/tables.mjs docs/research/calibration-polar-bear.json
+node scripts/calibration/run.mjs --only hippo        # writes docs/research/calibration-hippo.json (§14)
+node scripts/calibration/tables.mjs docs/research/calibration-hippo.json
 ```
 
-Sections: `trex-tiger`, `classic`, `presets`, `species-notes`, `interference`, `symmetry`, `monotonic`, and `polar-bear` (§13). `--only <section>` without `--out` writes `calibration-<section>.json`, so one section never replaces the committed results. A full run writes every section, `polar-bear` included, to `calibration-results.json`, and `presets` then also measures `polar-bear-brown-bear`. Every batch has a fixed seed, so a rerun on the same commit gives the same numbers within the same JavaScript engine (MODEL.md §2.2). Measured with Node v22.22.0. When the free engine changes (a new `mv`), rerun both scripts, update the tables and recheck §8 and §10.
+Sections: `trex-tiger`, `classic`, `presets`, `species-notes`, `interference`, `symmetry`, `monotonic`, `polar-bear` (§13) and `hippo` (§14). `--only <section>` without `--out` writes `calibration-<section>.json`, so one section never replaces the committed results. A full run writes every section, `polar-bear` and `hippo` included, to `calibration-results.json`, and `presets` then also measures `polar-bear-brown-bear` and `elephant-hippo`. Every batch has a fixed seed, so a rerun on the same commit gives the same numbers within the same JavaScript engine (MODEL.md §2.2). Measured with Node v22.22.0. When the free engine changes (a new `mv`), rerun both scripts, update the tables and recheck §8 and §10.
 
 The tables in this report: generated from docs/research/calibration-results.json (commit 12b5968, v22.22.0).
 
@@ -558,3 +562,135 @@ Polar bear 1 v brown bear 1 (the preset), 1,000 runs per row: each **S** trait o
 **Preset.** `polar-bear-brown-bear` (design §6 #17): polar bear 82.0 %, median 70.9 s, rout share 100 % in the fixture (200 runs). Not close; ready in Simple mode through the one-on-one override, as `tiger-bear` and `trex-mirror` ([PRESETS.md](../PRESETS.md#overrides-and-holds)).
 
 The tables in this section: generated from docs/research/calibration-polar-bear.json (commit bec0201, v22.22.0).
+
+## 14. Hippopotamus (#186)
+
+Measured 2026-11-04 on `main` at `f70371c` plus the #186 change (engines unchanged, model version `mv` 1). Like the polar bear, the hippo has no legacy entry (docs/SPECIES.md §4.12) and runs on the free engine only. These are the add-a-species checks of [RENEWAL-1.0 §5.3](../design/RENEWAL-1.0.md#53-add-a-species-pipeline-definition-of-done) step 5, a comparison with the other heavy species and its recorded predators, its flight behaviour under the current model (#169, not changed here) and a one-at-a-time sensitivity sweep of its **S** values against the elephant (preset #16). Raw data: `calibration-hippo.json` (section `hippo`); §1–§13, `calibration-results.json` and `calibration-polar-bear.json` are unchanged. Method and metrics as in §2: seed 20261019, every other input at its preset.
+
+### Mirror matches
+
+| Mirror            | Runs |           A wins |           B wins | Draws | A − B (pp, paired) | 0 inside? | Median s |
+| ----------------- | ---: | ---------------: | ---------------: | ----: | -----------------: | --------: | -------: |
+| hippo 1 v hippo 1 | 1000 | 49.2 (46.1–52.3) | 50.6 (47.5–53.7) |   0.2 | -1.4 (-7.6 to 4.8) |       yes |      106 |
+| hippo 3 v hippo 3 | 1000 | 49.1 (46.0–52.2) | 50.8 (47.7–53.9) |   0.1 | -1.7 (-7.9 to 4.5) |       yes |      134 |
+
+### Count sweeps
+
+One hippo against lions and against spotted hyenas, its recorded predators (side B varies), and hippos against one elephant and against one _T. rex_ (side A varies). "Step" flags a drop in the varying side's share larger than both intervals allow, the §6 rule.
+
+| Match-up          | Runs |             A wins |           B wins | Draws | Median s | Rout % | Step |
+| ----------------- | ---: | -----------------: | ---------------: | ----: | -------: | -----: | ---: |
+| hippo 1 v lion 1  |  500 | 100.0 (99.2–100.0) |    0.0 (0.0–0.8) |   0.0 |       41 |   50.2 |      |
+| hippo 1 v lion 2  |  500 |   85.2 (81.8–88.0) |   7.6 (5.6–10.3) |   7.2 |      347 |   62.0 |   ok |
+| hippo 1 v lion 3  |  500 |   78.6 (74.8–82.0) | 15.4 (12.5–18.8) |   6.0 |      441 |   72.4 |   ok |
+| hippo 1 v lion 4  |  500 |   70.4 (66.3–74.2) | 21.8 (18.4–25.6) |   7.8 |      420 |   79.9 |   ok |
+| hippo 1 v lion 6  |  500 |   69.0 (64.8–72.9) | 28.8 (25.0–32.9) |   2.2 |      381 |   85.9 |   ok |
+| hippo 1 v lion 8  |  500 |   66.8 (62.6–70.8) | 32.0 (28.1–36.2) |   1.2 |      324 |   89.4 |   ok |
+| hippo 1 v lion 10 |  500 |   62.2 (57.9–66.3) | 37.4 (33.3–41.7) |   0.4 |      267 |   90.1 |   ok |
+| hippo 1 v lion 12 |  500 |   60.8 (56.5–65.0) | 39.2 (35.0–43.5) |   0.0 |      206 |   91.4 |   ok |
+| hippo 1 v lion 16 |  500 |   53.2 (48.8–57.5) | 46.6 (42.3–51.0) |   0.2 |      162 |   91.6 |   ok |
+| hippo 1 v lion 20 |  500 |   43.2 (38.9–47.6) | 56.4 (52.0–60.7) |   0.4 |      136 |   91.9 |   ok |
+
+| Match-up           | Runs |             A wins |           B wins | Draws | Median s | Rout % | Step |
+| ------------------ | ---: | -----------------: | ---------------: | ----: | -------: | -----: | ---: |
+| hippo 1 v hyena 1  |  500 | 100.0 (99.2–100.0) |    0.0 (0.0–0.8) |   0.0 |       33 |    8.2 |      |
+| hippo 1 v hyena 2  |  500 |   98.8 (97.4–99.4) |    0.2 (0.0–1.1) |   1.0 |      201 |   45.0 |   ok |
+| hippo 1 v hyena 4  |  500 |   97.6 (95.9–98.6) |    1.6 (0.8–3.1) |   0.8 |      184 |   74.2 |   ok |
+| hippo 1 v hyena 6  |  500 |   96.0 (93.9–97.4) |    3.8 (2.4–5.9) |   0.2 |      134 |   84.8 |   ok |
+| hippo 1 v hyena 8  |  500 |   94.2 (91.8–95.9) |    5.8 (4.1–8.2) |   0.0 |      116 |   87.9 |   ok |
+| hippo 1 v hyena 10 |  500 |   94.4 (92.0–96.1) |    5.6 (3.9–8.0) |   0.0 |      100 |   90.0 |   ok |
+| hippo 1 v hyena 12 |  500 |   93.4 (90.9–95.3) |    6.6 (4.7–9.1) |   0.0 |       93 |   91.1 |   ok |
+| hippo 1 v hyena 16 |  500 |   90.2 (87.3–92.5) |   9.8 (7.5–12.7) |   0.0 |       84 |   92.3 |   ok |
+| hippo 1 v hyena 20 |  500 |   89.6 (86.6–92.0) |  10.4 (8.0–13.4) |   0.0 |       74 |   93.0 |   ok |
+| hippo 1 v hyena 25 |  500 |   88.0 (84.9–90.6) |  12.0 (9.4–15.1) |   0.0 |       66 |   93.4 |   ok |
+| hippo 1 v hyena 30 |  500 |   86.4 (83.1–89.1) | 13.6 (10.9–16.9) |   0.0 |       61 |   93.7 |   ok |
+
+| Match-up             | Runs |           A wins |           B wins | Draws | Median s | Rout % | Step |
+| -------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: | ---: |
+| hippo 1 v elephant 1 |  500 | 17.0 (14.0–20.5) | 83.0 (79.5–86.0) |   0.0 |      117 |  100.0 |      |
+| hippo 2 v elephant 1 |  500 | 50.2 (45.8–54.6) | 49.4 (45.0–53.8) |   0.4 |      145 |   99.7 |   ok |
+| hippo 3 v elephant 1 |  500 | 76.8 (72.9–80.3) | 22.8 (19.3–26.7) |   0.4 |      130 |   99.7 |   ok |
+| hippo 4 v elephant 1 |  500 | 90.6 (87.7–92.9) |   9.4 (7.1–12.3) |   0.0 |      113 |   99.1 |   ok |
+| hippo 5 v elephant 1 |  500 | 96.4 (94.4–97.7) |    3.6 (2.3–5.6) |   0.0 |      100 |   99.8 |   ok |
+| hippo 6 v elephant 1 |  500 | 98.2 (96.6–99.1) |    1.8 (0.9–3.4) |   0.0 |       95 |  100.0 |   ok |
+
+| Match-up             | Runs |           A wins |             B wins | Draws | Median s | Rout % | Step |
+| -------------------- | ---: | ---------------: | -----------------: | ----: | -------: | -----: | ---: |
+| hippo 1 v _T. rex_ 1 |  500 |    0.0 (0.0–0.8) | 100.0 (99.2–100.0) |   0.0 |       76 |   98.6 |      |
+| hippo 2 v _T. rex_ 1 |  500 |    0.6 (0.2–1.7) |   99.4 (98.3–99.8) |   0.0 |       93 |   98.0 |   ok |
+| hippo 3 v _T. rex_ 1 |  500 |    4.0 (2.6–6.1) |   96.0 (93.9–97.4) |   0.0 |      109 |   97.1 |   ok |
+| hippo 4 v _T. rex_ 1 |  500 |   9.2 (7.0–12.1) |   90.8 (87.9–93.0) |   0.0 |      125 |   96.5 |   ok |
+| hippo 6 v _T. rex_ 1 |  500 | 28.4 (24.6–32.5) |   71.6 (67.5–75.4) |   0.0 |      150 |   93.7 |   ok |
+| hippo 8 v _T. rex_ 1 |  500 | 52.2 (47.8–56.5) |   47.8 (43.5–52.2) |   0.0 |      155 |   92.4 |   ok |
+
+### Side swaps
+
+| Pair                                            | Runs | First order: A wins | Swapped: same species wins |    Difference (pp) | 0 inside? |
+| ----------------------------------------------- | ---: | ------------------: | -------------------------: | -----------------: | --------: |
+| hippo 1 v elephant 1 / elephant 1 v hippo 1     | 1000 |    16.1 (14.0–18.5) |           14.3 (12.3–16.6) | +1.8 (-1.4 to 5.0) |       yes |
+| hippo 1 v polar bear 1 / polar bear 1 v hippo 1 | 1000 |    98.4 (97.4–99.0) |           98.9 (98.0–99.4) | -0.5 (-1.6 to 0.6) |       yes |
+
+### Next to the other heavy species and the lion
+
+The buffalo row against six lions is the reference for the hippo row below it.
+
+| Match-up               | Runs |             A wins |           B wins | Draws | Median s | Rout % |
+| ---------------------- | ---: | -----------------: | ---------------: | ----: | -------: | -----: |
+| hippo 1 v buffalo 1    | 1000 |   92.3 (90.5–93.8) |    7.7 (6.2–9.5) |   0.0 |       80 |  100.0 |
+| hippo 1 v brown bear 1 | 1000 |   98.8 (97.9–99.3) |    1.2 (0.7–2.1) |   0.0 |       78 |   76.7 |
+| hippo 1 v tiger 1      | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       36 |   66.1 |
+| hippo 1 v lion 1       | 1000 |   99.8 (99.3–99.9) |    0.0 (0.0–0.4) |   0.2 |       40 |   50.1 |
+| hippo 1 v mammoth 1    | 1000 |    10.2 (8.5–12.2) | 89.7 (87.7–91.4) |   0.1 |      114 |  100.0 |
+| buffalo 1 v lion 6     | 1000 |   16.7 (14.5–19.1) | 83.2 (80.8–85.4) |   0.1 |      137 |   73.4 |
+| hippo 1 v lion 6       | 1000 |   68.8 (65.9–71.6) | 29.0 (26.3–31.9) |   2.2 |      397 |   86.4 |
+
+### Much larger opponents
+
+| Match-up             | Runs |           A wins |             B wins | Draws | Median s | Rout % |
+| -------------------- | ---: | ---------------: | -----------------: | ----: | -------: | -----: |
+| hippo 1 v _T. rex_ 1 | 1000 |    0.0 (0.0–0.4) | 100.0 (99.6–100.0) |   0.0 |       76 |   98.6 |
+| hippo 1 v elephant 1 | 1000 | 16.1 (14.0–18.5) |   83.6 (81.2–85.8) |   0.3 |      121 |  100.0 |
+| hippo 1 v mammoth 1  | 1000 |  10.2 (8.5–12.2) |   89.7 (87.7–91.4) |   0.1 |      114 |  100.0 |
+
+### One-at-a-time sensitivity
+
+Hippo 1 v elephant 1 (preset #16 seen from the hippo's side), 1,000 runs per row: each **S** trait of the hippo pinned at its preset min, then at its max. The swing is the change in the hippo's win share from min to max. The constant `hide` (0.3) cannot be pinned through a config and only scales damage from a latcher, which the elephant is not.
+
+| Trait (S)         |         Range |    A wins at min |    A wins at max | Swing (pp) | Median s (min / max) |
+| ----------------- | ------------: | ---------------: | ---------------: | ---------: | -------------------: |
+| all at preset     |             – | 16.1 (14.0–18.5) | 16.1 (14.0–18.5) |          – |                  121 |
+| `turnRate`        |      40 – 120 | 15.0 (12.9–17.3) | 16.4 (14.2–18.8) |       +1.4 |            121 / 121 |
+| `sprintSpeed`     |       4 – 8.3 | 15.1 (13.0–17.5) | 16.8 (14.6–19.2) |       +1.7 |            122 / 120 |
+| `cruiseSpeed`     |     0.8 – 1.8 | 16.6 (14.4–19.0) | 16.6 (14.4–19.0) |       +0.0 |            132 / 111 |
+| `sprintEndurance` |      15 – 100 |  11.7 (9.9–13.8) | 20.1 (17.7–22.7) |       +8.4 |            122 / 119 |
+| `recoveryTime`    |      60 – 300 | 17.5 (15.3–20.0) | 14.5 (12.5–16.8) |       -3.0 |            121 / 121 |
+| `strikeForce`     |        4 – 15 |    2.7 (1.9–3.9) | 32.6 (29.8–35.6) |      +29.9 |            124 / 111 |
+| `strikeLethality` |        4 – 12 |    4.0 (3.0–5.4) | 28.3 (25.6–31.2) |      +24.3 |            124 / 113 |
+| `strikeInterval`  |       1.5 – 5 | 35.5 (32.6–38.5) |    4.9 (3.7–6.4) |      -30.6 |            110 / 124 |
+| `strikeReach`     |     1.6 – 2.3 | 15.6 (13.5–18.0) | 18.1 (15.8–20.6) |       +2.5 |            121 / 120 |
+| `strikeArc`       |       30 – 80 | 16.1 (14.0–18.5) | 16.2 (14.0–18.6) |       +0.1 |            121 / 121 |
+| `strikeAccuracy`  |    0.2 – 0.55 |    4.5 (3.4–6.0) | 27.6 (24.9–30.5) |      +23.1 |            124 / 115 |
+| `shakeRate`       |    0.03 – 0.2 | 16.1 (14.0–18.5) | 16.1 (14.0–18.5) |       +0.0 |            121 / 121 |
+| `bleed`           | 0.001 – 0.006 | 16.1 (14.0–18.5) | 16.3 (14.1–18.7) |       +0.2 |            121 / 121 |
+| `morale`          |   0.65 – 0.95 |  10.0 (8.3–12.0) | 21.6 (19.2–24.3) |      +11.6 |            106 / 134 |
+| `moraleLoss`      |    0.02 – 0.1 | 16.1 (14.0–18.5) | 16.1 (14.0–18.5) |       +0.0 |            121 / 121 |
+
+Generated from docs/research/calibration-hippo.json (commit f70371c, v22.22.0).
+
+### Verdicts
+
+| Check (RENEWAL-1.0 §5.3 step 5)  | Result                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mirror 50/50 within the interval | **Pass.** 1 v 1: −1.4 pp (−7.6 to 4.8); 3 v 3: −1.7 pp (−7.9 to 4.5), paired interval.                                                                                                                                                                                                                                                                                                                                       |
+| Win share monotonic in count     | **Pass.** No drop in any of the four sweeps: lions reach about 50 % at 16–20, hyenas only 13.6 % at 30, two hippos are even with one elephant (50.2 %), and eight hippos bring one _T. rex_ to 52.2 %.                                                                                                                                                                                                                       |
+| Side order                       | **Pass.** Both swaps agree within the interval (+1.8 and −0.5 pp).                                                                                                                                                                                                                                                                                                                                                           |
+| Documented interactions          | **Consistent, qualitatively.** The sources record lions and spotted hyenas taking young hippos and large lion prides only rarely taking adults [WP: Hippopotamus]. The model's adult hippo beats one lion or one hyena in practically every run, still wins 69 % against six lions (where one buffalo wins 17 %) and loses its majority only at 16–20 lions; hyenas never get close (13.6 % at 30). Calves are not modelled. |
+| Rout check for social species    | Not applicable: the hippo is solitary.                                                                                                                                                                                                                                                                                                                                                                                       |
+
+**Sanity against the other heavies.** At the mode the hippo (1.5 t) sits between the buffalo (0.6 t) and the elephant (3.2 t) and the model orders it so: it beats the buffalo in 92 %, the brown bear in 99 % and the polar bear in 98–99 % of duels, and loses to the elephant (16 %) and the mammoth (10 %). The size of the elephant's lead rests on unmeasured values: strike force, interval, lethality and accuracy each swing the duel by 23–31 pp, and no single **S** value at either end of its range makes the hippo the favourite (the highest is 35.5 %, strike interval at 1.5 s); joint optimistic values were not tested. The two **U** values that became **S** behave differently: top speed barely matters (+1.7 pp over 4–8.3 m/s), the bite is one of the two largest swings (+29.9 pp over 4–15 kN). No field record of an adult hippo fighting an elephant was found to check the strength against.
+
+**Flight (#169).** The flight model is unchanged; this records how the hippo behaves under it. One on one against an opponent of similar or larger size, the loser flees in practically every decided run (rout share 98.6–100 % against _T. rex_, the elephant, the mammoth and the buffalo). Unlike the polar bear (28 % against _T. rex_), the losing hippo does flee a much larger opponent, probably because its 1.5 t of HP outlasts the hits that break its morale (not traced here). Against small opponents the pattern of #169 shows from the other side: a lone lion or tiger that loses flees in only 50–66 % of runs. The presets were tuned against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §14 should be re-run then.
+
+**Preset.** `elephant-hippo` (design §6 #16): elephant 81.5 %, median 119.5 s, rout share 99.5 % in the fixture (200 runs). Not close; ready in Simple mode through the one-on-one override, as `tiger-bear` and `polar-bear-brown-bear` ([PRESETS.md](../PRESETS.md#overrides-and-holds)). Preset #15 (hippo vs rhino) waits for the white rhinoceros (#187).
+
+The tables in this section: generated from docs/research/calibration-hippo.json (commit f70371c, v22.22.0).

@@ -157,6 +157,19 @@
       "medianS": 70.85,
       "rout": 1,
       "close": false
+    },
+    {
+      "id": "elephant-hippo",
+      "matchup": "elephant 1 v hippo 1",
+      "wins": [163, 37, 0],
+      "share": {
+        "a": 0.815,
+        "b": 0.185,
+        "draw": 0
+      },
+      "medianS": 119.45,
+      "rout": 0.995,
+      "close": false
     }
   ]
 }

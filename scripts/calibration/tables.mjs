@@ -2,6 +2,7 @@
 //
 //   node scripts/calibration/tables.mjs [results.json]
 //   node scripts/calibration/tables.mjs docs/research/calibration-polar-bear.json
+//   node scripts/calibration/tables.mjs docs/research/calibration-hippo.json
 //
 // Dev-only, no dependencies. The report's tables are pasted from this output, so a rerun of
 // run.mjs followed by this script shows exactly which numbers moved.
@@ -28,6 +29,7 @@ const NAMES = {
   hyena: 'hyena',
   homoErectus: '_H. erectus_',
   polarBear: 'polar bear',
+  hippo: 'hippo',
 };
 
 const pct = (x) =>
@@ -251,9 +253,13 @@ const freeRow = (r) => [
 ];
 const FREE_HEAD = ['Match-up', 'Runs', 'A wins', 'B wins', 'Draws', 'Median s', 'Rout %'];
 
-if (S['polar-bear']) {
-  const pb = S['polar-bear'];
-  out('### Polar bear: mirror matches');
+/**
+ * The add-a-species tables of one species section (polar bear, hippo): mirror matches, count
+ * sweeps, side swaps, comparison rows, much larger opponents and one-at-a-time sensitivity.
+ * `varyA` lists the sweeps in which side A (the species itself) varies; in the others side B does.
+ */
+function speciesTables(pb, { title, varyA, sanityTitle, sensitivityTitle }) {
+  out(`### ${title}: mirror matches`);
   out();
   table(
     ['Mirror', 'Runs', 'A wins', 'B wins', 'Draws', 'A − B (pp, paired)', '0 inside?', 'Median s'],
@@ -269,16 +275,15 @@ if (S['polar-bear']) {
     ]),
   );
   for (const [key, rows] of Object.entries(pb.sweeps)) {
-    // The varying side is B, except in the sweep of polar bears against one T. rex.
-    const side = key === 'vsTrex' ? 'a' : 'b';
-    out(`### Polar bear: count sweep ${key} (side ${side.toUpperCase()} varies)`);
+    const side = varyA.includes(key) ? 'a' : 'b';
+    out(`### ${title}: count sweep ${key} (side ${side.toUpperCase()} varies)`);
     out();
     table(
       [...FREE_HEAD, 'Step'],
       rows.map((r, i) => [...freeRow(r), stepCheck(rows, i, side)]),
     );
   }
-  out('### Polar bear: side swaps');
+  out(`### ${title}: side swaps`);
   out();
   table(
     [
@@ -298,13 +303,13 @@ if (S['polar-bear']) {
       r.diff.lo <= 0 && r.diff.hi >= 0 ? 'yes' : '**no**',
     ]),
   );
-  out('### Polar bear: next to the brown bear');
+  out(`### ${title}: ${sanityTitle}`);
   out();
   table(FREE_HEAD, pb.sanity.map(freeRow));
-  out('### Polar bear: much larger opponents');
+  out(`### ${title}: much larger opponents`);
   out();
   table(FREE_HEAD, pb.flight.map(freeRow));
-  out('### Polar bear: one-at-a-time sensitivity (polar bear 1 v brown bear 1)');
+  out(`### ${title}: one-at-a-time sensitivity (${sensitivityTitle})`);
   out();
   const base = pb.sensitivity.base.free;
   table(
@@ -321,6 +326,25 @@ if (S['polar-bear']) {
       ]),
     ],
   );
+}
+
+if (S['polar-bear']) {
+  // The varying side is B, except in the sweep of polar bears against one T. rex.
+  speciesTables(S['polar-bear'], {
+    title: 'Polar bear',
+    varyA: ['vsTrex'],
+    sanityTitle: 'next to the brown bear',
+    sensitivityTitle: 'polar bear 1 v brown bear 1',
+  });
+}
+
+if (S['hippo']) {
+  speciesTables(S['hippo'], {
+    title: 'Hippo',
+    varyA: ['vsElephant', 'vsTrex'],
+    sanityTitle: 'next to the other heavy species and the lion',
+    sensitivityTitle: 'hippo 1 v elephant 1',
+  });
 }
 
 out(

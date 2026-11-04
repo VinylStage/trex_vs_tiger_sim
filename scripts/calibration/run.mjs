@@ -21,6 +21,8 @@
 //   monotonic     win share against head count on the free engine
 //   polar-bear    the add-a-species checks for the polar bear (#184): mirror, count sweeps, the
 //                 brown bear and tiger comparisons, flight, one-at-a-time sensitivity
+//   hippo         the same checks for the hippopotamus (#186), with the elephant (preset #16)
+//                 as the reference opponent
 
 import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -489,6 +491,89 @@ sections['polar-bear'] = () => {
       one({
         a: PB,
         b: 'brownBear',
+        na: 1,
+        nb: 1,
+        runs: runsOf(1000),
+        paramsA: { [k]: { min: v, mode: v, max: v } },
+      });
+    return { trait: k, range: t.range, low: at(t.range.min), high: at(t.range.max) };
+  });
+  return { mirrors, sweeps, pairs, sanity, flight, sensitivity: { base, traits: sensitivity } };
+};
+
+// The hippopotamus (#186): the same checks as the polar bear. Side A is the hippo, except in the
+// comparison rows of other species and the second order of each swap. The sensitivity rows use
+// preset #16 (elephant vs hippo) from the hippo's side.
+sections['hippo'] = () => {
+  const one = (m) => {
+    const free = runFree(m);
+    logRow(label(m), free);
+    return { match: m, free };
+  };
+  const H = 'hippo';
+  const mirrors = [
+    { a: H, b: H, na: 1, nb: 1, runs: runsOf(1000) },
+    { a: H, b: H, na: 3, nb: 3, runs: runsOf(1000) },
+  ].map((m) => {
+    const r = one(m);
+    return { ...r, diff: pairedDiffInterval(r.free.a, r.free.b, r.free.runs) };
+  });
+  // Count sweeps: lions and spotted hyenas, the hippo's recorded predators (mostly of calves),
+  // against one hippo (side B varies), and hippos against one elephant and one T. rex (side A
+  // varies).
+  const sweeps = {
+    lions: [1, 2, 3, 4, 6, 8, 10, 12, 16, 20].map((nb) =>
+      one({ a: H, b: 'lion', na: 1, nb, runs: runsOf(500) }),
+    ),
+    hyenas: [1, 2, 4, 6, 8, 10, 12, 16, 20, 25, 30].map((nb) =>
+      one({ a: H, b: 'hyena', na: 1, nb, runs: runsOf(500) }),
+    ),
+    vsElephant: [1, 2, 3, 4, 5, 6].map((na) =>
+      one({ a: H, b: 'elephant', na, nb: 1, runs: runsOf(500) }),
+    ),
+    vsTrex: [1, 2, 3, 4, 6, 8].map((na) => one({ a: H, b: 'trex', na, nb: 1, runs: runsOf(500) })),
+  };
+  const pairs = [
+    [
+      { a: H, b: 'elephant', na: 1, nb: 1 },
+      { a: 'elephant', b: H, na: 1, nb: 1 },
+    ],
+    [
+      { a: H, b: 'polarBear', na: 1, nb: 1 },
+      { a: 'polarBear', b: H, na: 1, nb: 1 },
+    ],
+  ].map(([x, y]) => {
+    const fx = one({ ...x, runs: runsOf(1000) });
+    const fy = one({ ...y, runs: runsOf(1000) });
+    return { first: fx, second: fy, diff: diffInterval(fx.free.a, fy.free.b) };
+  });
+  // Next to the other heavy grazers and the bears: the hippo against each species of similar or
+  // larger build, one on one.
+  const sanity = [
+    [H, 'buffalo', 1],
+    [H, 'brownBear', 1],
+    [H, 'tiger', 1],
+    [H, 'lion', 1],
+    [H, 'mammoth', 1],
+    ['buffalo', 'lion', 6],
+    [H, 'lion', 6],
+  ].map(([a, b, nb]) => one({ a, b, na: 1, nb, runs: runsOf(1000) }));
+  // Flight (#169, unchanged here): one hippo against much larger single opponents.
+  const flight = [
+    ['trex', 1],
+    ['elephant', 1],
+    ['mammoth', 1],
+  ].map(([b, nb]) => one({ a: H, b, na: 1, nb, runs: runsOf(1000) }));
+  // One-at-a-time sensitivity of every S trait: hippo 1 v elephant 1 with the trait pinned at its
+  // preset min, then at its max, every other input at its preset.
+  const preset = speciesMod.FREE_SPECIES[H].traits;
+  const sTraits = Object.entries(preset).filter(([, t]) => t.evidence === 'S');
+  const base = one({ a: H, b: 'elephant', na: 1, nb: 1, runs: runsOf(1000) });
+  const sensitivity = sTraits.map(([k, t]) => {
+    const at = (v) =>
+      one({
+        a: H,
+        b: 'elephant',
         na: 1,
         nb: 1,
         runs: runsOf(1000),

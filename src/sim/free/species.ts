@@ -47,6 +47,7 @@ export const FREE_SPECIES_IDS = [
   'wolf',
   'hyena',
   'polarBear',
+  'hippo',
 ] as const;
 export type FreeSpeciesId = (typeof FREE_SPECIES_IDS)[number];
 
@@ -443,6 +444,34 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
       shakeRate: [0.1, 0.25, 0.5, 'S'],
       bleed: [0.001, 0.003, 0.006, 'S'],
       morale: [0.55, 0.75, 0.9, 'S'],
+      moraleLoss: HEAVY_MORALE_LOSS,
+    },
+    buff: null,
+  }),
+  // Built from its own source sheet (docs/SPECIES.md §4.12, research/SPECIES.md §5.18).
+  hippo: defineFreeSpecies('hippo', {
+    era: 'extant',
+    adSafe: true,
+    social: false,
+    canLatch: false,
+    constants: { hide: 0.3, intimidation: 1 },
+    traits: {
+      mass: [1300, 1500, 3200, 'L'],
+      bodyRadius: [1, 1.15, 1.55, 'D'],
+      turnRate: [40, 70, 120, 'S'],
+      sprintSpeed: [4, 6, 8.3, 'S'],
+      cruiseSpeed: [0.8, 1.2, 1.8, 'S'],
+      sprintEndurance: [15, 40, 100, 'S'],
+      recoveryTime: [60, 120, 300, 'S'],
+      strikeForce: [4, 8, 15, 'S'],
+      strikeLethality: [4, 8, 12, 'S'],
+      strikeInterval: [1.5, 2.5, 5, 'S'],
+      strikeReach: [1.6, 1.9, 2.3, 'S'],
+      strikeArc: [30, 50, 80, 'S'],
+      strikeAccuracy: [0.2, 0.35, 0.55, 'S'],
+      shakeRate: [0.03, 0.08, 0.2, 'S'],
+      bleed: [0.001, 0.003, 0.006, 'S'],
+      morale: [0.65, 0.8, 0.95, 'S'],
       moraleLoss: HEAVY_MORALE_LOSS,
     },
     buff: null,
