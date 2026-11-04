@@ -3,7 +3,8 @@
 //   node scripts/demand/tables.mjs [results.json]
 //
 // Dev-only, no dependencies, no network. The report's tables are pasted from this output, so a
-// quarterly rerun of run.mjs followed by this script shows exactly which numbers moved.
+// quarterly rerun of run.mjs followed by this script shows exactly which numbers moved. YouTube
+// appears as a tier only (high / mid / low); the results file has no YouTube figure to print.
 
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -18,6 +19,7 @@ const out = (line = '') => stdout.write(`${line}\n`);
 const byId = new Map(data.species.map((s) => [s.id, s]));
 const name = (s) => `${s.en} (${s.ko})`;
 const issue = (s) => (s.issue ? `#${s.issue}` : '–');
+const tier = (t) => t ?? '–';
 const row = (cells) => out(`| ${cells.join(' | ')} |`);
 
 out(`Window ${data.window.start} to ${data.window.end} (exclusive), run ${data.runDate}.`);
@@ -31,13 +33,11 @@ row([
   'Wiki en',
   'Wiki ko',
   'r/whowouldwin',
-  'YT en top 10',
-  'YT ko top 10',
-  'YT en est.',
-  'YT ko est.',
+  'YouTube en',
+  'YouTube ko',
   'Score',
 ]);
-row(['--:', '---', '---', '--:', '--:', '--:', '--:', '--:', '--:', '--:', '--:']);
+row(['--:', '---', '---', '--:', '--:', '--:', '---', '---', '--:']);
 for (const sc of data.scores) {
   const s = byId.get(sc.id);
   row([
@@ -47,11 +47,9 @@ for (const sc of data.scores) {
     compact(s.wiki.en?.total),
     compact(s.wiki.ko?.total),
     compact(s.reddit?.total),
-    compact(s.youtube.en?.topViews),
-    compact(s.youtube.ko?.topViews),
-    compact(s.youtube.en?.totalResults),
-    compact(s.youtube.ko?.totalResults),
-    `${sc.score.toFixed(1)}${sc.coverage < 1 ? ` (${Math.round(sc.coverage * 100)} %)` : ''}`,
+    tier(s.youtube.en),
+    tier(s.youtube.ko),
+    `${sc.score}${sc.coverage < 1 ? ` (${Math.round(sc.coverage * 100)} %)` : ''}`,
   ]);
 }
 
@@ -65,8 +63,8 @@ row([
   'Score',
   'Overall rank',
   'Reddit part',
-  'YouTube parts (en / ko)',
   'Wiki parts (en / ko)',
+  'YouTube tier (en / ko)',
 ]);
 row(['--:', '---', '---', '--:', '--:', '--:', '---', '---']);
 const p = (x) => (x === null || x === undefined ? '–' : x.toFixed(2));
@@ -79,11 +77,11 @@ for (const sc of data.scores) {
     r,
     name(s),
     issue(s),
-    sc.score.toFixed(1),
+    sc.score,
     sc.rank,
     p(sc.parts.reddit),
-    `${p(sc.parts.youtubeEn)} / ${p(sc.parts.youtubeKo)}`,
     `${p(sc.parts.wikiEn)} / ${p(sc.parts.wikiKo)}`,
+    `${tier(s.youtube.en)} / ${tier(s.youtube.ko)}`,
   ]);
 }
 
