@@ -21,7 +21,7 @@
   "sources": {
     "wiki": "Wikimedia REST per-article pageviews, all-access, agent=user, daily summed by month; totals sum the listed articles",
     "reddit": "Arctic Shift posts/search/aggregate, r/whowouldwin, title keyword search, monthly",
-    "youtube": "YouTube Data API search.list (type=video, order=viewCount, maxResults=10, published in the window) and videos.list statistics; topViews sums the ten view counts; totalResults is the API estimate"
+    "youtube": "YouTube Data API search.list (type=video, order=viewCount, maxResults=10, published in the window) and videos.list statistics; only a tier per species and language is published (high / mid / low = top / middle / bottom third of the species by the ten videos' summed views); the figures stay in the local cache"
   },
   "weights": {
     "reddit": 0.3,
@@ -117,18 +117,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "t rex vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 250668850
-        },
-        "ko": {
-          "query": "티라노사우루스 vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 19805628
-        }
+        "en": "mid",
+        "ko": "low"
       }
     },
     {
@@ -209,18 +199,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "elephant vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 576776472
-        },
-        "ko": {
-          "query": "코끼리 vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 70237460
-        }
+        "en": "high",
+        "ko": "high"
       }
     },
     {
@@ -301,18 +281,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "buffalo vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 197430064
-        },
-        "ko": {
-          "query": "물소 vs",
-          "totalResults": 538097,
-          "videos": 10,
-          "topViews": 12898719
-        }
+        "en": "mid",
+        "ko": "low"
       }
     },
     {
@@ -393,18 +363,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "grizzly bear vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 426028855
-        },
-        "ko": {
-          "query": "불곰 vs",
-          "totalResults": 826359,
-          "videos": 10,
-          "topViews": 26203268
-        }
+        "en": "high",
+        "ko": "mid"
       }
     },
     {
@@ -485,18 +445,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "mammoth vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 247075438
-        },
-        "ko": {
-          "query": "매머드 vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 241754121
-        }
+        "en": "mid",
+        "ko": "high"
       }
     },
     {
@@ -577,18 +527,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "homo erectus vs",
-          "totalResults": 364625,
-          "videos": 10,
-          "topViews": 26580354
-        },
-        "ko": {
-          "query": "호모 에렉투스 vs",
-          "totalResults": 133413,
-          "videos": 2,
-          "topViews": 40612
-        }
+        "en": "low",
+        "ko": "low"
       }
     },
     {
@@ -669,18 +609,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "tiger vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 283781130
-        },
-        "ko": {
-          "query": "호랑이 vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 79000849
-        }
+        "en": "high",
+        "ko": "high"
       }
     },
     {
@@ -761,18 +691,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "lion vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 604186127
-        },
-        "ko": {
-          "query": "사자 vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 907164262
-        }
+        "en": "high",
+        "ko": "high"
       }
     },
     {
@@ -853,18 +773,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "wolf vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 241219319
-        },
-        "ko": {
-          "query": "늑대 vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 55852205
-        }
+        "en": "mid",
+        "ko": "high"
       }
     },
     {
@@ -945,18 +855,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "hyena vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 159720030
-        },
-        "ko": {
-          "query": "하이에나 vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 108361387
-        }
+        "en": "mid",
+        "ko": "high"
       }
     },
     {
@@ -1037,18 +937,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "polar bear vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 457944724
-        },
-        "ko": {
-          "query": "북극곰 vs",
-          "totalResults": 889525,
-          "videos": 10,
-          "topViews": 22464682
-        }
+        "en": "high",
+        "ko": "mid"
       }
     },
     {
@@ -1129,18 +1019,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "spinosaurus vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 63466309
-        },
-        "ko": {
-          "query": "스피노사우루스 vs",
-          "totalResults": 103885,
-          "videos": 10,
-          "topViews": 10754839
-        }
+        "en": "low",
+        "ko": "low"
       }
     },
     {
@@ -1221,18 +1101,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "hippo vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 163775719
-        },
-        "ko": {
-          "query": "하마 vs",
-          "totalResults": 969551,
-          "videos": 10,
-          "topViews": 35867556
-        }
+        "en": "mid",
+        "ko": "mid"
       }
     },
     {
@@ -1313,18 +1183,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "rhino vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 66537669
-        },
-        "ko": {
-          "query": "코뿔소 vs",
-          "totalResults": 494753,
-          "videos": 10,
-          "topViews": 9847901
-        }
+        "en": "low",
+        "ko": "low"
       }
     },
     {
@@ -1407,18 +1267,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "velociraptor vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 35352214
-        },
-        "ko": {
-          "query": "랩터 vs",
-          "totalResults": 247120,
-          "videos": 10,
-          "topViews": 130269430
-        }
+        "en": "low",
+        "ko": "high"
       }
     },
     {
@@ -1499,18 +1349,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "triceratops vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 114394786
-        },
-        "ko": {
-          "query": "트리케라톱스 vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 48145118
-        }
+        "en": "low",
+        "ko": "mid"
       }
     },
     {
@@ -1591,18 +1431,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "gorilla vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 464425468
-        },
-        "ko": {
-          "query": "고릴라 vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 29640905
-        }
+        "en": "high",
+        "ko": "mid"
       }
     },
     {
@@ -1683,18 +1513,8 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "capybara vs",
-          "totalResults": 1000000,
-          "videos": 10,
-          "topViews": 307369136
-        },
-        "ko": {
-          "query": "카피바라 vs",
-          "totalResults": 709433,
-          "videos": 10,
-          "topViews": 55126321
-        }
+        "en": "high",
+        "ko": "mid"
       }
     },
     {
@@ -1775,268 +1595,220 @@
         }
       },
       "youtube": {
-        "en": {
-          "query": "emperor penguin vs",
-          "totalResults": 817297,
-          "videos": 10,
-          "topViews": 51119448
-        },
-        "ko": {
-          "query": "황제펭귄 vs",
-          "totalResults": 237757,
-          "videos": 10,
-          "topViews": 10746383
-        }
+        "en": "low",
+        "ko": "low"
       }
     }
   ],
   "scores": [
     {
       "id": "lion",
+      "rank": 1,
+      "score": 96,
+      "coverage": 1,
       "parts": {
         "reddit": 0.9117258919020546,
-        "youtubeEn": 1,
-        "youtubeKo": 1,
         "wikiEn": 0.9964700544812977,
         "wikiKo": 0.9397386205598405
-      },
-      "score": 96.4,
-      "coverage": 1,
-      "rank": 1
+      }
     },
     {
       "id": "gorilla",
+      "rank": 2,
+      "score": 93,
+      "coverage": 1,
       "parts": {
         "reddit": 1,
-        "youtubeEn": 0.986988668749756,
-        "youtubeKo": 0.8341318873883001,
         "wikiEn": 0.9626338656338421,
         "wikiKo": 0.8041053477440765
-      },
-      "score": 92.9,
-      "coverage": 1,
-      "rank": 2
+      }
     },
     {
       "id": "trex",
+      "rank": 3,
+      "score": 92,
+      "coverage": 1,
       "parts": {
         "reddit": 0.9476024592749631,
-        "youtubeEn": 0.9564898132285513,
-        "youtubeKo": 0.8145841117866084,
         "wikiEn": 0.9840142602032825,
         "wikiKo": 0.9104838832713253
-      },
-      "score": 92.3,
-      "coverage": 1,
-      "rank": 3
+      }
     },
     {
       "id": "tiger",
+      "rank": 4,
+      "score": 92,
+      "coverage": 1,
       "parts": {
         "reddit": 0.8525297648676886,
-        "youtubeEn": 0.9626260274574991,
-        "youtubeKo": 0.8816598196166546,
         "wikiEn": 0.9933013494309214,
         "wikiKo": 0.9816421578362103
-      },
-      "score": 92.1,
-      "coverage": 1,
-      "rank": 4
+      }
     },
     {
       "id": "elephant",
+      "rank": 5,
+      "score": 90,
+      "coverage": 1,
       "parts": {
         "reddit": 0.8245859822975672,
-        "youtubeEn": 0.9977038127007747,
-        "youtubeKo": 0.875959356296352,
         "wikiEn": 0.9759194550000294,
         "wikiKo": 0.9007686114990755
-      },
-      "score": 90.4,
-      "coverage": 1,
-      "rank": 5
+      }
     },
     {
       "id": "wolf",
+      "rank": 6,
+      "score": 89,
+      "coverage": 1,
       "parts": {
         "reddit": 0.8130444942761975,
-        "youtubeEn": 0.9545893512095458,
-        "youtubeKo": 0.864848398227779,
         "wikiEn": 0.9804102399370395,
         "wikiKo": 0.908183037764843
-      },
-      "score": 89.1,
-      "coverage": 1,
-      "rank": 6
+      }
     },
     {
       "id": "polarBear",
-      "parts": {
-        "reddit": 0.8282936368330606,
-        "youtubeEn": 0.9862936626156884,
-        "youtubeKo": 0.8206919007255483,
-        "wikiEn": 0.9725335435356475,
-        "wikiKo": 0.8976846052670714
-      },
+      "rank": 7,
       "score": 89,
       "coverage": 1,
-      "rank": 7
+      "parts": {
+        "reddit": 0.8282936368330606,
+        "wikiEn": 0.9725335435356475,
+        "wikiKo": 0.8976846052670714
+      }
     },
     {
       "id": "brownBear",
-      "parts": {
-        "reddit": 0.8245859822975672,
-        "youtubeEn": 0.9827207854048214,
-        "youtubeKo": 0.8281553439814578,
-        "wikiEn": 0.9548743614878734,
-        "wikiKo": 0.8514099472201148
-      },
+      "rank": 8,
       "score": 88,
       "coverage": 1,
-      "rank": 8
+      "parts": {
+        "reddit": 0.8245859822975672,
+        "wikiEn": 0.9548743614878734,
+        "wikiKo": 0.8514099472201148
+      }
     },
     {
       "id": "hippo",
+      "rank": 9,
+      "score": 86,
+      "coverage": 1,
       "parts": {
         "reddit": 0.7485034106381677,
-        "youtubeEn": 0.9354389923039144,
-        "youtubeKo": 0.8433764985156669,
         "wikiEn": 0.9612378580420711,
         "wikiKo": 0.892121215181511
-      },
-      "score": 85.8,
-      "coverage": 1,
-      "rank": 9
+      }
     },
     {
       "id": "raptor",
+      "rank": 10,
+      "score": 82,
+      "coverage": 1,
       "parts": {
         "reddit": 0.6781819115170623,
-        "youtubeEn": 0.8596139222121549,
-        "youtubeKo": 0.9059083536434919,
         "wikiEn": 0.9484048474316675,
         "wikiKo": 0.8335378455653135
-      },
-      "score": 82.4,
-      "coverage": 1,
-      "rank": 10
+      }
     },
     {
       "id": "whiteRhino",
+      "rank": 11,
+      "score": 80,
+      "coverage": 1,
       "parts": {
         "reddit": 0.662345695068243,
-        "youtubeEn": 0.8908911820236413,
-        "youtubeKo": 0.7807087422209944,
         "wikiEn": 0.9285882671897698,
         "wikiKo": 0.8642603195289186
-      },
-      "score": 80.2,
-      "coverage": 1,
-      "rank": 11
+      }
     },
     {
       "id": "hyena",
+      "rank": 12,
+      "score": 74,
+      "coverage": 1,
       "parts": {
         "reddit": 0.3686890192757141,
-        "youtubeEn": 0.9341988237803843,
-        "youtubeKo": 0.8969810528280008,
         "wikiEn": 0.948638778263102,
         "wikiKo": 0.8246890887033222
-      },
-      "score": 74.3,
-      "coverage": 1,
-      "rank": 12
+      }
     },
     {
       "id": "spinosaurus",
-      "parts": {
-        "reddit": 0.40040849052298044,
-        "youtubeEn": 0.888553869532096,
-        "youtubeKo": 0.7849799609177751,
-        "wikiEn": 0.9359973687552088,
-        "wikiKo": 0.8337149984964886
-      },
+      "rank": 13,
       "score": 72,
       "coverage": 1,
-      "rank": 13
+      "parts": {
+        "reddit": 0.40040849052298044,
+        "wikiEn": 0.9359973687552088,
+        "wikiKo": 0.8337149984964886
+      }
     },
     {
       "id": "capybara",
+      "rank": 14,
+      "score": 71,
+      "coverage": 1,
       "parts": {
         "reddit": 0.14262838210336,
-        "youtubeEn": 0.9665750159807829,
-        "youtubeKo": 0.8642141592442033,
         "wikiEn": 1,
         "wikiKo": 1
-      },
-      "score": 70.9,
-      "coverage": 1,
-      "rank": 14
+      }
     },
     {
       "id": "triceratops",
+      "rank": 15,
+      "score": 70,
+      "coverage": 1,
       "parts": {
         "reddit": 0.28525676420672,
-        "youtubeEn": 0.9176915543114924,
-        "youtubeKo": 0.8576492100494534,
         "wikiEn": 0.9119201252735358,
         "wikiKo": 0.7902551162371464
-      },
-      "score": 69.6,
-      "coverage": 1,
-      "rank": 15
+      }
     },
     {
       "id": "buffalo",
+      "rank": 16,
+      "score": 69,
+      "coverage": 1,
       "parts": {
         "reddit": 0.3311728475341215,
-        "youtubeEn": 0.9446819251015977,
-        "youtubeKo": 0.7937928018904746,
         "wikiEn": 0.880474432641256,
         "wikiKo": 0.7530736278979495
-      },
-      "score": 69.2,
-      "coverage": 1,
-      "rank": 16
+      }
     },
     {
       "id": "mammoth",
+      "rank": 17,
+      "score": 69,
+      "coverage": 1,
       "parts": {
         "reddit": 0.2260606371723541,
-        "youtubeEn": 0.9557756949370116,
-        "youtubeKo": 0.93588611503186,
         "wikiEn": 0.9222522832938433,
         "wikiKo": 0.7117114194247052
-      },
-      "score": 69.1,
-      "coverage": 1,
-      "rank": 17
+      }
     },
     {
       "id": "emperorPenguin",
+      "rank": 18,
+      "score": 67,
+      "coverage": 1,
       "parts": {
         "reddit": 0.2260606371723541,
-        "youtubeEn": 0.8778540337905549,
-        "youtubeKo": 0.7849418262217934,
         "wikiEn": 0.9163473015425159,
         "wikiKo": 0.8641073088009568
-      },
-      "score": 66.7,
-      "coverage": 1,
-      "rank": 18
+      }
     },
     {
       "id": "homoErectus",
+      "rank": 19,
+      "score": 53,
+      "coverage": 1,
       "parts": {
         "reddit": 0,
-        "youtubeEn": 0.8455092138131065,
-        "youtubeKo": 0.5144928171731639,
         "wikiEn": 0.9415300608125142,
         "wikiKo": 0.7844658482817218
-      },
-      "score": 53.1,
-      "coverage": 1,
-      "rank": 19
+      }
     }
   ],
   "errors": [

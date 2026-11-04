@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { FREE_SPECIES_IDS } from '../src/sim/free/species';
 import {
+  TIERS,
+  UNPUBLISHED_SOURCES,
   USER_AGENT,
   WEIGHTS,
   arcticAggregateUrl,
@@ -13,6 +15,8 @@ import {
   parseWikiPageviews,
   parseYoutubeSearch,
   parseYoutubeVideos,
+  publishScores,
+  rankTiers,
   redact,
   wikiPageviewsUrl,
   windowDays,
@@ -185,6 +189,95 @@ describe('combined score', () => {
   it('scores a row with no data as 0 with zero coverage', () => {
     const [row] = combinedScores([{ id: 'x', metrics: {} }]);
     expect(row).toMatchObject({ score: 0, coverage: 0, rank: 1 });
+  });
+});
+
+describe('YouTube tiers', () => {
+  it('cuts the ranked values into thirds by position', () => {
+    // 6 values: two per tier, largest first; input order does not matter.
+    expect(rankTiers([10, 60, 30, 50, 20, 40])).toEqual([
+      'low',
+      'high',
+      'mid',
+      'high',
+      'low',
+      'mid',
+    ]);
+  });
+
+  it('splits 19 species 7 / 6 / 6', () => {
+    const tiers = rankTiers(Array.from({ length: 19 }, (_, i) => 19 - i));
+    expect(TIERS.map((t) => tiers.filter((x) => x === t).length)).toEqual([7, 6, 6]);
+    expect(tiers.slice(0, 7).every((t) => t === 'high')).toBe(true);
+    expect(tiers.slice(13).every((t) => t === 'low')).toBe(true);
+  });
+
+  it('keeps null as no data, ranks only present values and breaks ties by input order', () => {
+    expect(rankTiers([5, null, 5, 1])).toEqual(['high', null, 'mid', 'low']);
+    expect(rankTiers([null, undefined])).toEqual([null, null]);
+    expect(rankTiers([7])).toEqual(['high']);
+    expect(() => rankTiers([-1])).toThrow();
+    expect(() => rankTiers([Number.NaN])).toThrow();
+  });
+});
+
+describe('published scores', () => {
+  it('round to whole points and drop the YouTube parts', () => {
+    const scored = combinedScores([
+      { id: 'a', metrics: { reddit: 99, youtubeEn: 9, youtubeKo: 99, wikiEn: 9, wikiKo: 99 } },
+      { id: 'b', metrics: { reddit: 9, youtubeEn: 99, youtubeKo: 9, wikiEn: 99, wikiKo: 9 } },
+    ]);
+    const published = publishScores(scored);
+    expect(published.map((r) => r.id)).toEqual(scored.map((r) => r.id));
+    for (const [i, r] of published.entries()) {
+      const src = scored[i];
+      expect(Number.isInteger(r.score)).toBe(true);
+      expect(r.score).toBe(Math.round(src?.score ?? Number.NaN));
+      expect(r.rank).toBe(src?.rank);
+      expect(Object.keys(r.parts).sort()).toEqual(['reddit', 'wikiEn', 'wikiKo']);
+    }
+    expect(UNPUBLISHED_SOURCES).toEqual(['youtubeEn', 'youtubeKo']);
+  });
+});
+
+describe('committed demand-results.json', () => {
+  const results = JSON.parse(readFileSync('docs/research/demand-results.json', 'utf8')) as {
+    weights: Record<string, number>;
+    species: { id: string; youtube: Record<string, unknown> }[];
+    scores: { score: number; parts: Record<string, unknown> }[];
+  } & Record<string, unknown>;
+
+  /** Paths of every number in `value` (arrays and objects walked). */
+  function numberPaths(value: unknown, at: string, out: string[] = []): string[] {
+    if (typeof value === 'number') out.push(at);
+    else if (Array.isArray(value)) value.forEach((v, i) => numberPaths(v, `${at}[${i}]`, out));
+    else if (value && typeof value === 'object') {
+      for (const [k, v] of Object.entries(value)) numberPaths(v, `${at}.${k}`, out);
+    }
+    return out;
+  }
+
+  it('holds no YouTube figure: only a tier per species and language', () => {
+    for (const s of results.species) {
+      expect(Object.keys(s.youtube).sort(), s.id).toEqual(['en', 'ko']);
+      for (const tier of Object.values(s.youtube)) {
+        expect([...TIERS, null], s.id).toContain(tier);
+      }
+    }
+    // Any number on a YouTube path fails, except the two that are not API data: the score
+    // weights (configuration) and youtubeQuota (this project's own request counts).
+    const exempt = /^\$\.(weights|youtubeQuota)\./;
+    const leaked = numberPaths(results, '$').filter(
+      (p) => /youtube|topViews|totalResults|views/i.test(p) && !exempt.test(p),
+    );
+    expect(leaked).toEqual([]);
+  });
+
+  it('publishes whole-point scores without YouTube parts', () => {
+    for (const s of results.scores) {
+      expect(Number.isInteger(s.score)).toBe(true);
+      for (const k of UNPUBLISHED_SOURCES) expect(s.parts).not.toHaveProperty(k);
+    }
   });
 });
 
