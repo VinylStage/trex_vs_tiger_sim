@@ -59,6 +59,29 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.24',
+    date: '2026-11-04',
+    title: {
+      ko: '실시간 카드를 위한 엔진 정비 🔧',
+      en: 'Engine work for live cards 🔧',
+    },
+    prs: [201, 200],
+    items: [
+      {
+        cat: 'improved',
+        refs: [175, 201],
+        ko: '시뮬레이션 계산을 미리 켜 둔 작업자에게 우선순위대로 나눠 맡기도록 바꿨어요. 화면에 보이는 대결부터 먼저 계산합니다.',
+        en: 'Simulation work now goes to pre-started workers in priority order, so the match on screen is computed first.',
+      },
+      {
+        cat: 'improved',
+        refs: [174, 200],
+        ko: '자유 대결 도중에 변수를 끼워 넣어도 같은 시드면 같은 결과가 나오도록 하는 장치를 넣었어요. 다음에 올 실시간 변수 카드의 바탕입니다.',
+        en: 'Free matchups can now take a change partway through and still give the same result for the same seed. This is the base for the upcoming live variable cards.',
+      },
+    ],
+  },
+  {
     version: '0.2.23',
     date: '2026-11-02',
     title: {
