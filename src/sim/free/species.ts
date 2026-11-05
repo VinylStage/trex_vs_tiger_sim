@@ -48,6 +48,7 @@ export const FREE_SPECIES_IDS = [
   'hyena',
   'polarBear',
   'hippo',
+  'raptor',
 ] as const;
 export type FreeSpeciesId = (typeof FREE_SPECIES_IDS)[number];
 
@@ -475,6 +476,45 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
       moraleLoss: HEAVY_MORALE_LOSS,
     },
     buff: null,
+  }),
+  // The first social species without a legacy entry, Utahraptor by default (docs/SPECIES.md
+  // §4.13, research/SPECIES.md §5.15).
+  raptor: defineFreeSpecies('raptor', {
+    era: { fromMa: 139, toMa: 125 },
+    adSafe: true,
+    social: true,
+    canLatch: true,
+    constants: { hide: 1, intimidation: 1 },
+    traits: {
+      mass: [280, 400, 500, 'L'],
+      bodyRadius: [0.95, 1.05, 1.1, 'D'],
+      turnRate: [60, 120, 200, 'S'],
+      sprintSpeed: [6, 8, 10.5, 'S'],
+      cruiseSpeed: [1.5, 2.5, 4, 'S'],
+      sprintEndurance: [10, 20, 40, 'S'],
+      recoveryTime: [30, 60, 120, 'S'],
+      strikeForce: [1.7, 2.15, 2.5, 'D'],
+      strikeLethality: PACK_STRIKE_LETHALITY,
+      strikeInterval: PACK_STRIKE_INTERVAL,
+      strikeReach: [1.4, 1.7, 2, 'S'],
+      strikeArc: [30, 45, 70, 'S'],
+      strikeAccuracy: [0.3, 0.45, 0.6, 'S'],
+      latchChance: [0.1, 0.25, 0.5, 'S'],
+      latchEndurance: [15, 30, 60, 'S'],
+      latchDps: [3.4, 9.5, 20, 'D'],
+      shakeRate: [0.1, 0.25, 0.5, 'S'],
+      bleed: [0.001, 0.004, 0.01, 'S'],
+      morale: [0.3, 0.55, 0.8, 'S'],
+      moraleLoss: [0.03, 0.08, 0.15, 'S'],
+    },
+    buff: {
+      cohesionRadius: [30, 60, 100, 'S'],
+      groupLatchGain: [0, 0.12, 0.25, 'S'],
+      focusBonus: [0, 10, 20, 'S'],
+      moraleSupport: [0, 0.025, 0.05, 'S'],
+      routShock: [0, 0.025, 0.05, 'S'],
+      reliefStamina: [0.2, 0.3, 0.5, 'S'],
+    },
   }),
 };
 

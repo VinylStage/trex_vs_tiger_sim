@@ -173,6 +173,18 @@ describe('share link v3', () => {
     expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
   });
 
+  it('round-trips the raptor pack on side A, pack-buff ranges included', () => {
+    const c = sanitizeFreeConfig({
+      sides: [
+        { species: 'raptor', count: 12, buff: { routShock: { min: 0, mode: 0.01, max: 0.04 } } },
+        { species: 'trex', count: 1 },
+      ],
+    });
+    expect(c.sides[0].species).toBe('raptor');
+    expect(c.sides[0].buff.routShock).toEqual({ min: 0, mode: 0.01, max: 0.04 });
+    expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
+  });
+
   it('carries v: 3 and the mode marker, and never an empty hash', () => {
     const json = JSON.parse(
       Buffer.from(encodeFreeConfig(defaultFreeConfig()), 'base64url').toString(),

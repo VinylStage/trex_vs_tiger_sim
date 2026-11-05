@@ -100,4 +100,11 @@ export const SPECIES_GUIDE: Readonly<Record<FreeSpeciesId, SpeciesGuideEntry>> =
       en: 'A large grazer of African rivers and lakes that rests in the water by day and feeds on land at night. Its mass and gait (it trots even when running fast, with brief moments when all four feet are off the ground) come from the literature; its top speed and bite force have no verified measurement and are assumed.',
     },
   },
+  raptor: {
+    scientific: 'Utahraptor ostrommaysi',
+    note: {
+      ko: '전기 백악기 북아메리카(지금의 유타)에 살았던 가장 큰 드로마이오사우루스류(랩터) 공룡으로, 뒷발 둘째 발가락에 큰 낫 모양 발톱이 있습니다. 몸무게는 화석 연구의 값이고, 무는 힘은 가까운 종의 연구에서 유도했으며, 속도는 추정입니다. 여러 마리의 화석이 한곳에서 함께 발견되어 무리를 지었다고 보지만, 함께 사냥했는지는 논쟁 중이므로 무리 버프 값은 모두 추정입니다.',
+      en: 'The largest known dromaeosaurid (raptor), from Early Cretaceous North America (today’s Utah), with a large sickle-shaped claw on the second toe. Its mass comes from fossil studies, its bite is derived from a close relative and its speed is assumed. Fossils of several were found together, so it probably lived in groups, but whether raptors hunted together is debated, so every pack-buff value is an assumption.',
+    },
+  },
 };

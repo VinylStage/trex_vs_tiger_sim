@@ -30,6 +30,7 @@ Every number below is a statement about the two models under their assumptions, 
 12. [Reproducing](#12-reproducing)
 13. [Polar bear (#184)](#13-polar-bear-184)
 14. [Hippopotamus (#186)](#14-hippopotamus-186)
+15. [Raptor pack (#188)](#15-raptor-pack-188)
 
 ## 1. Questions
 
@@ -696,3 +697,157 @@ Generated from docs/research/calibration-hippo.json (commit f70371c, v22.22.0).
 **Bite anchor review (#210, 2026-11-05).** The `strikeForce` row (4 / 8 / 15 kN **S**, mode from the unpublished ~8.1 kN television figure) was re-researched because it is one of the two largest swings above. No primary record, peer-reviewed measurement or biomechanical estimate was found ([research/SPECIES.md §5.18](SPECIES.md#518-hippopotamus-heavy-batch-a-shipped-in-the-free-model-186)), so the range and mode are kept. No input changed, so this section was not re-run: every number above, `calibration-hippo.json` and the `elephant-hippo` fixture row stand as measured for #186.
 
 The tables in this section: generated from docs/research/calibration-hippo.json (commit f70371c, v22.22.0).
+
+## 15. Raptor pack (#188)
+
+Measured 2026-11-05 on `main` at `68cf53e` plus the #188 change (engines unchanged, model version `mv` 1). The raptor pack (`raptor`, _Utahraptor_ by default) has no legacy entry (docs/SPECIES.md §4.13) and runs on the free engine only. It is the first social species added this way, so besides the add-a-species checks of [RENEWAL-1.0 §5.3](../design/RENEWAL-1.0.md#53-add-a-species-pipeline-definition-of-done) step 5 this section carries the rout check (§3.2, R4) against one _T. rex_, a comparison with the lion at the same counts, its flight under the current model (#169, not changed here) and a one-at-a-time sensitivity sweep of every **S** value, the six pack-buff traits included, on preset #18. Raw data: `calibration-raptor.json` (section `raptor`); §1–§14 and their files are unchanged. Method and metrics as in §2: seed 20261019, every other input at its preset.
+
+### Mirror matches
+
+| Mirror                          | Runs |           A wins |           B wins | Draws | A − B (pp, paired) | 0 inside? | Median s |
+| ------------------------------- | ---: | ---------------: | ---------------: | ----: | -----------------: | --------: | -------: |
+| _Utahraptor_ 1 v _Utahraptor_ 1 | 1000 | 51.3 (48.2–54.4) | 48.2 (45.1–51.3) |   0.5 | +3.1 (-3.1 to 9.3) |       yes |       40 |
+| _Utahraptor_ 3 v _Utahraptor_ 3 | 1000 | 48.6 (45.5–51.7) | 51.2 (48.1–54.3) |   0.2 | -2.6 (-8.8 to 3.6) |       yes |       41 |
+| _Utahraptor_ 8 v _Utahraptor_ 8 | 1000 | 50.4 (47.3–53.5) | 49.5 (46.4–52.6) |   0.1 | +0.9 (-5.3 to 7.1) |       yes |       41 |
+
+### Count sweeps
+
+Raptors against one _T. rex_ (preset #18), one buffalo and one hippo, the roster's nearest stand-ins for the 1–2 t iguanodonts _Utahraptor_ lived with (side A varies). "Step" flags a drop in the varying side's share larger than both intervals allow, the §6 rule.
+
+Against one _T. rex_:
+
+| Match-up                     | Runs |           A wins |             B wins | Draws | Median s | Rout % | Step |
+| ---------------------------- | ---: | ---------------: | -----------------: | ----: | -------: | -----: | ---: |
+| _Utahraptor_ 1 v _T. rex_ 1  |  500 |    0.0 (0.0–0.8) | 100.0 (99.2–100.0) |   0.0 |       46 |   37.8 |      |
+| _Utahraptor_ 2 v _T. rex_ 1  |  500 |    0.0 (0.0–0.8) | 100.0 (99.2–100.0) |   0.0 |       79 |   50.1 |   ok |
+| _Utahraptor_ 4 v _T. rex_ 1  |  500 |    0.0 (0.0–0.8) |  99.8 (98.9–100.0) |   0.2 |      123 |   59.4 |   ok |
+| _Utahraptor_ 6 v _T. rex_ 1  |  500 |    1.6 (0.8–3.1) |   98.4 (96.9–99.2) |   0.0 |      159 |   68.4 |   ok |
+| _Utahraptor_ 8 v _T. rex_ 1  |  500 |    3.2 (2.0–5.1) |   96.8 (94.9–98.0) |   0.0 |      167 |   74.1 |   ok |
+| _Utahraptor_ 10 v _T. rex_ 1 |  500 |    5.0 (3.4–7.3) |   95.0 (92.7–96.6) |   0.0 |      172 |   79.5 |   ok |
+| _Utahraptor_ 12 v _T. rex_ 1 |  500 |    7.0 (5.1–9.6) |   93.0 (90.4–94.9) |   0.0 |      160 |   83.2 |   ok |
+| _Utahraptor_ 16 v _T. rex_ 1 |  500 |  10.6 (8.2–13.6) |   89.4 (86.4–91.8) |   0.0 |      138 |   86.6 |   ok |
+| _Utahraptor_ 20 v _T. rex_ 1 |  500 |  12.0 (9.4–15.1) |   88.0 (84.9–90.6) |   0.0 |      123 |   89.8 |   ok |
+| _Utahraptor_ 25 v _T. rex_ 1 |  500 | 14.4 (11.6–17.7) |   85.6 (82.3–88.4) |   0.0 |      109 |   91.9 |   ok |
+| _Utahraptor_ 30 v _T. rex_ 1 |  500 | 17.0 (14.0–20.5) |   83.0 (79.5–86.0) |   0.0 |       99 |   93.5 |   ok |
+
+Against one buffalo:
+
+| Match-up                   | Runs |           A wins |           B wins | Draws | Median s | Rout % | Step |
+| -------------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: | ---: |
+| _Utahraptor_ 1 v buffalo 1 |  500 |   8.4 (6.3–11.2) | 91.6 (88.8–93.7) |   0.0 |       49 |  100.0 |      |
+| _Utahraptor_ 2 v buffalo 1 |  500 | 40.4 (36.2–44.8) | 59.6 (55.2–63.8) |   0.0 |       55 |  100.0 |   ok |
+| _Utahraptor_ 3 v buffalo 1 |  500 | 73.4 (69.4–77.1) | 26.6 (22.9–30.6) |   0.0 |       52 |  100.0 |   ok |
+| _Utahraptor_ 4 v buffalo 1 |  500 | 86.6 (83.3–89.3) | 13.4 (10.7–16.7) |   0.0 |       48 |  100.0 |   ok |
+| _Utahraptor_ 6 v buffalo 1 |  500 | 97.0 (95.1–98.2) |    3.0 (1.8–4.9) |   0.0 |       44 |  100.0 |   ok |
+| _Utahraptor_ 8 v buffalo 1 |  500 | 98.0 (96.4–98.9) |    2.0 (1.1–3.6) |   0.0 |       42 |   99.8 |   ok |
+
+Against one hippo:
+
+| Match-up                 | Runs |           A wins |             B wins | Draws | Median s | Rout % | Step |
+| ------------------------ | ---: | ---------------: | -----------------: | ----: | -------: | -----: | ---: |
+| _Utahraptor_ 1 v hippo 1 |  500 |    0.0 (0.0–0.8) | 100.0 (99.2–100.0) |   0.0 |       50 |   99.4 |      |
+| _Utahraptor_ 2 v hippo 1 |  500 |    5.4 (3.7–7.7) |   94.6 (92.3–96.3) |   0.0 |       93 |   98.7 |   ok |
+| _Utahraptor_ 3 v hippo 1 |  500 | 13.0 (10.3–16.2) |   87.0 (83.8–89.7) |   0.0 |      201 |   97.9 |   ok |
+| _Utahraptor_ 4 v hippo 1 |  500 | 19.8 (16.5–23.5) |   80.2 (76.5–83.5) |   0.0 |      243 |   97.0 |   ok |
+| _Utahraptor_ 6 v hippo 1 |  500 | 38.2 (34.0–42.5) |   61.8 (57.5–66.0) |   0.0 |      266 |   95.6 |   ok |
+| _Utahraptor_ 8 v hippo 1 |  500 | 48.4 (44.0–52.8) |   51.2 (46.8–55.6) |   0.4 |      249 |   95.4 |   ok |
+
+### Side swaps
+
+| Pair                                                          | Runs | First order: A wins | Swapped: same species wins |    Difference (pp) | 0 inside? |
+| ------------------------------------------------------------- | ---: | ------------------: | -------------------------: | -----------------: | --------: |
+| _Utahraptor_ 1 v polar bear 1 / polar bear 1 v _Utahraptor_ 1 | 1000 |    26.0 (23.4–28.8) |           28.0 (25.3–30.9) | -2.0 (-5.9 to 1.9) |       yes |
+| _Utahraptor_ 12 v _T. rex_ 1 / _T. rex_ 1 v _Utahraptor_ 12   | 1000 |       7.1 (5.7–8.9) |              8.0 (6.5–9.8) | -0.9 (-3.2 to 1.4) |       yes |
+
+### Next to animals of similar mass and the other social hunters
+
+Its describers compared _Utahraptor_ with a polar bear in size (via [WP: Utahraptor]); the polar bear row is in the side swaps above.
+
+| Match-up                      | Runs |           A wins |           B wins | Draws | Median s | Rout % |
+| ----------------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: |
+| _Utahraptor_ 1 v lion 1       | 1000 | 84.9 (82.5–87.0) | 14.9 (12.8–17.2) |   0.2 |       31 |   99.0 |
+| _Utahraptor_ 1 v tiger 1      | 1000 | 87.0 (84.8–88.9) | 12.8 (10.9–15.0) |   0.2 |       28 |  100.0 |
+| _Utahraptor_ 1 v brown bear 1 | 1000 | 64.1 (61.1–67.0) | 35.4 (32.5–38.4) |   0.5 |       52 |  100.0 |
+| _Utahraptor_ 3 v lion 3       | 1000 | 79.9 (77.3–82.3) | 19.7 (17.4–22.3) |   0.4 |       38 |   99.4 |
+| _Utahraptor_ 3 v buffalo 1    | 1000 | 70.7 (67.8–73.4) | 29.3 (26.6–32.2) |   0.0 |       53 |  100.0 |
+| lion 3 v buffalo 1            | 1000 | 41.9 (38.9–45.0) | 57.8 (54.7–60.8) |   0.3 |      200 |   84.7 |
+| _Utahraptor_ 1 v hyena 4      | 1000 | 52.7 (49.6–55.8) | 47.1 (44.0–50.2) |   0.2 |       78 |   88.1 |
+
+### Rout check against one _T. rex_
+
+Raptors and lions in the same numbers against one _T. rex_. The rout share is the losing side's fled ÷ (fled + incapacitated) over decided runs; the preset limit is 90 % (docs/PRESETS.md).
+
+| Match-up                     | Runs |           A wins |           B wins | Draws | Median s | Rout % |
+| ---------------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: |
+| _Utahraptor_ 8 v _T. rex_ 1  |  500 |    3.2 (2.0–5.1) | 96.8 (94.9–98.0) |   0.0 |      167 |   74.1 |
+| lion 8 v _T. rex_ 1          |  500 |    2.0 (1.1–3.6) | 97.0 (95.1–98.2) |   1.0 |      197 |   66.1 |
+| _Utahraptor_ 12 v _T. rex_ 1 |  500 |    7.0 (5.1–9.6) | 93.0 (90.4–94.9) |   0.0 |      160 |   83.2 |
+| lion 12 v _T. rex_ 1         |  500 |    3.6 (2.3–5.6) | 96.2 (94.1–97.6) |   0.2 |      161 |   79.1 |
+| _Utahraptor_ 16 v _T. rex_ 1 |  500 |  10.6 (8.2–13.6) | 89.4 (86.4–91.8) |   0.0 |      138 |   86.6 |
+| lion 16 v _T. rex_ 1         |  500 |    5.8 (4.1–8.2) | 94.0 (91.6–95.8) |   0.2 |      143 |   85.0 |
+| _Utahraptor_ 20 v _T. rex_ 1 |  500 |  12.0 (9.4–15.1) | 88.0 (84.9–90.6) |   0.0 |      123 |   89.8 |
+| lion 20 v _T. rex_ 1         |  500 |   9.2 (7.0–12.1) | 90.6 (87.7–92.9) |   0.2 |      130 |   87.2 |
+| _Utahraptor_ 30 v _T. rex_ 1 |  500 | 17.0 (14.0–20.5) | 83.0 (79.5–86.0) |   0.0 |       99 |   93.5 |
+| lion 30 v _T. rex_ 1         |  500 | 17.4 (14.3–21.0) | 82.6 (79.0–85.7) |   0.0 |      109 |   90.0 |
+
+### Much larger opponents
+
+| Match-up                    | Runs |        A wins |             B wins | Draws | Median s | Rout % |
+| --------------------------- | ---: | ------------: | -----------------: | ----: | -------: | -----: |
+| _Utahraptor_ 1 v _T. rex_ 1 | 1000 | 0.0 (0.0–0.4) | 100.0 (99.6–100.0) |   0.0 |       46 |   36.8 |
+| _Utahraptor_ 1 v elephant 1 | 1000 | 0.0 (0.0–0.4) | 100.0 (99.6–100.0) |   0.0 |       55 |   87.1 |
+| _Utahraptor_ 1 v mammoth 1  | 1000 | 0.0 (0.0–0.4) | 100.0 (99.6–100.0) |   0.0 |       55 |   79.4 |
+
+### One-at-a-time sensitivity
+
+Preset #18 (_Utahraptor_ 12 v _T. rex_ 1), 1,000 runs, each **S** value pinned at its preset min and then its max, every other input at its preset. The two **D** rows (`strikeForce`, `latchDps`) and the **L** mass are not swept.
+
+| Trait (S)         |        Range |    A wins at min |    A wins at max | Swing (pp) | Median s (min / max) |
+| ----------------- | -----------: | ---------------: | ---------------: | ---------: | -------------------: |
+| all at preset     |            – |    7.1 (5.7–8.9) |    7.1 (5.7–8.9) |          – |                  156 |
+| `turnRate`        |     60 – 200 |    1.4 (0.8–2.3) |  11.6 (9.8–13.7) |      +10.2 |            141 / 168 |
+| `sprintSpeed`     |     6 – 10.5 |    6.1 (4.8–7.8) |    6.2 (4.9–7.9) |       +0.1 |            183 / 145 |
+| `cruiseSpeed`     |      1.5 – 4 |    4.0 (3.0–5.4) |  11.2 (9.4–13.3) |       +7.2 |            149 / 174 |
+| `sprintEndurance` |      10 – 40 |    2.8 (1.9–4.0) |    6.7 (5.3–8.4) |       +3.9 |            300 / 127 |
+| `recoveryTime`    |     30 – 120 |    5.2 (4.0–6.8) |   9.1 (7.5–11.0) |       +3.9 |            123 / 201 |
+| `strikeLethality` |       4 – 12 |    5.5 (4.2–7.1) |   8.9 (7.3–10.8) |       +3.4 |            157 / 156 |
+| `strikeInterval`  |      1 – 2.5 |    7.5 (6.0–9.3) |    6.5 (5.1–8.2) |       -1.0 |            157 / 159 |
+| `strikeReach`     |      1.4 – 2 |    6.3 (5.0–8.0) |    7.7 (6.2–9.5) |       +1.4 |            162 / 159 |
+| `strikeArc`       |      30 – 70 |    6.3 (5.0–8.0) |    7.9 (6.4–9.7) |       +1.6 |            161 / 155 |
+| `strikeAccuracy`  |    0.3 – 0.6 |    6.4 (5.0–8.1) |    7.6 (6.1–9.4) |       +1.2 |            159 / 155 |
+| `latchChance`     |    0.1 – 0.5 |   9.3 (7.7–11.3) |    6.5 (5.1–8.2) |       -2.8 |            202 / 144 |
+| `latchEndurance`  |      15 – 60 |    6.5 (5.1–8.2) |    6.8 (5.4–8.5) |       +0.3 |            197 / 144 |
+| `shakeRate`       |    0.1 – 0.5 |    7.1 (5.7–8.9) |    7.1 (5.7–8.9) |       +0.0 |            156 / 156 |
+| `bleed`           | 0.001 – 0.01 |    1.3 (0.8–2.2) | 15.5 (13.4–17.9) |      +14.2 |            157 / 154 |
+| `morale`          |    0.3 – 0.8 |    0.0 (0.0–0.4) | 29.3 (26.6–32.2) |      +29.3 |             51 / 275 |
+| `moraleLoss`      |  0.03 – 0.15 |  11.1 (9.3–13.2) |    4.0 (3.0–5.4) |       -7.1 |            194 / 133 |
+| `cohesionRadius`  |     30 – 100 |  10.2 (8.5–12.2) |    6.5 (5.1–8.2) |       -3.7 |            184 / 151 |
+| `groupLatchGain`  |     0 – 0.25 |    6.8 (5.4–8.5) |    7.3 (5.8–9.1) |       +0.5 |            162 / 153 |
+| `focusBonus`      |       0 – 20 |    7.1 (5.7–8.9) |    7.1 (5.7–8.9) |       +0.0 |            156 / 156 |
+| `moraleSupport`   |     0 – 0.05 |    7.3 (5.8–9.1) |    7.4 (5.9–9.2) |       +0.1 |            161 / 160 |
+| `routShock`       |     0 – 0.05 | 19.8 (17.4–22.4) |    1.9 (1.2–2.9) |      -17.9 |            254 / 108 |
+| `reliefStamina`   |    0.2 – 0.5 |    7.5 (6.0–9.3) |    7.5 (6.0–9.3) |       +0.0 |            157 / 157 |
+
+Generated from docs/research/calibration-raptor.json (commit 68cf53e, v22.22.0).
+
+### Verdicts
+
+| Check (RENEWAL-1.0 §5.3 step 5)  | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mirror 50/50 within the interval | **Pass.** 1 v 1: +3.1 pp (−3.1 to 9.3); 3 v 3: −2.6 pp (−8.8 to 3.6); 8 v 8, pack buff active on both sides: +0.9 pp (−5.3 to 7.1), paired interval.                                                                                                                                                                                                                                                                                                                                                                    |
+| Win share monotonic in count     | **Pass.** No drop in any sweep. Against one _T. rex_ the raptors' share climbs from 0 % (1–4) to 7.0 % at 12 and 17.0 % at 30; three raptors beat one buffalo (73.4 %); eight are even with one hippo (48.4 %).                                                                                                                                                                                                                                                                                                         |
+| Side order                       | **Pass.** Both swaps agree within the interval (−2.0 and −0.9 pp).                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Documented interactions          | **None to check.** _Utahraptor_ shares no time with any other species in the roster, and its prey (iguanodonts, ankylosaurs) is not in it. The qualitative reading of the sources holds: a single raptor does not take an animal several times its mass (0 % against a hippo or any much larger opponent), a few together take a 600 kg buffalo, which fits a group predator of 1–2 t prey (Kirkland et al., via [WP: Utahraptor]).                                                                                     |
+| Rout check for social species    | **Pass at the preset count.** Preset #18 at 12 v 1: rout share 83.2 % here (500 runs) and 83.3 % in the fixture (200 runs), median 155–160 s, both inside the limits without an override. The rout share rises with the head count and crosses 90 % at about 20–25 raptors (89.8 % at 20, 91.9 % at 25). Lions in the same numbers behave the same way, 1–4 pp lower (79.1 % at 12, 90.0 % at 30), so the raptor pack does not cascade more than the existing social carnivores; the rise is the model-wide R4 pattern. |
+
+**The cooperation lever.** The pack-buff rows are **S** between no cooperation and the lion's mode (docs/SPECIES.md §11.4), because pack hunting is contested. Only one of them matters much on preset #18: rout contagion (`routShock`) swings the raptors' share by −17.9 pp, from 19.8 % at 0 (no contagion, median 254 s) to 1.9 % at 0.05 (the lion's mode, median 108 s). Pinned at the lion's mode it lifts the preset's rout share to 88.8 %, just under the limit, against 69.6 % with no contagion. A first draft with the lion's own row (0 / 0.05 / 0.1) gave 4.0 % and a rout share of 89.2 % at 200 runs; that exploration is not part of the JSON. `focusBonus`, `moraleSupport`, `groupLatchGain` and `reliefStamina` barely move it against a single target that cannot be ridden off. `cohesionRadius` (−3.7 pp) matters a little through the contagion range.
+
+**Other sensitivities.** Individual morale is the largest swing (+29.3 pp over 0.3–0.8): at 0.3 the pack flees at once (median 51 s), at 0.8 it wins 29 %. Bleed (+14.2 pp), turn rate (+10.2 pp), cruise speed (+7.2 pp) and morale loss (−7.1 pp) follow. Sprint speed, the value the design listed as L (Sellers & Manning 2007 modelled _Velociraptor_, not _Utahraptor_, so it is **S** here), does not matter (+0.1 pp over 6–10.5 m/s). A higher latch chance slightly lowers the share (−2.8 pp): riders sit under the host's strikes for longer.
+
+**Sanity.** One 400 kg raptor beats one lion (85 %), one tiger (87 %) and one brown bear (64 %) and loses to one polar bear (26–28 %; 450 kg at the mode, with a wider strike arc); three raptors beat three lions (80 %). The derived bite (2.15 kN at the mode) is above the lion's 1.6 kN and the raptor has more than twice the lion's mass (HP), so its lead over the big cats follows from the two **D**/**L** rows rather than from an **S** value. No field record exists to check it against.
+
+**Flight (#169).** The flight model is unchanged; this records how the raptor behaves under it. A lone raptor against _T. rex_ flees in only 37 % of its losses (it is incapacitated in most), against the elephant and the mammoth in 79–87 %. The per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §15 should be re-run then.
+
+**Preset.** `raptors-trex` (design §6 #18): raptors 7.5 %, median 154.6 s, rout share 83.3 % in the fixture (200 runs). Not close; ready in Simple mode with no override. The design's 12 v 1 proposal is kept: more raptors win more (17 % at 30) but rout more than the limit allows from about 25, so the matchup cannot be made close within the rout check under `mv` 1.
+
+The tables in this section: generated from docs/research/calibration-raptor.json (commit 68cf53e, v22.22.0).

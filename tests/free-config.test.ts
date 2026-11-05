@@ -106,7 +106,7 @@ describe('sanitizeFreeConfig', () => {
     expect(m.sides[0].params).toEqual(m.sides[1].params);
   });
 
-  it.each(['polarBear', 'hippo'] as const)(
+  it.each(['polarBear', 'hippo', 'raptor'] as const)(
     'accepts a species without a legacy entry (%s), preset from its own sheet',
     (id) => {
       const c = sanitizeFreeConfig({ sides: [{ species: id }, { species: 'tiger' }] });

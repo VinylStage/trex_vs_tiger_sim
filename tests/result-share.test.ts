@@ -473,7 +473,7 @@ describe('text share', () => {
   it('keys the text-share symbols by free species id', () => {
     for (const id of Object.keys(SPECIES_EMOJI)) expect(isFreeSpecies(id), id).toBe(true);
     const withFallback = FREE_SPECIES_IDS.filter((id) => !Object.hasOwn(SPECIES_EMOJI, id));
-    expect(withFallback).toEqual(['mammoth', 'homoErectus']);
+    expect(withFallback).toEqual(['mammoth', 'homoErectus', 'raptor']);
     // A species without a legacy entry gets its symbol the same way (docs/SPECIES.md §11.5).
     expect(speciesEmoji('polarBear', 'heavy')).toBe('🐻‍❄️');
     expect(speciesEmoji('polarBear', 'pack')).toBe('🐻‍❄️');

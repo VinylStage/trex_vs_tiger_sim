@@ -2,10 +2,10 @@
 
 > **한국어 요약**
 >
-> - 쉬운 모드에서 고를 대진 프리셋을 `src/sim/free/presets.ts`에 모았습니다. 설계 문서 [RENEWAL-1.0.md §6](design/RENEWAL-1.0.md#6-simple-mode-preset-list)의 목록 가운데 두 종이 모두 지금 있는 13개만 넣었고(북극곰 vs 불곰은 #184, 코끼리 vs 하마는 #186에서 추가), 나머지 10개는 종이 추가될 때 들어옵니다(아래 [대기 중인 프리셋](#presets-waiting-for-a-species)).
+> - 쉬운 모드에서 고를 대진 프리셋을 `src/sim/free/presets.ts`에 모았습니다. 설계 문서 [RENEWAL-1.0.md §6](design/RENEWAL-1.0.md#6-simple-mode-preset-list)의 목록 가운데 두 종이 모두 지금 있는 14개만 넣었고(북극곰 vs 불곰은 #184, 코끼리 vs 하마는 #186, 랩터 무리 vs 티라노는 #188에서 추가), 나머지 9개는 종이 추가될 때 들어옵니다(아래 [대기 중인 프리셋](#presets-waiting-for-a-species)).
 > - 프리셋마다 자유 대결 엔진으로 같은 시드(20261019)와 같은 실행 수(200회)로 승률, 전투 시간 중앙값, 진 쪽의 이탈 비율을 재서 `tests/fixtures/preset-shares.json`에 기록합니다. 테스트가 매번 다시 계산해 기록과 비트 단위로 같은지 확인하므로, 모델이 바뀌면 이 파일의 차이로 드러납니다.
 > - 이탈 점검: 전투 시간 중앙값이 30초 미만이거나 진 쪽의 이탈 비율이 90%를 넘으면 실패입니다(모두 **S**). 문서로 남긴 예외(override)가 있으면 통과합니다. 예외도 받지 못한 프리셋은 보류(hold)되어 쉬운 모드에 나오지 않습니다.
-> - 측정 결과 1:1 대결은 진 쪽이 거의 항상 이탈로 끝납니다(100%). 1:1 다섯 개와 불곰 vs 늑대 무리는 근거를 적은 예외로 통과하고, 사자 무리 vs 호랑이 다섯, 티라노 vs 호모 에렉투스 100, 사자 vs 하이에나는 보류입니다. 보류를 풀지는 소유자가 정합니다(R4).
+> - 측정 결과 1:1 대결은 진 쪽이 거의 항상 이탈로 끝납니다(100%). 1:1 다섯 개와 불곰 vs 늑대 무리는 근거를 적은 예외로 통과하고, 랩터 무리 vs 티라노(12 대 1)는 예외 없이 통과하며, 사자 무리 vs 호랑이 다섯, 티라노 vs 호모 에렉투스 100, 사자 vs 하이에나는 보류입니다. 보류를 풀지는 소유자가 정합니다(R4).
 > - 프리셋 이름, "왜?" 문구, 예외와 보류 사유는 금지어 테스트를 거칩니다. 잔혹하거나 죽음을 뜻하는 말, 베팅 용어, 작품·상표·방송 플랫폼 이름, 조회수를 쓰지 않습니다.
 
 Source of truth: `src/sim/free/presets.ts`, `tests/presets.test.ts` and `tests/fixtures/preset-shares.json`. The design is [RENEWAL-1.0.md §3.2 and §6](design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode), with owner decision R4 (b): keep the model for 1.0 and contain the mass-rout cascade.
@@ -65,7 +65,7 @@ The `close` tag is never chosen by hand: for every preset, held or not, the test
 
 ## Fixture
 
-Measured on `main` at 0e5bfd8 plus this change; the engine is unchanged. The `polar-bear-brown-bear` row was appended with the polar bear (#184) and the `elephant-hippo` row with the hippo (#186); the earlier rows did not change. `tests/fixtures/preset-shares.json` is authoritative; update this table with it.
+Measured on `main` at 0e5bfd8 plus this change; the engine is unchanged. The `polar-bear-brown-bear` row was appended with the polar bear (#184), the `elephant-hippo` row with the hippo (#186) and the `raptors-trex` row with the raptor pack (#188); the earlier rows did not change. `tests/fixtures/preset-shares.json` is authoritative; update this table with it.
 
 | Preset (`id`)            | Sides                         | A wins | B wins | Draws |  Median | Rout share | Close | Status   |
 | ------------------------ | ----------------------------- | -----: | -----: | ----: | ------: | ---------: | ----- | -------- |
@@ -82,11 +82,13 @@ Measured on `main` at 0e5bfd8 plus this change; the engine is unchanged. The `po
 | `lions-hyenas`           | lion 3 v spotted hyena 10     | 37.5 % | 62.5 % |   0 % |  25.6 s |     98.2 % | yes   | hold     |
 | `polar-bear-brown-bear`  | polar bear 1 v brown bear 1   | 82.0 % | 17.5 % | 0.5 % |  70.9 s |      100 % | no    | override |
 | `elephant-hippo`         | elephant 1 v hippo 1          | 81.5 % | 18.5 % |   0 % | 119.5 s |     99.5 % | no    | override |
+| `raptors-trex`           | _Utahraptor_ 12 v _T. rex_ 1  |  7.5 % | 92.5 % |   0 % | 154.6 s |     83.3 % | no    | passes   |
 
 What the numbers show:
 
 - **One on one, the loser flees in every decided run.** Under the free morale rule (FREE-MATCHUPS.md §4.5) a lone animal routs before it is incapacitated, so the rout share of a duel is 100 %. Design §3.2 expected the check to catch the large social groups (§6 names #2, #6, #10, #11 and #18). It also trips every duel.
 - **A non-social crowd does not cascade.** 100 tigers against 10 _T. rex_ end with 2.2 % fled: without the pack layer there is no morale contagion.
+- **The raptor pack passes unaided.** `raptors-trex` is the first social preset added after the check: its losing raptors flee in 83.3 % of cases, under the 90 % limit, because its cooperation effects (rout contagion included) are set between none and the lion's mode ([SPECIES.md §11.4](SPECIES.md#114-pack-buff-traits)). It is not close: the design's 12 v 1 proposal was kept, since larger packs win more but rout more (CALIBRATION.md §15: 30 raptors win 17.0 % with a rout share of 93.5 %).
 - **Two passes are narrow.** `elephants-pride` (89.1 %) and `mammoth-wolves` (89.8 %) sit just under the 90 % limit; a model change may tip them.
 - **Free shares differ from the classic ones in §6.** `bear-wolf-pack` (classic: bear 57.6 %) and `buffalo-pride` (classic: lions 58.9 %) are not close in the free model, so neither carries `close`.
 
@@ -116,7 +118,6 @@ These design §6 presets stay out of the registry until their species ship (desi
 | 13  | 티라노 vs 트리케라톱스 / T. rex vs _Triceratops_                   | _Triceratops_ (batch A′)                              |
 | 14  | 코끼리 vs 코뿔소 / Elephant vs rhino                               | white rhinoceros (batch A)                            |
 | 15  | 하마 vs 코뿔소 / Hippo vs rhino                                    | white rhinoceros (batch A; the hippo shipped in #186) |
-| 18  | 랩터 무리 vs 티라노 / Raptor pack vs T. rex                        | raptor pack (batch A)                                 |
 | 19  | 티라노 vs 카피바라 천 마리 / T. rex vs a thousand capybaras        | capybara (batch B, R15)                               |
 | 20  | 북극곰 vs 펭귄 이천 마리 / Polar bear vs two thousand penguins     | polar bear and penguin (batch C)                      |
 | 21  | 벌꿀오소리 vs 사자 셋 / Honey badger vs three lions                | honey badger (batch C)                                |

@@ -99,8 +99,8 @@ describe('species registries behind the guide', () => {
     expect(Object.keys(SPECIES_GUIDE).sort()).toEqual([...FREE_SPECIES_IDS].sort());
   });
 
-  it('tags as what-if exactly the species that never met any other (T. rex today)', () => {
-    expect(GUIDE_SPECIES.filter(isWhatIf)).toEqual(['trex']);
+  it('tags as what-if exactly the species that never met any other (T. rex, Utahraptor)', () => {
+    expect(GUIDE_SPECIES.filter(isWhatIf)).toEqual(['trex', 'raptor']);
     // The same answer as the classic matchup badge: every T. rex pairing is "never met".
     for (const p of PACK_SPECIES_IDS) expect(matchupClass('trex', p)).toBe('neverMet');
     for (const id of GUIDE_SPECIES.filter((x) => !isWhatIf(x))) {

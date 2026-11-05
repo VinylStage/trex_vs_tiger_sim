@@ -23,6 +23,8 @@
 //                 brown bear and tiger comparisons, flight, one-at-a-time sensitivity
 //   hippo         the same checks for the hippopotamus (#186), with the elephant (preset #16)
 //                 as the reference opponent
+//   raptor        the same checks for the raptor pack (Utahraptor, #188), with the rout check
+//                 against one T. rex (preset #18) and the pack-buff traits in the sensitivity
 
 import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -191,10 +193,15 @@ function runClassic({ a, b, na, nb, runs, morale = true }, tactic = 'flank') {
   return record(`classic-${tactic}`, c.runs, rows, [c.heavyCount, c.packCount]);
 }
 
-function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED, paramsA }) {
+function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED, paramsA, buffA }) {
   const c = freeConfig.sanitizeFreeConfig({
     sides: [
-      { species: a, count: na, ...(paramsA === undefined ? {} : { params: paramsA }) },
+      {
+        species: a,
+        count: na,
+        ...(paramsA === undefined ? {} : { params: paramsA }),
+        ...(buffA === undefined ? {} : { buff: buffA }),
+      },
       { species: b, count: nb },
     ],
     runs,
@@ -223,7 +230,7 @@ function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED, para
 }
 
 const label = (m) =>
-  `${m.a} ${m.na} v ${m.b} ${m.nb}${m.morale === false ? ' (morale off)' : ''}${m.globals ? ' (globals)' : ''}${m.paramsA ? ` (${Object.keys(m.paramsA).join(', ')} pinned)` : ''}`;
+  `${m.a} ${m.na} v ${m.b} ${m.nb}${m.morale === false ? ' (morale off)' : ''}${m.globals ? ' (globals)' : ''}${m.paramsA ? ` (${Object.keys(m.paramsA).join(', ')} pinned)` : ''}${m.buffA ? ` (${Object.keys(m.buffA).join(', ')} pinned)` : ''}`;
 
 function log(line) {
   stdout.write(`${line}\n`);
@@ -582,6 +589,99 @@ sections['hippo'] = () => {
     return { trait: k, range: t.range, low: at(t.range.min), high: at(t.range.max) };
   });
   return { mirrors, sweeps, pairs, sanity, flight, sensitivity: { base, traits: sensitivity } };
+};
+
+// The raptor pack (#188), Utahraptor by default: the first social species without a legacy entry.
+// Side A is the raptor, except in the reference rows and the second order of each swap. The rout
+// check compares the raptor pack's rout share against one T. rex with the lion's at the same
+// counts, and the sensitivity rows use preset #18 (raptor 12 v T. rex 1) from the raptors' side,
+// pinning the six pack-buff traits as well as every S individual trait.
+sections['raptor'] = () => {
+  const one = (m) => {
+    const free = runFree(m);
+    logRow(label(m), free);
+    return { match: m, free };
+  };
+  const R = 'raptor';
+  const mirrors = [
+    { a: R, b: R, na: 1, nb: 1, runs: runsOf(1000) },
+    { a: R, b: R, na: 3, nb: 3, runs: runsOf(1000) },
+    { a: R, b: R, na: 8, nb: 8, runs: runsOf(1000) },
+  ].map((m) => {
+    const r = one(m);
+    return { ...r, diff: pairedDiffInterval(r.free.a, r.free.b, r.free.runs) };
+  });
+  // Count sweeps, side A varies: raptors against one T. rex (preset #18), one buffalo and one
+  // hippo (the roster's nearest stand-ins for the 1-2 t iguanodonts it lived with).
+  const sweeps = {
+    vsTrex: [1, 2, 4, 6, 8, 10, 12, 16, 20, 25, 30].map((na) =>
+      one({ a: R, b: 'trex', na, nb: 1, runs: runsOf(500) }),
+    ),
+    vsBuffalo: [1, 2, 3, 4, 6, 8].map((na) =>
+      one({ a: R, b: 'buffalo', na, nb: 1, runs: runsOf(500) }),
+    ),
+    vsHippo: [1, 2, 3, 4, 6, 8].map((na) =>
+      one({ a: R, b: 'hippo', na, nb: 1, runs: runsOf(500) }),
+    ),
+  };
+  const pairs = [
+    [
+      { a: R, b: 'polarBear', na: 1, nb: 1 },
+      { a: 'polarBear', b: R, na: 1, nb: 1 },
+    ],
+    [
+      { a: R, b: 'trex', na: 12, nb: 1 },
+      { a: 'trex', b: R, na: 1, nb: 12 },
+    ],
+  ].map(([x, y]) => {
+    const fx = one({ ...x, runs: runsOf(1000) });
+    const fy = one({ ...y, runs: runsOf(1000) });
+    return { first: fx, second: fy, diff: diffInterval(fx.free.a, fy.free.b) };
+  });
+  // Next to animals of similar mass (Kirkland et al. 1993 compared it with a polar bear) and the
+  // other social hunters, one on one and in groups against a buffalo.
+  const sanity = [
+    [R, 'lion', 1, 1],
+    [R, 'tiger', 1, 1],
+    [R, 'brownBear', 1, 1],
+    [R, 'lion', 3, 3],
+    [R, 'buffalo', 3, 1],
+    ['lion', 'buffalo', 3, 1],
+    [R, 'hyena', 1, 4],
+  ].map(([a, b, na, nb]) => one({ a, b, na, nb, runs: runsOf(1000) }));
+  // Rout check (RENEWAL-1.0 §3.2, R4): raptors and lions in the same numbers against one T. rex.
+  const routCheck = [8, 12, 16, 20, 30].flatMap((na) =>
+    [R, 'lion'].map((a) => one({ a, b: 'trex', na, nb: 1, runs: runsOf(500) })),
+  );
+  // Flight (#169, unchanged here): one raptor against much larger single opponents.
+  const flight = [
+    ['trex', 1],
+    ['elephant', 1],
+    ['mammoth', 1],
+  ].map(([b, nb]) => one({ a: R, b, na: 1, nb, runs: runsOf(1000) }));
+  // One-at-a-time sensitivity of every S trait, pack-buff traits included: preset #18 with the
+  // trait pinned at its preset min, then at its max, every other input at its preset.
+  const sp = speciesMod.FREE_SPECIES[R];
+  const pinned = (group, rows) =>
+    Object.entries(rows)
+      .filter(([, t]) => t.evidence === 'S')
+      .map(([k, t]) => ({ group, k, t }));
+  const sTraits = [...pinned('paramsA', sp.traits), ...pinned('buffA', sp.buff)];
+  const preset18 = { a: R, b: 'trex', na: 12, nb: 1, runs: runsOf(1000) };
+  const base = one(preset18);
+  const sensitivity = sTraits.map(({ group, k, t }) => {
+    const at = (v) => one({ ...preset18, [group]: { [k]: { min: v, mode: v, max: v } } });
+    return { trait: k, range: t.range, low: at(t.range.min), high: at(t.range.max) };
+  });
+  return {
+    mirrors,
+    sweeps,
+    pairs,
+    sanity,
+    routCheck,
+    flight,
+    sensitivity: { base, traits: sensitivity },
+  };
 };
 
 // --- run ---
