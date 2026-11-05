@@ -693,4 +693,6 @@ Generated from docs/research/calibration-hippo.json (commit f70371c, v22.22.0).
 
 **Preset.** `elephant-hippo` (design §6 #16): elephant 81.5 %, median 119.5 s, rout share 99.5 % in the fixture (200 runs). Not close; ready in Simple mode through the one-on-one override, as `tiger-bear` and `polar-bear-brown-bear` ([PRESETS.md](../PRESETS.md#overrides-and-holds)). Preset #15 (hippo vs rhino) waits for the white rhinoceros (#187).
 
+**Bite anchor review (#210, 2026-11-05).** The `strikeForce` row (4 / 8 / 15 kN **S**, mode from the unpublished ~8.1 kN television figure) was re-researched because it is one of the two largest swings above. No primary record, peer-reviewed measurement or biomechanical estimate was found ([research/SPECIES.md §5.18](SPECIES.md#518-hippopotamus-heavy-batch-a-shipped-in-the-free-model-186)), so the range and mode are kept. No input changed, so this section was not re-run: every number above, `calibration-hippo.json` and the `elephant-hippo` fixture row stand as measured for #186.
+
 The tables in this section: generated from docs/research/calibration-hippo.json (commit f70371c, v22.22.0).
