@@ -122,7 +122,7 @@
     },
     {
       "id": "hippo",
-      "group": "candidate",
+      "group": "sim",
       "issue": 186,
       "en": "Hippopotamus",
       "ko": "하마",

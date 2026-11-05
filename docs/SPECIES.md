@@ -11,6 +11,7 @@
 > - 종 도감 페이지(`/species/`)는 이 등록부에서 빌드할 때 만들어지며, 다른 어떤 종과도 시대가 겹치지 않는 종(지금은 티라노사우루스)에 "만약에" 표시를 붙입니다(#162).
 > - 자유 대결 모델(#50)용으로 모든 종이 같은 개체 특성 20개와, 사회성 종(사자 · 늑대 · 하이에나 · 호모 에렉투스)만 쓰는 무리 버프 특성 6개를 갖습니다(§11). 기존 역할에 있던 값은 기존 등록부에서 그대로 읽고, 새 값에는 근거 수준과 범위를 달았습니다. 기존 엔진과 v1/v2 결과는 바뀌지 않습니다.
 > - 북극곰(#184)은 기존 등록부에 없는 첫 종으로, 자유 대결에만 나옵니다(§4.11). 자체 근거표에서 바로 만들었고(몸무게 · 속도 L, 몸 반경은 몸무게에서 유도한 D, 나머지 행동 값은 불곰과 같은 S), 추천 대결 "북극곰 vs 불곰"이 쉬운 모드에 나옵니다. 클래식 모드와 기존 결과는 바뀌지 않습니다.
+> - 하마(#186)도 자유 대결 전용입니다(§4.12). 몸무게와 걸음새는 문헌 값(L), 최고 속도와 무는 힘은 검증된 측정이 없어(U) 범위를 단 추정값(S)으로 바꿨고, 몸 반경은 몸무게에서 유도했습니다(D). 추천 대결 "코끼리 vs 하마"가 쉬운 모드에 나오고, "하마 vs 코뿔소"는 흰코뿔소(#187)를 기다립니다.
 
 Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#species`, `/en/parameters/#species`) repeat the presets and are checked against the registry by `tests/pages.test.ts`. The species guide (`/species/`, `/en/species/`, #162) is generated from the registries at build time and checked by `tests/species-page.test.ts` ([PAGES.md](PAGES.md#species-guide)); adding a species to `FREE_SPECIES` adds its section there, and the test then asks for its entry in `src/content/species-guide.ts` (scientific name and a short note, both languages). The research behind this document, including the phase-2 and deferred species and the change plan, is in [research/SPECIES.md](research/SPECIES.md).
 
@@ -61,8 +62,9 @@ Each species carries, besides its eleven preset triangles:
 | _Homo erectus_ (heavy) | `homoErectus` | heavy | 1.9–0.11 Ma  | bare hands      |      1 | Owner request (#47): a hominin on both sides   | Mass **L**; strike force **D**; rest **S** |
 | _Homo erectus_ (pack)  | `homoErectus` | pack  | 1.9–0.11 Ma  | radius 0.3 m    |      — | Many hominins vs one heavy                     | Mass **L**; rest **S**                     |
 | Polar bear             | `polarBear`   | free  | extant       | bite/paw        |    0.5 | Batch A of the 1.0 renewal (#184), §4.11       | Good mass and speed; strike **S**          |
+| Hippopotamus           | `hippo`       | free  | extant       | bite (canines)  |    0.3 | Batch A of the 1.0 renewal (#186), §4.12       | Good mass and gait; speed and bite **S**   |
 
-The polar bear exists in free matchups only (§4.11, §11.5); the classic role registry and every classic link are unchanged. **Phase 2** (no new mechanics needed, weaker data): Giganotosaurus, Allosaurus, Deinonychus (with Velociraptor and Utahraptor variants), African wild dog. **Deferred** until new mechanics exist (§8): Nile crocodile, Spinosaurus, Komodo dragon. Their research tables are in [research/SPECIES.md](research/SPECIES.md) §5.
+The polar bear and the hippo exist in free matchups only (§4.11, §4.12, §11.5); the classic role registry and every classic link are unchanged. **Phase 2** (no new mechanics needed, weaker data): Giganotosaurus, Allosaurus, Deinonychus (with Velociraptor and Utahraptor variants), African wild dog. **Deferred** until new mechanics exist (§8): Nile crocodile, Spinosaurus, Komodo dragon. Their research tables are in [research/SPECIES.md](research/SPECIES.md) §5.
 
 The UI offers these matchup presets: 10 _T. rex_ vs 100 tigers (default), 1 vs 10 tigers, 5 elephants vs 30 lions, 1 buffalo vs 6 lions, 1 buffalo vs 15 hyenas, 1 brown bear vs 8 wolves, 1 brown bear vs 1 tiger, 1 woolly mammoth vs 12 wolves, 1 _T. rex_ vs 100 _Homo erectus_ (`PRESETS` in `src/ui/form.ts`).
 
@@ -352,6 +354,39 @@ The first species without a legacy entry: the classic engine does not offer it, 
 | `moraleLoss`      | 0–1   |  0.02 |  0.05 |   0.1 | **S** | Shared heavy placeholder (read only by social species).             |
 | latch traits      |       |       |       |       |   –   | Inactive (neutral, §11.1): the polar bear does not latch.           |
 
+### 4.12 Hippopotamus (free model only, #186)
+
+Built from its own source sheet with `defineFreeSpecies` (§11.5), like the polar bear; the classic engine does not offer it. The full sheet, with the free trait names, the sensitivity range of every **S** value, its measured swing and the sources, is in [research/SPECIES.md §5.18](research/SPECIES.md#518-hippopotamus-heavy-batch-a-shipped-in-the-free-model-186); the calibration is in [research/CALIBRATION.md §14](research/CALIBRATION.md#14-hippopotamus-186).
+
+- **Evidence.** Mean adult mass 1.48 t for bulls and 1.365 t for cows [WP: Hippopotamus]; wild adults 1,300–3,200 kg [ADW]. Hippos trot at every speed and use brief aerial phases when running fast [Hutchinson & Pringle 2024]. Skin about 6 cm thick; lower canines up to 50 cm, used in combat [WP: Hippopotamus].
+- **Unverified values turned into S.** Top speed: about 8 m/s (30 km/h) is claimed but has never been measured [Hutchinson & Pringle 2024], so `sprintSpeed` is 4 / 6 / 8.3 m/s **S** with the claim as the maximum. Bite: the common figure (about 8.1 kN, one female, measured for television) has no published primary record that could be checked, so `strikeForce` is 4 / 8 / 15 kN **S** with that figure as the mode and a bull's body weight as the maximum. Calibration shows the speed barely matters (+1.7 pp over its range) and the bite matters a lot (+29.9 pp).
+- **Model.** A heavy, solitary striker: pods exist, but adults form almost no social bonds and graze alone [WP: Hippopotamus], so it gets no pack buff; it bites in a frontal cone and does not latch. `hide` 0.3 (**S**, the elephant's value: thick skin) and `intimidation` 1. Water, its refuge and fighting ground, is not modelled (§8).
+- **Glyph.** Body radius is the buffalo's scaled by (mass ratio)^(1/3) (**D**): 1 / 1.15 / 1.55 m. Every value is at least 1 m, so the replay always draws the hippo as a triangle, 3.2 m long at the mode.
+- **Content check.** `adSafe`: yes. Era: extant. Overlap: lions and spotted hyenas prey on young hippos, and lion prides occasionally on adults [WP: Hippopotamus], which free mode has no badge for; with every other living species "no recorded encounter"; with _T. rex_ "never met"; with the woolly mammoth and _H. erectus_ "no recorded overlap". No what-if tag. Korean counter 마리; text-share symbol 🦛.
+- **Presets.** `elephant-hippo`, 1 v 1 (design §6 #16), ready in Simple mode through the one-on-one rout override ([PRESETS.md](PRESETS.md#overrides-and-holds)). #15 (hippo vs rhino) waits for the white rhinoceros (#187).
+- **Flight (#169).** Tuned under the current flight model. The per-species flight traits decided on #169 (with #197, under a new model version) will re-check this species.
+
+| Free trait        | Unit  |   min |  mode |   max | Basis | Source / rationale                                                  |
+| ----------------- | ----- | ----: | ----: | ----: | :---: | ------------------------------------------------------------------- |
+| `mass`            | kg    | 1,300 | 1,500 | 3,200 |   L   | Wild adults 1,300–3,200 kg (ADW); bull mean 1.48 t (via Wikipedia). |
+| `bodyRadius`      | m     |     1 |  1.15 |  1.55 |   D   | Buffalo 0.7 / 0.85 / 1 m × (mass ratio)^(1/3).                      |
+| `turnRate`        | deg/s |    40 |    70 |   120 | **S** | Between the elephant and the buffalo.                               |
+| `sprintSpeed`     | m/s   |     4 |     6 |   8.3 | **S** | U → S: ~8 m/s claimed, never measured (Hutchinson & Pringle 2024).  |
+| `cruiseSpeed`     | m/s   |   0.8 |   1.2 |   1.8 | **S** | A walking trot; no measured speed.                                  |
+| `sprintEndurance` | s     |    15 |    40 |   100 | **S** | "Several hundred metres" at speed (ADW, no measurement).            |
+| `recoveryTime`    | s     |    60 |   120 |   300 | **S** | Elephant.                                                           |
+| `strikeForce`     | kN    |     4 |     8 |    15 | **S** | U → S: ~8.1 kN for one female (unpublished); bull body weight × g.  |
+| `strikeLethality` | HP/kN |     4 |     8 |    12 | **S** | Shared mapping for a toothed bite.                                  |
+| `strikeInterval`  | s     |   1.5 |   2.5 |     5 | **S** | Lunging bites with a wide gape.                                     |
+| `strikeReach`     | m     |   1.6 |   1.9 |   2.3 | **S** | Geometry: radius + head and open jaw.                               |
+| `strikeArc`       | deg   |    30 |    50 |    80 | **S** | Buffalo, a little wider for the gape.                               |
+| `strikeAccuracy`  | p     |   0.2 |  0.35 |  0.55 | **S** | Buffalo.                                                            |
+| `shakeRate`       | 1/s   |  0.03 |  0.08 |   0.2 | **S** | Buffalo: short legs.                                                |
+| `bleed`           | 1/s   | 0.001 | 0.003 | 0.006 | **S** | Brown bear: deep canine gashes.                                     |
+| `morale`          | 0–1   |  0.65 |   0.8 |  0.95 | **S** | Elephant: considered highly aggressive.                             |
+| `moraleLoss`      | 0–1   |  0.02 |  0.05 |   0.1 | **S** | Shared heavy placeholder (read only by social species).             |
+| latch traits      |       |       |       |       |   –   | Inactive (neutral, §11.1): the hippo does not latch.                |
+
 ## 5. Documented match-ups
 
 The matchup badge marks a pairing **documented** when field observations exist (`DOCUMENTED_MATCHUPS` in `src/sim/species.ts`), **never met** only when geological time separates the species (every _T. rex_ pairing: both eras dated and disjoint, or an extinct species gone for at least 5 Ma against a living one), **no recorded encounters** (`undocumented`) when they lived at the same time and place, and **기록된 조우 없음 / No recorded overlap** (`unrecorded`) when a recently extinct species meets a living one whose overlap is not established. Extant species carry no first-appearance date, so the sourced overlaps are listed in `COEXISTING_MATCHUPS` (below); every other pairing of the mammoth or _H. erectus_ with a living species is `unrecorded`, never "never met". The badge links to the matching section of the model page (`/model/#matchup-<anchor>`). Documented match-ups are still heavily simplified.
@@ -507,6 +542,7 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 - **[Hubel 2016b]** Hubel T.Y. et al. Additive opportunistic capture explains group hunting benefits in African wild dogs. _Nat. Commun._ 7:11033. <https://doi.org/10.1038/ncomms11033> [FT abstract and introduction]
 - **[Hutchinson 2003]** Hutchinson J.R. et al. Are fast-moving elephants really running? _Nature_ 422:493–494. <https://doi.org/10.1038/422493a> [Abs]
 - **[Hutchinson 2006]** Hutchinson J.R. et al. The locomotor kinematics of Asian and African elephants: changes with speed and size. _J. Exp. Biol._ 209:3812–3827. <https://doi.org/10.1242/jeb.02443> [Abs]
+- **[Hutchinson & Pringle 2024]** Hutchinson J.R., Pringle E.V. Footfall patterns and stride parameters of Common hippopotamus (_Hippopotamus amphibius_) on land. _PeerJ_ 12:e17675. <https://doi.org/10.7717/peerj.17675> [FT]
 - **[Hutchinson 2019]** Divergent evolution of terrestrial locomotor abilities in extant Crocodylia. _Sci. Rep._ <https://doi.org/10.1038/s41598-019-55768-6> [FT]
 - **[Iurino 2022]** Iurino D.A. et al. A Middle Pleistocene wolf from central Italy provides insights on the first occurrence of _Canis lupus_ in Europe. _Sci. Rep._ 12:2882. <https://doi.org/10.1038/s41598-022-06812-5> [WP]
 - **[Jimenez 2008]** Gray wolves, _Canis lupus_, killed by cougars, _Puma concolor_, and a grizzly bear, _Ursus arctos_, in Montana, Alberta, and Wyoming. _Can. Field-Nat._ 122:76–78. <https://doi.org/10.22621/cfn.v122i1.550> [Abs]
@@ -542,6 +578,8 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 - [WP: Brown bear] <https://en.wikipedia.org/wiki/Brown_bear>
 - [WP: Grizzly bear] <https://en.wikipedia.org/wiki/Grizzly_bear>
 - [WP: Polar bear] <https://en.wikipedia.org/wiki/Polar_bear>
+- [WP: Hippopotamus] <https://en.wikipedia.org/wiki/Hippopotamus> (accessed 2026-11-04)
+- [ADW] Animal Diversity Web, _Hippopotamus amphibius_ <https://animaldiversity.org/accounts/Hippopotamus_amphibius/> (accessed 2026-11-04)
 - [WP: Nile crocodile] <https://en.wikipedia.org/wiki/Nile_crocodile>
 - [WP: African bush elephant] <https://en.wikipedia.org/wiki/African_bush_elephant>
 - [WP: African buffalo] <https://en.wikipedia.org/wiki/African_buffalo>
@@ -575,7 +613,7 @@ The free model ([design](design/FREE-MATCHUPS.md), [ADR-0007](adr/0007-symmetric
 - **Mapped traits are read, not copied.** Every trait a legacy role already had comes from that role's preset at run time: heavy `mass`, `bodyRadius`, `turnRate`, `speed` → `sprintSpeed`, `bite*` → `strike*`, `shakeRate`; pack `mass`, `sprintSpeed`, `cruiseSpeed`, `sprintEndurance`, `recoveryTime`, `latchChance`, `latchEndurance`, `dps` → `latchDps`, `bleed`, `morale`, `moraleLoss`, and the constant `radius` → a fixed `bodyRadius` triangle. Their evidence tags carry over. The constants `hide` and `intimidation` carry over for former heavies and are 1 for former pack species.
 - **_Homo erectus_** merges its two presets: body (`bodyRadius`), `turnRate`, strike and shake-off from the heavy row; running, stamina, grip (latch), bleed and morale from the pack row. Mass is identical in both. `sprintSpeed` uses the pack row (6–9 m/s, a sprint with stamina) rather than the heavy `speed` (a speed held over a whole fight).
 - **`era` and `adSafe`** are read from the legacy entry too. The two _Homo erectus_ entries share one era, and the species is ad-safe only when both entries are. Free mode groups its species pickers by `era` (extant or extinct); `freeMatchupAdSafe(config)` is true only when the species on both sides are ad-safe ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)).
-- **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_. Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger, polar bear. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
+- **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_. Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger, polar bear, hippopotamus. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
 - **`canLatch`** (design §4.2): tiger, lion, wolf, hyena, _Homo erectus_. The others fight with strikes only.
 - **Inactive traits** (latch traits of a species that cannot latch, pack-buff traits of a non-social species) hold neutral values (0, or 1 s for `latchEndurance`) with no evidence tag. They only keep the design matrix layout independent of the species.
 - **Bounds** are shared by all species in the free model (`TRAIT_BOUNDS`): the union of the legacy heavy and pack bounds, with strike reach widened down to 0.3 m. The legacy per-species bounds stay as they are for the legacy engine.
@@ -635,7 +673,7 @@ Sources and the calibration guard are in design §2.3 and §5: [Stander 1992], [
 
 ### 11.5 Species without a legacy entry
 
-Every species above except the polar bear has a legacy entry, and its free entry reads from it (§11.1). The polar bear (§4.11, #184) is the first species built the way this section describes. A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
+Every species above except the polar bear and the hippo has a legacy entry, and its free entry reads from it (§11.1). The polar bear (§4.11, #184) is the first species built the way this section describes, and the hippo (§4.12, #186) the second. A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
 
 - **Registry.** Append the id to `FREE_SPECIES_IDS` (append-only, never renamed) and build its entry with the standalone constructor `defineFreeSpecies(id, sheet)` in `src/sim/free/species.ts`. The sheet (`FreeSpeciesSheet`) holds everything the free model reads: `era`, `adSafe`, `social`, `canLatch`, the constants `hide` and `intimidation`, one preset row `[min, mode, max, evidence]` per individual trait, and the six pack-buff rows of a social species (`buff: null` otherwise). Latch rows are given only when the species can latch. Inactive traits get the neutral values of §11.1. The constructor throws when the rows do not match the flags.
 - **Same as a derived entry.** `tests/free-species.test.ts` rebuilds every current entry from its own sheet with the constructor and checks that the result equals the registry entry, so a standalone species reaches the engine in exactly the form a derived one does.

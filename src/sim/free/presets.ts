@@ -227,6 +227,18 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     },
     check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
+  {
+    id: 'elephant-hippo',
+    name: { ko: '코끼리 vs 하마', en: 'Elephant vs hippo' },
+    a: { sp: 'elephant', n: 1 },
+    b: { sp: 'hippo', n: 1 },
+    tags: ['popular'],
+    why: {
+      ko: '두 종은 아프리카의 같은 강가와 물웅덩이를 씁니다. 하마도 손꼽히게 무거운 육상동물이지만, 다 자란 코끼리는 하마보다 두 배쯤 무겁습니다.',
+      en: 'Both use the same African rivers and waterholes. The hippo is one of the heaviest land animals, yet an adult elephant weighs about twice as much.',
+    },
+    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
+  },
 ];
 
 /** Presets Simple mode may show: every preset not on hold. */

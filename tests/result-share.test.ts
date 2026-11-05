@@ -477,6 +477,8 @@ describe('text share', () => {
     // A species without a legacy entry gets its symbol the same way (docs/SPECIES.md §11.5).
     expect(speciesEmoji('polarBear', 'heavy')).toBe('🐻‍❄️');
     expect(speciesEmoji('polarBear', 'pack')).toBe('🐻‍❄️');
+    expect(speciesEmoji('hippo', 'heavy')).toBe('🦛');
+    expect(speciesEmoji('hippo', 'pack')).toBe('🦛');
     for (const id of withFallback) {
       expect(speciesEmoji(id, 'heavy')).toBe('🔷');
       expect(speciesEmoji(id, 'pack')).toBe('🔶');
