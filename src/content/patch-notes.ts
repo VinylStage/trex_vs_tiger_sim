@@ -59,6 +59,35 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.26',
+    date: '2026-11-05',
+    title: {
+      ko: '코뿔소, 스피노사우루스, 트리케라톱스가 합류했어요 🦏',
+      en: 'The rhino, Spinosaurus and Triceratops join in 🦏',
+    },
+    prs: [215, 217, 218],
+    items: [
+      {
+        cat: 'new',
+        refs: [187, 215],
+        ko: '새 동물 흰코뿔소가 들어왔어요. 간단 모드에 "코끼리 대 코뿔소"와 "하마 대 코뿔소" 대결이 생겼어요. 하마 대 코뿔소는 큰 동물끼리 붙는 대결 중 처음으로 승부가 팽팽해요.',
+        en: 'New animal: the white rhinoceros. Simple mode gets elephant vs rhino and hippo vs rhino. Hippo vs rhino is the first heavyweight match that comes out close.',
+      },
+      {
+        cat: 'new',
+        refs: [185, 217],
+        ko: '새 동물 스피노사우루스가 들어왔어요. 간단 모드에 "티렉스 대 스피노사우루스" 대결이 생겼어요. 물가에 살던 공룡이라 육상 대결이라는 안내가 함께 표시돼요.',
+        en: 'New animal: Spinosaurus. Simple mode gets T. rex vs Spinosaurus. It lived by the water, so the match shows a note that this is a land duel.',
+      },
+      {
+        cat: 'new',
+        refs: [189, 218],
+        ko: '새 동물 트리케라톱스가 들어왔어요. 간단 모드에 "티렉스 대 트리케라톱스" 대결이 생겼어요. 같은 시대를 살았던 두 공룡이라 동물 도감에서 티렉스의 "가상 대결" 표시가 빠졌어요.',
+        en: 'New animal: Triceratops. Simple mode gets T. rex vs Triceratops. The two lived at the same time, so T. rex no longer carries the "what-if" tag in the species guide.',
+      },
+    ],
+  },
+  {
     version: '0.2.25',
     date: '2026-11-05',
     title: {
