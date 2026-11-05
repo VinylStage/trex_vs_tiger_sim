@@ -99,8 +99,10 @@ describe('species registries behind the guide', () => {
     expect(Object.keys(SPECIES_GUIDE).sort()).toEqual([...FREE_SPECIES_IDS].sort());
   });
 
-  it('tags as what-if exactly the species that never met any other (T. rex, Utahraptor, Spinosaurus)', () => {
-    expect(GUIDE_SPECIES.filter(isWhatIf)).toEqual(['trex', 'raptor', 'spinosaurus']);
+  it('tags as what-if exactly the species that never met any other (Utahraptor, Spinosaurus)', () => {
+    // T. rex lost the tag with Triceratops (#189): both lived 68–66 Ma.
+    expect(GUIDE_SPECIES.filter(isWhatIf)).toEqual(['raptor', 'spinosaurus']);
+    expect(erasNeverMet(FREE_SPECIES.trex.era, FREE_SPECIES.triceratops.era)).toBe(false);
     // The same answer as the classic matchup badge: every T. rex pairing is "never met".
     for (const p of PACK_SPECIES_IDS) expect(matchupClass('trex', p)).toBe('neverMet');
     for (const id of GUIDE_SPECIES.filter((x) => !isWhatIf(x))) {

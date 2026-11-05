@@ -222,6 +222,19 @@
       "medianS": 111.95,
       "rout": 1,
       "close": false
+    },
+    {
+      "id": "trex-triceratops",
+      "matchup": "trex 1 v triceratops 1",
+      "wins": [123, 77, 0],
+      "share": {
+        "a": 0.615,
+        "b": 0.385,
+        "draw": 0
+      },
+      "medianS": 91.9,
+      "rout": 1,
+      "close": true
     }
   ]
 }

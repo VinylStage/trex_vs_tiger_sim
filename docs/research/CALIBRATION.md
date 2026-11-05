@@ -10,6 +10,7 @@
 > - **하마(#186, §14):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게가 물소와 코끼리 사이(1.5톤)라 물소 · 곰에는 92–99% 이기고 코끼리에는 16%, 매머드에는 10%만 이깁니다. 사자는 16–20마리가 되어야 다 자란 하마와 비슷해지는데, 사자 무리가 어른 하마를 드물게만 사냥한다는 기록과 맞습니다. 검증되지 않은 두 값 중 최고 속도는 결과에 거의 영향이 없고(+1.7%p), 무는 힘은 가장 큰 영향 중 하나입니다(+29.9%p). 이탈 모델(#169)은 바꾸지 않았습니다.
 > - **흰코뿔소(#187, §16):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게(2톤)가 하마보다 조금 무거워 1:1에서 하마에 63%, 물소에 93% 이기고, 코끼리에는 26%, 매머드에는 18%만 이깁니다. 사자는 20마리가 되어도 56%로 아직 흰코뿔소가 앞서는데, 다 자란 흰코뿔소는 천적이 거의 없다는 기록과 맞습니다. 검증되지 않은 최고 속도는 결과에 거의 영향이 없고(코끼리 상대 +2.6%p, 하마 상대 0%p), 측정이 없는 뿔 힘 · 공격 간격 · 치명도 · 정확도가 가장 크게 흔듭니다(33–52%p). 이탈 모델(#169)은 바꾸지 않았습니다.
 > - **스피노사우루스(#185, §17, 육상 대결):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게(7.4톤)는 티라노(8톤)와 비슷하지만 무는 힘이 몇 배 약해(Sakamoto 2022) 1:1에서 티라노에 3.5%만 이기고, 세 마리가 되어야 티라노 한 마리를 넘습니다(56%). 값 하나를 범위 끝으로 옮겨도 13.5%가 최고입니다. 논쟁 중인 자세(네 발 / 두 발)가 영향을 주는 속도 · 선회는 결과에 거의 영향이 없습니다(+0.3%p, +0.2%p). 코끼리에는 몸무게 덕분에 89% 이깁니다.
+> - **트리케라톱스(#189, §18):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게(8톤)가 티라노와 같고 뿔 힘을 몸무게에 맞춰 잡아, 1:1에서 티라노에 40%를 이깁니다(티라노 60%, 프리셋 "가까움"). 이 값은 맞추지 않았고, 측정이 없는 공격 간격 · 뿔 힘 · 치명도 · 정확도가 각각 45–53%p를 흔들며 문헌의 몸무게 범위도 25%p를 흔듭니다. 속도는 거의 영향이 없습니다(+1.1%p). 다른 대형 초식동물과 스피노사우루스에는 92–100% 이깁니다. 이탈 모델(#169)은 바꾸지 않았습니다.
 > - **R1 "잠정 모델" 안내:** 기준(보정 보고서 + 소유자 승인 + 안내에 대한 결정, 그리고 가이드 · 모델 · 파라미터 페이지의 자유 모델 설명)을 아직 다 채우지 못했으므로 **지금은 내리지 말 것을 권합니다.** 소유자가 이 보고서를 승인하고, #170(파라미터 페이지)을 마치고, #169를 결정하면 내릴 수 있습니다. UI는 바꾸지 않았습니다.
 
 Status: measured 2026-10-28 on `main` at `12b5968` (v0.2.22), engines unchanged by this report. Issue [#166](https://github.com/VinylStage/trex_vs_tiger_sim/issues/166), part of [#125](https://github.com/VinylStage/trex_vs_tiger_sim/issues/125). Design: [RENEWAL-1.0.md §3.2](../design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode) (minimum P8 pass, owner decision R1) and [FREE-MATCHUPS.md §8](../design/FREE-MATCHUPS.md#8-phased-implementation-plan) (phase P8). **Not signed off by the owner yet.**
@@ -35,6 +36,7 @@ Every number below is a statement about the two models under their assumptions, 
 15. [Raptor pack (#188)](#15-raptor-pack-188)
 16. [White rhinoceros (#187)](#16-white-rhinoceros-187)
 17. [_Spinosaurus_ (#185)](#17-spinosaurus-185)
+18. [_Triceratops_ (#189)](#18-triceratops-189)
 
 ## 1. Questions
 
@@ -1177,3 +1179,162 @@ Against the elephant:
 **Preset.** `trex-spinosaurus` (design §6 #12): _T. rex_ 96.5 %, median 112.0 s, rout share 100 % in the fixture (200 runs). Not close. Ready in Simple mode through the one-on-one override ([PRESETS.md](../PRESETS.md#overrides-and-holds)). The fixture's 96.5 % (200 runs) and this section's 96.5 % (1,000 runs, _Spinosaurus_ on side A) agree.
 
 The tables in this section: generated from docs/research/calibration-spinosaurus.json (commit f85796d, v22.22.0).
+
+## 18. _Triceratops_ (#189)
+
+Measured 2026-11-05 on `main` at `c61f9c6` plus the #189 change (engines unchanged, model version `mv` 1). _Triceratops_ (`triceratops`) has no legacy entry (docs/SPECIES.md §4.16) and runs on the free engine only. These are the add-a-species checks of [RENEWAL-1.0 §5.3](../design/RENEWAL-1.0.md#53-add-a-species-pipeline-definition-of-done) step 5, a comparison with the other heavy species and with _T. rex_ against the raptor pack, its flight behaviour under the current model (#169, not changed here) and a one-at-a-time sensitivity sweep against _T. rex_ (preset #13) and _Spinosaurus_. The elephant is not the second opponent, as it was for _Spinosaurus_, because it loses almost every run (1.2 %). Raw data: `calibration-triceratops.json` (section `triceratops`); §1–§17 and the other calibration files are unchanged. Method and metrics as in §2: seed 20261019, every other input at its preset.
+
+### Mirror matches
+
+| Mirror                            | Runs |           A wins |           B wins | Draws | A − B (pp, paired) | 0 inside? | Median s |
+| --------------------------------- | ---: | ---------------: | ---------------: | ----: | -----------------: | --------: | -------: |
+| _Triceratops_ 1 v _Triceratops_ 1 | 1000 | 50.4 (47.3–53.5) | 49.4 (46.3–52.5) |   0.2 | +1.0 (-5.2 to 7.2) |       yes |       87 |
+| _Triceratops_ 3 v _Triceratops_ 3 | 1000 | 48.4 (45.3–51.5) | 51.6 (48.5–54.7) |   0.0 | -3.2 (-9.4 to 3.0) |       yes |      104 |
+
+### Count sweeps
+
+One _Triceratops_ against lions, the raptor pack and _T. rex_ (side B varies), and _Triceratops_ against one _T. rex_ (side A varies). "Step" flags a drop in the varying side's share larger than both intervals allow, the §6 rule. Neither lions nor _Utahraptor_ shared its time or place; they stand in for a large group of smaller attackers.
+
+| Match-up                  | Runs |             A wins |        B wins | Draws | Median s | Rout % | Step |
+| ------------------------- | ---: | -----------------: | ------------: | ----: | -------: | -----: | ---: |
+| _Triceratops_ 1 v lion 1  |  500 | 100.0 (99.2–100.0) | 0.0 (0.0–0.8) |   0.0 |       28 |    0.0 |      |
+| _Triceratops_ 1 v lion 2  |  500 |   99.2 (98.0–99.7) | 0.0 (0.0–0.8) |   0.8 |       66 |    5.6 |   ok |
+| _Triceratops_ 1 v lion 3  |  500 |   96.8 (94.9–98.0) | 0.0 (0.0–0.8) |   3.2 |      127 |   10.9 |   ok |
+| _Triceratops_ 1 v lion 4  |  500 |   97.4 (95.6–98.5) | 0.2 (0.0–1.1) |   2.4 |      197 |   21.7 |   ok |
+| _Triceratops_ 1 v lion 6  |  500 |   97.4 (95.6–98.5) | 0.4 (0.1–1.4) |   2.2 |      268 |   43.4 |   ok |
+| _Triceratops_ 1 v lion 8  |  500 |   96.8 (94.9–98.0) | 1.2 (0.6–2.6) |   2.0 |      267 |   58.0 |   ok |
+| _Triceratops_ 1 v lion 10 |  500 |   97.8 (96.1–98.8) | 1.2 (0.6–2.6) |   1.0 |      204 |   69.5 |   ok |
+| _Triceratops_ 1 v lion 12 |  500 |   96.6 (94.6–97.9) | 2.0 (1.1–3.6) |   1.4 |      191 |   77.9 |   ok |
+| _Triceratops_ 1 v lion 16 |  500 |   97.6 (95.9–98.6) | 2.0 (1.1–3.6) |   0.4 |      160 |   84.7 |   ok |
+| _Triceratops_ 1 v lion 20 |  500 |   96.4 (94.4–97.7) | 3.6 (2.3–5.6) |   0.0 |      153 |   88.6 |   ok |
+
+| Match-up                          | Runs |             A wins |         B wins | Draws | Median s | Rout % | Step |
+| --------------------------------- | ---: | -----------------: | -------------: | ----: | -------: | -----: | ---: |
+| _Triceratops_ 1 v _Utahraptor_ 1  |  500 | 100.0 (99.2–100.0) |  0.0 (0.0–0.8) |   0.0 |       47 |   16.2 |      |
+| _Triceratops_ 1 v _Utahraptor_ 2  |  500 | 100.0 (99.2–100.0) |  0.0 (0.0–0.8) |   0.0 |       73 |   25.7 |   ok |
+| _Triceratops_ 1 v _Utahraptor_ 4  |  500 |   99.2 (98.0–99.7) |  0.6 (0.2–1.7) |   0.2 |      119 |   40.0 |   ok |
+| _Triceratops_ 1 v _Utahraptor_ 6  |  500 |   98.8 (97.4–99.4) |  1.0 (0.4–2.3) |   0.2 |      169 |   53.1 |   ok |
+| _Triceratops_ 1 v _Utahraptor_ 8  |  500 |   97.6 (95.9–98.6) |  2.0 (1.1–3.6) |   0.4 |      171 |   63.6 |   ok |
+| _Triceratops_ 1 v _Utahraptor_ 10 |  500 |   96.8 (94.9–98.0) |  2.8 (1.7–4.6) |   0.4 |      155 |   70.8 |   ok |
+| _Triceratops_ 1 v _Utahraptor_ 12 |  500 |   96.0 (93.9–97.4) |  3.6 (2.3–5.6) |   0.4 |      149 |   76.6 |   ok |
+| _Triceratops_ 1 v _Utahraptor_ 16 |  500 |   93.8 (91.3–95.6) |  6.2 (4.4–8.7) |   0.0 |      124 |   83.8 |   ok |
+| _Triceratops_ 1 v _Utahraptor_ 20 |  500 |   92.2 (89.5–94.2) | 7.8 (5.8–10.5) |   0.0 |      117 |   87.7 |   ok |
+| _Triceratops_ 1 v _Utahraptor_ 25 |  500 |   93.4 (90.9–95.3) |  6.6 (4.7–9.1) |   0.0 |       98 |   90.4 |   ok |
+| _Triceratops_ 1 v _Utahraptor_ 30 |  500 |   92.0 (89.3–94.1) | 8.0 (5.9–10.7) |   0.0 |       97 |   92.0 |   ok |
+
+| Match-up                     | Runs |           A wins |             B wins | Draws | Median s | Rout % | Step |
+| ---------------------------- | ---: | ---------------: | -----------------: | ----: | -------: | -----: | ---: |
+| _Triceratops_ 1 v _T. rex_ 1 |  500 | 41.0 (36.8–45.4) |   59.0 (54.6–63.2) |   0.0 |       91 |  100.0 |      |
+| _Triceratops_ 1 v _T. rex_ 2 |  500 |    7.2 (5.2–9.8) |   92.8 (90.2–94.8) |   0.0 |       81 |   99.8 |   ok |
+| _Triceratops_ 1 v _T. rex_ 3 |  500 |    1.2 (0.6–2.6) |   98.8 (97.4–99.4) |   0.0 |       74 |  100.0 |   ok |
+| _Triceratops_ 1 v _T. rex_ 4 |  500 |    0.0 (0.0–0.8) | 100.0 (99.2–100.0) |   0.0 |       71 |  100.0 |   ok |
+
+| Match-up                     | Runs |           A wins |           B wins | Draws | Median s | Rout % | Step |
+| ---------------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: | ---: |
+| _Triceratops_ 1 v _T. rex_ 1 |  500 | 41.0 (36.8–45.4) | 59.0 (54.6–63.2) |   0.0 |       91 |  100.0 |      |
+| _Triceratops_ 2 v _T. rex_ 1 |  500 | 83.6 (80.1–86.6) | 16.4 (13.4–19.9) |   0.0 |       87 |  100.0 |   ok |
+| _Triceratops_ 3 v _T. rex_ 1 |  500 | 95.6 (93.4–97.1) |    4.4 (2.9–6.6) |   0.0 |       78 |  100.0 |   ok |
+| _Triceratops_ 4 v _T. rex_ 1 |  500 | 99.4 (98.3–99.8) |    0.6 (0.2–1.7) |   0.0 |       74 |  100.0 |   ok |
+
+### Side swaps
+
+| Pair                                                                  | Runs | First order: A wins | Swapped: same species wins |    Difference (pp) | 0 inside? |
+| --------------------------------------------------------------------- | ---: | ------------------: | -------------------------: | -----------------: | --------: |
+| _Triceratops_ 1 v _T. rex_ 1 / _T. rex_ 1 v _Triceratops_ 1           | 1000 |    39.8 (36.8–42.9) |           42.1 (39.1–45.2) | -2.3 (-6.6 to 2.0) |       yes |
+| _Triceratops_ 1 v _Spinosaurus_ 1 / _Spinosaurus_ 1 v _Triceratops_ 1 | 1000 |    92.1 (90.3–93.6) |           90.9 (89.0–92.5) | +1.2 (-1.3 to 3.7) |       yes |
+
+### Next to the other heavy species
+
+_T. rex_ against twelve _Utahraptor_ (preset #18) is the reference for the _Triceratops_ row below it.
+
+| Match-up                          | Runs |             A wins |           B wins | Draws | Median s | Rout % |
+| --------------------------------- | ---: | -----------------: | ---------------: | ----: | -------: | -----: |
+| _Triceratops_ 1 v _T. rex_ 1      | 1000 |   39.8 (36.8–42.9) | 60.1 (57.0–63.1) |   0.1 |       91 |   99.9 |
+| _Triceratops_ 1 v _Spinosaurus_ 1 | 1000 |   92.1 (90.3–93.6) |    7.9 (6.4–9.7) |   0.0 |      116 |   99.6 |
+| _Triceratops_ 1 v elephant 1      | 1000 |   98.7 (97.8–99.2) |    1.2 (0.7–2.1) |   0.1 |       83 |   99.9 |
+| _Triceratops_ 1 v mammoth 1       | 1000 |   98.7 (97.8–99.2) |    1.2 (0.7–2.1) |   0.1 |       84 |   99.9 |
+| _Triceratops_ 1 v white rhino 1   | 1000 |   99.6 (99.0–99.8) |    0.4 (0.2–1.0) |   0.0 |       77 |   97.8 |
+| _Triceratops_ 1 v hippo 1         | 1000 |   99.8 (99.3–99.9) |    0.2 (0.1–0.7) |   0.0 |       80 |   90.3 |
+| _Triceratops_ 1 v buffalo 1       | 1000 |  99.9 (99.4–100.0) |    0.1 (0.0–0.6) |   0.0 |       69 |   13.7 |
+| _Triceratops_ 1 v brown bear 1    | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       65 |    0.4 |
+| _Triceratops_ 1 v polar bear 1    | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       64 |    8.0 |
+| _Triceratops_ 1 v tiger 1         | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       26 |    0.4 |
+| _Triceratops_ 1 v lion 1          | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       28 |    0.0 |
+| _T. rex_ 1 v _Utahraptor_ 12      | 1000 |   91.8 (89.9–93.3) |    8.0 (6.5–9.8) |   0.2 |      153 |   82.7 |
+| _Triceratops_ 1 v _Utahraptor_ 12 | 1000 |   96.0 (94.6–97.0) |    3.8 (2.8–5.2) |   0.2 |      149 |   77.1 |
+
+### Larger or stronger opponents
+
+| Match-up                     | Runs |           A wins |           B wins | Draws | Median s | Rout % |
+| ---------------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: |
+| _Triceratops_ 1 v _T. rex_ 1 | 1000 | 39.8 (36.8–42.9) | 60.1 (57.0–63.1) |   0.1 |       91 |   99.9 |
+| _Triceratops_ 1 v elephant 1 | 1000 | 98.7 (97.8–99.2) |    1.2 (0.7–2.1) |   0.1 |       83 |   99.9 |
+| _Triceratops_ 1 v mammoth 1  | 1000 | 98.7 (97.8–99.2) |    1.2 (0.7–2.1) |   0.1 |       84 |   99.9 |
+
+### One-at-a-time sensitivity
+
+_Triceratops_ 1 v _T. rex_ 1 (preset #13 seen from the _Triceratops_ side) and _Triceratops_ 1 v _Spinosaurus_ 1, 1,000 runs per row: each **S** trait pinned at its preset min, then at its max. Because the mass estimates disagree, the **L** `mass` row (5,400–10,000 kg) is swept the same way; the table header says "S" for every row. The swing is the change in the _Triceratops_ win share from min to max. The constant `hide` (0.5) cannot be pinned through a config and only scales damage from a latcher, which neither opponent is.
+
+Against _T. rex_ (preset #13):
+
+| Trait (S)         |         Range |    A wins at min |    A wins at max | Swing (pp) | Median s (min / max) |
+| ----------------- | ------------: | ---------------: | ---------------: | ---------: | -------------------: |
+| all at preset     |             – | 39.8 (36.8–42.9) | 39.8 (36.8–42.9) |          – |                   91 |
+| `mass`            |  5400 – 10000 | 25.2 (22.6–28.0) | 50.1 (47.0–53.2) |      +24.9 |              85 / 96 |
+| `turnRate`        |       30 – 90 | 39.9 (36.9–43.0) | 39.8 (36.8–42.9) |       -0.1 |              91 / 91 |
+| `sprintSpeed`     |     4.5 – 9.7 | 39.5 (36.5–42.6) | 40.6 (37.6–43.7) |       +1.1 |              92 / 91 |
+| `cruiseSpeed`     |       0.8 – 2 | 39.9 (36.9–43.0) | 39.6 (36.6–42.7) |       -0.3 |             106 / 78 |
+| `sprintEndurance` |      15 – 100 | 31.6 (28.8–34.5) | 43.3 (40.3–46.4) |      +11.7 |              93 / 91 |
+| `recoveryTime`    |      60 – 300 | 40.4 (37.4–43.5) | 39.5 (36.5–42.6) |       -0.9 |              91 / 91 |
+| `strikeForce`     |       24 – 78 |  11.7 (9.9–13.8) | 61.0 (57.9–64.0) |      +49.3 |              99 / 85 |
+| `strikeLethality` |        4 – 12 | 12.3 (10.4–14.5) | 58.4 (55.3–61.4) |      +46.1 |              99 / 85 |
+| `strikeInterval`  |       1.5 – 5 | 71.1 (68.2–73.8) | 17.9 (15.6–20.4) |      -53.2 |              81 / 98 |
+| `strikeReach`     |     3.2 – 4.8 | 39.0 (36.0–42.1) | 43.0 (40.0–46.1) |       +4.0 |              92 / 91 |
+| `strikeArc`       |       30 – 70 | 39.8 (36.8–42.9) | 39.8 (36.8–42.9) |       +0.0 |              91 / 91 |
+| `strikeAccuracy`  |    0.2 – 0.55 | 15.9 (13.8–18.3) | 61.0 (57.9–64.0) |      +45.1 |              97 / 85 |
+| `shakeRate`       |    0.03 – 0.2 | 39.8 (36.8–42.9) | 39.8 (36.8–42.9) |       +0.0 |              91 / 91 |
+| `bleed`           | 0.001 – 0.005 | 39.8 (36.8–42.9) | 39.8 (36.8–42.9) |       +0.0 |              91 / 91 |
+| `morale`          |     0.6 – 0.9 | 27.8 (25.1–30.7) | 50.4 (47.3–53.5) |      +22.6 |              86 / 96 |
+| `moraleLoss`      |    0.02 – 0.1 | 39.8 (36.8–42.9) | 39.8 (36.8–42.9) |       +0.0 |              91 / 91 |
+
+Against _Spinosaurus_:
+
+| Trait (S)         |         Range |    A wins at min |    A wins at max | Swing (pp) | Median s (min / max) |
+| ----------------- | ------------: | ---------------: | ---------------: | ---------: | -------------------: |
+| all at preset     |             – | 92.1 (90.3–93.6) | 92.1 (90.3–93.6) |          – |                  116 |
+| `mass`            |  5400 – 10000 | 82.8 (80.3–85.0) | 96.1 (94.7–97.1) |      +13.3 |            115 / 116 |
+| `turnRate`        |       30 – 90 | 91.1 (89.2–92.7) | 92.3 (90.5–93.8) |       +1.2 |            116 / 116 |
+| `sprintSpeed`     |     4.5 – 9.7 | 91.2 (89.3–92.8) | 92.6 (90.8–94.1) |       +1.4 |            119 / 114 |
+| `cruiseSpeed`     |       0.8 – 2 | 91.8 (89.9–93.3) | 92.1 (90.3–93.6) |       +0.3 |            134 / 101 |
+| `sprintEndurance` |      15 – 100 | 78.2 (75.5–80.6) | 96.5 (95.2–97.5) |      +18.3 |            144 / 111 |
+| `recoveryTime`    |      60 – 300 | 94.4 (92.8–95.7) | 88.7 (86.6–90.5) |       -5.7 |            116 / 116 |
+| `strikeForce`     |       24 – 78 | 73.4 (70.6–76.0) | 96.5 (95.2–97.5) |      +23.1 |             171 / 96 |
+| `strikeLethality` |        4 – 12 | 75.2 (72.4–77.8) | 96.6 (95.3–97.6) |      +21.4 |             167 / 98 |
+| `strikeInterval`  |       1.5 – 5 | 97.6 (96.5–98.4) | 79.6 (77.0–82.0) |      -18.0 |             91 / 158 |
+| `strikeReach`     |     3.2 – 4.8 | 91.0 (89.1–92.6) | 94.0 (92.4–95.3) |       +3.0 |            116 / 113 |
+| `strikeArc`       |       30 – 70 | 92.1 (90.3–93.6) | 92.2 (90.4–93.7) |       +0.1 |            116 / 116 |
+| `strikeAccuracy`  |    0.2 – 0.55 | 74.6 (71.8–77.2) | 97.1 (95.9–98.0) |      +22.5 |             166 / 97 |
+| `shakeRate`       |    0.03 – 0.2 | 92.1 (90.3–93.6) | 92.1 (90.3–93.6) |       +0.0 |            116 / 116 |
+| `bleed`           | 0.001 – 0.005 | 92.1 (90.3–93.6) | 92.2 (90.4–93.7) |       +0.1 |            116 / 116 |
+| `morale`          |     0.6 – 0.9 | 84.5 (82.1–86.6) | 95.4 (93.9–96.5) |      +10.9 |            115 / 116 |
+| `moraleLoss`      |    0.02 – 0.1 | 92.1 (90.3–93.6) | 92.1 (90.3–93.6) |       +0.0 |            116 / 116 |
+
+### Verdicts
+
+| Check (RENEWAL-1.0 §5.3 step 5)  | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mirror 50/50 within the interval | **Pass.** 1 v 1: +1.0 pp (−5.2 to 7.2); 3 v 3: −3.2 pp (−9.4 to 3.0), paired interval.                                                                                                                                                                                                                                                                                                                                                                                             |
+| Win share monotonic in count     | **Pass.** No step in any of the four sweeps. Lions and raptors barely move one _Triceratops_: 20 lions win 3.6 %, 30 raptors 8.0 % (the small ups and downs, such as 96.8 → 97.8 % for 8 → 10 lions, are inside the intervals). Two _T. rex_ beat one _Triceratops_ in 92.8 %; two _Triceratops_ beat one _T. rex_ in 83.6 %, three in 95.6 %.                                                                                                                                     |
+| Side order                       | **Pass.** Both swaps agree within the interval (−2.3 and +1.2 pp).                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Documented interactions          | **Qualitative match.** The only direct record is one adult _Triceratops_ that survived a head-on encounter with healed _T. rex_ tooth marks on a broken brow horn [Happ 2008]; _T. rex_ also fed on _Triceratops_ [Erickson & Olson 1996]. Survivors and carcasses both exist, so neither side should win every duel; the model gives _T. rex_ 60.1 % and _Triceratops_ 39.8 %. That share was not tuned: it follows from the sheet, and its strike values are unmeasured (below). |
+| Rout check for social species    | Not applicable: _Triceratops_ is solitary (docs/SPECIES.md §4.16). Preset #13 is one on one and passes through the one-on-one override (rout share 100 %, median 92 s, above the 30 s limit unaided). For reference, twelve raptors losing to one _Triceratops_ flee in 77.1 % of cases, against 82.7 % when they lose to one _T. rex_. This is not a preset.                                                                                                                      |
+
+**The documented duel.** At the modes the two weigh the same (8,000 kg), and _T. rex_'s 35 kN bite at 8 HP/kN against the _Triceratops_ horn at 47 kN and 8 HP/kN is close per hit; _T. rex_ wins on accuracy (0.5 against 0.35) and reach (5.5 m against 4 m). _T. rex_ wins 60.1 % at 1,000 runs and 61.5 % in the 200-run fixture, so the preset carries `close`. The result rests on unmeasured values: strike interval (−53.2 pp over 1.5–5 s), horn force (+49.3 pp over 24–78 kN), lethality (+46.1 pp) and accuracy (+45.1 pp) each move it from a clear _T. rex_ win to a clear _Triceratops_ win; the literature mass range moves it by 24.9 pp (25.2 % at 5.4 t, 50.1 % at 10 t). Speed (+1.1 pp) and turn rate (−0.1 pp) barely matter. Joint values were not tested.
+
+**Against the other heavies.** _Triceratops_ ties _T. rex_ as the heaviest species in the roster at the mode (8 t) and wins at least 98.7 % against the elephant, the mammoth, the white rhino, the hippo and the buffalo, and 92.1 % against _Spinosaurus_. Its horn force is anchored on its own body weight (78.5 kN at the mode mass), the rule used for the rhino and the hippo, so it scales with mass; against _Spinosaurus_ that force swings the result by 23.1 pp.
+
+**Flight (#169).** The flight model is unchanged; this records how _Triceratops_ behaves under it. One on one against another heavy, the loser flees in practically every decided run (rout share 90.3–99.9 % against _T. rex_, _Spinosaurus_, the elephant, the mammoth, the rhino and the hippo). A lone buffalo, bear, tiger or lion that loses mostly ends incapacitated instead (rout share 0–13.7 %): one horn hit at 376 HP is close to or above their whole body mass. The preset was measured against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §18 should be re-run then.
+
+**Preset.** `trex-triceratops` (design §6 #13): _T. rex_ 61.5 %, median 91.9 s, rout share 100 % in the fixture (200 runs). Close. Ready in Simple mode through the one-on-one override ([PRESETS.md](../PRESETS.md#overrides-and-holds)). The fixture's 61.5 % (200 runs) and this section's 60.1 % (1,000 runs, _Triceratops_ on side A) agree within the interval.
+
+The tables in this section: Generated from docs/research/calibration-triceratops.json (commit c61f9c6, v22.22.0).

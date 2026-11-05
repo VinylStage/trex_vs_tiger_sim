@@ -152,7 +152,7 @@
     },
     {
       "id": "triceratops",
-      "group": "candidate",
+      "group": "sim",
       "issue": 189,
       "en": "Triceratops",
       "ko": "트리케라톱스",

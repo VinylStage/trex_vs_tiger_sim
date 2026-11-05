@@ -286,6 +286,18 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     },
     check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
+  {
+    id: 'trex-triceratops',
+    name: { ko: '티라노 vs 트리케라톱스', en: 'T. rex vs Triceratops' },
+    a: { sp: 'trex', n: 1 },
+    b: { sp: 'triceratops', n: 1 },
+    tags: ['documented', 'close'],
+    why: {
+      ko: '두 종은 약 6,800만~6,600만 년 전 북아메리카 서부에서 함께 살았습니다. 끝이 부러진 트리케라톱스의 눈 위 뿔에 티라노의 이빨 자국이 아문 채 남아 있어, 그 만남 뒤에도 트리케라톱스가 살아남았음을 보여 줍니다(Happ 2008).',
+      en: 'They lived together in western North America about 68–66 million years ago. A Triceratops brow horn with a broken tip carries healed T. rex tooth marks: the horned animal survived the encounter (Happ 2008).',
+    },
+    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
+  },
 ];
 
 /** Presets Simple mode may show: every preset not on hold. */

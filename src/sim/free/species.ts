@@ -51,6 +51,7 @@ export const FREE_SPECIES_IDS = [
   'raptor',
   'whiteRhino',
   'spinosaurus',
+  'triceratops',
 ] as const;
 export type FreeSpeciesId = (typeof FREE_SPECIES_IDS)[number];
 
@@ -572,6 +573,35 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
       shakeRate: [0.05, 0.12, 0.25, 'S'],
       bleed: [0.002, 0.004, 0.008, 'S'],
       morale: [0.7, 0.85, 0.95, 'S'],
+      moraleLoss: HEAVY_MORALE_LOSS,
+    },
+    buff: null,
+  }),
+  // Built from its own source sheet (docs/SPECIES.md §4.16, research/SPECIES.md §5.20). Treated
+  // as solitary: one juvenile bonebed and one possible family group are too little for a herd.
+  triceratops: defineFreeSpecies('triceratops', {
+    era: { fromMa: 68, toMa: 66 },
+    adSafe: true,
+    social: false,
+    canLatch: false,
+    constants: { hide: 0.5, intimidation: 1 },
+    traits: {
+      mass: [5400, 8000, 10000, 'L'],
+      bodyRadius: [1.65, 2, 2.25, 'D'],
+      turnRate: [30, 50, 90, 'S'],
+      sprintSpeed: [4.5, 7, 9.7, 'S'],
+      cruiseSpeed: [0.8, 1.2, 2, 'S'],
+      sprintEndurance: [15, 40, 100, 'S'],
+      recoveryTime: [60, 120, 300, 'S'],
+      strikeForce: [24, 47, 78, 'S'],
+      strikeLethality: [4, 8, 12, 'S'],
+      strikeInterval: [1.5, 2.5, 5, 'S'],
+      strikeReach: [3.2, 4, 4.8, 'S'],
+      strikeArc: [30, 45, 70, 'S'],
+      strikeAccuracy: [0.2, 0.35, 0.55, 'S'],
+      shakeRate: [0.03, 0.08, 0.2, 'S'],
+      bleed: [0.001, 0.002, 0.005, 'S'],
+      morale: [0.6, 0.75, 0.9, 'S'],
       moraleLoss: HEAVY_MORALE_LOSS,
     },
     buff: null,

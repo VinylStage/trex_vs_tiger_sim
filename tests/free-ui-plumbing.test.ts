@@ -189,6 +189,22 @@ describe('share link v3', () => {
     expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
   });
 
+  it('round-trips Triceratops on side B against a T. rex, edited ranges included', () => {
+    const c = sanitizeFreeConfig({
+      sides: [
+        { species: 'trex', count: 1 },
+        {
+          species: 'triceratops',
+          count: 2,
+          params: { strikeForce: { min: 30, mode: 40, max: 60 } },
+        },
+      ],
+    });
+    expect(c.sides[1].species).toBe('triceratops');
+    expect(c.sides[1].params.strikeForce).toEqual({ min: 30, mode: 40, max: 60 });
+    expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
+  });
+
   it('round-trips the white rhino on side B against a hippo, edited ranges included', () => {
     const c = sanitizeFreeConfig({
       sides: [

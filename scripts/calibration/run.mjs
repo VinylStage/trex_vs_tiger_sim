@@ -29,6 +29,8 @@
 //                 as the reference opponent and the hippo (preset #15) as the second
 //   spinosaurus   the same checks for Spinosaurus (#185, land duel), with T. rex (preset #12) as
 //                 the reference opponent and the elephant as the second
+//   triceratops   the same checks for Triceratops (#189), with T. rex (preset #13) as the
+//                 reference opponent and Spinosaurus as the second
 
 import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -859,6 +861,91 @@ sections['spinosaurus'] = () => {
   const sensitivity = sweepAgainst('trex');
   const sensitivityElephant = sweepAgainst('elephant');
   return { mirrors, sweeps, pairs, sanity, flight, sensitivity, sensitivityElephant };
+};
+
+// Triceratops (#189): the same checks as Spinosaurus. Side A is Triceratops, except in the
+// comparison rows of other species and the second order of each swap. The sensitivity rows use
+// preset #13 (T. rex vs Triceratops) from Triceratops's side, and the elephant as a second
+// opponent. Mass is swept too: its estimates disagree.
+sections['triceratops'] = () => {
+  const one = (m) => {
+    const free = runFree(m);
+    logRow(label(m), free);
+    return { match: m, free };
+  };
+  const S = 'triceratops';
+  const mirrors = [
+    { a: S, b: S, na: 1, nb: 1, runs: runsOf(1000) },
+    { a: S, b: S, na: 3, nb: 3, runs: runsOf(1000) },
+  ].map((m) => {
+    const r = one(m);
+    return { ...r, diff: pairedDiffInterval(r.free.a, r.free.b, r.free.runs) };
+  });
+  // Count sweeps: lions, the raptor pack and T. rex against one Triceratops (side B varies),
+  // and Triceratops against one T. rex (side A varies).
+  const sweeps = {
+    lions: [1, 2, 3, 4, 6, 8, 10, 12, 16, 20].map((nb) =>
+      one({ a: S, b: 'lion', na: 1, nb, runs: runsOf(500) }),
+    ),
+    raptors: [1, 2, 4, 6, 8, 10, 12, 16, 20, 25, 30].map((nb) =>
+      one({ a: S, b: 'raptor', na: 1, nb, runs: runsOf(500) }),
+    ),
+    trexes: [1, 2, 3, 4].map((nb) => one({ a: S, b: 'trex', na: 1, nb, runs: runsOf(500) })),
+    vsTrex: [1, 2, 3, 4].map((na) => one({ a: S, b: 'trex', na, nb: 1, runs: runsOf(500) })),
+  };
+  const pairs = [
+    [
+      { a: S, b: 'trex', na: 1, nb: 1 },
+      { a: 'trex', b: S, na: 1, nb: 1 },
+    ],
+    [
+      { a: S, b: 'spinosaurus', na: 1, nb: 1 },
+      { a: 'spinosaurus', b: S, na: 1, nb: 1 },
+    ],
+  ].map(([x, y]) => {
+    const fx = one({ ...x, runs: runsOf(1000) });
+    const fy = one({ ...y, runs: runsOf(1000) });
+    return { first: fx, second: fy, diff: diffInterval(fx.free.a, fy.free.b) };
+  });
+  // Next to the other heavy species one on one, with T. rex against twelve raptors (preset #18)
+  // as the reference for the Triceratops row below it.
+  const sanity = [
+    [S, 'trex', 1],
+    [S, 'spinosaurus', 1],
+    [S, 'elephant', 1],
+    [S, 'mammoth', 1],
+    [S, 'whiteRhino', 1],
+    [S, 'hippo', 1],
+    [S, 'buffalo', 1],
+    [S, 'brownBear', 1],
+    [S, 'polarBear', 1],
+    [S, 'tiger', 1],
+    [S, 'lion', 1],
+    ['trex', 'raptor', 12],
+    [S, 'raptor', 12],
+  ].map(([a, b, nb]) => one({ a, b, na: 1, nb, runs: runsOf(1000) }));
+  // Flight (#169, unchanged here): one Triceratops against much larger or stronger opponents.
+  const flight = [
+    ['trex', 1],
+    ['elephant', 1],
+    ['mammoth', 1],
+  ].map(([b, nb]) => one({ a: S, b, na: 1, nb, runs: runsOf(1000) }));
+  // One-at-a-time sensitivity of every S trait against one opponent: the trait pinned at its
+  // preset min, then at its max, every other input at its preset. The L mass row is swept too.
+  const preset = speciesMod.FREE_SPECIES[S].traits;
+  const swept = Object.entries(preset).filter(([k, t]) => t.evidence === 'S' || k === 'mass');
+  const sweepAgainst = (b) => {
+    const m = { a: S, b, na: 1, nb: 1, runs: runsOf(1000) };
+    const base = one(m);
+    const traits = swept.map(([k, t]) => {
+      const at = (v) => one({ ...m, paramsA: { [k]: { min: v, mode: v, max: v } } });
+      return { trait: k, range: t.range, low: at(t.range.min), high: at(t.range.max) };
+    });
+    return { base, traits };
+  };
+  const sensitivity = sweepAgainst('trex');
+  const sensitivitySpinosaurus = sweepAgainst('spinosaurus');
+  return { mirrors, sweeps, pairs, sanity, flight, sensitivity, sensitivitySpinosaurus };
 };
 
 // --- run ---

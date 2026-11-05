@@ -35,7 +35,8 @@ export const speciesAnchor = (id: FreeSpeciesId): string => `sp-${id}`;
 
 /**
  * A species that shares no time with any other species in the roster (the era rule of
- * `erasNeverMet`): every matchup with it is a what-if (design R15). Today that is _T. rex_ only.
+ * `erasNeverMet`): every matchup with it is a what-if (design R15). Today that is _Utahraptor_ and
+ * _Spinosaurus_; _T. rex_ lost the tag when _Triceratops_ (same age) joined (#189).
  */
 export function isWhatIf(id: FreeSpeciesId): boolean {
   const era = FREE_SPECIES[id].era;
