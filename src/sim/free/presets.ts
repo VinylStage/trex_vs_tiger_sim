@@ -274,6 +274,18 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     },
     check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
+  {
+    id: 'trex-spinosaurus',
+    name: { ko: '티라노 vs 스피노 (육상 대결)', en: 'T. rex vs Spinosaurus (land duel)' },
+    a: { sp: 'trex', n: 1 },
+    b: { sp: 'spinosaurus', n: 1 },
+    tags: ['popular'],
+    why: {
+      ko: '두 종은 만난 적이 없습니다(약 3천만 년 차이, 북아메리카와 북아프리카). 스피노사우루스는 물가에 살았지만, 두 발로 걷고 얕은 물에 서서 물고기를 잡았다는 연구가 있어 땅 위에서 겨룹니다(Sereno 외 2022). 몸무게는 비슷하지만 무는 힘은 티라노가 몇 배 강합니다(Sakamoto 2022).',
+      en: 'Never met (about 30 million years apart, in North America and North Africa). Spinosaurus lived by the water, but it walked on two legs and caught fish while wading (Sereno et al. 2022), so they meet on land. Their weights are similar; the T. rex bite was several times stronger (Sakamoto 2022).',
+    },
+    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
+  },
 ];
 
 /** Presets Simple mode may show: every preset not on hold. */

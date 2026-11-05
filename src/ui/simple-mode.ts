@@ -216,6 +216,10 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
     if (a.species === 'homoErectus' || b.species === 'homoErectus') {
       out.push(h('p', { class: 'matchup-note', text: t('matchup.thoughtExperiment') }));
     }
+    // Spinosaurus carries its "semi-aquatic; land duel" label wherever it is shown (#185).
+    if (a.species === 'spinosaurus' || b.species === 'spinosaurus') {
+      out.push(h('p', { class: 'free-note', text: t('matchup.landDuel') }));
+    }
     if (hasHiddenEdits(c)) out.push(h('p', { class: 'free-note', text: t('simple.hiddenEdits') }));
     const seed = opts.linkSeed();
     out.push(

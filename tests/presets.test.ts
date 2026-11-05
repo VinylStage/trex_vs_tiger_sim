@@ -149,7 +149,7 @@ describe('preset registry', () => {
     // RENEWAL-1.0 §5.3 step 8: a new species ships with a ready preset (docs/SPECIES.md §11.5).
     const freeOnly = FREE_SPECIES_IDS.filter((id) => !isHeavySpecies(id) && !isPackSpecies(id));
     expect(freeOnly).toEqual(
-      expect.arrayContaining(['polarBear', 'hippo', 'raptor', 'whiteRhino']),
+      expect.arrayContaining(['polarBear', 'hippo', 'raptor', 'whiteRhino', 'spinosaurus']),
     );
     for (const id of freeOnly) {
       expect(

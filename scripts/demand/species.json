@@ -112,7 +112,7 @@
     },
     {
       "id": "spinosaurus",
-      "group": "candidate",
+      "group": "sim",
       "issue": 185,
       "en": "Spinosaurus",
       "ko": "스피노사우루스",

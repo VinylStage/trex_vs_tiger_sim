@@ -9,6 +9,7 @@
 > - **북극곰(#184, §13):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 3개 모두 단조, 진영 바꾸기 같음. 불곰보다 두 배 무거워 1:1에서 불곰에 83% 이기고, 호랑이 · 사자 · 늑대 · 물소 상대로 모두 불곰 이상입니다. 이 차이는 대부분 추정값(공격 힘 · 간격 · 정확도, 사기)에 달려 있습니다. 이탈 모델(#169)은 바꾸지 않았고, 북극곰도 훨씬 큰 티라노 앞에서는 진 경우의 28%만 이탈합니다.
 > - **하마(#186, §14):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게가 물소와 코끼리 사이(1.5톤)라 물소 · 곰에는 92–99% 이기고 코끼리에는 16%, 매머드에는 10%만 이깁니다. 사자는 16–20마리가 되어야 다 자란 하마와 비슷해지는데, 사자 무리가 어른 하마를 드물게만 사냥한다는 기록과 맞습니다. 검증되지 않은 두 값 중 최고 속도는 결과에 거의 영향이 없고(+1.7%p), 무는 힘은 가장 큰 영향 중 하나입니다(+29.9%p). 이탈 모델(#169)은 바꾸지 않았습니다.
 > - **흰코뿔소(#187, §16):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게(2톤)가 하마보다 조금 무거워 1:1에서 하마에 63%, 물소에 93% 이기고, 코끼리에는 26%, 매머드에는 18%만 이깁니다. 사자는 20마리가 되어도 56%로 아직 흰코뿔소가 앞서는데, 다 자란 흰코뿔소는 천적이 거의 없다는 기록과 맞습니다. 검증되지 않은 최고 속도는 결과에 거의 영향이 없고(코끼리 상대 +2.6%p, 하마 상대 0%p), 측정이 없는 뿔 힘 · 공격 간격 · 치명도 · 정확도가 가장 크게 흔듭니다(33–52%p). 이탈 모델(#169)은 바꾸지 않았습니다.
+> - **스피노사우루스(#185, §17, 육상 대결):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게(7.4톤)는 티라노(8톤)와 비슷하지만 무는 힘이 몇 배 약해(Sakamoto 2022) 1:1에서 티라노에 3.5%만 이기고, 세 마리가 되어야 티라노 한 마리를 넘습니다(56%). 값 하나를 범위 끝으로 옮겨도 13.5%가 최고입니다. 논쟁 중인 자세(네 발 / 두 발)가 영향을 주는 속도 · 선회는 결과에 거의 영향이 없습니다(+0.3%p, +0.2%p). 코끼리에는 몸무게 덕분에 89% 이깁니다.
 > - **R1 "잠정 모델" 안내:** 기준(보정 보고서 + 소유자 승인 + 안내에 대한 결정, 그리고 가이드 · 모델 · 파라미터 페이지의 자유 모델 설명)을 아직 다 채우지 못했으므로 **지금은 내리지 말 것을 권합니다.** 소유자가 이 보고서를 승인하고, #170(파라미터 페이지)을 마치고, #169를 결정하면 내릴 수 있습니다. UI는 바꾸지 않았습니다.
 
 Status: measured 2026-10-28 on `main` at `12b5968` (v0.2.22), engines unchanged by this report. Issue [#166](https://github.com/VinylStage/trex_vs_tiger_sim/issues/166), part of [#125](https://github.com/VinylStage/trex_vs_tiger_sim/issues/125). Design: [RENEWAL-1.0.md §3.2](../design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode) (minimum P8 pass, owner decision R1) and [FREE-MATCHUPS.md §8](../design/FREE-MATCHUPS.md#8-phased-implementation-plan) (phase P8). **Not signed off by the owner yet.**
@@ -33,6 +34,7 @@ Every number below is a statement about the two models under their assumptions, 
 14. [Hippopotamus (#186)](#14-hippopotamus-186)
 15. [Raptor pack (#188)](#15-raptor-pack-188)
 16. [White rhinoceros (#187)](#16-white-rhinoceros-187)
+17. [_Spinosaurus_ (#185)](#17-spinosaurus-185)
 
 ## 1. Questions
 
@@ -445,6 +447,8 @@ node scripts/calibration/run.mjs --only hippo        # writes docs/research/cali
 node scripts/calibration/tables.mjs docs/research/calibration-hippo.json
 node scripts/calibration/run.mjs --only white-rhino  # writes docs/research/calibration-white-rhino.json (§16)
 node scripts/calibration/tables.mjs docs/research/calibration-white-rhino.json
+node scripts/calibration/run.mjs --only spinosaurus  # writes docs/research/calibration-spinosaurus.json (§17)
+node scripts/calibration/tables.mjs docs/research/calibration-spinosaurus.json
 ```
 
 Sections: `trex-tiger`, `classic`, `presets`, `species-notes`, `interference`, `symmetry`, `monotonic`, `polar-bear` (§13) and `hippo` (§14). `--only <section>` without `--out` writes `calibration-<section>.json`, so one section never replaces the committed results. A full run writes every section, `polar-bear` and `hippo` included, to `calibration-results.json`, and `presets` then also measures `polar-bear-brown-bear` and `elephant-hippo`. Every batch has a fixed seed, so a rerun on the same commit gives the same numbers within the same JavaScript engine (MODEL.md §2.2). Measured with Node v22.22.0. When the free engine changes (a new `mv`), rerun both scripts, update the tables and recheck §8 and §10.
@@ -1013,3 +1017,163 @@ Generated from docs/research/calibration-white-rhino.json (commit 6de39b6, v22.2
 **Presets.** `elephant-rhino` (design §6 #14): elephant 73.5 %, median 114.3 s, rout share 100 % in the fixture (200 runs). Not close. `hippo-rhino` (design §6 #15): rhino 58.5 %, hippo 41.0 %, median 102.7 s, rout share 100 %: close (35–65 % for both), the first close heavy-against-heavy preset. Both are ready in Simple mode through the one-on-one override, as `elephant-hippo` ([PRESETS.md](../PRESETS.md#overrides-and-holds)). The fixture's 58.5 % (200 runs) and this section's 63.1 % (1,000 runs, rhino on side A) agree within their intervals.
 
 The tables in this section: generated from docs/research/calibration-white-rhino.json (commit 6de39b6, v22.22.0).
+
+## 17. _Spinosaurus_ (#185)
+
+Measured 2026-11-05 on `main` at `f85796d` plus the #185 change (engines unchanged, model version `mv` 1). _Spinosaurus_ (`spinosaurus`) has no legacy entry (docs/SPECIES.md §4.15) and runs on the free engine only, on land: the free model has no water, so the issue's "land duel" is the only setting, and the species carries the "semi-aquatic; land duel" label. These are the add-a-species checks of [RENEWAL-1.0 §5.3](../design/RENEWAL-1.0.md#53-add-a-species-pipeline-definition-of-done) step 5, a comparison with the other heavy species and with _T. rex_ against the raptor pack, its flight behaviour under the current model (#169, not changed here) and a one-at-a-time sensitivity sweep against _T. rex_ (preset #12) and the elephant. Raw data: `calibration-spinosaurus.json` (section `spinosaurus`); §1–§16 and the other calibration files are unchanged. Method and metrics as in §2: seed 20261019, every other input at its preset.
+
+### Mirror matches
+
+| Mirror                            | Runs |           A wins |           B wins | Draws | A − B (pp, paired) | 0 inside? | Median s |
+| --------------------------------- | ---: | ---------------: | ---------------: | ----: | -----------------: | --------: | -------: |
+| _Spinosaurus_ 1 v _Spinosaurus_ 1 | 1000 | 48.8 (45.7–51.9) | 50.9 (47.8–54.0) |   0.3 | -2.1 (-8.3 to 4.1) |       yes |      248 |
+| _Spinosaurus_ 3 v _Spinosaurus_ 3 | 1000 | 49.6 (46.5–52.7) | 49.2 (46.1–52.3) |   1.2 | +0.4 (-5.8 to 6.6) |       yes |      382 |
+
+### Count sweeps
+
+One _Spinosaurus_ against lions and against the raptor pack (side B varies), and _Spinosaurus_ against one _T. rex_ and against one elephant (side A varies). "Step" flags a drop in the varying side's share larger than both intervals allow, the §6 rule. Neither lions nor _Utahraptor_ shared its time or place; they stand in for a large group of smaller attackers.
+
+| Match-up                  | Runs |             A wins |           B wins | Draws | Median s | Rout % | Step |
+| ------------------------- | ---: | -----------------: | ---------------: | ----: | -------: | -----: | ---: |
+| _Spinosaurus_ 1 v lion 1  |  500 | 100.0 (99.2–100.0) |    0.0 (0.0–0.8) |   0.0 |       39 |   76.0 |      |
+| _Spinosaurus_ 1 v lion 2  |  500 |   99.0 (97.7–99.6) |    0.0 (0.0–0.8) |   1.0 |      183 |   80.1 |   ok |
+| _Spinosaurus_ 1 v lion 3  |  500 |   97.2 (95.4–98.3) |    0.6 (0.2–1.7) |   2.2 |      282 |   87.9 |   ok |
+| _Spinosaurus_ 1 v lion 4  |  500 |   97.4 (95.6–98.5) |    0.4 (0.1–1.4) |   2.2 |      282 |   91.3 |   ok |
+| _Spinosaurus_ 1 v lion 6  |  500 |   98.2 (96.6–99.1) |    1.0 (0.4–2.3) |   0.8 |      246 |   94.9 |   ok |
+| _Spinosaurus_ 1 v lion 8  |  500 |   95.8 (93.7–97.2) |    3.6 (2.3–5.6) |   0.6 |      220 |   96.2 |   ok |
+| _Spinosaurus_ 1 v lion 10 |  500 |   94.4 (92.0–96.1) |    5.2 (3.6–7.5) |   0.4 |      195 |   96.9 |   ok |
+| _Spinosaurus_ 1 v lion 12 |  500 |   93.2 (90.6–95.1) |    6.6 (4.7–9.1) |   0.2 |      189 |   96.9 |   ok |
+| _Spinosaurus_ 1 v lion 16 |  500 |   87.2 (84.0–89.8) | 12.8 (10.2–16.0) |   0.0 |      173 |   96.7 |   ok |
+| _Spinosaurus_ 1 v lion 20 |  500 |   80.0 (76.3–83.3) | 20.0 (16.7–23.7) |   0.0 |      157 |   97.0 |   ok |
+
+| Match-up                          | Runs |             A wins |           B wins | Draws | Median s | Rout % | Step |
+| --------------------------------- | ---: | -----------------: | ---------------: | ----: | -------: | -----: | ---: |
+| _Spinosaurus_ 1 v _Utahraptor_ 1  |  500 | 100.0 (99.2–100.0) |    0.0 (0.0–0.8) |   0.0 |       51 |   99.8 |      |
+| _Spinosaurus_ 1 v _Utahraptor_ 2  |  500 |   98.4 (96.9–99.2) |    0.6 (0.2–1.7) |   1.0 |      107 |   99.5 |   ok |
+| _Spinosaurus_ 1 v _Utahraptor_ 4  |  500 |   96.6 (94.6–97.9) |    3.2 (2.0–5.1) |   0.2 |      233 |   99.0 |   ok |
+| _Spinosaurus_ 1 v _Utahraptor_ 6  |  500 |   89.6 (86.6–92.0) |   9.4 (7.1–12.3) |   1.0 |      285 |   98.0 |   ok |
+| _Spinosaurus_ 1 v _Utahraptor_ 8  |  500 |   82.6 (79.0–85.7) | 17.0 (14.0–20.5) |   0.4 |      295 |   97.3 |   ok |
+| _Spinosaurus_ 1 v _Utahraptor_ 10 |  500 |   77.8 (74.0–81.2) | 21.6 (18.2–25.4) |   0.6 |      252 |   97.2 |   ok |
+| _Spinosaurus_ 1 v _Utahraptor_ 12 |  500 |   73.8 (69.8–77.5) | 26.0 (22.3–30.0) |   0.2 |      224 |   97.1 |   ok |
+| _Spinosaurus_ 1 v _Utahraptor_ 16 |  500 |   68.8 (64.6–72.7) | 31.2 (27.3–35.4) |   0.0 |      194 |   97.3 |   ok |
+| _Spinosaurus_ 1 v _Utahraptor_ 20 |  500 |   64.4 (60.1–68.5) | 35.6 (31.5–39.9) |   0.0 |      165 |   97.4 |   ok |
+| _Spinosaurus_ 1 v _Utahraptor_ 25 |  500 |   59.0 (54.6–63.2) | 41.0 (36.8–45.4) |   0.0 |      139 |   97.4 |   ok |
+| _Spinosaurus_ 1 v _Utahraptor_ 30 |  500 |   56.0 (51.6–60.3) | 44.0 (39.7–48.4) |   0.0 |      127 |   97.5 |   ok |
+
+| Match-up                     | Runs |           A wins |           B wins | Draws | Median s | Rout % | Step |
+| ---------------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: | ---: |
+| _Spinosaurus_ 1 v _T. rex_ 1 |  500 |    4.4 (2.9–6.6) | 95.6 (93.4–97.1) |   0.0 |      113 |   99.0 |      |
+| _Spinosaurus_ 2 v _T. rex_ 1 |  500 | 25.6 (22.0–29.6) | 74.4 (70.4–78.0) |   0.0 |      149 |   99.3 |   ok |
+| _Spinosaurus_ 3 v _T. rex_ 1 |  500 | 56.4 (52.0–60.7) | 43.4 (39.1–47.8) |   0.2 |      158 |   99.5 |   ok |
+| _Spinosaurus_ 4 v _T. rex_ 1 |  500 | 80.6 (76.9–83.8) | 19.4 (16.2–23.1) |   0.0 |      148 |   97.9 |   ok |
+| _Spinosaurus_ 5 v _T. rex_ 1 |  500 | 91.4 (88.6–93.6) |   8.6 (6.4–11.4) |   0.0 |      136 |   98.1 |   ok |
+| _Spinosaurus_ 6 v _T. rex_ 1 |  500 | 94.6 (92.3–96.3) |    5.4 (3.7–7.7) |   0.0 |      126 |   98.1 |   ok |
+
+| Match-up                     | Runs |             A wins |          B wins | Draws | Median s | Rout % | Step |
+| ---------------------------- | ---: | -----------------: | --------------: | ----: | -------: | -----: | ---: |
+| _Spinosaurus_ 1 v elephant 1 |  500 |   86.8 (83.6–89.5) | 12.4 (9.8–15.6) |   0.8 |      170 |   97.8 |      |
+| _Spinosaurus_ 2 v elephant 1 |  500 |   99.4 (98.3–99.8) |   0.6 (0.2–1.7) |   0.0 |      125 |   99.4 |   ok |
+| _Spinosaurus_ 3 v elephant 1 |  500 |  99.8 (98.9–100.0) |   0.2 (0.0–1.1) |   0.0 |      109 |   99.6 |   ok |
+| _Spinosaurus_ 4 v elephant 1 |  500 | 100.0 (99.2–100.0) |   0.0 (0.0–0.8) |   0.0 |      101 |  100.0 |   ok |
+
+### Side swaps
+
+| Pair                                                        | Runs | First order: A wins | Swapped: same species wins |    Difference (pp) | 0 inside? |
+| ----------------------------------------------------------- | ---: | ------------------: | -------------------------: | -----------------: | --------: |
+| _Spinosaurus_ 1 v _T. rex_ 1 / _T. rex_ 1 v _Spinosaurus_ 1 | 1000 |       3.5 (2.5–4.8) |              3.7 (2.7–5.1) | -0.2 (-1.9 to 1.5) |       yes |
+| _Spinosaurus_ 1 v elephant 1 / elephant 1 v _Spinosaurus_ 1 | 1000 |    88.9 (86.8–90.7) |           88.7 (86.6–90.5) | +0.2 (-2.6 to 3.0) |       yes |
+
+### Next to the other heavy species
+
+_T. rex_ against twelve _Utahraptor_ (preset #18) is the reference for the _Spinosaurus_ row below it.
+
+| Match-up                          | Runs |             A wins |           B wins | Draws | Median s | Rout % |
+| --------------------------------- | ---: | -----------------: | ---------------: | ----: | -------: | -----: |
+| _Spinosaurus_ 1 v _T. rex_ 1      | 1000 |      3.5 (2.5–4.8) | 96.5 (95.2–97.5) |   0.0 |      115 |   99.2 |
+| _Spinosaurus_ 1 v elephant 1      | 1000 |   88.9 (86.8–90.7) |  10.7 (8.9–12.8) |   0.4 |      173 |   97.6 |
+| _Spinosaurus_ 1 v mammoth 1       | 1000 |   84.0 (81.6–86.1) | 16.0 (13.9–18.4) |   0.0 |      176 |   98.0 |
+| _Spinosaurus_ 1 v white rhino 1   | 1000 |   98.1 (97.1–98.8) |    1.7 (1.1–2.7) |   0.2 |      121 |   98.0 |
+| _Spinosaurus_ 1 v hippo 1         | 1000 |   99.0 (98.2–99.5) |    0.8 (0.4–1.6) |   0.2 |      118 |   97.5 |
+| _Spinosaurus_ 1 v buffalo 1       | 1000 |  99.9 (99.4–100.0) |    0.1 (0.0–0.6) |   0.0 |       82 |   99.9 |
+| _Spinosaurus_ 1 v brown bear 1    | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       79 |   92.9 |
+| _Spinosaurus_ 1 v polar bear 1    | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       74 |   99.9 |
+| _Spinosaurus_ 1 v tiger 1         | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       35 |   86.3 |
+| _Spinosaurus_ 1 v lion 1          | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       39 |   72.8 |
+| _T. rex_ 1 v _Utahraptor_ 12      | 1000 |   91.8 (89.9–93.3) |    8.0 (6.5–9.8) |   0.2 |      153 |   82.7 |
+| _Spinosaurus_ 1 v _Utahraptor_ 12 | 1000 |   75.6 (72.8–78.2) | 24.3 (21.7–27.1) |   0.1 |      214 |   97.4 |
+
+### Larger or stronger opponents
+
+| Match-up                     | Runs |           A wins |           B wins | Draws | Median s | Rout % |
+| ---------------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: |
+| _Spinosaurus_ 1 v _T. rex_ 1 | 1000 |    3.5 (2.5–4.8) | 96.5 (95.2–97.5) |   0.0 |      115 |   99.2 |
+| _Spinosaurus_ 1 v elephant 1 | 1000 | 88.9 (86.8–90.7) |  10.7 (8.9–12.8) |   0.4 |      173 |   97.6 |
+| _Spinosaurus_ 1 v mammoth 1  | 1000 | 84.0 (81.6–86.1) | 16.0 (13.9–18.4) |   0.0 |      176 |   98.0 |
+
+### One-at-a-time sensitivity
+
+_Spinosaurus_ 1 v _T. rex_ 1 (preset #12 seen from the _Spinosaurus_ side) and _Spinosaurus_ 1 v elephant 1, 1,000 runs per row: each **S** trait pinned at its preset min, then at its max. Because the mass estimates disagree, the two **L** rows (`mass`, 6,000–9,000 kg, and `strikeForce`, the 4.8–11.9 kN of Sakamoto 2022) are swept the same way; the table header says "S" for every row. The swing is the change in the _Spinosaurus_ win share from min to max. The constant `hide` (1) cannot be pinned through a config and only scales damage from a latcher, which neither opponent is. The elephant is a second opponent because against _T. rex_ the base share (3.5 %) leaves little room to see a swing.
+
+Against _T. rex_ (preset #12):
+
+| Trait (S)         |         Range |    A wins at min |  A wins at max | Swing (pp) | Median s (min / max) |
+| ----------------- | ------------: | ---------------: | -------------: | ---------: | -------------------: |
+| all at preset     |             – |    3.5 (2.5–4.8) |  3.5 (2.5–4.8) |          – |                  115 |
+| `mass`            |   6000 – 9000 |    1.7 (1.1–2.7) |  4.8 (3.6–6.3) |       +3.1 |            106 / 125 |
+| `turnRate`        |       15 – 32 |    3.4 (2.4–4.7) |  3.6 (2.6–4.9) |       +0.2 |            115 / 115 |
+| `sprintSpeed`     |         2 – 6 |    3.3 (2.4–4.6) |  3.6 (2.6–4.9) |       +0.3 |            116 / 114 |
+| `cruiseSpeed`     |     0.6 – 1.4 |    3.1 (2.2–4.4) |  3.2 (2.3–4.5) |       +0.1 |            128 / 104 |
+| `sprintEndurance` |      20 – 180 |    1.8 (1.1–2.8) |  4.4 (3.3–5.9) |       +2.6 |            115 / 115 |
+| `recoveryTime`    |      60 – 300 |    3.4 (2.4–4.7) |  3.3 (2.4–4.6) |       -0.1 |            115 / 115 |
+| `strikeForce`     |    4.8 – 11.9 |    0.5 (0.2–1.2) |  6.8 (5.4–8.5) |       +6.3 |            115 / 114 |
+| `strikeLethality` |        3 – 10 |    0.3 (0.1–0.9) | 8.1 (6.6–10.0) |       +7.8 |            115 / 114 |
+| `strikeInterval`  |       1 – 3.5 | 13.5 (11.5–15.8) |  0.4 (0.2–1.0) |      -13.1 |            114 / 115 |
+| `strikeReach`     |         5 – 7 |    2.3 (1.5–3.4) |  4.4 (3.3–5.9) |       +2.1 |            114 / 115 |
+| `strikeArc`       |       25 – 60 |    3.5 (2.5–4.8) |  3.5 (2.5–4.8) |       +0.0 |            115 / 115 |
+| `strikeAccuracy`  |   0.25 – 0.65 |    0.6 (0.3–1.3) |  7.4 (5.9–9.2) |       +6.8 |            115 / 114 |
+| `shakeRate`       |   0.05 – 0.25 |    3.5 (2.5–4.8) |  3.5 (2.5–4.8) |       +0.0 |            115 / 115 |
+| `bleed`           | 0.002 – 0.008 |    3.2 (2.3–4.5) |  3.6 (2.6–4.9) |       +0.4 |            115 / 115 |
+| `morale`          |    0.7 – 0.95 |    1.8 (1.1–2.8) |  4.3 (3.2–5.7) |       +2.5 |            106 / 124 |
+| `moraleLoss`      |    0.02 – 0.1 |    3.5 (2.5–4.8) |  3.5 (2.5–4.8) |       +0.0 |            115 / 115 |
+
+Against the elephant:
+
+| Trait (S)         |         Range |    A wins at min |    A wins at max | Swing (pp) | Median s (min / max) |
+| ----------------- | ------------: | ---------------: | ---------------: | ---------: | -------------------: |
+| all at preset     |             – | 88.9 (86.8–90.7) | 88.9 (86.8–90.7) |          – |                  173 |
+| `mass`            |   6000 – 9000 | 83.2 (80.8–85.4) | 93.1 (91.4–94.5) |       +9.9 |            166 / 182 |
+| `turnRate`        |       15 – 32 | 88.6 (86.5–90.4) | 88.8 (86.7–90.6) |       +0.2 |            173 / 173 |
+| `sprintSpeed`     |         2 – 6 | 87.4 (85.2–89.3) | 89.1 (87.0–90.9) |       +1.7 |            177 / 172 |
+| `cruiseSpeed`     |     0.6 – 1.4 | 88.7 (86.6–90.5) | 88.9 (86.8–90.7) |       +0.2 |            184 / 164 |
+| `sprintEndurance` |      20 – 180 | 70.9 (68.0–73.6) | 91.2 (89.3–92.8) |      +20.3 |            227 / 169 |
+| `recoveryTime`    |      60 – 300 | 90.4 (88.4–92.1) | 87.8 (85.6–89.7) |       -2.6 |            173 / 173 |
+| `strikeForce`     |    4.8 – 11.9 | 71.1 (68.2–73.8) | 95.3 (93.8–96.4) |      +24.2 |            263 / 138 |
+| `strikeLethality` |        3 – 10 | 64.7 (61.7–67.6) | 97.1 (95.9–98.0) |      +32.4 |            307 / 130 |
+| `strikeInterval`  |       1 – 3.5 | 98.2 (97.2–98.9) | 76.4 (73.7–78.9) |      -21.8 |            116 / 245 |
+| `strikeReach`     |         5 – 7 | 87.2 (85.0–89.1) | 89.4 (87.3–91.2) |       +2.2 |            173 / 173 |
+| `strikeArc`       |       25 – 60 | 88.9 (86.8–90.7) | 88.9 (86.8–90.7) |       +0.0 |            173 / 173 |
+| `strikeAccuracy`  |   0.25 – 0.65 | 72.9 (70.1–75.6) | 96.1 (94.7–97.1) |      +23.2 |            255 / 138 |
+| `shakeRate`       |   0.05 – 0.25 | 88.9 (86.8–90.7) | 88.9 (86.8–90.7) |       +0.0 |            173 / 173 |
+| `bleed`           | 0.002 – 0.008 | 88.5 (86.4–90.3) | 89.5 (87.4–91.3) |       +1.0 |            173 / 173 |
+| `morale`          |    0.7 – 0.95 | 82.2 (79.7–84.4) | 92.4 (90.6–93.9) |      +10.2 |            170 / 174 |
+| `moraleLoss`      |    0.02 – 0.1 | 88.9 (86.8–90.7) | 88.9 (86.8–90.7) |       +0.0 |            173 / 173 |
+
+### Verdicts
+
+| Check (RENEWAL-1.0 §5.3 step 5)  | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mirror 50/50 within the interval | **Pass.** 1 v 1: −2.1 pp (−8.3 to 4.1); 3 v 3: +0.4 pp (−5.8 to 6.6), paired interval.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Win share monotonic in count     | **Pass.** No drop in any of the four sweeps: 20 lions win 20.0 %, 30 raptors 44.0 %; two _Spinosaurus_ win 25.6 % against one _T. rex_, three 56.4 %, six 94.6 %; two beat one elephant in 99.4 %.                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Side order                       | **Pass.** Both swaps agree within the interval (−0.2 and +0.2 pp).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Documented interactions          | **None to match.** _Spinosaurus_ shares no time with any other species in the roster (what-if tag). Its contemporaries in the Kem Kem beds and the Bahariya Formation were _Carcharodontosaurus_, abelisaurids, sauropods, crocodyliforms and large fish [WP: Spinosaurus]; none is in the roster. The qualitative literature agrees the jaws were built for fast closure on fish rather than for large prey [Sakamoto 2022] and that it was a shoreline or wading predator [Hone & Holtz 2021; Sereno 2022]; the model's weak bite against _T. rex_ follows from those values, not from a tuned result. |
+| Rout check for social species    | Not applicable: _Spinosaurus_ is solitary. Preset #12 is one on one and passes through the one-on-one override (rout share 100 %, median 112 s, above the 30 s limit unaided). For reference, twelve raptors losing to one _Spinosaurus_ flee in 97.4 % of cases, against 82.7 % when they lose to one _T. rex_: the _Spinosaurus_ fights last longer (median 214 s against 153 s), so more raptors reach the rout threshold. This is not a preset.                                                                                                                                                      |
+
+**The land duel.** At the modes the two weigh about the same (_T. rex_ 8,000 kg, _Spinosaurus_ 7,400 kg), but the _Spinosaurus_ bite is several times weaker (8.35 kN at the mode, against 35 kN; Sakamoto 2022 gives 4.8 / 11.9 kN anterior / posterior for _Spinosaurus_ and 25.4 / 48.5 kN for _T. rex_). _T. rex_ wins 96.5 % of duels. No single sheet value pinned at either end of its range makes _Spinosaurus_ the favourite: the highest share is 13.5 % (strike interval at 1 s), and mass at 9,000 kg gives 4.8 %. Three _Spinosaurus_ are needed to beat one _T. rex_ more often than not (56.4 %). Joint values were not tested. Against the elephant the order flips: _Spinosaurus_ wins 88.9 % by mass (7.4 t against 3.2 t), and the strike values swing it by 22–32 pp.
+
+**What the contested body plan does here.** The quadruped reading (Ibrahim et al. 2014, 2020) and the biped reading (Henderson 2018; Sereno et al. 2022) differ mostly in how the animal moved on land and in water. On land the free model reads speed, turn rate and stamina, and all three matter little in this duel: top speed swings it by 0.3 pp over 2–6 m/s, turn rate by 0.2 pp, sprint endurance by 2.6 pp. The mass range, which spans the published estimates without the 12–20.9 t outlier, swings it by 3.1 pp against _T. rex_ and 9.9 pp against the elephant.
+
+**Flight (#169).** The flight model is unchanged; this records how _Spinosaurus_ behaves under it. One on one against another heavy, the loser flees in practically every decided run (rout share 97.5–99.9 % against _T. rex_, the elephant, the mammoth, the rhino, the hippo and the buffalo). As for the white rhino, a lone brown bear, tiger or lion that loses flees less often (72.8–92.9 %). The preset was measured against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §17 should be re-run then.
+
+**Preset.** `trex-spinosaurus` (design §6 #12): _T. rex_ 96.5 %, median 112.0 s, rout share 100 % in the fixture (200 runs). Not close. Ready in Simple mode through the one-on-one override ([PRESETS.md](../PRESETS.md#overrides-and-holds)). The fixture's 96.5 % (200 runs) and this section's 96.5 % (1,000 runs, _Spinosaurus_ on side A) agree.
+
+The tables in this section: generated from docs/research/calibration-spinosaurus.json (commit f85796d, v22.22.0).

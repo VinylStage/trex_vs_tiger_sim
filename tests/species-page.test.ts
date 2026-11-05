@@ -99,8 +99,8 @@ describe('species registries behind the guide', () => {
     expect(Object.keys(SPECIES_GUIDE).sort()).toEqual([...FREE_SPECIES_IDS].sort());
   });
 
-  it('tags as what-if exactly the species that never met any other (T. rex, Utahraptor)', () => {
-    expect(GUIDE_SPECIES.filter(isWhatIf)).toEqual(['trex', 'raptor']);
+  it('tags as what-if exactly the species that never met any other (T. rex, Utahraptor, Spinosaurus)', () => {
+    expect(GUIDE_SPECIES.filter(isWhatIf)).toEqual(['trex', 'raptor', 'spinosaurus']);
     // The same answer as the classic matchup badge: every T. rex pairing is "never met".
     for (const p of PACK_SPECIES_IDS) expect(matchupClass('trex', p)).toBe('neverMet');
     for (const id of GUIDE_SPECIES.filter((x) => !isWhatIf(x))) {
@@ -213,6 +213,8 @@ describe.each(LANGS)('species guide (%s)', (lang) => {
       expect(p.a.sp === id || p.b.sp === id).toBe(true);
     }
     expect(c.includes('data-i18n="matchup.thoughtExperiment"')).toBe(id === 'homoErectus');
+    // Spinosaurus carries its "semi-aquatic; land duel" label (#185).
+    expect(c.includes('data-i18n="matchup.landDuel"')).toBe(id === 'spinosaurus');
   });
 
   it('lists every preset under each of its species', () => {
