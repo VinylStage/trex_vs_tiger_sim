@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.26](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.25...trex-vs-tiger-sim-v0.2.26) (2026-11-05)
+
+
+### Features
+
+* **species:** add Spinosaurus ([#185](https://github.com/VinylStage/trex_vs_tiger_sim/issues/185)) ([#217](https://github.com/VinylStage/trex_vs_tiger_sim/issues/217)) ([c61f9c6](https://github.com/VinylStage/trex_vs_tiger_sim/commit/c61f9c61050c7d37f7d0d6fa469c233fe9066ffa))
+* **species:** add the white rhinoceros ([#187](https://github.com/VinylStage/trex_vs_tiger_sim/issues/187)) ([#215](https://github.com/VinylStage/trex_vs_tiger_sim/issues/215)) ([f85796d](https://github.com/VinylStage/trex_vs_tiger_sim/commit/f85796def8ea1cb82c75f5ccb0a793c894b83443))
+* **species:** add Triceratops ([#189](https://github.com/VinylStage/trex_vs_tiger_sim/issues/189)) ([#218](https://github.com/VinylStage/trex_vs_tiger_sim/issues/218)) ([5b2ea03](https://github.com/VinylStage/trex_vs_tiger_sim/commit/5b2ea03e1c26644e87c1576934f0dd0e60291adb))
+
 ## [0.2.25](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.24...trex-vs-tiger-sim-v0.2.25) (2026-11-05)
 
 
