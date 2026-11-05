@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.25](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.24...trex-vs-tiger-sim-v0.2.25) (2026-11-05)
+
+
+### Features
+
+* **species:** add the hippopotamus ([#186](https://github.com/VinylStage/trex_vs_tiger_sim/issues/186)) ([#209](https://github.com/VinylStage/trex_vs_tiger_sim/issues/209)) ([e29c5cc](https://github.com/VinylStage/trex_vs_tiger_sim/commit/e29c5ccb9508feff41b2aeaa547e3f4bec1b2931))
+* **species:** add the raptor pack ([#188](https://github.com/VinylStage/trex_vs_tiger_sim/issues/188)) ([#213](https://github.com/VinylStage/trex_vs_tiger_sim/issues/213)) ([6de39b6](https://github.com/VinylStage/trex_vs_tiger_sim/commit/6de39b64fa84d74c7e3abea8794e116ef9d57ee4))
+
 ## [0.2.24](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.23...trex-vs-tiger-sim-v0.2.24) (2026-11-04)
 
 
