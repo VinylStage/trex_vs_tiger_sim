@@ -3,6 +3,7 @@
 //   node scripts/calibration/tables.mjs [results.json]
 //   node scripts/calibration/tables.mjs docs/research/calibration-polar-bear.json
 //   node scripts/calibration/tables.mjs docs/research/calibration-hippo.json
+//   node scripts/calibration/tables.mjs docs/research/calibration-raptor.json
 //
 // Dev-only, no dependencies. The report's tables are pasted from this output, so a rerun of
 // run.mjs followed by this script shows exactly which numbers moved.
@@ -30,6 +31,7 @@ const NAMES = {
   homoErectus: '_H. erectus_',
   polarBear: 'polar bear',
   hippo: 'hippo',
+  raptor: '_Utahraptor_',
 };
 
 const pct = (x) =>
@@ -345,6 +347,18 @@ if (S['hippo']) {
     sanityTitle: 'next to the other heavy species and the lion',
     sensitivityTitle: 'hippo 1 v elephant 1',
   });
+}
+
+if (S['raptor']) {
+  speciesTables(S['raptor'], {
+    title: 'Raptor',
+    varyA: ['vsTrex', 'vsBuffalo', 'vsHippo'],
+    sanityTitle: 'next to animals of similar mass and the other social hunters',
+    sensitivityTitle: '_Utahraptor_ 12 v _T. rex_ 1, preset #18',
+  });
+  out('### Raptor: rout check against one _T. rex_ (raptors and lions in the same numbers)');
+  out();
+  table(FREE_HEAD, S['raptor'].routCheck.map(freeRow));
 }
 
 out(

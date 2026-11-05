@@ -148,7 +148,7 @@ describe('preset registry', () => {
   it('shows at least one preset in Simple mode for every species added after the free model', () => {
     // RENEWAL-1.0 §5.3 step 8: a new species ships with a ready preset (docs/SPECIES.md §11.5).
     const freeOnly = FREE_SPECIES_IDS.filter((id) => !isHeavySpecies(id) && !isPackSpecies(id));
-    expect(freeOnly).toEqual(expect.arrayContaining(['polarBear', 'hippo']));
+    expect(freeOnly).toEqual(expect.arrayContaining(['polarBear', 'hippo', 'raptor']));
     for (const id of freeOnly) {
       expect(
         readyPresets().some((p) => p.a.sp === id || p.b.sp === id),

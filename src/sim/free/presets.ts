@@ -239,6 +239,17 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     },
     check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
+  {
+    id: 'raptors-trex',
+    name: { ko: '랩터 무리 vs 티라노', en: 'Raptor pack vs T. rex' },
+    a: { sp: 'raptor', n: 12 },
+    b: { sp: 'trex', n: 1 },
+    tags: ['popular'],
+    why: {
+      ko: '두 종은 만난 적이 없습니다(약 7천만 년 차이). 유타랍토르는 가장 큰 랩터였지만 티라노보다 스무 배쯤 가볍습니다. 여러 마리의 화석이 한곳에서 함께 발견되어 무리를 지었다고 보지만, 함께 사냥했는지는 논쟁 중입니다.',
+      en: 'Never met (about 70 million years apart). Utahraptor was the largest known raptor, yet about twenty times lighter than T. rex. Fossils of several were found together, so it probably lived in groups; whether raptors hunted together is debated.',
+    },
+  },
 ];
 
 /** Presets Simple mode may show: every preset not on hold. */

@@ -142,7 +142,7 @@
     },
     {
       "id": "raptor",
-      "group": "candidate",
+      "group": "sim",
       "issue": 188,
       "en": "Raptor pack (Utahraptor, Velociraptor)",
       "ko": "랩터 무리",

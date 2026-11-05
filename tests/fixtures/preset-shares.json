@@ -170,6 +170,19 @@
       "medianS": 119.45,
       "rout": 0.995,
       "close": false
+    },
+    {
+      "id": "raptors-trex",
+      "matchup": "raptor 12 v trex 1",
+      "wins": [15, 185, 0],
+      "share": {
+        "a": 0.075,
+        "b": 0.925,
+        "draw": 0
+      },
+      "medianS": 154.55,
+      "rout": 0.8326621923937361,
+      "close": false
     }
   ]
 }

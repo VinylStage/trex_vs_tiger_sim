@@ -12,6 +12,7 @@
 > - 자유 대결 모델(#50)용으로 모든 종이 같은 개체 특성 20개와, 사회성 종(사자 · 늑대 · 하이에나 · 호모 에렉투스)만 쓰는 무리 버프 특성 6개를 갖습니다(§11). 기존 역할에 있던 값은 기존 등록부에서 그대로 읽고, 새 값에는 근거 수준과 범위를 달았습니다. 기존 엔진과 v1/v2 결과는 바뀌지 않습니다.
 > - 북극곰(#184)은 기존 등록부에 없는 첫 종으로, 자유 대결에만 나옵니다(§4.11). 자체 근거표에서 바로 만들었고(몸무게 · 속도 L, 몸 반경은 몸무게에서 유도한 D, 나머지 행동 값은 불곰과 같은 S), 추천 대결 "북극곰 vs 불곰"이 쉬운 모드에 나옵니다. 클래식 모드와 기존 결과는 바뀌지 않습니다.
 > - 하마(#186)도 자유 대결 전용입니다(§4.12). 몸무게와 걸음새는 문헌 값(L), 최고 속도와 무는 힘은 검증된 측정이 없어(U) 범위를 단 추정값(S)으로 바꿨고, 몸 반경은 몸무게에서 유도했습니다(D). 추천 대결 "코끼리 vs 하마"가 쉬운 모드에 나오고, "하마 vs 코뿔소"는 흰코뿔소(#187)를 기다립니다.
+> - 랩터 무리(#188)는 기존 등록부에 없는 첫 사회성 종으로, 기본 종은 유타랍토르입니다(§4.13). 몸무게는 문헌 값(L), 무는 힘과 매달렸을 때의 초당 피해는 데이노니쿠스 연구에서 유도한 값(D), 속도와 행동 값은 추정(S)입니다. 함께 사냥했는지는 논쟁 중이라 무리 버프 값은 협동이 전혀 없는 경우(0)부터 사자 무리의 기본값까지를 범위로 둔 추정입니다. 추천 대결 "랩터 무리 vs 티라노"(12 대 1)가 이탈 점검을 예외 없이 통과해 쉬운 모드에 나옵니다. 벨로키랍토르와 데이노니쿠스 변형은 나중에 다룹니다.
 
 Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#species`, `/en/parameters/#species`) repeat the presets and are checked against the registry by `tests/pages.test.ts`. The species guide (`/species/`, `/en/species/`, #162) is generated from the registries at build time and checked by `tests/species-page.test.ts` ([PAGES.md](PAGES.md#species-guide)); adding a species to `FREE_SPECIES` adds its section there, and the test then asks for its entry in `src/content/species-guide.ts` (scientific name and a short note, both languages). The research behind this document, including the phase-2 and deferred species and the change plan, is in [research/SPECIES.md](research/SPECIES.md).
 
@@ -63,8 +64,9 @@ Each species carries, besides its eleven preset triangles:
 | _Homo erectus_ (pack)  | `homoErectus` | pack  | 1.9–0.11 Ma  | radius 0.3 m    |      — | Many hominins vs one heavy                     | Mass **L**; rest **S**                     |
 | Polar bear             | `polarBear`   | free  | extant       | bite/paw        |    0.5 | Batch A of the 1.0 renewal (#184), §4.11       | Good mass and speed; strike **S**          |
 | Hippopotamus           | `hippo`       | free  | extant       | bite (canines)  |    0.3 | Batch A of the 1.0 renewal (#186), §4.12       | Good mass and gait; speed and bite **S**   |
+| _Utahraptor_ (pack)    | `raptor`      | free  | 139–125 Ma   | bite, latch     |      1 | Batch A of the 1.0 renewal (#188), §4.13       | Good mass; bite **D**; speed, buff **S**   |
 
-The polar bear and the hippo exist in free matchups only (§4.11, §4.12, §11.5); the classic role registry and every classic link are unchanged. **Phase 2** (no new mechanics needed, weaker data): Giganotosaurus, Allosaurus, Deinonychus (with Velociraptor and Utahraptor variants), African wild dog. **Deferred** until new mechanics exist (§8): Nile crocodile, Spinosaurus, Komodo dragon. Their research tables are in [research/SPECIES.md](research/SPECIES.md) §5.
+The polar bear, the hippo and the raptor pack exist in free matchups only (§4.11–§4.13, §11.5); the classic role registry and every classic link are unchanged. **Phase 2** (no new mechanics needed, weaker data): Giganotosaurus, Allosaurus, the _Velociraptor_ and _Deinonychus_ variants of the raptor pack, African wild dog. **Deferred** until new mechanics exist (§8): Nile crocodile, Spinosaurus, Komodo dragon. Their research tables are in [research/SPECIES.md](research/SPECIES.md) §5.
 
 The UI offers these matchup presets: 10 _T. rex_ vs 100 tigers (default), 1 vs 10 tigers, 5 elephants vs 30 lions, 1 buffalo vs 6 lions, 1 buffalo vs 15 hyenas, 1 brown bear vs 8 wolves, 1 brown bear vs 1 tiger, 1 woolly mammoth vs 12 wolves, 1 _T. rex_ vs 100 _Homo erectus_ (`PRESETS` in `src/ui/form.ts`).
 
@@ -387,6 +389,45 @@ Built from its own source sheet with `defineFreeSpecies` (§11.5), like the pola
 | `moraleLoss`      | 0–1   |  0.02 |  0.05 |   0.1 | **S** | Shared heavy placeholder (read only by social species).             |
 | latch traits      |       |       |       |       |   –   | Inactive (neutral, §11.1): the hippo does not latch.                |
 
+### 4.13 Raptor pack: _Utahraptor_ (free model only, #188)
+
+The first social species built from its own source sheet with `defineFreeSpecies` (§11.5), with latch rows and pack-buff rows; the classic engine does not offer it. The id is `raptor` and the default animal is _Utahraptor ostrommaysi_. _Velociraptor_ and _Deinonychus_ variants are left for later. The full sheet, with the sensitivity range of every **S** value, its measured swing and the sources, is in [research/SPECIES.md §5.15](research/SPECIES.md#515-deinonychus-and-other-dromaeosaurids-pack-utahraptor-shipped-in-the-free-model-188); the calibration is in [research/CALIBRATION.md §15](research/CALIBRATION.md#15-raptor-pack-188).
+
+- **Evidence.** The largest known dromaeosaurid, about 6–7 m long. Mass estimates run from 280 kg [Molina-Pérez & Larramendi 2019] and 290 kg [Zanno & Makovicky 2013] through 350–450 kg (the size of _Achillobator_) to "under 500 kg" [Kirkland 1993], all via [WP: Utahraptor]. The upper Yellow Cat Member of the Cedar Mountain Formation, Utah, dated 139–135 Ma [Joeckel 2019] or 130–125 Ma (Holtz), all via [WP: Utahraptor].
+- **Bite (D).** No _Utahraptor_ bite estimate exists. The posterior bite of _Deinonychus_, 706 N [Sakamoto 2022], is scaled isometrically by (mass ÷ 75 kg)^(2/3): 1.7 / 2.15 / 2.5 kN. The much higher 4.1–8.2 kN that [Gignac 2010] inferred from bite marks is not used; Sakamoto argues the lower figure fits an animal of that size. Latch damage follows from the bite (§3.2 item 4): 3.4 / 9.5 / 20 HP/s.
+- **Speed (S).** No estimate exists for _Utahraptor_. The authors of its description judged it slower than _Deinonychus_ and _Velociraptor_, about as fast as the iguanodonts it lived with, and later work reads it as an ambush hunter [WP: Utahraptor]. `sprintSpeed` 6 / 8 / 10.5 m/s: the maximum is the modelled top speed of _Dilophosaurus_ (430 kg, 10.5 m/s), the mode the modelled _T. rex_ (8 m/s), both [Sellers & Manning 2007]; _Velociraptor_'s 10.8 m/s from the same paper belongs to a 20 kg animal.
+- **Latching.** The "raptor prey restraint" model: leap on, pin the prey under body weight and hold it with the sickle claws [Fowler 2011]. A musculoskeletal model of the _Deinonychus_ foot found small claw forces, which supports holding prey smaller than the predator rather than climbing much larger prey [Bishop 2019], so `latchChance` (0.1 / 0.25 / 0.5 **S**) sits below the lion's.
+- **Group living and the pack buff (S).** At least seven individuals of different ages, from a hatchling to an adult, were found together in one sandstone block [WP: Utahraptor, citing Kirkland], so the model treats it as social. Whether dromaeosaurids hunted cooperatively is contested: parallel trackways [Li 2007] against Komodo-like mobbing [Roach & Brinkman 2007] and different diets in young and adult _Deinonychus_ [Frederickson 2020]. The pack-buff rows therefore span no cooperation (0) to a lion-like pride (§11.4); the species guide says so.
+- **Rout check (R4).** Preset #18 passes the rout check without an override: the losing raptors flee in 83 % of decided cases (limit 90 %), and the median is 155 s. The rout share rises with the head count, as it does for lions (CALIBRATION.md §15).
+- **Glyph.** Body radius is the lion's 0.8 m scaled by (mass ÷ 180 kg)^(1/3) (**D**): 0.95 / 1.05 / 1.1 m. At 1 m and above the replay draws triangles, so most runs draw the raptors as triangles.
+- **Content check.** `adSafe`: yes. Era: 139–125 Ma, so it shares no time with any other species in the roster and carries the what-if tag on the species guide, like _T. rex_. Overlap: with _T. rex_ "never met" (about 70 million years apart); with every living species and the woolly mammoth "never met". Korean counter 마리; no text-share symbol yet, so it falls back to 🔷 / 🔶 (an owner decision, as 🦖 is _T. rex_'s).
+- **Presets.** `raptors-trex`, 12 v 1 (design §6 #18), ready in Simple mode with no override ([PRESETS.md](PRESETS.md#fixture)).
+- **Flight (#169).** Tuned under the current flight model. The per-species flight traits decided on #169 (with #197, under a new model version) will re-check this species.
+
+| Free trait        | Unit  |   min |  mode |  max | Basis | Source / rationale                                                         |
+| ----------------- | ----- | ----: | ----: | ---: | :---: | -------------------------------------------------------------------------- |
+| `mass`            | kg    |   280 |   400 |  500 |   L   | 280–290 kg to under 500 kg (via Wikipedia).                                |
+| `bodyRadius`      | m     |  0.95 |  1.05 |  1.1 |   D   | Lion 0.8 m × (mass ÷ 180 kg)^(1/3).                                        |
+| `turnRate`        | deg/s |    60 |   120 |  200 | **S** | A biped of 300–500 kg: between _T. rex_ (22–45) and the lion (90–300).     |
+| `sprintSpeed`     | m/s   |     6 |     8 | 10.5 | **S** | No estimate; _T. rex_ and _Dilophosaurus_ models (Sellers & Manning 2007). |
+| `cruiseSpeed`     | m/s   |   1.5 |   2.5 |    4 | **S** | Below the _Deinonychus_ row (2.5–6): heavier.                              |
+| `sprintEndurance` | s     |    10 |    20 |   40 | **S** | An ambush hunter (via Wikipedia).                                          |
+| `recoveryTime`    | s     |    30 |    60 |  120 | **S** | _Deinonychus_ row.                                                         |
+| `strikeForce`     | kN    |   1.7 |  2.15 |  2.5 |   D   | _Deinonychus_ 706 N (Sakamoto 2022) × (mass ÷ 75 kg)^(2/3).                |
+| `strikeLethality` | HP/kN |     4 |     8 |   12 | **S** | Shared pack mapping.                                                       |
+| `strikeInterval`  | s     |     1 |   1.5 |  2.5 | **S** | Shared pack row.                                                           |
+| `strikeReach`     | m     |   1.4 |   1.7 |    2 | **S** | Geometry: radius + head and neck.                                          |
+| `strikeArc`       | deg   |    30 |    45 |   70 | **S** | Lion.                                                                      |
+| `strikeAccuracy`  | p     |   0.3 |  0.45 |  0.6 | **S** | Lion.                                                                      |
+| `latchChance`     | p     |   0.1 |  0.25 |  0.5 | **S** | Prey restraint (Fowler 2011); small claw force (Bishop 2019).              |
+| `latchEndurance`  | s     |    15 |    30 |   60 | **S** | _Deinonychus_ row.                                                         |
+| `latchDps`        | HP/s  |   3.4 |   9.5 |   20 |   D   | 2·F_min, 4.4·F_mode, 8·F_max (§3.2 item 4).                                |
+| `shakeRate`       | 1/s   |   0.1 |  0.25 |  0.5 | **S** | Lion.                                                                      |
+| `bleed`           | 1/s   | 0.001 | 0.004 | 0.01 | **S** | _Deinonychus_ row: prey restraint ends in blood loss (Fowler 2011).        |
+| `morale`          | 0–1   |   0.3 |  0.55 |  0.8 | **S** | _Deinonychus_ row: pack hunting is debated.                                |
+| `moraleLoss`      | 0–1   |  0.03 |  0.08 | 0.15 | **S** | _Deinonychus_ row.                                                         |
+| pack buff         |       |       |       |      | **S** | §11.4: from no cooperation to the lion's mode.                             |
+
 ## 5. Documented match-ups
 
 The matchup badge marks a pairing **documented** when field observations exist (`DOCUMENTED_MATCHUPS` in `src/sim/species.ts`), **never met** only when geological time separates the species (every _T. rex_ pairing: both eras dated and disjoint, or an extinct species gone for at least 5 Ma against a living one), **no recorded encounters** (`undocumented`) when they lived at the same time and place, and **기록된 조우 없음 / No recorded overlap** (`unrecorded`) when a recently extinct species meets a living one whose overlap is not established. Extant species carry no first-appearance date, so the sourced overlaps are listed in `COEXISTING_MATCHUPS` (below); every other pairing of the mammoth or _H. erectus_ with a living species is `unrecorded`, never "never met". The badge links to the matching section of the model page (`/model/#matchup-<anchor>`). Documented match-ups are still heavily simplified.
@@ -526,11 +567,13 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 
 **Primary literature**
 
+- **[Bishop 2019]** Bishop P.J. Testing the function of dromaeosaurid (Dinosauria, Theropoda) 'sickle claws' through musculoskeletal modelling and optimization. _PeerJ_ 7:e7577. <https://doi.org/10.7717/peerj.7577> [FT, via Europe PMC PMC6717499, read 2026-11-05]
 - **[Bates & Falkingham 2012]** Estimating maximum bite performance in _Tyrannosaurus rex_ using multi-body dynamics. _Biology Letters_ 8:660–664. <https://doi.org/10.1098/rsbl.2012.0056> [MODEL]
 - **[Christiansen & Wroe 2007]** Bite forces and evolutionary adaptations to feeding ecology in carnivores. _Ecology_ 88:347–358. <https://doi.org/10.1890/0012-9658(2007)88[347:BFAEAT]2.0.CO;2> [WP]
 - **[D'Amore 2011]** D'Amore D.C. et al. The effects of biting and pulling on the forces generated during feeding in the Komodo dragon. _PLoS ONE_ 6:e26226. <https://doi.org/10.1371/journal.pone.0026226> [FT]
 - **[Erickson 2012]** Erickson G.M. et al. Insights into the ecology and evolutionary success of crocodilians revealed through bite-force and tooth-pressure experimentation. _PLoS ONE_ 7:e31781. <https://doi.org/10.1371/journal.pone.0031781> [FT]
-- **[Fowler 2011]** The predatory ecology of _Deinonychus_ and the origin of flapping in birds. _PLoS ONE_ 6:e28964. <https://doi.org/10.1371/journal.pone.0028964> [WP]
+- **[Fowler 2011]** The predatory ecology of _Deinonychus_ and the origin of flapping in birds. _PLoS ONE_ 6:e28964. <https://doi.org/10.1371/journal.pone.0028964> [FT, via Europe PMC PMC3237572, read 2026-11-05]
+- **[Frederickson 2020]** Frederickson J.A., Engel M.H., Cifelli R.L. Ontogenetic dietary shifts in _Deinonychus antirrhopus_ (Theropoda; Dromaeosauridae): insights into the ecology and social behavior of raptorial dinosaurs through stable isotope analysis. _Palaeogeogr. Palaeoclimatol. Palaeoecol._ 552:109780. <https://doi.org/10.1016/j.palaeo.2020.109780> [Abs, search summary]
 - **[Fry 2009]** A central role for venom in predation by _Varanus komodoensis_. _PNAS_ 106:8969–8974. <https://doi.org/10.1073/pnas.0810883106> [Abs]
 - **[Funston 2001]** Funston P.J., Mills M.G.L., Biggs H.C. Factors affecting the hunting success of male and female lions in the Kruger National Park. _J. Zool._ 253:419–431. <https://doi.org/10.1017/S0952836901000395> [Abs]
 - **[Gignac 2010]** A description of _Deinonychus antirrhopus_ bite marks and estimates of bite force using tooth indentation simulations. _J. Vert. Paleontol._ 30:1169–1177. <https://doi.org/10.1080/02724634.2010.483535> [Abs]
@@ -567,6 +610,7 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 - **[Wilson 2018]** Biomechanics of predator–prey arms race in lion, zebra, cheetah and impala. _Nature_ 554:183–188. <https://doi.org/10.1038/nature25479> [WP]
 - **[Wroe 2005]** Bite club: comparative bite force in big biting mammals and the prediction of predatory behaviour in fossil taxa. _Proc. R. Soc. B_ 272:619–625. <https://doi.org/10.1098/rspb.2004.2986>. Individual values quoted here (lion 1,768 N; wild dog ~428 N) come from secondary search snippets **[U]**.
 - **Other sources cited only via Wikipedia** (not read): Smuts 1980 (lion mass), Kearns 1937 (grizzly speed), Bates 2009 ("Big Al" mass), Carpenter 2005 (_Stegosaurus_ spike wound), Therrien 2005 (theropod jaw mechanics), Blanco & Mazzetta 2001 (Giganotosaurus speed), Coria & Currie 2002 (Giganotosaurus braincase), Ostrom 1976, Brinkman 1998, Campione 2014, Roach & Brinkman 2007, Li 2007 (Deinonychus). The Wikipedia pages below give their full citations.
+- **_Utahraptor_, cited only via Wikipedia** (not read, 2026-11-05): Kirkland, Gaston & Burge 1993 (description, "under 500 kg", speed like the iguanodonts), Molina-Pérez & Larramendi 2019 (280 kg), Zanno & Makovicky 2013 (290 kg), Pintore et al. 2024 (391, 481 and 777 kg for three specimens), Joeckel et al. 2019 (Yellow Cat Member 139–135 Ma), Holtz (130–125 Ma), Paul (ambush hunter) and the Utahraptor block (at least seven individuals), via [WP: Utahraptor] (accessed 2026-11-05). Li 2007 (parallel trackways) and Roach & Brinkman 2007 (mobbing) as in research/SPECIES.md §5.15.
 - **Scandinavian wolf chase study** (SLU): "Wolf predation on moose and roe deer: chase distances and outcome". <https://research.slu.se/en/publications/wolf-predation-on-moose-and-roe-deer-chase-distances-and-outcome-> [Abs; units not verified]
 
 **Wikipedia pages** (secondary, accessed 2026-10-19)
@@ -613,8 +657,8 @@ The free model ([design](design/FREE-MATCHUPS.md), [ADR-0007](adr/0007-symmetric
 - **Mapped traits are read, not copied.** Every trait a legacy role already had comes from that role's preset at run time: heavy `mass`, `bodyRadius`, `turnRate`, `speed` → `sprintSpeed`, `bite*` → `strike*`, `shakeRate`; pack `mass`, `sprintSpeed`, `cruiseSpeed`, `sprintEndurance`, `recoveryTime`, `latchChance`, `latchEndurance`, `dps` → `latchDps`, `bleed`, `morale`, `moraleLoss`, and the constant `radius` → a fixed `bodyRadius` triangle. Their evidence tags carry over. The constants `hide` and `intimidation` carry over for former heavies and are 1 for former pack species.
 - **_Homo erectus_** merges its two presets: body (`bodyRadius`), `turnRate`, strike and shake-off from the heavy row; running, stamina, grip (latch), bleed and morale from the pack row. Mass is identical in both. `sprintSpeed` uses the pack row (6–9 m/s, a sprint with stamina) rather than the heavy `speed` (a speed held over a whole fight).
 - **`era` and `adSafe`** are read from the legacy entry too. The two _Homo erectus_ entries share one era, and the species is ad-safe only when both entries are. Free mode groups its species pickers by `era` (extant or extinct); `freeMatchupAdSafe(config)` is true only when the species on both sides are ad-safe ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)).
-- **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_. Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger, polar bear, hippopotamus. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
-- **`canLatch`** (design §4.2): tiger, lion, wolf, hyena, _Homo erectus_. The others fight with strikes only.
+- **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_, the raptor pack (_Utahraptor_). Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger, polar bear, hippopotamus. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
+- **`canLatch`** (design §4.2): tiger, lion, wolf, hyena, _Homo erectus_, the raptor pack. The others fight with strikes only.
 - **Inactive traits** (latch traits of a species that cannot latch, pack-buff traits of a non-social species) hold neutral values (0, or 1 s for `latchEndurance`) with no evidence tag. They only keep the design matrix layout independent of the species.
 - **Bounds** are shared by all species in the free model (`TRAIT_BOUNDS`): the union of the legacy heavy and pack bounds, with strike reach widened down to 0.3 m. The legacy per-species bounds stay as they are for the legacy engine.
 
@@ -662,18 +706,21 @@ Rationale:
 
 The values of design §5.3, all **S**, sampled per run and never per animal. Non-social species carry neutral values.
 
-| Species        | `cohesionRadius` (m) | `groupLatchGain` (×/rider) | `focusBonus` (m) | `moraleSupport` (`k_c`) | `routShock`    | `reliefStamina` |
-| -------------- | -------------------- | -------------------------- | ---------------- | ----------------------- | -------------- | --------------- |
-| Lion           | 30 / 60 / 100        | 0.1 / 0.25 / 0.4           | 0 / 20 / 40      | 0 / 0.05 / 0.1          | 0 / 0.05 / 0.1 | 0.2 / 0.3 / 0.5 |
-| Gray wolf      | 30 / 60 / 120        | 0.1 / 0.3 / 0.5            | 0 / 20 / 40      | 0 / 0.05 / 0.1          | 0 / 0.05 / 0.1 | 0.2 / 0.3 / 0.5 |
-| Spotted hyena  | 30 / 60 / 120        | 0.1 / 0.3 / 0.5            | 0 / 20 / 40      | 0 / 0.06 / 0.1          | 0 / 0.05 / 0.1 | 0.2 / 0.3 / 0.5 |
-| _Homo erectus_ | 15 / 30 / 60         | 0 / 0.15 / 0.3             | 0 / 15 / 30      | 0 / 0.04 / 0.08         | 0 / 0.05 / 0.1 | 0.2 / 0.3 / 0.5 |
+| Species        | `cohesionRadius` (m) | `groupLatchGain` (×/rider) | `focusBonus` (m) | `moraleSupport` (`k_c`) | `routShock`      | `reliefStamina` |
+| -------------- | -------------------- | -------------------------- | ---------------- | ----------------------- | ---------------- | --------------- |
+| Lion           | 30 / 60 / 100        | 0.1 / 0.25 / 0.4           | 0 / 20 / 40      | 0 / 0.05 / 0.1          | 0 / 0.05 / 0.1   | 0.2 / 0.3 / 0.5 |
+| Gray wolf      | 30 / 60 / 120        | 0.1 / 0.3 / 0.5            | 0 / 20 / 40      | 0 / 0.05 / 0.1          | 0 / 0.05 / 0.1   | 0.2 / 0.3 / 0.5 |
+| Spotted hyena  | 30 / 60 / 120        | 0.1 / 0.3 / 0.5            | 0 / 20 / 40      | 0 / 0.06 / 0.1          | 0 / 0.05 / 0.1   | 0.2 / 0.3 / 0.5 |
+| _Homo erectus_ | 15 / 30 / 60         | 0 / 0.15 / 0.3             | 0 / 15 / 30      | 0 / 0.04 / 0.08         | 0 / 0.05 / 0.1   | 0.2 / 0.3 / 0.5 |
+| _Utahraptor_   | 30 / 60 / 100        | 0 / 0.12 / 0.25            | 0 / 10 / 20      | 0 / 0.025 / 0.05        | 0 / 0.025 / 0.05 | 0.2 / 0.3 / 0.5 |
 
 Sources and the calibration guard are in design §2.3 and §5: [Stander 1992], [Packer 1990], [McComb 1994], [MacNulty 2012], [MacNulty 2014], [Cassidy 2015], [Benson-Amram 2011], [Lehmann 2017], [Hatala 2016]. The full citations are in the design's §10.
 
+The _Utahraptor_ row is not taken from a pack study: whether dromaeosaurids hunted together is debated (§4.13). Each cooperation effect (`groupLatchGain`, `focusBonus`, `moraleSupport`, `routShock`) runs from 0, a loose group with no cooperation, to the lion's mode, a lion-like pack, with the mode at half the lion's mode (rounded down to the input step). `cohesionRadius` and `reliefStamina` are the lion's. Every value is **S**; the sensitivity of each is measured in [research/CALIBRATION.md §15](research/CALIBRATION.md#15-raptor-pack-188).
+
 ### 11.5 Species without a legacy entry
 
-Every species above except the polar bear and the hippo has a legacy entry, and its free entry reads from it (§11.1). The polar bear (§4.11, #184) is the first species built the way this section describes, and the hippo (§4.12, #186) the second. A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
+Every species above except the polar bear, the hippo and the raptor pack has a legacy entry, and its free entry reads from it (§11.1). The polar bear (§4.11, #184) is the first species built the way this section describes, the hippo (§4.12, #186) the second, and the raptor pack (§4.13, #188) the first social one, with latch and pack-buff rows. A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
 
 - **Registry.** Append the id to `FREE_SPECIES_IDS` (append-only, never renamed) and build its entry with the standalone constructor `defineFreeSpecies(id, sheet)` in `src/sim/free/species.ts`. The sheet (`FreeSpeciesSheet`) holds everything the free model reads: `era`, `adSafe`, `social`, `canLatch`, the constants `hide` and `intimidation`, one preset row `[min, mode, max, evidence]` per individual trait, and the six pack-buff rows of a social species (`buff: null` otherwise). Latch rows are given only when the species can latch. Inactive traits get the neutral values of §11.1. The constructor throws when the rows do not match the flags.
 - **Same as a derived entry.** `tests/free-species.test.ts` rebuilds every current entry from its own sheet with the constructor and checks that the result equals the registry entry, so a standalone species reaches the engine in exactly the form a derived one does.

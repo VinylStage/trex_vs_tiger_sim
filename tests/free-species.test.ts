@@ -37,10 +37,17 @@ import {
 
 /** Unified trait presets of the free model (docs/design/FREE-MATCHUPS.md §2, SPECIES.md §11). */
 
-const SOCIAL: readonly FreeSpeciesId[] = ['lion', 'wolf', 'hyena', 'homoErectus'];
-const LATCHERS: readonly FreeSpeciesId[] = ['tiger', 'lion', 'wolf', 'hyena', 'homoErectus'];
+const SOCIAL: readonly FreeSpeciesId[] = ['lion', 'wolf', 'hyena', 'homoErectus', 'raptor'];
+const LATCHERS: readonly FreeSpeciesId[] = [
+  'tiger',
+  'lion',
+  'wolf',
+  'hyena',
+  'homoErectus',
+  'raptor',
+];
 /** Species with no legacy entry, built by `defineFreeSpecies` (docs/SPECIES.md §11.5). */
-const FREE_ONLY: readonly FreeSpeciesId[] = ['polarBear', 'hippo'];
+const FREE_ONLY: readonly FreeSpeciesId[] = ['polarBear', 'hippo', 'raptor'];
 /** `FREE_SPECIES_IDS` as first shipped: ids are append-only (RENEWAL-1.0 §5.3 step 4). */
 const SHIPPED_IDS: readonly FreeSpeciesId[] = [
   'trex',
@@ -55,6 +62,7 @@ const SHIPPED_IDS: readonly FreeSpeciesId[] = [
   'hyena',
   'polarBear',
   'hippo',
+  'raptor',
 ];
 
 describe('trait lists', () => {
@@ -265,6 +273,7 @@ describe('era and ad safety (read from the legacy registry)', () => {
       'trex',
       'mammoth',
       'homoErectus',
+      'raptor',
     ]);
   });
 });
@@ -388,6 +397,63 @@ describe('hippopotamus (docs/SPECIES.md §4.12, research/SPECIES.md §5.18)', ()
       range: { min: scaled('min'), mode: scaled('mode'), max: scaled('max') },
       evidence: 'D',
     });
+  });
+});
+
+describe('raptor pack, Utahraptor (docs/SPECIES.md §4.13, research/SPECIES.md §5.15)', () => {
+  const r = FREE_SPECIES.raptor;
+  const lion = FREE_SPECIES.lion;
+
+  it('is an extinct, ad-safe, social latcher with no legacy entry', () => {
+    expect(r.era).toEqual({ fromMa: 139, toMa: 125 });
+    expect(r.adSafe).toBe(true);
+    expect([r.social, r.canLatch]).toEqual([true, true]);
+    expect(isHeavySpecies('raptor')).toBe(false);
+    expect(isPackSpecies('raptor')).toBe(false);
+    expect(r.constants).toEqual({ hide: 1, intimidation: 1 });
+  });
+
+  it('takes mass from the literature and is lighter than the hippo, heavier than the lion', () => {
+    expect(r.traits.mass).toEqual({ range: { min: 280, mode: 400, max: 500 }, evidence: 'L' });
+    expect(r.traits.mass.range.mode).toBeGreaterThan(lion.traits.mass.range.max);
+    expect(r.traits.mass.range.max).toBeLessThan(FREE_SPECIES.hippo.traits.mass.range.min);
+    for (const k of TRAIT_IDS) expect(r.traits[k].evidence, k).not.toBe('U');
+  });
+
+  it('derives the bite from Deinonychus (Sakamoto 2022) and the latch damage from the bite', () => {
+    // 706 N for a 75 kg Deinonychus, scaled by (mass ratio)^(2/3) at min, mode and max.
+    const bite = (m: number) => Math.round(20 * 0.706 * (m / 75) ** (2 / 3)) / 20;
+    const { min, mode, max } = r.traits.mass.range;
+    expect(r.traits.strikeForce).toEqual({
+      range: { min: bite(min), mode: bite(mode), max: bite(max) },
+      evidence: 'D',
+    });
+    // The pack dps rule of docs/SPECIES.md §3.2 item 4: 2·F_min, 4.4·F_mode, 8·F_max.
+    const f = r.traits.strikeForce.range;
+    expect(r.traits.latchDps.range.min).toBeCloseTo(2 * f.min, 6);
+    expect(r.traits.latchDps.range.mode).toBeCloseTo(Math.round(10 * 4.4 * f.mode) / 10, 6);
+    expect(r.traits.latchDps.range.max).toBeCloseTo(8 * f.max, 6);
+    expect(r.traits.latchDps.evidence).toBe('D');
+  });
+
+  it('derives its body radius from mass: the lion scaled by mass^(1/3)', () => {
+    const scaled = (k: 'min' | 'mode' | 'max') =>
+      Math.round(20 * 0.8 * Math.cbrt(r.traits.mass.range[k] / 180)) / 20;
+    expect(r.traits.bodyRadius).toEqual({
+      range: { min: scaled('min'), mode: scaled('mode'), max: scaled('max') },
+      evidence: 'D',
+    });
+  });
+
+  it('keeps every cooperation effect between none and the lion pride (contested pack hunting)', () => {
+    for (const k of ['groupLatchGain', 'focusBonus', 'moraleSupport', 'routShock'] as const) {
+      expect(r.buff[k].evidence, k).toBe('S');
+      expect(r.buff[k].range.min, k).toBe(0);
+      expect(r.buff[k].range.max, k).toBeLessThanOrEqual(lion.buff[k].range.mode);
+      expect(r.buff[k].range.mode, k).toBeLessThan(lion.buff[k].range.mode);
+    }
+    expect(r.buff.cohesionRadius).toEqual(lion.buff.cohesionRadius);
+    expect(r.buff.reliefStamina).toEqual(lion.buff.reliefStamina);
   });
 });
 
