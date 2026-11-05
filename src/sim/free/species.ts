@@ -49,6 +49,7 @@ export const FREE_SPECIES_IDS = [
   'polarBear',
   'hippo',
   'raptor',
+  'whiteRhino',
 ] as const;
 export type FreeSpeciesId = (typeof FREE_SPECIES_IDS)[number];
 
@@ -515,6 +516,34 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
       routShock: [0, 0.025, 0.05, 'S'],
       reliefStamina: [0.2, 0.3, 0.5, 'S'],
     },
+  }),
+  // Built from its own source sheet (docs/SPECIES.md §4.14, research/SPECIES.md §5.19).
+  whiteRhino: defineFreeSpecies('whiteRhino', {
+    era: 'extant',
+    adSafe: true,
+    social: false,
+    canLatch: false,
+    constants: { hide: 0.3, intimidation: 1 },
+    traits: {
+      mass: [1600, 2000, 3600, 'L'],
+      bodyRadius: [1.1, 1.25, 1.6, 'D'],
+      turnRate: [40, 80, 140, 'S'],
+      sprintSpeed: [5, 7, 11.1, 'S'],
+      cruiseSpeed: [0.8, 1.2, 2, 'S'],
+      sprintEndurance: [15, 40, 100, 'S'],
+      recoveryTime: [60, 120, 300, 'S'],
+      strikeForce: [6, 12, 20, 'S'],
+      strikeLethality: [4, 8, 12, 'S'],
+      strikeInterval: [1.5, 2.5, 5, 'S'],
+      strikeReach: [1.7, 2, 2.5, 'S'],
+      strikeArc: [30, 45, 70, 'S'],
+      strikeAccuracy: [0.15, 0.3, 0.5, 'S'],
+      shakeRate: [0.03, 0.08, 0.2, 'S'],
+      bleed: [0.001, 0.002, 0.005, 'S'],
+      morale: [0.6, 0.75, 0.9, 'S'],
+      moraleLoss: HEAVY_MORALE_LOSS,
+    },
+    buff: null,
   }),
 };
 

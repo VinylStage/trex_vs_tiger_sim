@@ -4,6 +4,7 @@
 //   node scripts/calibration/tables.mjs docs/research/calibration-polar-bear.json
 //   node scripts/calibration/tables.mjs docs/research/calibration-hippo.json
 //   node scripts/calibration/tables.mjs docs/research/calibration-raptor.json
+//   node scripts/calibration/tables.mjs docs/research/calibration-white-rhino.json
 //
 // Dev-only, no dependencies. The report's tables are pasted from this output, so a rerun of
 // run.mjs followed by this script shows exactly which numbers moved.
@@ -32,6 +33,7 @@ const NAMES = {
   polarBear: 'polar bear',
   hippo: 'hippo',
   raptor: '_Utahraptor_',
+  whiteRhino: 'white rhino',
 };
 
 const pct = (x) =>
@@ -311,14 +313,19 @@ function speciesTables(pb, { title, varyA, sanityTitle, sensitivityTitle }) {
   out(`### ${title}: much larger opponents`);
   out();
   table(FREE_HEAD, pb.flight.map(freeRow));
-  out(`### ${title}: one-at-a-time sensitivity (${sensitivityTitle})`);
+  sensitivityTable(`${title}: one-at-a-time sensitivity (${sensitivityTitle})`, pb.sensitivity);
+}
+
+/** One one-at-a-time sensitivity table: `sens` holds the base run and the pinned runs per trait. */
+function sensitivityTable(heading, sens) {
+  out(`### ${heading}`);
   out();
-  const base = pb.sensitivity.base.free;
+  const base = sens.base.free;
   table(
     ['Trait (S)', 'Range', 'A wins at min', 'A wins at max', 'Swing (pp)', 'Median s (min / max)'],
     [
       ['all at preset', '–', ci(base.a), ci(base.a), '–', sec(base.duration.p50)],
-      ...pb.sensitivity.traits.map((t) => [
+      ...sens.traits.map((t) => [
         `\`${t.trait}\``,
         `${t.range.min} – ${t.range.max}`,
         ci(t.low.free.a),
@@ -359,6 +366,19 @@ if (S['raptor']) {
   out('### Raptor: rout check against one _T. rex_ (raptors and lions in the same numbers)');
   out();
   table(FREE_HEAD, S['raptor'].routCheck.map(freeRow));
+}
+
+if (S['white-rhino']) {
+  speciesTables(S['white-rhino'], {
+    title: 'White rhino',
+    varyA: ['vsElephant', 'vsTrex'],
+    sanityTitle: 'next to the other heavy species and the lion',
+    sensitivityTitle: 'white rhino 1 v elephant 1, preset #14',
+  });
+  sensitivityTable(
+    'White rhino: one-at-a-time sensitivity (white rhino 1 v hippo 1, preset #15)',
+    S['white-rhino'].sensitivityHippo,
+  );
 }
 
 out(

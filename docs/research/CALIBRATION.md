@@ -8,6 +8,7 @@
 > - **보정 문제로 보이는 것:** 호모 에렉투스 1마리가 어떤 육식동물과의 1:1에서도 한 번도 이기지 못하고 늘 이탈함(#167), 늑대 대 물소 곡선이 9–13마리에서 평평해지지 않음(#168), 혼자 사는 동물이 훨씬 큰 상대 앞에서도 거의 이탈하지 않음(#169). 파라미터 페이지에 자유 모델 항목이 없음(#170). 이미 알려진 1:1 이탈 100%와 보류 프리셋 3개(R4)는 그대로입니다.
 > - **북극곰(#184, §13):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 3개 모두 단조, 진영 바꾸기 같음. 불곰보다 두 배 무거워 1:1에서 불곰에 83% 이기고, 호랑이 · 사자 · 늑대 · 물소 상대로 모두 불곰 이상입니다. 이 차이는 대부분 추정값(공격 힘 · 간격 · 정확도, 사기)에 달려 있습니다. 이탈 모델(#169)은 바꾸지 않았고, 북극곰도 훨씬 큰 티라노 앞에서는 진 경우의 28%만 이탈합니다.
 > - **하마(#186, §14):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게가 물소와 코끼리 사이(1.5톤)라 물소 · 곰에는 92–99% 이기고 코끼리에는 16%, 매머드에는 10%만 이깁니다. 사자는 16–20마리가 되어야 다 자란 하마와 비슷해지는데, 사자 무리가 어른 하마를 드물게만 사냥한다는 기록과 맞습니다. 검증되지 않은 두 값 중 최고 속도는 결과에 거의 영향이 없고(+1.7%p), 무는 힘은 가장 큰 영향 중 하나입니다(+29.9%p). 이탈 모델(#169)은 바꾸지 않았습니다.
+> - **흰코뿔소(#187, §16):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게(2톤)가 하마보다 조금 무거워 1:1에서 하마에 63%, 물소에 93% 이기고, 코끼리에는 26%, 매머드에는 18%만 이깁니다. 사자는 20마리가 되어도 56%로 아직 흰코뿔소가 앞서는데, 다 자란 흰코뿔소는 천적이 거의 없다는 기록과 맞습니다. 검증되지 않은 최고 속도는 결과에 거의 영향이 없고(코끼리 상대 +2.6%p, 하마 상대 0%p), 측정이 없는 뿔 힘 · 공격 간격 · 치명도 · 정확도가 가장 크게 흔듭니다(33–52%p). 이탈 모델(#169)은 바꾸지 않았습니다.
 > - **R1 "잠정 모델" 안내:** 기준(보정 보고서 + 소유자 승인 + 안내에 대한 결정, 그리고 가이드 · 모델 · 파라미터 페이지의 자유 모델 설명)을 아직 다 채우지 못했으므로 **지금은 내리지 말 것을 권합니다.** 소유자가 이 보고서를 승인하고, #170(파라미터 페이지)을 마치고, #169를 결정하면 내릴 수 있습니다. UI는 바꾸지 않았습니다.
 
 Status: measured 2026-10-28 on `main` at `12b5968` (v0.2.22), engines unchanged by this report. Issue [#166](https://github.com/VinylStage/trex_vs_tiger_sim/issues/166), part of [#125](https://github.com/VinylStage/trex_vs_tiger_sim/issues/125). Design: [RENEWAL-1.0.md §3.2](../design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode) (minimum P8 pass, owner decision R1) and [FREE-MATCHUPS.md §8](../design/FREE-MATCHUPS.md#8-phased-implementation-plan) (phase P8). **Not signed off by the owner yet.**
@@ -31,6 +32,7 @@ Every number below is a statement about the two models under their assumptions, 
 13. [Polar bear (#184)](#13-polar-bear-184)
 14. [Hippopotamus (#186)](#14-hippopotamus-186)
 15. [Raptor pack (#188)](#15-raptor-pack-188)
+16. [White rhinoceros (#187)](#16-white-rhinoceros-187)
 
 ## 1. Questions
 
@@ -441,6 +443,8 @@ node scripts/calibration/run.mjs --only polar-bear   # writes docs/research/cali
 node scripts/calibration/tables.mjs docs/research/calibration-polar-bear.json
 node scripts/calibration/run.mjs --only hippo        # writes docs/research/calibration-hippo.json (§14)
 node scripts/calibration/tables.mjs docs/research/calibration-hippo.json
+node scripts/calibration/run.mjs --only white-rhino  # writes docs/research/calibration-white-rhino.json (§16)
+node scripts/calibration/tables.mjs docs/research/calibration-white-rhino.json
 ```
 
 Sections: `trex-tiger`, `classic`, `presets`, `species-notes`, `interference`, `symmetry`, `monotonic`, `polar-bear` (§13) and `hippo` (§14). `--only <section>` without `--out` writes `calibration-<section>.json`, so one section never replaces the committed results. A full run writes every section, `polar-bear` and `hippo` included, to `calibration-results.json`, and `presets` then also measures `polar-bear-brown-bear` and `elephant-hippo`. Every batch has a fixed seed, so a rerun on the same commit gives the same numbers within the same JavaScript engine (MODEL.md §2.2). Measured with Node v22.22.0. When the free engine changes (a new `mv`), rerun both scripts, update the tables and recheck §8 and §10.
@@ -692,7 +696,7 @@ Generated from docs/research/calibration-hippo.json (commit f70371c, v22.22.0).
 
 **Flight (#169).** The flight model is unchanged; this records how the hippo behaves under it. One on one against an opponent of similar or larger size, the loser flees in practically every decided run (rout share 98.6–100 % against _T. rex_, the elephant, the mammoth and the buffalo). Unlike the polar bear (28 % against _T. rex_), the losing hippo does flee a much larger opponent, probably because its 1.5 t of HP outlasts the hits that break its morale (not traced here). Against small opponents the pattern of #169 shows from the other side: a lone lion or tiger that loses flees in only 50–66 % of runs. The presets were tuned against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §14 should be re-run then.
 
-**Preset.** `elephant-hippo` (design §6 #16): elephant 81.5 %, median 119.5 s, rout share 99.5 % in the fixture (200 runs). Not close; ready in Simple mode through the one-on-one override, as `tiger-bear` and `polar-bear-brown-bear` ([PRESETS.md](../PRESETS.md#overrides-and-holds)). Preset #15 (hippo vs rhino) waits for the white rhinoceros (#187).
+**Preset.** `elephant-hippo` (design §6 #16): elephant 81.5 %, median 119.5 s, rout share 99.5 % in the fixture (200 runs). Not close; ready in Simple mode through the one-on-one override, as `tiger-bear` and `polar-bear-brown-bear` ([PRESETS.md](../PRESETS.md#overrides-and-holds)). Preset #15 (hippo vs rhino) joined with the white rhinoceros (#187, §16).
 
 **Bite anchor review (#210, 2026-11-05).** The `strikeForce` row (4 / 8 / 15 kN **S**, mode from the unpublished ~8.1 kN television figure) was re-researched because it is one of the two largest swings above. No primary record, peer-reviewed measurement or biomechanical estimate was found ([research/SPECIES.md §5.18](SPECIES.md#518-hippopotamus-heavy-batch-a-shipped-in-the-free-model-186)), so the range and mode are kept. No input changed, so this section was not re-run: every number above, `calibration-hippo.json` and the `elephant-hippo` fixture row stand as measured for #186.
 
@@ -851,3 +855,161 @@ Generated from docs/research/calibration-raptor.json (commit 68cf53e, v22.22.0).
 **Preset.** `raptors-trex` (design §6 #18): raptors 7.5 %, median 154.6 s, rout share 83.3 % in the fixture (200 runs). Not close; ready in Simple mode with no override. The design's 12 v 1 proposal is kept: more raptors win more (17 % at 30) but rout more than the limit allows from about 25, so the matchup cannot be made close within the rout check under `mv` 1.
 
 The tables in this section: generated from docs/research/calibration-raptor.json (commit 68cf53e, v22.22.0).
+
+## 16. White rhinoceros (#187)
+
+Measured 2026-11-05 on `main` at `6de39b6` plus the #187 change (engines unchanged, model version `mv` 1). Like the hippo, the white rhino (`whiteRhino`) has no legacy entry (docs/SPECIES.md §4.14) and runs on the free engine only. These are the add-a-species checks of [RENEWAL-1.0 §5.3](../design/RENEWAL-1.0.md#53-add-a-species-pipeline-definition-of-done) step 5, a comparison with the other heavy species and its recorded predators, its flight behaviour under the current model (#169, not changed here) and a one-at-a-time sensitivity sweep of its **S** values against the elephant (preset #14) and the hippo (preset #15). Raw data: `calibration-white-rhino.json` (section `white-rhino`); §1–§15 and the other calibration files are unchanged. Method and metrics as in §2: seed 20261019, every other input at its preset.
+
+### Mirror matches
+
+| Mirror                        | Runs |           A wins |           B wins | Draws | A − B (pp, paired) | 0 inside? | Median s |
+| ----------------------------- | ---: | ---------------: | ---------------: | ----: | -----------------: | --------: | -------: |
+| white rhino 1 v white rhino 1 | 1000 | 49.7 (46.6–52.8) | 50.2 (47.1–53.3) |   0.1 | -0.5 (-6.7 to 5.7) |       yes |       98 |
+| white rhino 3 v white rhino 3 | 1000 | 48.5 (45.4–51.6) | 51.5 (48.4–54.6) |   0.0 | -3.0 (-9.2 to 3.2) |       yes |      124 |
+
+### Count sweeps
+
+One rhino against lions and against spotted hyenas, its recorded predators (side B varies), and rhinos against one elephant and against one _T. rex_ (side A varies). "Step" flags a drop in the varying side's share larger than both intervals allow, the §6 rule.
+
+| Match-up                | Runs |            A wins |           B wins | Draws | Median s | Rout % | Step |
+| ----------------------- | ---: | ----------------: | ---------------: | ----: | -------: | -----: | ---: |
+| white rhino 1 v lion 1  |  500 | 99.8 (98.9–100.0) |    0.0 (0.0–0.8) |   0.2 |       40 |   25.1 |      |
+| white rhino 1 v lion 2  |  500 |  87.6 (84.4–90.2) |    5.8 (4.1–8.2) |   6.6 |      303 |   42.5 |   ok |
+| white rhino 1 v lion 3  |  500 |  82.0 (78.4–85.1) |  12.4 (9.8–15.6) |   5.6 |      410 |   55.7 |   ok |
+| white rhino 1 v lion 4  |  500 |  81.2 (77.5–84.4) | 13.4 (10.7–16.7) |   5.4 |      440 |   65.2 |   ok |
+| white rhino 1 v lion 6  |  500 |  77.0 (73.1–80.5) | 19.4 (16.2–23.1) |   3.6 |      379 |   76.3 |   ok |
+| white rhino 1 v lion 8  |  500 |  76.0 (72.1–79.5) | 22.4 (19.0–26.3) |   1.6 |      338 |   84.4 |   ok |
+| white rhino 1 v lion 10 |  500 |  73.6 (69.6–77.3) | 25.6 (22.0–29.6) |   0.8 |      278 |   87.5 |   ok |
+| white rhino 1 v lion 12 |  500 |  70.8 (66.7–74.6) | 28.4 (24.6–32.5) |   0.8 |      229 |   88.8 |   ok |
+| white rhino 1 v lion 16 |  500 |  66.0 (61.7–70.0) | 33.8 (29.8–38.1) |   0.2 |      175 |   90.6 |   ok |
+| white rhino 1 v lion 20 |  500 |  56.4 (52.0–60.7) | 43.6 (39.3–48.0) |   0.0 |      144 |   91.7 |   ok |
+
+| Match-up                 | Runs |             A wins |         B wins | Draws | Median s | Rout % | Step |
+| ------------------------ | ---: | -----------------: | -------------: | ----: | -------: | -----: | ---: |
+| white rhino 1 v hyena 1  |  500 | 100.0 (99.2–100.0) |  0.0 (0.0–0.8) |   0.0 |       32 |    3.2 |      |
+| white rhino 1 v hyena 2  |  500 |   99.2 (98.0–99.7) |  0.2 (0.0–1.1) |   0.6 |      124 |   31.5 |   ok |
+| white rhino 1 v hyena 4  |  500 |   99.2 (98.0–99.7) |  0.6 (0.2–1.7) |   0.2 |      171 |   67.4 |   ok |
+| white rhino 1 v hyena 6  |  500 |   98.2 (96.6–99.1) |  1.2 (0.6–2.6) |   0.6 |      125 |   81.3 |   ok |
+| white rhino 1 v hyena 8  |  500 |   96.4 (94.4–97.7) |  3.4 (2.1–5.4) |   0.2 |      108 |   87.2 |   ok |
+| white rhino 1 v hyena 10 |  500 |   95.8 (93.7–97.2) |  4.2 (2.8–6.3) |   0.0 |      101 |   89.7 |   ok |
+| white rhino 1 v hyena 12 |  500 |   96.2 (94.1–97.6) |  3.8 (2.4–5.9) |   0.0 |       94 |   90.7 |   ok |
+| white rhino 1 v hyena 16 |  500 |   94.6 (92.3–96.3) |  5.4 (3.7–7.7) |   0.0 |       81 |   92.4 |   ok |
+| white rhino 1 v hyena 20 |  500 |   93.6 (91.1–95.4) |  6.4 (4.6–8.9) |   0.0 |       72 |   93.1 |   ok |
+| white rhino 1 v hyena 25 |  500 |   93.6 (91.1–95.4) |  6.4 (4.6–8.9) |   0.0 |       67 |   93.9 |   ok |
+| white rhino 1 v hyena 30 |  500 |   90.2 (87.3–92.5) | 9.8 (7.5–12.7) |   0.0 |       63 |   94.0 |   ok |
+
+| Match-up                   | Runs |           A wins |           B wins | Draws | Median s | Rout % | Step |
+| -------------------------- | ---: | ---------------: | ---------------: | ----: | -------: | -----: | ---: |
+| white rhino 1 v elephant 1 |  500 | 26.8 (23.1–30.8) | 73.0 (68.9–76.7) |   0.2 |      116 |  100.0 |      |
+| white rhino 2 v elephant 1 |  500 | 65.6 (61.3–69.6) | 34.4 (30.4–38.7) |   0.0 |      126 |   99.9 |   ok |
+| white rhino 3 v elephant 1 |  500 | 87.0 (83.8–89.7) | 13.0 (10.3–16.2) |   0.0 |      106 |  100.0 |   ok |
+| white rhino 4 v elephant 1 |  500 | 95.2 (93.0–96.8) |    4.8 (3.2–7.0) |   0.0 |       96 |   99.8 |   ok |
+| white rhino 5 v elephant 1 |  500 | 97.6 (95.9–98.6) |    2.4 (1.4–4.1) |   0.0 |       88 |  100.0 |   ok |
+| white rhino 6 v elephant 1 |  500 | 99.2 (98.0–99.7) |    0.8 (0.3–2.0) |   0.0 |       85 |  100.0 |   ok |
+
+| Match-up                   | Runs |           A wins |             B wins | Draws | Median s | Rout % | Step |
+| -------------------------- | ---: | ---------------: | -----------------: | ----: | -------: | -----: | ---: |
+| white rhino 1 v _T. rex_ 1 |  500 |    0.0 (0.0–0.8) | 100.0 (99.2–100.0) |   0.0 |       74 |  100.0 |      |
+| white rhino 2 v _T. rex_ 1 |  500 |    1.8 (0.9–3.4) |   98.2 (96.6–99.1) |   0.0 |       91 |   99.3 |   ok |
+| white rhino 3 v _T. rex_ 1 |  500 |    5.4 (3.7–7.7) |   94.6 (92.3–96.3) |   0.0 |      107 |   99.8 |   ok |
+| white rhino 4 v _T. rex_ 1 |  500 | 14.4 (11.6–17.7) |   85.6 (82.3–88.4) |   0.0 |      121 |   99.4 |   ok |
+| white rhino 6 v _T. rex_ 1 |  500 | 40.8 (36.6–45.2) |   59.2 (54.8–63.4) |   0.0 |      137 |   98.6 |   ok |
+| white rhino 8 v _T. rex_ 1 |  500 | 64.0 (59.7–68.1) |   36.0 (31.9–40.3) |   0.0 |      126 |   97.6 |   ok |
+
+### Side swaps
+
+| Pair                                                    | Runs | First order: A wins | Swapped: same species wins |    Difference (pp) | 0 inside? |
+| ------------------------------------------------------- | ---: | ------------------: | -------------------------: | -----------------: | --------: |
+| white rhino 1 v elephant 1 / elephant 1 v white rhino 1 | 1000 |    26.4 (23.8–29.2) |           26.3 (23.7–29.1) | +0.1 (-3.8 to 4.0) |       yes |
+| white rhino 1 v hippo 1 / hippo 1 v white rhino 1       | 1000 |    63.1 (60.1–66.0) |           62.5 (59.5–65.4) | +0.6 (-3.6 to 4.8) |       yes |
+
+### Next to the other heavy species and the lion
+
+The buffalo and hippo rows against six lions are the references for the rhino row below them.
+
+| Match-up                     | Runs |             A wins |           B wins | Draws | Median s | Rout % |
+| ---------------------------- | ---: | -----------------: | ---------------: | ----: | -------: | -----: |
+| white rhino 1 v hippo 1      | 1000 |   63.1 (60.1–66.0) | 36.6 (33.7–39.6) |   0.3 |      102 |  100.0 |
+| white rhino 1 v buffalo 1    | 1000 |   93.4 (91.7–94.8) |    6.5 (5.1–8.2) |   0.1 |       79 |   98.7 |
+| white rhino 1 v brown bear 1 | 1000 |   99.0 (98.2–99.5) |    1.0 (0.5–1.8) |   0.0 |       78 |   50.4 |
+| white rhino 1 v polar bear 1 | 1000 |   98.7 (97.8–99.2) |    1.3 (0.8–2.2) |   0.0 |       74 |   90.8 |
+| white rhino 1 v tiger 1      | 1000 | 100.0 (99.6–100.0) |    0.0 (0.0–0.4) |   0.0 |       36 |   41.7 |
+| white rhino 1 v lion 1       | 1000 |  99.9 (99.4–100.0) |    0.0 (0.0–0.4) |   0.1 |       39 |   26.7 |
+| white rhino 1 v mammoth 1    | 1000 |   18.1 (15.8–20.6) | 81.8 (79.3–84.1) |   0.1 |      113 |  100.0 |
+| buffalo 1 v lion 6           | 1000 |   16.7 (14.5–19.1) | 83.2 (80.8–85.4) |   0.1 |      137 |   73.4 |
+| hippo 1 v lion 6             | 1000 |   68.8 (65.9–71.6) | 29.0 (26.3–31.9) |   2.2 |      397 |   86.4 |
+| white rhino 1 v lion 6       | 1000 |   76.8 (74.1–79.3) | 20.5 (18.1–23.1) |   2.7 |      395 |   77.5 |
+
+### Much larger opponents
+
+| Match-up                   | Runs |           A wins |             B wins | Draws | Median s | Rout % |
+| -------------------------- | ---: | ---------------: | -----------------: | ----: | -------: | -----: |
+| white rhino 1 v _T. rex_ 1 | 1000 |    0.0 (0.0–0.4) | 100.0 (99.6–100.0) |   0.0 |       74 |   99.9 |
+| white rhino 1 v elephant 1 | 1000 | 26.4 (23.8–29.2) |   73.6 (70.8–76.2) |   0.0 |      118 |  100.0 |
+| white rhino 1 v mammoth 1  | 1000 | 18.1 (15.8–20.6) |   81.8 (79.3–84.1) |   0.1 |      113 |  100.0 |
+
+### One-at-a-time sensitivity
+
+White rhino 1 v elephant 1 (preset #14 seen from the rhino's side) and white rhino 1 v hippo 1 (preset #15 seen from the rhino's side), 1,000 runs per row: each **S** trait of the rhino pinned at its preset min, then at its max. The swing is the change in the rhino's win share from min to max. The constant `hide` (0.3) cannot be pinned through a config and only scales damage from a latcher, which neither opponent is.
+
+Against the elephant (preset #14):
+
+| Trait (S)         |         Range |    A wins at min |    A wins at max | Swing (pp) | Median s (min / max) |
+| ----------------- | ------------: | ---------------: | ---------------: | ---------: | -------------------: |
+| all at preset     |             – | 26.4 (23.8–29.2) | 26.4 (23.8–29.2) |          – |                  118 |
+| `turnRate`        |      40 – 140 | 25.8 (23.2–28.6) | 26.8 (24.1–29.6) |       +1.0 |            119 / 118 |
+| `sprintSpeed`     |      5 – 11.1 | 24.5 (21.9–27.3) | 27.1 (24.4–29.9) |       +2.6 |            120 / 118 |
+| `cruiseSpeed`     |       0.8 – 2 | 26.2 (23.6–29.0) | 26.7 (24.1–29.5) |       +0.5 |            131 / 108 |
+| `sprintEndurance` |      15 – 100 | 21.0 (18.6–23.6) | 30.1 (27.3–33.0) |       +9.1 |            121 / 116 |
+| `recoveryTime`    |      60 – 300 | 27.6 (24.9–30.5) | 25.1 (22.5–27.9) |       -2.5 |            119 / 118 |
+| `strikeForce`     |        6 – 20 |    6.9 (5.5–8.6) | 42.7 (39.7–45.8) |      +35.8 |            127 / 106 |
+| `strikeLethality` |        4 – 12 |    8.0 (6.5–9.8) | 41.2 (38.2–44.3) |      +33.2 |            127 / 108 |
+| `strikeInterval`  |       1.5 – 5 | 49.3 (46.2–52.4) |  11.3 (9.5–13.4) |      -38.0 |            103 / 126 |
+| `strikeReach`     |     1.7 – 2.5 | 26.3 (23.7–29.1) | 27.9 (25.2–30.8) |       +1.6 |            119 / 117 |
+| `strikeArc`       |       30 – 70 | 26.4 (23.8–29.2) | 26.4 (23.8–29.2) |       +0.0 |            118 / 118 |
+| `strikeAccuracy`  |    0.15 – 0.5 |    8.0 (6.5–9.8) | 42.5 (39.5–45.6) |      +34.5 |            127 / 109 |
+| `shakeRate`       |    0.03 – 0.2 | 26.4 (23.8–29.2) | 26.4 (23.8–29.2) |       +0.0 |            118 / 118 |
+| `bleed`           | 0.001 – 0.005 | 26.4 (23.8–29.2) | 26.5 (23.9–29.3) |       +0.1 |            118 / 118 |
+| `morale`          |     0.6 – 0.9 | 17.7 (15.5–20.2) | 34.2 (31.3–37.2) |      +16.5 |            105 / 132 |
+| `moraleLoss`      |    0.02 – 0.1 | 26.4 (23.8–29.2) | 26.4 (23.8–29.2) |       +0.0 |            118 / 118 |
+
+Against the hippo (preset #15):
+
+| Trait (S)         |         Range |    A wins at min |    A wins at max | Swing (pp) | Median s (min / max) |
+| ----------------- | ------------: | ---------------: | ---------------: | ---------: | -------------------: |
+| all at preset     |             – | 63.1 (60.1–66.0) | 63.1 (60.1–66.0) |          – |                  102 |
+| `turnRate`        |      40 – 140 | 62.9 (59.9–65.8) | 63.1 (60.1–66.0) |       +0.2 |            102 / 102 |
+| `sprintSpeed`     |      5 – 11.1 | 63.1 (60.1–66.0) | 63.1 (60.1–66.0) |       +0.0 |            102 / 100 |
+| `cruiseSpeed`     |       0.8 – 2 | 62.8 (59.8–65.7) | 62.7 (59.7–65.6) |       -0.1 |             114 / 89 |
+| `sprintEndurance` |      15 – 100 | 60.1 (57.0–63.1) | 64.1 (61.1–67.0) |       +4.0 |            103 / 101 |
+| `recoveryTime`    |      60 – 300 | 63.5 (60.5–66.4) | 62.5 (59.5–65.4) |       -1.0 |            102 / 102 |
+| `strikeForce`     |        6 – 20 | 30.6 (27.8–33.5) | 80.8 (78.2–83.1) |      +50.2 |             122 / 89 |
+| `strikeLethality` |        4 – 12 | 32.2 (29.4–35.2) | 78.8 (76.2–81.2) |      +46.6 |             120 / 91 |
+| `strikeInterval`  |       1.5 – 5 | 87.1 (84.9–89.0) | 41.0 (38.0–44.1) |      -46.1 |             86 / 117 |
+| `strikeReach`     |     1.7 – 2.5 | 61.7 (58.6–64.7) | 65.4 (62.4–68.3) |       +3.7 |            102 / 102 |
+| `strikeArc`       |       30 – 70 | 63.1 (60.1–66.0) | 63.1 (60.1–66.0) |       +0.0 |            102 / 102 |
+| `strikeAccuracy`  |    0.15 – 0.5 | 30.6 (27.8–33.5) | 82.6 (80.1–84.8) |      +52.0 |             120 / 89 |
+| `shakeRate`       |    0.03 – 0.2 | 63.1 (60.1–66.0) | 63.1 (60.1–66.0) |       +0.0 |            102 / 102 |
+| `bleed`           | 0.001 – 0.005 | 63.1 (60.1–66.0) | 63.1 (60.1–66.0) |       +0.0 |            102 / 102 |
+| `morale`          |     0.6 – 0.9 | 49.4 (46.3–52.5) | 73.6 (70.8–76.2) |      +24.2 |             95 / 106 |
+| `moraleLoss`      |    0.02 – 0.1 | 63.1 (60.1–66.0) | 63.1 (60.1–66.0) |       +0.0 |            102 / 102 |
+
+Generated from docs/research/calibration-white-rhino.json (commit 6de39b6, v22.22.0).
+
+### Verdicts
+
+| Check (RENEWAL-1.0 §5.3 step 5)  | Result                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mirror 50/50 within the interval | **Pass.** 1 v 1: −0.5 pp (−6.7 to 5.7); 3 v 3: −3.0 pp (−9.2 to 3.2), paired interval.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Win share monotonic in count     | **Pass.** No drop in any of the four sweeps: 20 lions still win only 43.6 %, 30 hyenas 9.8 %, two rhinos beat one elephant (65.6 %), and six to eight rhinos bring one _T. rex_ from 40.8 % to 64.0 %.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| Side order                       | **Pass.** Both swaps agree within the interval (+0.1 and +0.6 pp).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| Documented interactions          | **Consistent, qualitatively.** Adults have no natural predators and calves are rarely taken; one sick bull fell to a lion pride [WP: White rhinoceros; ADW]. The model's adult rhino beats one lion or one hyena in practically every run, wins 77 % against six lions (the buffalo 17 %, the hippo 69 %) and still leads at 20 lions (56.4 %). The elephant record (young orphan bulls killing up to 49 rhinos at Pilanesberg [Slotow & van Dyk 2001]) agrees in direction: one elephant wins 73.6 % of duels. That record involved bulls in early musth against rhinos of every age, which the model does not represent; calves are not modelled. |
+| Rout check for social species    | Not applicable: the rhino is solitary. Both presets are one on one and pass through the one-on-one override (rout share 100 %, medians 114 s and 103 s, above the 30 s limit unaided).                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+
+**Sanity against the other heavies.** At the mode the rhino (2 t) sits between the hippo (1.5 t) and the elephant (3.2 t), and the model orders it so: it beats the hippo in 63 %, the buffalo in 93 %, the brown bear in 99 % and the polar bear in 99 % of duels, and loses to the elephant (26 %) and the mammoth (18 %). As for the hippo, the size of these leads rests on unmeasured values: horn force, strike interval, lethality and accuracy each swing the elephant duel by 33–38 pp and the hippo duel by 47–52 pp. Against the elephant no single **S** value at either end of its range makes the rhino the favourite (the highest is 49.3 %, strike interval at 1.5 s); against the hippo four of them make the hippo the favourite: horn force, lethality and accuracy at their minimum, and strike interval at its maximum (rhino 30.6–41.0 %). Joint values were not tested. The one **U** value that became **S**, top speed, barely matters: +2.6 pp against the elephant and 0.0 pp against the hippo over 5–11.1 m/s. Morale is the largest behavioural swing (+16.5 and +24.2 pp).
+
+**Flight (#169).** The flight model is unchanged; this records how the rhino behaves under it. One on one against an opponent of similar or larger size, the loser flees in practically every decided run (rout share 98.7–100 % against _T. rex_, the elephant, the mammoth, the hippo and the buffalo). Against the bears the pattern of #169 shows from the other side: a lone brown bear that loses flees in only 50 % of runs, a lone lion in 27 % and a tiger in 42 %. The presets were tuned against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §16 should be re-run then.
+
+**Presets.** `elephant-rhino` (design §6 #14): elephant 73.5 %, median 114.3 s, rout share 100 % in the fixture (200 runs). Not close. `hippo-rhino` (design §6 #15): rhino 58.5 %, hippo 41.0 %, median 102.7 s, rout share 100 %: close (35–65 % for both), the first close heavy-against-heavy preset. Both are ready in Simple mode through the one-on-one override, as `elephant-hippo` ([PRESETS.md](../PRESETS.md#overrides-and-holds)). The fixture's 58.5 % (200 runs) and this section's 63.1 % (1,000 runs, rhino on side A) agree within their intervals.
+
+The tables in this section: generated from docs/research/calibration-white-rhino.json (commit 6de39b6, v22.22.0).

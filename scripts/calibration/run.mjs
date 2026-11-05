@@ -25,6 +25,8 @@
 //                 as the reference opponent
 //   raptor        the same checks for the raptor pack (Utahraptor, #188), with the rout check
 //                 against one T. rex (preset #18) and the pack-buff traits in the sensitivity
+//   white-rhino   the same checks for the white rhinoceros (#187), with the elephant (preset #14)
+//                 as the reference opponent and the hippo (preset #15) as the second
 
 import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -682,6 +684,90 @@ sections['raptor'] = () => {
     flight,
     sensitivity: { base, traits: sensitivity },
   };
+};
+
+// The white rhinoceros (#187): the same checks as the hippo. Side A is the rhino, except in the
+// comparison rows of other species and the second order of each swap. The sensitivity rows use
+// preset #14 (elephant vs rhino) and preset #15 (hippo vs rhino), both from the rhino's side.
+sections['white-rhino'] = () => {
+  const one = (m) => {
+    const free = runFree(m);
+    logRow(label(m), free);
+    return { match: m, free };
+  };
+  const W = 'whiteRhino';
+  const mirrors = [
+    { a: W, b: W, na: 1, nb: 1, runs: runsOf(1000) },
+    { a: W, b: W, na: 3, nb: 3, runs: runsOf(1000) },
+  ].map((m) => {
+    const r = one(m);
+    return { ...r, diff: pairedDiffInterval(r.free.a, r.free.b, r.free.runs) };
+  });
+  // Count sweeps: lions and spotted hyenas, its recorded predators (of calves, and once of a sick
+  // bull), against one rhino (side B varies), and rhinos against one elephant and one T. rex
+  // (side A varies).
+  const sweeps = {
+    lions: [1, 2, 3, 4, 6, 8, 10, 12, 16, 20].map((nb) =>
+      one({ a: W, b: 'lion', na: 1, nb, runs: runsOf(500) }),
+    ),
+    hyenas: [1, 2, 4, 6, 8, 10, 12, 16, 20, 25, 30].map((nb) =>
+      one({ a: W, b: 'hyena', na: 1, nb, runs: runsOf(500) }),
+    ),
+    vsElephant: [1, 2, 3, 4, 5, 6].map((na) =>
+      one({ a: W, b: 'elephant', na, nb: 1, runs: runsOf(500) }),
+    ),
+    vsTrex: [1, 2, 3, 4, 6, 8].map((na) => one({ a: W, b: 'trex', na, nb: 1, runs: runsOf(500) })),
+  };
+  const pairs = [
+    [
+      { a: W, b: 'elephant', na: 1, nb: 1 },
+      { a: 'elephant', b: W, na: 1, nb: 1 },
+    ],
+    [
+      { a: W, b: 'hippo', na: 1, nb: 1 },
+      { a: 'hippo', b: W, na: 1, nb: 1 },
+    ],
+  ].map(([x, y]) => {
+    const fx = one({ ...x, runs: runsOf(1000) });
+    const fy = one({ ...y, runs: runsOf(1000) });
+    return { first: fx, second: fy, diff: diffInterval(fx.free.a, fy.free.b) };
+  });
+  // Next to the other heavy grazers and the bears, one on one, with the buffalo and the hippo
+  // against six lions as the references for the rhino row.
+  const sanity = [
+    [W, 'hippo', 1],
+    [W, 'buffalo', 1],
+    [W, 'brownBear', 1],
+    [W, 'polarBear', 1],
+    [W, 'tiger', 1],
+    [W, 'lion', 1],
+    [W, 'mammoth', 1],
+    ['buffalo', 'lion', 6],
+    ['hippo', 'lion', 6],
+    [W, 'lion', 6],
+  ].map(([a, b, nb]) => one({ a, b, na: 1, nb, runs: runsOf(1000) }));
+  // Flight (#169, unchanged here): one rhino against much larger single opponents.
+  const flight = [
+    ['trex', 1],
+    ['elephant', 1],
+    ['mammoth', 1],
+  ].map(([b, nb]) => one({ a: W, b, na: 1, nb, runs: runsOf(1000) }));
+  // One-at-a-time sensitivity of every S trait against one opponent: the trait pinned at its
+  // preset min, then at its max, every other input at its preset.
+  const preset = speciesMod.FREE_SPECIES[W].traits;
+  const sTraits = Object.entries(preset).filter(([, t]) => t.evidence === 'S');
+  const sweepAgainst = (b) => {
+    const m = { a: W, b, na: 1, nb: 1, runs: runsOf(1000) };
+    const base = one(m);
+    const traits = sTraits.map(([k, t]) => {
+      const at = (v) => one({ ...m, paramsA: { [k]: { min: v, mode: v, max: v } } });
+      return { trait: k, range: t.range, low: at(t.range.min), high: at(t.range.max) };
+    });
+    return { base, traits };
+  };
+  const sensitivity = sweepAgainst('elephant');
+  const sensitivityHippo = sweepAgainst('hippo');
+  return { mirrors, sweeps, pairs, sanity, flight, sensitivity, sensitivityHippo };
 };
 
 // --- run ---

@@ -250,6 +250,30 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       en: 'Never met (about 70 million years apart). Utahraptor was the largest known raptor, yet about twenty times lighter than T. rex. Fossils of several were found together, so it probably lived in groups; whether raptors hunted together is debated.',
     },
   },
+  {
+    id: 'elephant-rhino',
+    name: { ko: '코끼리 vs 코뿔소', en: 'Elephant vs rhino' },
+    a: { sp: 'elephant', n: 1 },
+    b: { sp: 'whiteRhino', n: 1 },
+    tags: ['popular', 'documented'],
+    why: {
+      ko: '남아프리카공화국의 한 보호구역에서 어린 수컷 코끼리들이 흰코뿔소를 여러 차례 공격한 기록이 있습니다. 나이 든 수컷 코끼리를 데려온 뒤로는 줄었습니다(Slotow 외 2000).',
+      en: 'In a South African reserve, young bull elephants were recorded attacking white rhinos many times; it stopped once older bulls were brought in (Slotow et al. 2000).',
+    },
+    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
+  },
+  {
+    id: 'hippo-rhino',
+    name: { ko: '하마 vs 코뿔소', en: 'Hippo vs rhino' },
+    a: { sp: 'hippo', n: 1 },
+    b: { sp: 'whiteRhino', n: 1 },
+    tags: ['popular', 'close'],
+    why: {
+      ko: '두 종 모두 아프리카 초원에서 풀을 뜯고 물가를 떠나지 못합니다. 하마는 낮에 물속에서 쉬고, 흰코뿔소는 물을 마시고 진흙 목욕을 합니다. 몸무게는 많이 겹치지만, 흰코뿔소가 평균적으로 조금 더 무겁습니다.',
+      en: 'Both graze African grasslands and stay close to water: the hippo rests in it by day, the white rhino drinks and wallows. Their weights overlap widely, but the white rhino is a little heavier on average.',
+    },
+    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
+  },
 ];
 
 /** Presets Simple mode may show: every preset not on hold. */
