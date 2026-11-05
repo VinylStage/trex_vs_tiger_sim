@@ -59,6 +59,35 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.25',
+    date: '2026-11-05',
+    title: {
+      ko: '하마와 랩터 무리가 왔어요 🦛',
+      en: 'The hippo and the raptor pack arrive 🦛',
+    },
+    prs: [209, 213, 205],
+    items: [
+      {
+        cat: 'new',
+        refs: [186, 209],
+        ko: '새 동물 하마가 들어왔어요. 간단 모드에 "코끼리 대 하마" 대결이 생겼고, 동물 도감에서도 만날 수 있어요. 자유 대결 전용입니다.',
+        en: 'New animal: the hippopotamus. Simple mode gets an elephant vs hippo match, and the hippo has its own entry in the species guide. It lives in free matchups only.',
+      },
+      {
+        cat: 'new',
+        refs: [188, 213],
+        ko: '새 동물 유타랍토르가 무리로 들어왔어요. 간단 모드에 "랩터 12마리 대 티렉스" 대결이 생겼고, 동물 도감에서도 만날 수 있어요. 무리 사냥을 했는지는 아직 논쟁 중이라 협동 효과는 낮게 잡았어요.',
+        en: 'New animal: Utahraptor, as a pack. Simple mode gets a 12 raptors vs T. rex match, and it has its own entry in the species guide. Whether raptors hunted together is still debated, so the pack bonus is kept low.',
+      },
+      {
+        cat: 'improved',
+        refs: [190, 205],
+        ko: '다음에 들어올 동물을 정할 때 참고할 인기도 조사를 시작했어요. 위키백과, 커뮤니티, 영상 검색을 분기마다 모아 봅니다.',
+        en: 'We started a demand survey to help pick the next animals. Wikipedia, community and video search signals are collected every quarter.',
+      },
+    ],
+  },
+  {
     version: '0.2.24',
     date: '2026-11-04',
     title: {
