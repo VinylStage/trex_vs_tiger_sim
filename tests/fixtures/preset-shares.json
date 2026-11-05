@@ -209,6 +209,19 @@
       "medianS": 102.65,
       "rout": 1,
       "close": true
+    },
+    {
+      "id": "trex-spinosaurus",
+      "matchup": "trex 1 v spinosaurus 1",
+      "wins": [193, 7, 0],
+      "share": {
+        "a": 0.965,
+        "b": 0.035,
+        "draw": 0
+      },
+      "medianS": 111.95,
+      "rout": 1,
+      "close": false
     }
   ]
 }

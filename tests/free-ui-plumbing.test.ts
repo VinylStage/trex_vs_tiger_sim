@@ -173,6 +173,22 @@ describe('share link v3', () => {
     expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
   });
 
+  it('round-trips Spinosaurus on side B against a T. rex, edited ranges included', () => {
+    const c = sanitizeFreeConfig({
+      sides: [
+        { species: 'trex', count: 1 },
+        {
+          species: 'spinosaurus',
+          count: 1,
+          params: { mass: { min: 7000, mode: 7400, max: 8000 } },
+        },
+      ],
+    });
+    expect(c.sides[1].species).toBe('spinosaurus');
+    expect(c.sides[1].params.mass).toEqual({ min: 7000, mode: 7400, max: 8000 });
+    expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
+  });
+
   it('round-trips the white rhino on side B against a hippo, edited ranges included', () => {
     const c = sanitizeFreeConfig({
       sides: [

@@ -102,6 +102,8 @@ export const en: Dictionary = {
   'matchup.sources': 'Sources',
   'matchup.thoughtExperiment':
     'A thought experiment comparing physical capability only (no clothing, tools, weapons, fire or training). It does not depict or endorse real violence.',
+  'matchup.landDuel':
+    'Spinosaurus: semi-aquatic; land duel. It lived along rivers and coasts and caught fish while wading. How much it swam is debated, and the arena has no water, so it fights on land.',
   'toast.rangesReset': 'Ranges reset to the {name} presets.',
   'toast.presetApplied': 'Applied the {label} preset.',
   'toast.undo': 'Undo',
@@ -160,6 +162,7 @@ export const en: Dictionary = {
   'species.hippo': 'Hippopotamus',
   'species.raptor': 'Utahraptor',
   'species.whiteRhino': 'White rhinoceros',
+  'species.spinosaurus': 'Spinosaurus',
   'species.trex.one': 'T-Rex',
   'species.trex.other': 'T-Rex',
   'species.elephant.one': 'elephant',
@@ -188,6 +191,8 @@ export const en: Dictionary = {
   'species.raptor.other': 'Utahraptors',
   'species.whiteRhino.one': 'white rhino',
   'species.whiteRhino.other': 'white rhinos',
+  'species.spinosaurus.one': 'Spinosaurus',
+  'species.spinosaurus.other': 'Spinosaurus',
   'evidence.L': 'Literature value',
   'evidence.D': 'Derived from literature',
   'evidence.S': 'Speculative',

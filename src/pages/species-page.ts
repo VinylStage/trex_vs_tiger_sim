@@ -345,6 +345,12 @@ function speciesSection(id: FreeSpeciesId, lang: Lang): string {
       `            <p class="warning" data-i18n="matchup.thoughtExperiment">${escapeHtml(d['matchup.thoughtExperiment'])}</p>`,
     );
   }
+  // The "semi-aquatic; land duel" label of Spinosaurus, as in the play page's matchup notes (#185).
+  if (id === 'spinosaurus') {
+    lines.push(
+      `            <p class="sp-whatif-note" data-i18n="matchup.landDuel">${escapeHtml(d['matchup.landDuel'])}</p>`,
+    );
+  }
   lines.push(
     '            <dl class="facts sp-facts">',
     `              <dt>${w.era}</dt>`,

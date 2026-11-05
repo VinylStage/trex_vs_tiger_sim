@@ -102,6 +102,8 @@ export const ko = {
   'matchup.sources': '근거 보기',
   'matchup.thoughtExperiment':
     '신체 능력만 비교하는 사고 실험입니다(옷 · 도구 · 무기 · 불 · 훈련 없음). 실제 폭력을 묘사하거나 지지하지 않습니다.',
+  'matchup.landDuel':
+    '스피노사우루스: 반수생, 육상 대결. 강가와 해안에 살며 얕은 물에 서서 물고기를 잡았습니다. 얼마나 헤엄쳤는지는 논쟁 중이고, 경기장에는 물이 없어서 땅 위에서만 싸웁니다.',
   'toast.rangesReset': '파라미터 범위를 {name} 기본값으로 바꿨습니다.',
   'toast.presetApplied': '{label} 프리셋을 적용했습니다.',
   'toast.undo': '되돌리기',
@@ -160,6 +162,7 @@ export const ko = {
   'species.hippo': '하마',
   'species.raptor': '유타랍토르',
   'species.whiteRhino': '흰코뿔소',
+  'species.spinosaurus': '스피노사우루스',
   'species.trex.one': 'T-Rex',
   'species.trex.other': 'T-Rex',
   'species.elephant.one': '코끼리',
@@ -188,6 +191,8 @@ export const ko = {
   'species.raptor.other': '유타랍토르',
   'species.whiteRhino.one': '흰코뿔소',
   'species.whiteRhino.other': '흰코뿔소',
+  'species.spinosaurus.one': '스피노사우루스',
+  'species.spinosaurus.other': '스피노사우루스',
   'evidence.L': '문헌 값',
   'evidence.D': '문헌에서 유도한 값',
   'evidence.S': '추정값',

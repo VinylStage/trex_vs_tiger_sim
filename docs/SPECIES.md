@@ -14,6 +14,7 @@
 > - 하마(#186)도 자유 대결 전용입니다(§4.12). 몸무게와 걸음새는 문헌 값(L), 최고 속도와 무는 힘은 검증된 측정이 없어(U) 범위를 단 추정값(S)으로 바꿨고, 몸 반경은 몸무게에서 유도했습니다(D). 추천 대결 "코끼리 vs 하마"가 쉬운 모드에 나오고, "하마 vs 코뿔소"는 흰코뿔소(#187)와 함께 들어왔습니다.
 > - 랩터 무리(#188)는 기존 등록부에 없는 첫 사회성 종으로, 기본 종은 유타랍토르입니다(§4.13). 몸무게는 문헌 값(L), 무는 힘과 매달렸을 때의 초당 피해는 데이노니쿠스 연구에서 유도한 값(D), 속도와 행동 값은 추정(S)입니다. 함께 사냥했는지는 논쟁 중이라 무리 버프 값은 협동이 전혀 없는 경우(0)부터 사자 무리의 기본값까지를 범위로 둔 추정입니다. 추천 대결 "랩터 무리 vs 티라노"(12 대 1)가 이탈 점검을 예외 없이 통과해 쉬운 모드에 나옵니다. 벨로키랍토르와 데이노니쿠스 변형은 나중에 다룹니다.
 > - 흰코뿔소(#187)도 자유 대결 전용입니다(§4.14). 몸무게는 문헌 값(L), 최고 속도는 측정이 없어(U) 범위를 단 추정값(S)으로 바꿨고, 뿔은 해부 구조로만 다루며 뿔로 치는 힘은 추정(S), 몸 반경은 몸무게에서 유도했습니다(D). 추천 대결 "코끼리 vs 코뿔소"와 "하마 vs 코뿔소"가 쉬운 모드에 나옵니다.
+> - 스피노사우루스(#185)도 자유 대결 전용이며, 물이 없는 "육상 대결"로만 나옵니다(§4.15). 몸무게와 무는 힘은 문헌 값(L)이고, 네 발 / 두 발 자세와 물속 생활 정도는 논쟁 중이라 속도 · 선회 · 행동 값은 범위를 넓게 잡은 추정값(S)입니다. 대결 화면과 종 도감에 "반수생, 육상 대결" 표시가 붙고, 추천 대결 "티라노 vs 스피노 (육상 대결)"가 쉬운 모드에 나옵니다.
 
 Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#species`, `/en/parameters/#species`) repeat the presets and are checked against the registry by `tests/pages.test.ts`. The species guide (`/species/`, `/en/species/`, #162) is generated from the registries at build time and checked by `tests/species-page.test.ts` ([PAGES.md](PAGES.md#species-guide)); adding a species to `FREE_SPECIES` adds its section there, and the test then asks for its entry in `src/content/species-guide.ts` (scientific name and a short note, both languages). The research behind this document, including the phase-2 and deferred species and the change plan, is in [research/SPECIES.md](research/SPECIES.md).
 
@@ -67,8 +68,9 @@ Each species carries, besides its eleven preset triangles:
 | Hippopotamus           | `hippo`       | free  | extant       | bite (canines)  |    0.3 | Batch A of the 1.0 renewal (#186), §4.12       | Good mass and gait; speed and bite **S**   |
 | _Utahraptor_ (pack)    | `raptor`      | free  | 139–125 Ma   | bite, latch     |      1 | Batch A of the 1.0 renewal (#188), §4.13       | Good mass; bite **D**; speed, buff **S**   |
 | White rhinoceros       | `whiteRhino`  | free  | extant       | horn            |    0.3 | Batch A of the 1.0 renewal (#187), §4.14       | Good mass; speed and horn force **S**      |
+| _Spinosaurus_          | `spinosaurus` | free  | 100–94 Ma    | bite            |      1 | Batch A of the 1.0 renewal (#185), land duel   | Mass and bite **L**; posture, speed **S**  |
 
-The polar bear, the hippo, the raptor pack and the white rhino exist in free matchups only (§4.11–§4.14, §11.5); the classic role registry and every classic link are unchanged. **Phase 2** (no new mechanics needed, weaker data): Giganotosaurus, Allosaurus, the _Velociraptor_ and _Deinonychus_ variants of the raptor pack, African wild dog. **Deferred** until new mechanics exist (§8): Nile crocodile, Spinosaurus, Komodo dragon. Their research tables are in [research/SPECIES.md](research/SPECIES.md) §5.
+The polar bear, the hippo, the raptor pack, the white rhino and _Spinosaurus_ exist in free matchups only (§4.11–§4.15, §11.5); the classic role registry and every classic link are unchanged. **Phase 2** (no new mechanics needed, weaker data): Giganotosaurus, Allosaurus, the _Velociraptor_ and _Deinonychus_ variants of the raptor pack, African wild dog. **Deferred** until new mechanics exist (§8): Nile crocodile, Komodo dragon, and _Spinosaurus_ in water (it ships as a land duel, §4.15). Their research tables are in [research/SPECIES.md](research/SPECIES.md) §5.
 
 The UI offers these matchup presets: 10 _T. rex_ vs 100 tigers (default), 1 vs 10 tigers, 5 elephants vs 30 lions, 1 buffalo vs 6 lions, 1 buffalo vs 15 hyenas, 1 brown bear vs 8 wolves, 1 brown bear vs 1 tiger, 1 woolly mammoth vs 12 wolves, 1 _T. rex_ vs 100 _Homo erectus_ (`PRESETS` in `src/ui/form.ts`).
 
@@ -463,6 +465,40 @@ Built from its own source sheet with `defineFreeSpecies` (§11.5), like the hipp
 | `moraleLoss`      | 0–1   |  0.02 |  0.05 |   0.1 | **S** | Shared heavy placeholder (read only by social species).                                       |
 | latch traits      |       |       |       |       |   –   | Inactive (neutral, §11.1): the rhino does not latch.                                          |
 
+### 4.15 _Spinosaurus_, land duel (free model only, #185)
+
+Built from its own source sheet with `defineFreeSpecies` (§11.5), like the white rhino; the classic engine does not offer it. The id is `spinosaurus` (_Spinosaurus aegyptiacus_). The full sheet, with the free trait names, the sensitivity range of every **S** value, its measured swings and the sources, is in [research/SPECIES.md §5.8](research/SPECIES.md#58-spinosaurus-heavy-deferred-shipped-in-the-free-model-as-a-land-duel-185); the calibration is in [research/CALIBRATION.md §17](research/CALIBRATION.md#17-spinosaurus-185).
+
+- **Land duel.** The free model has no water (M9 in §8), so _Spinosaurus_ fights on land only. The play page shows the label "semi-aquatic; land duel" (`matchup.landDuel`, ko/en) under the matchup whenever it is on a side, in Simple and Advanced mode, and its species-guide card repeats it. No mechanic was added: heavy against heavy is already a free-model duel.
+- **A contested body plan.** It was described as semi-aquatic and quadrupedal on land [Ibrahim 2014] and as a tail-propelled swimmer [Ibrahim 2020]; later models put its center of mass over the hips and read it as a biped that waded and could not dive [Henderson 2018; Sereno 2022], a shoreline generalist rather than a pursuit predator [Hone & Holtz 2021]; a bone-density study argued for subaqueous foraging [Fabbri 2022], disputed by [Myhrvold 2024]. On land only posture and speed enter the model, and both are **S** with wide ranges.
+- **Evidence.** Mass 6,000 / 7,400 / 9,000 kg **L**: Sereno 2022's flesh model weighs 7,390–8,013 kg depending on air space; Dal Sasso 2005 gave 7–9 t (via [WP: Spinosaurus]); skull-length estimates of 12–20.9 t are left out. Bite 4.8 / 8.35 / 11.9 kN **L**: Sakamoto 2022's anterior and posterior estimates, with the midpoint as the mode; fast-closing jaws, several times weaker than _T. rex_'s 25.4 / 48.5 kN in the same study [Sakamoto 2022]. Top speed 2 / 4 / 6 m/s **S**: no estimate exists, the hind limbs are short. Calibration shows the contested posture matters little on land (speed +0.3 pp, turn rate +0.2 pp against _T. rex_) and the strike values most (strike interval −13.1 pp, lethality +7.8 pp).
+- **Model.** A heavy, solitary striker with no latch and no pack buff; `hide` 1 and `intimidation` 1 (**S**, as _T. rex_). Lethality 3 / 6 / 10 HP/kN **S**, below the shared mapping: conical teeth without serrations, for gripping fish.
+- **Glyph.** Body radius is _T. rex_'s scaled by (mass ratio)^(1/3) (**D**): 2.05 / 2.45 / 2.95 m, so the replay draws it as a triangle.
+- **Content check.** `adSafe`: yes. Era: 100–94 Ma (Cenomanian, North Africa [WP: Spinosaurus]), so it shares no time with any other species in the roster and carries the what-if tag on the species guide, like _T. rex_ and _Utahraptor_. Overlap: "never met" with every species, _T. rex_ included (about 30 million years later, in North America). Korean counter 마리; no text-share symbol, so it falls back to 🔷 / 🔶 (🦖 is _T. rex_'s; an owner decision, as for the raptor). The film that popularised the _T. rex_ pairing is not named in any shipped text.
+- **Presets.** `trex-spinosaurus`, 1 v 1 (design §6 #12), ready in Simple mode through the one-on-one rout override ([PRESETS.md](PRESETS.md#overrides-and-holds)). Not close: _T. rex_ wins 96.5 %.
+- **Flight (#169).** Tuned under the current flight model. The per-species flight traits decided on #169 (with #197, under a new model version) will re-check this species.
+
+| Free trait        | Unit  |   min |  mode |   max | Basis | Source / rationale                                               |
+| ----------------- | ----- | ----: | ----: | ----: | :---: | ---------------------------------------------------------------- |
+| `mass`            | kg    | 6,000 | 7,400 | 9,000 |   L   | Sereno 2022: 7,390 kg; Dal Sasso 2005: 7–9 t; older surveys 6 t. |
+| `bodyRadius`      | m     |  2.05 |  2.45 |  2.95 |   D   | _T. rex_ 2 / 2.5 / 3 m × (mass ratio)^(1/3).                     |
+| `turnRate`        | deg/s |    15 |    22 |    32 | **S** | Long body, no agility data; below _T. rex_.                      |
+| `sprintSpeed`     | m/s   |     2 |     4 |     6 | **S** | No estimate; short hind limbs, a slow biped or a quadruped.      |
+| `cruiseSpeed`     | m/s   |   0.6 |     1 |   1.4 | **S** | Below _T. rex_.                                                  |
+| `sprintEndurance` | s     |    20 |    60 |   180 | **S** | _T. rex_.                                                        |
+| `recoveryTime`    | s     |    60 |   120 |   300 | **S** | _T. rex_.                                                        |
+| `strikeForce`     | kN    |   4.8 |  8.35 |  11.9 |   L   | Sakamoto 2022: 4.8 kN anterior, 11.9 kN posterior.               |
+| `strikeLethality` | HP/kN |     3 |     6 |    10 | **S** | Conical, unserrated teeth for gripping fish.                     |
+| `strikeInterval`  | s     |     1 |     2 |   3.5 | **S** | Fast-closing jaws (Sakamoto 2022).                               |
+| `strikeReach`     | m     |     5 |     6 |     7 | **S** | Geometry: radius + neck + head (Sereno 2022, Table 7).           |
+| `strikeArc`       | deg   |    25 |    40 |    60 | **S** | Narrow snout.                                                    |
+| `strikeAccuracy`  | p     |  0.25 |  0.45 |  0.65 | **S** | No data.                                                         |
+| `shakeRate`       | 1/s   |  0.05 |  0.12 |  0.25 | **S** | _T. rex_.                                                        |
+| `bleed`           | 1/s   | 0.002 | 0.004 | 0.008 | **S** | _T. rex_.                                                        |
+| `morale`          | 0–1   |   0.7 |  0.85 |  0.95 | **S** | _T. rex_.                                                        |
+| `moraleLoss`      | 0–1   |  0.02 |  0.05 |   0.1 | **S** | Shared heavy placeholder (read only by social species).          |
+| latch traits      |       |       |       |       |   –   | Inactive (neutral, §11.1): it does not latch.                    |
+
 ## 5. Documented match-ups
 
 The matchup badge marks a pairing **documented** when field observations exist (`DOCUMENTED_MATCHUPS` in `src/sim/species.ts`), **never met** only when geological time separates the species (every _T. rex_ pairing: both eras dated and disjoint, or an extinct species gone for at least 5 Ma against a living one), **no recorded encounters** (`undocumented`) when they lived at the same time and place, and **기록된 조우 없음 / No recorded overlap** (`unrecorded`) when a recently extinct species meets a living one whose overlap is not established. Extant species carry no first-appearance date, so the sourced overlaps are listed in `COEXISTING_MATCHUPS` (below); every other pairing of the mammoth or _H. erectus_ with a living species is `unrecorded`, never "never met". The badge links to the matching section of the model page (`/model/#matchup-<anchor>`). Documented match-ups are still heavily simplified.
@@ -639,6 +675,12 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 - **[Sellers 2017]** Investigating the running abilities of _Tyrannosaurus rex_ using stress-constrained multibody dynamic analysis. _PeerJ_ 5:e3420. <https://peerj.com/articles/3420/> [MODEL]
 - **[Sellers & Manning 2007]** Estimating dinosaur maximum running speeds using evolutionary robotics. _Proc. R. Soc. B_ 274. <https://doi.org/10.1098/rspb.2007.0846>, full text <https://pmc.ncbi.nlm.nih.gov/articles/PMC2279215/> [FT]
 - **[Sereno 2022]** Sereno P.C. et al. _Spinosaurus_ is not an aquatic dinosaur. _eLife_ 11:e80092. <https://doi.org/10.7554/eLife.80092> [FT]
+- **[Fabbri 2022]** Fabbri M. et al. Subaqueous foraging among carnivorous dinosaurs. _Nature_ 603:852–857. <https://doi.org/10.1038/s41586-022-04528-0> [Abs]
+- **[Henderson 2018]** Henderson D.M. A buoyancy, balance and stability challenge to the hypothesis of a semi-aquatic _Spinosaurus_. _PeerJ_ 6:e5409. <https://doi.org/10.7717/peerj.5409> [Abs]
+- **[Hone & Holtz 2021]** Hone D.W.E., Holtz T.R. Jr. Evaluating the ecology of _Spinosaurus_: shoreline generalist or aquatic pursuit specialist? _Palaeontologia Electronica_ 24(1):a03. <https://doi.org/10.26879/1110> [FT]
+- **[Ibrahim 2014]** Ibrahim N. et al. Semiaquatic adaptations in a giant predatory dinosaur. _Science_ 345:1613–1616. <https://doi.org/10.1126/science.1258750> [Abs]
+- **[Ibrahim 2020]** Ibrahim N. et al. Tail-propelled aquatic locomotion in a theropod dinosaur. _Nature_ 581:67–70. <https://doi.org/10.1038/s41586-020-2190-3> [Abs]
+- **[Myhrvold 2024]** Myhrvold N.P. et al. Diving dinosaurs? Caveats on the use of bone compactness and pFDA for inferring lifestyle. _PLoS ONE_ 19:e0298957. <https://doi.org/10.1371/journal.pone.0298957> [FT]
 - **[Slotow 2000]** Slotow R., van Dyk G., Poole J., Page B., Klocke A. Older bull elephants control young males. _Nature_ 408:425–426. <https://doi.org/10.1038/35044191> [via Science News]
 - **[Slotow & van Dyk 2001]** Slotow R., van Dyk G. Role of delinquent young "orphan" male elephants in high mortality of white rhinoceros in Pilanesberg National Park, South Africa. _Koedoe_ 44(1). <https://doi.org/10.4102/koedoe.v44i1.188> [Abs]
 - **[Smith 2000]** Smith M.S., Dyson R.J., Hale T., Janaway L. Development of a boxing dynamometer and its punch force discrimination efficacy. _J. Sports Sci._ 18(6):445–450. [Abs]
@@ -673,7 +715,7 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 - [WP: Velociraptor] <https://en.wikipedia.org/wiki/Velociraptor>
 - [WP: Utahraptor] <https://en.wikipedia.org/wiki/Utahraptor>
 - [WP: Dakotaraptor] <https://en.wikipedia.org/wiki/Dakotaraptor>
-- [WP: Spinosaurus] <https://en.wikipedia.org/wiki/Spinosaurus>
+- [WP: Spinosaurus] <https://en.wikipedia.org/wiki/Spinosaurus> (revision 1383593376, accessed 2026-11-05)
 - [WP: Giganotosaurus] <https://en.wikipedia.org/wiki/Giganotosaurus>
 - [WP: Allosaurus] <https://en.wikipedia.org/wiki/Allosaurus>
 - [WP: Tiger] <https://en.wikipedia.org/wiki/Tiger>
@@ -698,7 +740,7 @@ The free model ([design](design/FREE-MATCHUPS.md), [ADR-0007](adr/0007-symmetric
 - **Mapped traits are read, not copied.** Every trait a legacy role already had comes from that role's preset at run time: heavy `mass`, `bodyRadius`, `turnRate`, `speed` → `sprintSpeed`, `bite*` → `strike*`, `shakeRate`; pack `mass`, `sprintSpeed`, `cruiseSpeed`, `sprintEndurance`, `recoveryTime`, `latchChance`, `latchEndurance`, `dps` → `latchDps`, `bleed`, `morale`, `moraleLoss`, and the constant `radius` → a fixed `bodyRadius` triangle. Their evidence tags carry over. The constants `hide` and `intimidation` carry over for former heavies and are 1 for former pack species.
 - **_Homo erectus_** merges its two presets: body (`bodyRadius`), `turnRate`, strike and shake-off from the heavy row; running, stamina, grip (latch), bleed and morale from the pack row. Mass is identical in both. `sprintSpeed` uses the pack row (6–9 m/s, a sprint with stamina) rather than the heavy `speed` (a speed held over a whole fight).
 - **`era` and `adSafe`** are read from the legacy entry too. The two _Homo erectus_ entries share one era, and the species is ad-safe only when both entries are. Free mode groups its species pickers by `era` (extant or extinct); `freeMatchupAdSafe(config)` is true only when the species on both sides are ad-safe ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)).
-- **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_, the raptor pack (_Utahraptor_). Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger, polar bear, hippopotamus, white rhinoceros. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
+- **`social`** (pack buff in groups, design §2.3): lion, gray wolf, spotted hyena, _Homo erectus_, the raptor pack (_Utahraptor_). Not social: _T. rex_, elephant, buffalo, brown bear, woolly mammoth, tiger, polar bear, hippopotamus, white rhinoceros, _Spinosaurus_. Herd defence by elephants, buffalo and mammoths is a separate issue (#72).
 - **`canLatch`** (design §4.2): tiger, lion, wolf, hyena, _Homo erectus_, the raptor pack. The others fight with strikes only.
 - **Inactive traits** (latch traits of a species that cannot latch, pack-buff traits of a non-social species) hold neutral values (0, or 1 s for `latchEndurance`) with no evidence tag. They only keep the design matrix layout independent of the species.
 - **Bounds** are shared by all species in the free model (`TRAIT_BOUNDS`): the union of the legacy heavy and pack bounds, with strike reach widened down to 0.3 m. The legacy per-species bounds stay as they are for the legacy engine.
@@ -761,7 +803,7 @@ The _Utahraptor_ row is not taken from a pack study: whether dromaeosaurids hunt
 
 ### 11.5 Species without a legacy entry
 
-Every species above except the polar bear, the hippo, the raptor pack and the white rhino has a legacy entry, and its free entry reads from it (§11.1). The polar bear (§4.11, #184) is the first species built the way this section describes, the hippo (§4.12, #186) the second, the raptor pack (§4.13, #188) the first social one, with latch and pack-buff rows, and the white rhino (§4.14, #187) the fourth. A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
+Every species above except the polar bear, the hippo, the raptor pack, the white rhino and _Spinosaurus_ has a legacy entry, and its free entry reads from it (§11.1). The polar bear (§4.11, #184) is the first species built the way this section describes, the hippo (§4.12, #186) the second, the raptor pack (§4.13, #188) the first social one, with latch and pack-buff rows, the white rhino (§4.14, #187) the fourth and _Spinosaurus_ (§4.15, #185) the fifth. A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
 
 - **Registry.** Append the id to `FREE_SPECIES_IDS` (append-only, never renamed) and build its entry with the standalone constructor `defineFreeSpecies(id, sheet)` in `src/sim/free/species.ts`. The sheet (`FreeSpeciesSheet`) holds everything the free model reads: `era`, `adSafe`, `social`, `canLatch`, the constants `hide` and `intimidation`, one preset row `[min, mode, max, evidence]` per individual trait, and the six pack-buff rows of a social species (`buff: null` otherwise). Latch rows are given only when the species can latch. Inactive traits get the neutral values of §11.1. The constructor throws when the rows do not match the flags.
 - **Same as a derived entry.** `tests/free-species.test.ts` rebuilds every current entry from its own sheet with the constructor and checks that the result equals the registry entry, so a standalone species reaches the engine in exactly the form a derived one does.

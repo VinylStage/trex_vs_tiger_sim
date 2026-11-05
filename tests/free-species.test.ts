@@ -47,7 +47,13 @@ const LATCHERS: readonly FreeSpeciesId[] = [
   'raptor',
 ];
 /** Species with no legacy entry, built by `defineFreeSpecies` (docs/SPECIES.md §11.5). */
-const FREE_ONLY: readonly FreeSpeciesId[] = ['polarBear', 'hippo', 'raptor', 'whiteRhino'];
+const FREE_ONLY: readonly FreeSpeciesId[] = [
+  'polarBear',
+  'hippo',
+  'raptor',
+  'whiteRhino',
+  'spinosaurus',
+];
 /** `FREE_SPECIES_IDS` as first shipped: ids are append-only (RENEWAL-1.0 §5.3 step 4). */
 const SHIPPED_IDS: readonly FreeSpeciesId[] = [
   'trex',
@@ -64,6 +70,7 @@ const SHIPPED_IDS: readonly FreeSpeciesId[] = [
   'hippo',
   'raptor',
   'whiteRhino',
+  'spinosaurus',
 ];
 
 describe('trait lists', () => {
@@ -275,6 +282,7 @@ describe('era and ad safety (read from the legacy registry)', () => {
       'mammoth',
       'homoErectus',
       'raptor',
+      'spinosaurus',
     ]);
   });
 });
@@ -494,6 +502,51 @@ describe('white rhinoceros (docs/SPECIES.md §4.14, research/SPECIES.md §5.19)'
           Math.cbrt(w.traits.mass.range[k] / buffalo.traits.mass.range[k]),
       ) / 20;
     expect(w.traits.bodyRadius).toEqual({
+      range: { min: scaled('min'), mode: scaled('mode'), max: scaled('max') },
+      evidence: 'D',
+    });
+  });
+});
+
+describe('Spinosaurus, land duel (docs/SPECIES.md §4.15, research/SPECIES.md §5.8)', () => {
+  const s = FREE_SPECIES.spinosaurus;
+  const trex = FREE_SPECIES.trex;
+
+  it('is an extinct, ad-safe, solitary striker with no legacy entry', () => {
+    expect(s.era).toEqual({ fromMa: 100, toMa: 94 });
+    expect(s.adSafe).toBe(true);
+    expect([s.social, s.canLatch]).toEqual([false, false]);
+    expect(isHeavySpecies('spinosaurus')).toBe(false);
+    expect(isPackSpecies('spinosaurus')).toBe(false);
+    expect(s.constants).toEqual({ hide: 1, intimidation: 1 });
+  });
+
+  it('takes mass and bite from the literature, a little lighter than T. rex with a weaker bite', () => {
+    // Sereno et al. 2022 flesh model 7,390 kg at the mode; Dal Sasso et al. 2005 up to 9 t.
+    expect(s.traits.mass).toEqual({ range: { min: 6000, mode: 7400, max: 9000 }, evidence: 'L' });
+    expect(s.traits.mass.range.mode).toBeLessThan(trex.traits.mass.range.mode);
+    // Sakamoto 2022: 4.8 kN anterior and 11.9 kN posterior, the mode at the midpoint.
+    expect(s.traits.strikeForce).toEqual({
+      range: { min: 4.8, mode: 8.35, max: 11.9 },
+      evidence: 'L',
+    });
+    expect(s.traits.strikeForce.range.max).toBeLessThan(trex.traits.strikeForce.range.mode);
+  });
+
+  it('keeps the contested posture and speed as S, slower than T. rex', () => {
+    expect(s.traits.sprintSpeed).toEqual({ range: { min: 2, mode: 4, max: 6 }, evidence: 'S' });
+    expect(s.traits.sprintSpeed.range.mode).toBeLessThan(trex.traits.sprintSpeed.range.mode);
+    for (const k of TRAIT_IDS) expect(s.traits[k].evidence, k).not.toBe('U');
+  });
+
+  it('derives its body radius (and so its glyph) from mass: T. rex scaled by mass^(1/3)', () => {
+    const scaled = (k: 'min' | 'mode' | 'max') =>
+      Math.round(
+        20 *
+          trex.traits.bodyRadius.range[k] *
+          Math.cbrt(s.traits.mass.range[k] / trex.traits.mass.range[k]),
+      ) / 20;
+    expect(s.traits.bodyRadius).toEqual({
       range: { min: scaled('min'), mode: scaled('mode'), max: scaled('max') },
       evidence: 'D',
     });

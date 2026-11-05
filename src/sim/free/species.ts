@@ -50,6 +50,7 @@ export const FREE_SPECIES_IDS = [
   'hippo',
   'raptor',
   'whiteRhino',
+  'spinosaurus',
 ] as const;
 export type FreeSpeciesId = (typeof FREE_SPECIES_IDS)[number];
 
@@ -541,6 +542,36 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
       shakeRate: [0.03, 0.08, 0.2, 'S'],
       bleed: [0.001, 0.002, 0.005, 'S'],
       morale: [0.6, 0.75, 0.9, 'S'],
+      moraleLoss: HEAVY_MORALE_LOSS,
+    },
+    buff: null,
+  }),
+  // Built from its own source sheet (docs/SPECIES.md §4.15, research/SPECIES.md §5.8). Shown as
+  // "semi-aquatic; land duel": its posture and how much it swam are contested, and the free model
+  // has no water, so it fights on land only.
+  spinosaurus: defineFreeSpecies('spinosaurus', {
+    era: { fromMa: 100, toMa: 94 },
+    adSafe: true,
+    social: false,
+    canLatch: false,
+    constants: { hide: 1, intimidation: 1 },
+    traits: {
+      mass: [6000, 7400, 9000, 'L'],
+      bodyRadius: [2.05, 2.45, 2.95, 'D'],
+      turnRate: [15, 22, 32, 'S'],
+      sprintSpeed: [2, 4, 6, 'S'],
+      cruiseSpeed: [0.6, 1, 1.4, 'S'],
+      sprintEndurance: [20, 60, 180, 'S'],
+      recoveryTime: [60, 120, 300, 'S'],
+      strikeForce: [4.8, 8.35, 11.9, 'L'],
+      strikeLethality: [3, 6, 10, 'S'],
+      strikeInterval: [1, 2, 3.5, 'S'],
+      strikeReach: [5, 6, 7, 'S'],
+      strikeArc: [25, 40, 60, 'S'],
+      strikeAccuracy: [0.25, 0.45, 0.65, 'S'],
+      shakeRate: [0.05, 0.12, 0.25, 'S'],
+      bleed: [0.002, 0.004, 0.008, 'S'],
+      morale: [0.7, 0.85, 0.95, 'S'],
       moraleLoss: HEAVY_MORALE_LOSS,
     },
     buff: null,

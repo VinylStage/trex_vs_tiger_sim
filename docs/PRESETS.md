@@ -2,10 +2,10 @@
 
 > **한국어 요약**
 >
-> - 쉬운 모드에서 고를 대진 프리셋을 `src/sim/free/presets.ts`에 모았습니다. 설계 문서 [RENEWAL-1.0.md §6](design/RENEWAL-1.0.md#6-simple-mode-preset-list)의 목록 가운데 두 종이 모두 지금 있는 16개만 넣었고(북극곰 vs 불곰은 #184, 코끼리 vs 하마는 #186, 랩터 무리 vs 티라노는 #188, 코끼리 vs 코뿔소와 하마 vs 코뿔소는 #187에서 추가), 나머지 7개는 종이 추가될 때 들어옵니다(아래 [대기 중인 프리셋](#presets-waiting-for-a-species)).
+> - 쉬운 모드에서 고를 대진 프리셋을 `src/sim/free/presets.ts`에 모았습니다. 설계 문서 [RENEWAL-1.0.md §6](design/RENEWAL-1.0.md#6-simple-mode-preset-list)의 목록 가운데 두 종이 모두 지금 있는 17개만 넣었고(북극곰 vs 불곰은 #184, 코끼리 vs 하마는 #186, 랩터 무리 vs 티라노는 #188, 코끼리 vs 코뿔소와 하마 vs 코뿔소는 #187, 티라노 vs 스피노(육상 대결)는 #185에서 추가), 나머지 6개는 종이 추가될 때 들어옵니다(아래 [대기 중인 프리셋](#presets-waiting-for-a-species)).
 > - 프리셋마다 자유 대결 엔진으로 같은 시드(20261019)와 같은 실행 수(200회)로 승률, 전투 시간 중앙값, 진 쪽의 이탈 비율을 재서 `tests/fixtures/preset-shares.json`에 기록합니다. 테스트가 매번 다시 계산해 기록과 비트 단위로 같은지 확인하므로, 모델이 바뀌면 이 파일의 차이로 드러납니다.
 > - 이탈 점검: 전투 시간 중앙값이 30초 미만이거나 진 쪽의 이탈 비율이 90%를 넘으면 실패입니다(모두 **S**). 문서로 남긴 예외(override)가 있으면 통과합니다. 예외도 받지 못한 프리셋은 보류(hold)되어 쉬운 모드에 나오지 않습니다.
-> - 측정 결과 1:1 대결은 진 쪽이 거의 항상 이탈로 끝납니다(100%). 1:1 일곱 개와 불곰 vs 늑대 무리는 근거를 적은 예외로 통과하고, 랩터 무리 vs 티라노(12 대 1)는 예외 없이 통과하며, 사자 무리 vs 호랑이 다섯, 티라노 vs 호모 에렉투스 100, 사자 vs 하이에나는 보류입니다. 보류를 풀지는 소유자가 정합니다(R4).
+> - 측정 결과 1:1 대결은 진 쪽이 거의 항상 이탈로 끝납니다(100%). 1:1 여덟 개와 불곰 vs 늑대 무리는 근거를 적은 예외로 통과하고, 랩터 무리 vs 티라노(12 대 1)는 예외 없이 통과하며, 사자 무리 vs 호랑이 다섯, 티라노 vs 호모 에렉투스 100, 사자 vs 하이에나는 보류입니다. 보류를 풀지는 소유자가 정합니다(R4).
 > - 프리셋 이름, "왜?" 문구, 예외와 보류 사유는 금지어 테스트를 거칩니다. 잔혹하거나 죽음을 뜻하는 말, 베팅 용어, 작품·상표·방송 플랫폼 이름, 조회수를 쓰지 않습니다.
 
 Source of truth: `src/sim/free/presets.ts`, `tests/presets.test.ts` and `tests/fixtures/preset-shares.json`. The design is [RENEWAL-1.0.md §3.2 and §6](design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode), with owner decision R4 (b): keep the model for 1.0 and contain the mass-rout cascade.
@@ -65,7 +65,7 @@ The `close` tag is never chosen by hand: for every preset, held or not, the test
 
 ## Fixture
 
-Measured on `main` at 0e5bfd8 plus this change; the engine is unchanged. The `polar-bear-brown-bear` row was appended with the polar bear (#184), the `elephant-hippo` row with the hippo (#186) the `raptors-trex` row with the raptor pack (#188) and the `elephant-rhino` and `hippo-rhino` rows with the white rhinoceros (#187); the earlier rows did not change. `tests/fixtures/preset-shares.json` is authoritative; update this table with it.
+Measured on `main` at 0e5bfd8 plus this change; the engine is unchanged. The `polar-bear-brown-bear` row was appended with the polar bear (#184), the `elephant-hippo` row with the hippo (#186) the `raptors-trex` row with the raptor pack (#188) the `elephant-rhino` and `hippo-rhino` rows with the white rhinoceros (#187) and the `trex-spinosaurus` row with _Spinosaurus_ (#185); the earlier rows did not change. `tests/fixtures/preset-shares.json` is authoritative; update this table with it.
 
 | Preset (`id`)            | Sides                         | A wins | B wins | Draws |  Median | Rout share | Close | Status   |
 | ------------------------ | ----------------------------- | -----: | -----: | ----: | ------: | ---------: | ----- | -------- |
@@ -85,6 +85,7 @@ Measured on `main` at 0e5bfd8 plus this change; the engine is unchanged. The `po
 | `raptors-trex`           | _Utahraptor_ 12 v _T. rex_ 1  |  7.5 % | 92.5 % |   0 % | 154.6 s |     83.3 % | no    | passes   |
 | `elephant-rhino`         | elephant 1 v white rhino 1    | 73.5 % | 26.5 % |   0 % | 114.3 s |      100 % | no    | override |
 | `hippo-rhino`            | hippo 1 v white rhino 1       | 41.0 % | 58.5 % | 0.5 % | 102.7 s |      100 % | yes   | override |
+| `trex-spinosaurus`       | _T. rex_ 1 v _Spinosaurus_ 1  | 96.5 % |  3.5 % |   0 % | 112.0 s |      100 % | no    | override |
 
 What the numbers show:
 
@@ -92,6 +93,7 @@ What the numbers show:
 - **A non-social crowd does not cascade.** 100 tigers against 10 _T. rex_ end with 2.2 % fled: without the pack layer there is no morale contagion.
 - **The raptor pack passes unaided.** `raptors-trex` is the first social preset added after the check: its losing raptors flee in 83.3 % of cases, under the 90 % limit, because its cooperation effects (rout contagion included) are set between none and the lion's mode ([SPECIES.md §11.4](SPECIES.md#114-pack-buff-traits)). It is not close: the design's 12 v 1 proposal was kept, since larger packs win more but rout more (CALIBRATION.md §15: 30 raptors win 17.0 % with a rout share of 93.5 %).
 - **The rhino duels are the closest heavy duels.** `hippo-rhino` is the first heavy-against-heavy preset that is close (rhino 58.5 %): the white rhino (2 t at the mode) is a little heavier than the hippo (1.5 t), and both rest on unmeasured strike values (CALIBRATION.md §16). `elephant-rhino` is not close (elephant 73.5 %).
+- **The land duel is lopsided.** `trex-spinosaurus` (design §6 #12) is not close: _T. rex_ wins 96.5 %. The two weigh about the same (8 t and 7.4 t at the mode), but the _Spinosaurus_ bite is several times weaker [Sakamoto 2022], and no single value of its sheet, pinned at either end of its range, makes it the favourite (CALIBRATION.md §17). It is a 1 v 1 by design, so its count was not tuned.
 - **Two passes are narrow.** `elephants-pride` (89.1 %) and `mammoth-wolves` (89.8 %) sit just under the 90 % limit; a model change may tip them.
 - **Free shares differ from the classic ones in §6.** `bear-wolf-pack` (classic: bear 57.6 %) and `buffalo-pride` (classic: lions 58.9 %) are not close in the free model, so neither carries `close`.
 
@@ -106,6 +108,7 @@ What the numbers show:
 | `elephant-hippo`        | override | rout 100 %                | One on one, as above. Added with the hippo (#186); the median (119 s) passes unaided. The hippo's flight follows the current model (#169); its per-species flight traits will re-check this row.                                 |
 | `elephant-rhino`        | override | rout 100 %                | One on one, as above. Added with the white rhino (#187); the median (114 s) passes unaided. The rhino's flight follows the current model (#169); its per-species flight traits will re-check this row.                           |
 | `hippo-rhino`           | override | rout 100 %                | One on one, as above. Added with the white rhino (#187); the median (103 s) passes unaided. Both species' flight follows the current model (#169), as above.                                                                     |
+| `trex-spinosaurus`      | override | rout 100 %                | One on one, as above. Added with _Spinosaurus_ (#185); the median (112 s) passes unaided. Its flight follows the current model (#169), as above.                                                                                 |
 | `bear-wolf-pack`        | override | rout 100 %                | Field records: most meetings of brown bears and wolves over a carcass end with one side withdrawing rather than with injuries ([SPECIES.md §5](SPECIES.md#brown-bears-and-wolves)), so a fight that ends in a rout matches them. |
 | `pride-five-tigers`     | hold     | –                         | Every member of the losing side flees (rout share 100 %), and the median is 26 s.                                                                                                                                                |
 | `trex-erectus-100`      | hold     | –                         | 97 % of the _H. erectus_ that leave the fight flee rather than being incapacitated.                                                                                                                                              |
@@ -117,15 +120,14 @@ A hold is released by one of: an owner-accepted override with a reason, other he
 
 These design §6 presets stay out of the registry until their species ship (design §5.2). `FreeSpeciesId` would reject them, so they cannot be added early by mistake.
 
-| #   | Preset (ko / en)                                                   | Waits for                        |
-| --- | ------------------------------------------------------------------ | -------------------------------- |
-| 12  | 티라노 vs 스피노 (육상 대결) / T. rex vs _Spinosaurus_ (land duel) | _Spinosaurus_ (batch A)          |
-| 13  | 티라노 vs 트리케라톱스 / T. rex vs _Triceratops_                   | _Triceratops_ (batch A′)         |
-| 19  | 티라노 vs 카피바라 천 마리 / T. rex vs a thousand capybaras        | capybara (batch B, R15)          |
-| 20  | 북극곰 vs 펭귄 이천 마리 / Polar bear vs two thousand penguins     | polar bear and penguin (batch C) |
-| 21  | 벌꿀오소리 vs 사자 셋 / Honey badger vs three lions                | honey badger (batch C)           |
-| 22  | 고릴라 vs 불곰 / Gorilla vs brown bear                             | gorilla (batch B, R14)           |
-| 23  | 티라노 vs 기가노토사우루스 / T. rex vs _Giganotosaurus_            | _Giganotosaurus_ (batch B)       |
+| #   | Preset (ko / en)                                               | Waits for                        |
+| --- | -------------------------------------------------------------- | -------------------------------- |
+| 13  | 티라노 vs 트리케라톱스 / T. rex vs _Triceratops_               | _Triceratops_ (batch A′)         |
+| 19  | 티라노 vs 카피바라 천 마리 / T. rex vs a thousand capybaras    | capybara (batch B, R15)          |
+| 20  | 북극곰 vs 펭귄 이천 마리 / Polar bear vs two thousand penguins | polar bear and penguin (batch C) |
+| 21  | 벌꿀오소리 vs 사자 셋 / Honey badger vs three lions            | honey badger (batch C)           |
+| 22  | 고릴라 vs 불곰 / Gorilla vs brown bear                         | gorilla (batch B, R14)           |
+| 23  | 티라노 vs 기가노토사우루스 / T. rex vs _Giganotosaurus_        | _Giganotosaurus_ (batch B)       |
 
 Each one joins the registry in the species' own PR (design §5.3 step 8), is measured into the fixture, and passes the checks there. Counts marked "proposal" in §6 may be tuned towards `close` at that point.
 

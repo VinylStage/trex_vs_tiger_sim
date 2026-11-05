@@ -5,6 +5,7 @@
 //   node scripts/calibration/tables.mjs docs/research/calibration-hippo.json
 //   node scripts/calibration/tables.mjs docs/research/calibration-raptor.json
 //   node scripts/calibration/tables.mjs docs/research/calibration-white-rhino.json
+//   node scripts/calibration/tables.mjs docs/research/calibration-spinosaurus.json
 //
 // Dev-only, no dependencies. The report's tables are pasted from this output, so a rerun of
 // run.mjs followed by this script shows exactly which numbers moved.
@@ -34,6 +35,7 @@ const NAMES = {
   hippo: 'hippo',
   raptor: '_Utahraptor_',
   whiteRhino: 'white rhino',
+  spinosaurus: '_Spinosaurus_',
 };
 
 const pct = (x) =>
@@ -378,6 +380,19 @@ if (S['white-rhino']) {
   sensitivityTable(
     'White rhino: one-at-a-time sensitivity (white rhino 1 v hippo 1, preset #15)',
     S['white-rhino'].sensitivityHippo,
+  );
+}
+
+if (S['spinosaurus']) {
+  speciesTables(S['spinosaurus'], {
+    title: 'Spinosaurus',
+    varyA: ['vsTrex', 'vsElephant'],
+    sanityTitle: 'next to the other heavy species',
+    sensitivityTitle: 'Spinosaurus 1 v T. rex 1, preset #12',
+  });
+  sensitivityTable(
+    'Spinosaurus: one-at-a-time sensitivity (Spinosaurus 1 v elephant 1)',
+    S['spinosaurus'].sensitivityElephant,
   );
 }
 

@@ -114,4 +114,11 @@ export const SPECIES_GUIDE: Readonly<Record<FreeSpeciesId, SpeciesGuideEntry>> =
       en: 'The largest rhino, a grazer of African grasslands with two keratin horns on its snout. It is the most social rhino, yet adult bulls mostly hold territories alone. Its mass comes from the literature; its top speed in short bursts has never been measured and is assumed, and so is the force of its horn.',
     },
   },
+  spinosaurus: {
+    scientific: 'Spinosaurus aegyptiacus',
+    note: {
+      ko: '후기 백악기 북아프리카의 강과 해안에 살았던 대형 수각류 공룡으로, 등에 높은 돛이 있고 주둥이가 길고 좁습니다. 반수생 동물이지만 이 시뮬레이터에는 물이 없어 육상 대결만 다룹니다. 몸무게와 무는 힘은 화석 연구의 값입니다. 물속에서 사냥했는지, 네 발로 걸었는지는 논쟁 중이며 최근 연구는 두 발로 걷고 얕은 물에서 물고기를 잡았다고 보므로, 속도와 행동 값은 추정입니다.',
+      en: 'A large theropod dinosaur of late-Cretaceous North African rivers and coasts, with a tall sail on its back and a long, narrow snout. It was semi-aquatic, but the simulator has no water, so it fights on land only. Its mass and bite force come from fossil studies. Whether it hunted underwater or walked on four legs is debated; recent studies see a two-legged walker that caught fish while wading, so its speed and behaviour values are assumptions.',
+    },
+  },
 };
