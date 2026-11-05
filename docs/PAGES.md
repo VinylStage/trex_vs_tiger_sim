@@ -166,7 +166,7 @@ The page has `nav.toc`, then `div.page-body` with `#overview` (a table: era, mas
 
 - an abstract glyph only, an `aria-hidden` inline SVG triangle or dot chosen like the replay chooses it (`freeSideGlyph` of the body-radius mode); no animal images;
 - the era: 현생 / Living today, or a range in years before present from the `Ma` values;
-- a **만약에 / what-if** tag (design R15 (a)) on a species that shared no time with any other species in the roster: `isWhatIf` applies the era rule of `matchupClass` (`erasNeverMet` in `src/sim/species.ts`) to every other species. Today that is _T. rex_ alone;
+- a **만약에 / what-if** tag (design R15 (a)) on a species that shared no time with any other species in the roster: `isWhatIf` applies the era rule of `matchupClass` (`erasNeverMet` in `src/sim/species.ts`) to every other species. Today that is _Utahraptor_ and _Spinosaurus_ (_T. rex_ lost it when _Triceratops_, of the same age, joined in #189);
 - the _Homo erectus_ card carries the thought-experiment note (`matchup.thoughtExperiment`, [SPECIES.md §9](SPECIES.md#9-content-rules));
 - **해 보기 / Try it**: a Simple link ([SHARING.md](SHARING.md#simple-links)) to the play page of the page's language: the species 1 vs 1 against side B of Simple's default preset (the tiger; the lion for the tiger), every other setting at Simple's defaults, written with `hashFromFreeConfig(…, { simple: true })` and checked with `simpleCanShow`, so `routeLink` opens Simple with the species preselected.
 

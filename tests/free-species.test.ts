@@ -53,6 +53,7 @@ const FREE_ONLY: readonly FreeSpeciesId[] = [
   'raptor',
   'whiteRhino',
   'spinosaurus',
+  'triceratops',
 ];
 /** `FREE_SPECIES_IDS` as first shipped: ids are append-only (RENEWAL-1.0 §5.3 step 4). */
 const SHIPPED_IDS: readonly FreeSpeciesId[] = [
@@ -71,6 +72,7 @@ const SHIPPED_IDS: readonly FreeSpeciesId[] = [
   'raptor',
   'whiteRhino',
   'spinosaurus',
+  'triceratops',
 ];
 
 describe('trait lists', () => {
@@ -283,6 +285,7 @@ describe('era and ad safety (read from the legacy registry)', () => {
       'homoErectus',
       'raptor',
       'spinosaurus',
+      'triceratops',
     ]);
   });
 });
@@ -545,6 +548,52 @@ describe('Spinosaurus, land duel (docs/SPECIES.md §4.15, research/SPECIES.md §
         20 *
           trex.traits.bodyRadius.range[k] *
           Math.cbrt(s.traits.mass.range[k] / trex.traits.mass.range[k]),
+      ) / 20;
+    expect(s.traits.bodyRadius).toEqual({
+      range: { min: scaled('min'), mode: scaled('mode'), max: scaled('max') },
+      evidence: 'D',
+    });
+  });
+});
+
+describe('Triceratops (docs/SPECIES.md §4.16, research/SPECIES.md §5.20)', () => {
+  const s = FREE_SPECIES.triceratops;
+  const trex = FREE_SPECIES.trex;
+  const buffalo = FREE_SPECIES.buffalo;
+
+  it('is an extinct, ad-safe, solitary striker with no legacy entry, of the same age as T. rex', () => {
+    expect(s.era).toEqual({ fromMa: 68, toMa: 66 });
+    expect(s.era).toEqual(trex.era);
+    expect(s.adSafe).toBe(true);
+    expect([s.social, s.canLatch]).toEqual([false, false]);
+    expect(isHeavySpecies('triceratops')).toBe(false);
+    expect(isPackSpecies('triceratops')).toBe(false);
+    expect(s.constants).toEqual({ hide: 0.5, intimidation: 1 });
+  });
+
+  it('takes its mass range from the literature', () => {
+    // Black Hills Institute 5.4 t for "Kelsey"; 6–10 t overall, the midpoint as the mode.
+    expect(s.traits.mass).toEqual({ range: { min: 5400, mode: 8000, max: 10000 }, evidence: 'L' });
+  });
+
+  it('keeps speed and horn S, with the pointed-horn lethality of the buffalo and the rhino', () => {
+    expect(s.traits.sprintSpeed).toEqual({ range: { min: 4.5, mode: 7, max: 9.7 }, evidence: 'S' });
+    expect(s.traits.strikeForce).toEqual({ range: { min: 24, mode: 47, max: 78 }, evidence: 'S' });
+    // Body weight at the mode mass as the maximum horn force, as for the rhino and the hippo.
+    expect(s.traits.strikeForce.range.max).toBe(
+      Math.floor((s.traits.mass.range.mode * 9.81) / 1000),
+    );
+    expect(s.traits.strikeLethality).toEqual(buffalo.traits.strikeLethality);
+    expect(s.traits.strikeLethality).toEqual(FREE_SPECIES.whiteRhino.traits.strikeLethality);
+    for (const k of TRAIT_IDS) expect(s.traits[k].evidence, k).not.toBe('U');
+  });
+
+  it('derives its body radius (and so its glyph) from mass: buffalo scaled by mass^(1/3)', () => {
+    const scaled = (k: 'min' | 'mode' | 'max') =>
+      Math.round(
+        20 *
+          buffalo.traits.bodyRadius.range[k] *
+          Math.cbrt(s.traits.mass.range[k] / buffalo.traits.mass.range[k]),
       ) / 20;
     expect(s.traits.bodyRadius).toEqual({
       range: { min: scaled('min'), mode: scaled('mode'), max: scaled('max') },

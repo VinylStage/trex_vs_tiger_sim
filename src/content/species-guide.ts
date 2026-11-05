@@ -121,4 +121,11 @@ export const SPECIES_GUIDE: Readonly<Record<FreeSpeciesId, SpeciesGuideEntry>> =
       en: 'A large theropod dinosaur of late-Cretaceous North African rivers and coasts, with a tall sail on its back and a long, narrow snout. It was semi-aquatic, but the simulator has no water, so it fights on land only. Its mass and bite force come from fossil studies. Whether it hunted underwater or walked on four legs is debated; recent studies see a two-legged walker that caught fish while wading, so its speed and behaviour values are assumptions.',
     },
   },
+  triceratops: {
+    scientific: 'Triceratops horridus',
+    note: {
+      ko: '후기 백악기 말 북아메리카 서부에 살았던 대형 뿔공룡으로, 눈 위의 긴 뿔 두 개와 코 위의 짧은 뿔, 단단한 목 주름 장식이 있습니다. 티라노사우루스와 같은 시대, 같은 곳에 살았고, 티라노의 이빨 자국이 아문 채 남은 뿔 화석이 있습니다. 몸무게는 화석 연구의 범위이고, 뛰는 속도와 뿔로 치는 힘은 측정할 수 없어 추정입니다. 무리를 지었다는 증거는 어린 개체 화석 한 곳 정도뿐이라 혼자 다니는 종으로 다룹니다.',
+      en: 'A large horned dinosaur of latest-Cretaceous western North America, with two long brow horns, a short nose horn and a solid frill. It lived at the same time and place as T. rex, and a brow horn with healed T. rex tooth marks is known. Its mass is a range from fossil studies; its running speed and the force of its horns cannot be measured and are assumed. Evidence of herds is limited to one site with three juveniles, so it is treated as solitary.',
+    },
+  },
 };
