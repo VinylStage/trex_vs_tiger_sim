@@ -107,4 +107,11 @@ export const SPECIES_GUIDE: Readonly<Record<FreeSpeciesId, SpeciesGuideEntry>> =
       en: 'The largest known dromaeosaurid (raptor), from Early Cretaceous North America (today’s Utah), with a large sickle-shaped claw on the second toe. Its mass comes from fossil studies, its bite is derived from a close relative and its speed is assumed. Fossils of several were found together, so it probably lived in groups, but whether raptors hunted together is debated, so every pack-buff value is an assumption.',
     },
   },
+  whiteRhino: {
+    scientific: 'Ceratotherium simum',
+    note: {
+      ko: '아프리카 초원에서 풀을 뜯는 가장 큰 코뿔소로, 코 위에 케라틴으로 된 뿔 두 개가 있습니다. 코뿔소 가운데 가장 무리를 잘 짓지만 다 자란 수컷은 대개 혼자 영역을 지킵니다. 몸무게는 문헌 값이고, 짧은 거리를 빠르게 달린다는 최고 속도는 측정된 적이 없어 추정이며, 뿔로 미는 힘도 측정이 없어 추정입니다.',
+      en: 'The largest rhino, a grazer of African grasslands with two keratin horns on its snout. It is the most social rhino, yet adult bulls mostly hold territories alone. Its mass comes from the literature; its top speed in short bursts has never been measured and is assumed, and so is the force of its horn.',
+    },
+  },
 };

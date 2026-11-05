@@ -183,6 +183,32 @@
       "medianS": 154.55,
       "rout": 0.8326621923937361,
       "close": false
+    },
+    {
+      "id": "elephant-rhino",
+      "matchup": "elephant 1 v whiteRhino 1",
+      "wins": [147, 53, 0],
+      "share": {
+        "a": 0.735,
+        "b": 0.265,
+        "draw": 0
+      },
+      "medianS": 114.25,
+      "rout": 1,
+      "close": false
+    },
+    {
+      "id": "hippo-rhino",
+      "matchup": "hippo 1 v whiteRhino 1",
+      "wins": [82, 117, 1],
+      "share": {
+        "a": 0.41,
+        "b": 0.585,
+        "draw": 0.005
+      },
+      "medianS": 102.65,
+      "rout": 1,
+      "close": true
     }
   ]
 }

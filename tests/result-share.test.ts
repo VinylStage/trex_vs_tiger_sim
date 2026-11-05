@@ -479,6 +479,8 @@ describe('text share', () => {
     expect(speciesEmoji('polarBear', 'pack')).toBe('🐻‍❄️');
     expect(speciesEmoji('hippo', 'heavy')).toBe('🦛');
     expect(speciesEmoji('hippo', 'pack')).toBe('🦛');
+    expect(speciesEmoji('whiteRhino', 'heavy')).toBe('🦏');
+    expect(speciesEmoji('whiteRhino', 'pack')).toBe('🦏');
     for (const id of withFallback) {
       expect(speciesEmoji(id, 'heavy')).toBe('🔷');
       expect(speciesEmoji(id, 'pack')).toBe('🔶');

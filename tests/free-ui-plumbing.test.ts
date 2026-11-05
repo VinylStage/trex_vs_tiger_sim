@@ -173,6 +173,18 @@ describe('share link v3', () => {
     expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
   });
 
+  it('round-trips the white rhino on side B against a hippo, edited ranges included', () => {
+    const c = sanitizeFreeConfig({
+      sides: [
+        { species: 'hippo', count: 1 },
+        { species: 'whiteRhino', count: 2, params: { sprintSpeed: { min: 6, mode: 8, max: 10 } } },
+      ],
+    });
+    expect(c.sides[1].species).toBe('whiteRhino');
+    expect(c.sides[1].params.sprintSpeed).toEqual({ min: 6, mode: 8, max: 10 });
+    expect(freeConfigFromHash(hashFromFreeConfig(c))).toEqual(c);
+  });
+
   it('round-trips the raptor pack on side A, pack-buff ranges included', () => {
     const c = sanitizeFreeConfig({
       sides: [

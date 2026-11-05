@@ -47,7 +47,7 @@ const LATCHERS: readonly FreeSpeciesId[] = [
   'raptor',
 ];
 /** Species with no legacy entry, built by `defineFreeSpecies` (docs/SPECIES.md §11.5). */
-const FREE_ONLY: readonly FreeSpeciesId[] = ['polarBear', 'hippo', 'raptor'];
+const FREE_ONLY: readonly FreeSpeciesId[] = ['polarBear', 'hippo', 'raptor', 'whiteRhino'];
 /** `FREE_SPECIES_IDS` as first shipped: ids are append-only (RENEWAL-1.0 §5.3 step 4). */
 const SHIPPED_IDS: readonly FreeSpeciesId[] = [
   'trex',
@@ -63,6 +63,7 @@ const SHIPPED_IDS: readonly FreeSpeciesId[] = [
   'polarBear',
   'hippo',
   'raptor',
+  'whiteRhino',
 ];
 
 describe('trait lists', () => {
@@ -454,6 +455,48 @@ describe('raptor pack, Utahraptor (docs/SPECIES.md §4.13, research/SPECIES.md �
     }
     expect(r.buff.cohesionRadius).toEqual(lion.buff.cohesionRadius);
     expect(r.buff.reliefStamina).toEqual(lion.buff.reliefStamina);
+  });
+});
+
+describe('white rhinoceros (docs/SPECIES.md §4.14, research/SPECIES.md §5.19)', () => {
+  const w = FREE_SPECIES.whiteRhino;
+  const buffalo = FREE_SPECIES.buffalo;
+  const elephant = FREE_SPECIES.elephant;
+
+  it('is a living, ad-safe, solitary striker with no legacy entry and a tough hide', () => {
+    expect(w.era).toBe('extant');
+    expect(w.adSafe).toBe(true);
+    expect([w.social, w.canLatch]).toEqual([false, false]);
+    expect(isHeavySpecies('whiteRhino')).toBe(false);
+    expect(isPackSpecies('whiteRhino')).toBe(false);
+    expect(w.constants).toEqual({ hide: 0.3, intimidation: 1 });
+  });
+
+  it('takes mass from the literature: heavier than the hippo on average, lighter than the elephant', () => {
+    expect(w.traits.mass).toEqual({ range: { min: 1600, mode: 2000, max: 3600 }, evidence: 'L' });
+    expect(w.traits.mass.range.mode).toBeGreaterThan(FREE_SPECIES.hippo.traits.mass.range.mode);
+    expect(w.traits.mass.range.mode).toBeLessThan(elephant.traits.mass.range.mode);
+  });
+
+  it('turns the unverified top speed into an S row and keeps the horn force S', () => {
+    // 40 km/h "for short periods" is claimed but unmeasured (ADW, SDZWA): the S maximum.
+    expect(w.traits.sprintSpeed).toEqual({ range: { min: 5, mode: 7, max: 11.1 }, evidence: 'S' });
+    // No horn measurement: the maximum is body weight at the mode (2 t × g ≈ 19.6 kN).
+    expect(w.traits.strikeForce).toEqual({ range: { min: 6, mode: 12, max: 20 }, evidence: 'S' });
+    for (const k of TRAIT_IDS) expect(w.traits[k].evidence, k).not.toBe('U');
+  });
+
+  it('derives its body radius (and so its glyph) from mass: the buffalo scaled by mass^(1/3)', () => {
+    const scaled = (k: 'min' | 'mode' | 'max') =>
+      Math.round(
+        20 *
+          buffalo.traits.bodyRadius.range[k] *
+          Math.cbrt(w.traits.mass.range[k] / buffalo.traits.mass.range[k]),
+      ) / 20;
+    expect(w.traits.bodyRadius).toEqual({
+      range: { min: scaled('min'), mode: scaled('mode'), max: scaled('max') },
+      evidence: 'D',
+    });
   });
 });
 
