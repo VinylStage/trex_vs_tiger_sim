@@ -268,3 +268,51 @@ describe('sim.worker replay-free with interventions', () => {
     expect(framesHash(r.trace)).toBe(c.trace.framesHash);
   });
 });
+
+describe('sim.worker branch-free (#179)', () => {
+  const config = sanitizeFreeConfig({
+    runs: 3,
+    sides: [
+      { species: 'lion', count: 3 },
+      { species: 'tiger', count: 2 },
+    ],
+  });
+  const row = designRow(buildFreeDesign(config), 2);
+
+  it('answers one outcome per branch, as the engine gives it', () => {
+    const branches = [
+      { tick: 0, salt: 6 },
+      { tick: 50, salt: 7 },
+      { tick: 50, salt: 8 },
+    ];
+    const interventions = [[20, 1, 2]];
+    const out = send({ type: 'branch-free', jobId: 4, config, run: 9, interventions, branches });
+    expect(out.map((p) => p.msg)).toEqual([
+      {
+        type: 'branch-free',
+        jobId: 4,
+        outcomes: branches.map(
+          (branch) =>
+            simulateFreeBattle(config, row, 2, false, {
+              interventions: [{ tick: 20, card: 1, side: 2 }],
+              branch,
+            }).summary.outcome,
+        ),
+      },
+    ]);
+  });
+
+  it('runs a malformed branch as the plain run and ignores a non-array list', () => {
+    const plain = simulateFreeBattle(config, row, 2, false).summary.outcome;
+    const out = send({
+      type: 'branch-free',
+      jobId: 1,
+      config,
+      run: 2,
+      branches: [null, { tick: 'x', salt: 6 }, { tick: 10, salt: 4 }],
+    });
+    expect(out[0]?.msg).toEqual({ type: 'branch-free', jobId: 1, outcomes: [plain, plain, plain] });
+    const none = send({ type: 'branch-free', jobId: 2, config, run: 2, branches: 'x' });
+    expect(none[0]?.msg).toEqual({ type: 'branch-free', jobId: 2, outcomes: [] });
+  });
+});

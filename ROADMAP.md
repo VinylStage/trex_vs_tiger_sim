@@ -74,7 +74,7 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | Battle events derived from frames                       | #176  | Done in review |
 | Seamless trace swap at the playhead                     | #177  | Done in review |
 | Replay with interventions and a warm live worker        | #178  | Done in review |
-| Branch hook and live-chance job                         | #179  | Open           |
+| Branch hook and live-chance job                         | #179  | Done in review |
 | `live` log in v3 config and free result link v3         | #180  | Open           |
 | Re-simulation gate, card-pause budget, pre-battle cards | #181  | Open           |
 | What-if shift display                                   | #182  | Open           |
