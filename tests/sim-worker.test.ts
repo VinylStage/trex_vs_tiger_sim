@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../src/sim/config';
 import { simulateBattle } from '../src/sim/engine';
@@ -12,7 +13,7 @@ import {
   traceTransferList,
   type WorkerResponse,
 } from '../src/workers/protocol';
-import { simulateFreeBattle } from '../src/sim/free/engine';
+import { simulateFreeBattle, type FreeTrace } from '../src/sim/free/engine';
 
 /*
  * Message dispatch of src/workers/sim.worker.ts (#61), run in Node: the module installs
@@ -154,5 +155,116 @@ describe('sim.worker dispatch', () => {
     ]);
     const without = send({ type: 'aggregate', jobId: 'x', config: small(), summaries: null });
     expect(without[0]?.msg).toMatchObject({ type: 'error', jobId: -1 });
+  });
+});
+
+/*
+ * Replay with interventions (#178, RENEWAL-1.0 §10.2 point 1): the live worker's request. An empty
+ * log must give today's replay; a fixed log must give the intervention golden of #174
+ * (tests/fixtures/free-v3-interventions-golden.json, read here and never written).
+ */
+describe('sim.worker replay-free with interventions', () => {
+  interface GoldenCase {
+    name: string;
+    input: Record<string, unknown>;
+    log: [number, number, number][];
+    trace: { run: number; frames: number; framesHash: string };
+  }
+  const golden = JSON.parse(
+    readFileSync(new URL('./fixtures/free-v3-interventions-golden.json', import.meta.url), 'utf8'),
+  ) as { cases: GoldenCase[] };
+
+  // The same frame hash as tests/free-interventions.test.ts (FNV-1a over t and the agent floats).
+  const framesHash = (trace: FreeTrace): string => {
+    let h = 0x811c9dc5;
+    const eat = (a: ArrayBufferView): void => {
+      const b = new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
+      for (let k = 0; k < b.length; k++) h = Math.imul(h ^ (b[k] as number), 0x01000193);
+    };
+    const t = new Float64Array(1);
+    for (const f of trace.frames) {
+      t[0] = f.t;
+      eat(t);
+      eat(f.agents);
+    }
+    return (h >>> 0).toString(16).padStart(8, '0');
+  };
+
+  const replayOf = (data: unknown): { trace: FreeTrace; liveSimMs: number } => {
+    const out = send(data);
+    expect(out).toHaveLength(1);
+    const msg = out[0]?.msg;
+    if (msg?.type !== 'replay-free') throw new Error(`unexpected ${String(msg?.type)}`);
+    return msg;
+  };
+
+  const wolves = sanitizeFreeConfig({
+    runs: 4,
+    sides: [
+      { species: 'wolf', count: 6 },
+      { species: 'tiger', count: 1 },
+    ],
+  });
+
+  it('an empty or absent log equals the replay without interventions', () => {
+    const { trace: expected } = simulateFreeBattle(
+      wolves,
+      designRow(buildFreeDesign(wolves), 2),
+      2,
+      true,
+    );
+    for (const interventions of [undefined, [], [[5, 999, 0]], 'junk']) {
+      const r = replayOf({ type: 'replay-free', jobId: 9, config: wolves, run: 2, interventions });
+      expect(r.trace).toEqual(expected);
+    }
+  });
+
+  it('returns the wall time of the simulation as liveSimMs', () => {
+    const r = replayOf({
+      type: 'replay-free',
+      jobId: 9,
+      config: wolves,
+      run: 0,
+      interventions: [],
+    });
+    expect(Number.isFinite(r.liveSimMs)).toBe(true);
+    expect(r.liveSimMs).toBeGreaterThanOrEqual(0);
+  });
+
+  for (const c of golden.cases) {
+    it(`a fixed log equals the intervention golden: ${c.name}`, () => {
+      const config = sanitizeFreeConfig(c.input);
+      // Tuples as in a link, plus the objects the live UI sends: both are accepted.
+      for (const interventions of [
+        c.log,
+        c.log.map(([tick, card, side]) => ({ tick, card, side })),
+      ]) {
+        const r = replayOf({
+          type: 'replay-free',
+          jobId: 1,
+          config,
+          run: c.trace.run,
+          interventions,
+        });
+        expect({ frames: r.trace.frames.length, framesHash: framesHash(r.trace) }).toEqual({
+          frames: c.trace.frames,
+          framesHash: c.trace.framesHash,
+        });
+      }
+    });
+  }
+
+  it('sanitizes the log in the worker: invalid entries are dropped, valid ones kept', () => {
+    const c = golden.cases[0] as GoldenCase;
+    const config = sanitizeFreeConfig(c.input);
+    const noisy = [
+      [-1, 7, 0],
+      ...c.log,
+      [10, 9999, 0],
+      [20, 7, 2],
+      { tick: 1.5, card: 7, side: 0 },
+    ];
+    const r = replayOf({ type: 'replay-free', jobId: 1, config, run: 0, interventions: noisy });
+    expect(framesHash(r.trace)).toBe(c.trace.framesHash);
   });
 });

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultConfig, type ScenarioConfig } from '../src/sim/config';
 import type { BattleTrace, RunSummary } from '../src/sim/engine';
+import type { FreeTrace } from '../src/sim/free/engine';
 import { defaultFreeConfig } from '../src/sim/free/config';
 import type { AggregateResult } from '../src/sim/montecarlo';
 import { CancelledError, SimPool } from '../src/ui/pool';
@@ -230,5 +231,69 @@ describe('SimPool.replay', () => {
     const p = pool.replay(config(10), 0);
     pool.dispose();
     await expect(p).rejects.toBeInstanceOf(CancelledError);
+  });
+});
+
+describe('SimPool.replayLive (#178)', () => {
+  const trace = {} as FreeTrace;
+  const iv = [{ tick: 10, card: 7, side: 0 as const }];
+
+  it('runs on its own warm worker and resolves with the trace and liveSimMs', async () => {
+    const { pool, workers } = setup(2);
+    const p = pool.replayLive(defaultFreeConfig(), 3, iv);
+    expect(workers).toHaveLength(1);
+    const w = workers[0] as FakeWorker;
+    expect(w.last()).toMatchObject({ type: 'replay-free', run: 3, interventions: iv });
+    w.emit({ type: 'replay-free', jobId: w.last()?.jobId ?? -1, trace, liveSimMs: 12.5 });
+    await expect(p).resolves.toEqual({ trace, liveSimMs: 12.5 });
+    // A second request reuses the same worker.
+    const q = pool.replayLive(defaultFreeConfig(), 4, []);
+    expect(workers).toHaveLength(1);
+    w.emit({ type: 'replay-free', jobId: w.last()?.jobId ?? -1, trace, liveSimMs: 3 });
+    await expect(q).resolves.toEqual({ trace, liveSimMs: 3 });
+  });
+
+  it('a newer request supersedes the older one without terminating the live worker', async () => {
+    const { pool, workers } = setup(2);
+    const first = pool.replayLive(defaultFreeConfig(), 1, iv);
+    const w = workers[0] as FakeWorker;
+    const firstId = w.last()?.jobId ?? -1;
+    const second = pool.replayLive(defaultFreeConfig(), 1, [...iv, { tick: 20, card: 1, side: 2 }]);
+    await expect(first).rejects.toBeInstanceOf(CancelledError);
+    expect(w.terminated).toBe(false);
+    // The worker is still busy with the superseded request; its answer is discarded.
+    expect(w.posted).toHaveLength(1);
+    w.emit({ type: 'replay-free', jobId: firstId, trace, liveSimMs: 1 });
+    expect(w.posted).toHaveLength(2);
+    expect(workers).toHaveLength(1);
+    const other = {} as FreeTrace;
+    w.emit({ type: 'replay-free', jobId: w.last()?.jobId ?? -1, trace: other, liveSimMs: 2 });
+    await expect(second).resolves.toEqual({ trace: other, liveSimMs: 2 });
+  });
+
+  it('is not delayed or cancelled by batches, replays or cancel()', async () => {
+    const { pool, workers } = setup(1);
+    void pool.runFree({ ...defaultFreeConfig(), runs: 50 }, () => undefined).catch(() => undefined);
+    const p = pool.replayLive(defaultFreeConfig(), 0, iv);
+    void pool.replay(config(10), 0).catch(() => undefined);
+    pool.cancel();
+    const live = workers.find((w) => w.last()?.type === 'replay-free') as FakeWorker;
+    expect(live).toBeDefined();
+    live.emit({ type: 'replay-free', jobId: live.last()?.jobId ?? -1, trace, liveSimMs: 4 });
+    await expect(p).resolves.toEqual({ trace, liveSimMs: 4 });
+    expect(live.terminated).toBe(false);
+  });
+
+  it('rejects on an error message and keeps the worker; dispose terminates it', async () => {
+    const { pool, workers } = setup(2);
+    const a = pool.replayLive(defaultFreeConfig(), 0, iv);
+    const w = workers[0] as FakeWorker;
+    w.emit({ type: 'error', jobId: w.last()?.jobId ?? -1, message: 'no trace' });
+    await expect(a).rejects.toThrow('no trace');
+    expect(w.terminated).toBe(false);
+    const b = pool.replayLive(defaultFreeConfig(), 0, iv);
+    pool.dispose();
+    await expect(b).rejects.toBeInstanceOf(CancelledError);
+    expect(w.terminated).toBe(true);
   });
 });

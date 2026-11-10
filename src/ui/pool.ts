@@ -3,6 +3,7 @@ import type { BattleTrace, RunSummary } from '../sim/engine';
 import type { FreeConfig } from '../sim/free/config';
 import type { FreeRunSummary, FreeTrace } from '../sim/free/engine';
 import type { FreeAggregate } from '../sim/free/aggregate';
+import type { Intervention } from '../sim/free/interventions';
 import { packFreeSummaries } from '../sim/free/montecarlo';
 import { packSummaries, type AggregateResult } from '../sim/montecarlo';
 import type { WorkerRequest, WorkerResponse } from '../workers/protocol';
@@ -56,6 +57,13 @@ function spawnWorker(): Worker {
   return new Worker(workerScript, { type: 'module' });
 }
 
+/** A live re-simulation: the run's full trace and the worker's wall time for it. */
+export interface LiveReplay {
+  trace: FreeTrace;
+  /** Simulation time in the live worker, without the message transfer (gate (a), §10.2). */
+  liveSimMs: number;
+}
+
 interface ReplayJob {
   jobId: number;
   resolve: (t: BattleTrace | FreeTrace) => void;
@@ -74,6 +82,9 @@ export class SimPool {
   readonly size: number;
   /** Background jobs at their own priority (they are not superseded by `run`). */
   readonly scheduler: Scheduler;
+  /** The dedicated live worker (RENEWAL-1.0 §10.2 point 1, §10.7): one warm worker at P0. */
+  readonly live: Scheduler;
+  private liveJob: Job<WorkerResponse[]> | null = null;
   private replayWorker: Worker | null = null;
   private nextJobId = 1;
   private foreground: Job<unknown> | null = null;
@@ -86,6 +97,7 @@ export class SimPool {
   ) {
     this.size = size;
     this.scheduler = new Scheduler(size, spawn);
+    this.live = new Scheduler(1, spawn);
   }
 
   get running(): boolean {
@@ -146,6 +158,7 @@ export class SimPool {
   /** The page was hidden or shown: idle workers are released after a long hide. */
   setHidden(hidden: boolean): void {
     this.scheduler.setHidden(hidden);
+    this.live.setHidden(hidden);
   }
 
   /** Re-simulate one run with a full trace. A newer replay request supersedes an older one. */
@@ -156,6 +169,37 @@ export class SimPool {
   /** Re-simulate one free-model run with its trace (shares the replay worker and its rule). */
   replayFree(config: FreeConfig, run: number): Promise<FreeTrace> {
     return this.startReplay({ type: 'replay-free', jobId: 0, config, run }) as Promise<FreeTrace>;
+  }
+
+  /**
+   * Re-simulate one free-model run under an intervention log on the warm live worker (P0). A newer
+   * call supersedes an older one: the older rejects with CancelledError and its answer, if already
+   * running, is discarded, but the worker is never terminated. Pair it with `spliceForkTrace` to
+   * keep the frames before the card tick on the trace the viewer is watching.
+   */
+  replayLive(
+    config: FreeConfig,
+    run: number,
+    interventions: readonly Intervention[],
+  ): Promise<LiveReplay> {
+    this.liveJob?.cancel();
+    const job = this.live.submit({
+      priority: Priority.Live,
+      tasks: [(jobId) => ({ msg: { type: 'replay-free', jobId, config, run, interventions } })],
+    });
+    this.liveJob = job;
+    return job.promise.then(
+      (results) => {
+        if (this.liveJob === job) this.liveJob = null;
+        const r = results[0];
+        if (r?.type !== 'replay-free') throw new Error('unexpected worker response');
+        return { trace: r.trace, liveSimMs: r.liveSimMs };
+      },
+      (e: unknown) => {
+        if (this.liveJob === job) this.liveJob = null;
+        throw e;
+      },
+    );
   }
 
   private startReplay(
@@ -180,6 +224,8 @@ export class SimPool {
   dispose(): void {
     this.cancel();
     this.scheduler.dispose();
+    this.live.dispose();
+    this.liveJob = null;
     this.replayWorker?.terminate();
     this.replayWorker = null;
     if (this.replayJob) {
