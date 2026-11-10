@@ -203,6 +203,17 @@ The non-social rows (tigers) re-measured on the same run: 0.93, 0.61 and 0.44.
 
 **Regression test.** `tests/free-perf.test.ts` has two halves. In every `npm test` it checks the deterministic part of the claim: `freeWorkEstimate` counts the same agent-steps as `workEstimate` for the same matchup (and exactly `FREE_WORK_WEIGHT_BUFF` times as many with an active pack buff), and seeded 10 v 100 batches (tigers, and wolves with the buff on) never simulate more (weighted) agent-steps than the budget counted. The timing gates (the free engine costs at most 1.5× the legacy engine per agent-step at 10 v 100 with tigers, and per weighted agent-step with wolves and the buff on; median of 7 interleaved rounds after a warm-up) run only with `BENCH=1 npx vitest run tests/free-perf.test.ts`: wall time is not deterministic, and in the default suite a single slow round on a loaded machine failed them (#82). Run the gates whenever `src/sim/free/engine.ts` changes.
 
+## Deterministic math (#197)
+
+Model 2 of both engines replaces `Math.sin`, `cos`, `atan2` and `log` with `src/sim/detmath.ts`. Measured 2026-11-10 in vitest (Node 22, V8) on a 4-core container, 30 runs × 300 s per batch, median of 5 alternating rounds, wall time per simulated agent-step:
+
+| Batch                                       | Model 1 (ns) | Model 2 (ns) | Ratio |
+| ------------------------------------------- | -----------: | -----------: | ----: |
+| Free, 10 _T. rex_ v 100 tigers, morale off  |        129.9 |        135.6 |  1.04 |
+| Classic, 10 _T. rex_ v 100 tigers (default) |        164.8 |        184.5 |  1.12 |
+
+On their own the functions take about twice the time of V8's built-ins (dsin 36 ns against 16 ns before the reduction was streamlined); per agent-step the engines spend most of their time elsewhere. With morale on, model 2's per-agent-step figure for the free tiger horde is higher (about 2.2×) because far more tigers flee, and a fleeing agent searches for the nearest enemy every tick; the battle itself ends in about a fifth of the simulated time (median 27 s against 141 s), so a whole batch is cheaper. Not measured: real browsers.
+
 ## Not changed
 
 - No `SharedArrayBuffer`: it needs cross-origin isolation, which conflicts with third-party ad iframes ([research §3](research/PERFORMANCE.md)). Transfers are already zero-copy.

@@ -97,6 +97,7 @@ flowchart LR
         species@{ shape: doc, label: "species.ts<br/>roster: 6 heavy, 5 pack" }
         events@{ shape: rect, label: "events.ts<br/>replay event log" }
         rng@{ shape: rect, label: "rng.ts<br/>sfc32 + splitmix" }
+        detmath@{ shape: rect, label: "detmath.ts<br/>deterministic sin/cos/atan2/log" }
         sampling@{ shape: rect, label: "sampling.ts<br/>LHS / MC design" }
         engine@{ shape: rect, label: "engine.ts<br/>agent battle" }
         spatial@{ shape: rect, label: "spatial.ts<br/>uniform grid" }
@@ -116,7 +117,8 @@ flowchart LR
     pool --> mc
     mc --> sampling & engine & stats
     sampling --> rng & params
-    engine --> spatial & rng & events
+    engine --> spatial & rng & events & detmath
+    rng --> detmath
     config & engine --> species
     seo --> routes
     app --> xfer
@@ -246,6 +248,8 @@ Fixed time step `dt = 0.1 s`; open square arena; battle ends when one side is el
 The play page opens in **Simple mode** (#146, [PAGES.md](docs/PAGES.md#simple-mode-and-the-advanced-switch)): `src/ui/simple-mode.ts` is a second view of the free mode (`free-mode.ts` keeps the config, the Run button, the run and the results panel) with preset chips, a species picker and a count per side, and in the results a win share bar and the still-standing / fled / incapacitated breakdown. Its pure part, `src/ui/simple-model.ts`, builds the config a Simple run uses (species and counts, a fresh seed, every hidden setting at its default). The app (`app.ts`) holds the view (`simple` or `advanced`) next to the engine (`classic` or `free`); one **Advanced** switch at the top of each config panel changes the view, and the existing classic / free radio group appears below it in Advanced mode.
 
 The free model's matchup presets (`src/sim/free/presets.ts`) are pure data. A test measures each one on the free engine and checks it against a committed fixture and the rout check ([PRESETS.md](docs/PRESETS.md)).
+
+**Model versions and deterministic math (#169, #197).** Both engines run every model version a link can name (`mv`, [ADR-0008](docs/adr/0008-live-interventions-and-model-version.md)); new links name version 2. Version 2 takes its `sin`, `cos`, `atan2` and `log` from `src/sim/detmath.ts` (fdlibm's algorithms from basic arithmetic and `Math.sqrt`), so a link gives the same battle in every JavaScript engine; version 1 keeps `Math` so old links reproduce. Each engine picks the set once per battle (`DET_MATH` or `NATIVE_MATH`), and `Rng` takes the same choice for `normal()`. The free species registry keeps version 1 in `FREE_SPECIES` and applies later versions' revisions through `freeSpeciesAt(id, mv)` (`SPECIES_REVISIONS`): version 2 adds per-species flight traits and the polar bear's researched behaviour rows ([SPECIES.md §11.6](docs/SPECIES.md#116-flight-traits-model-2-169)). Goldens pin each version: the older fixtures model 1, `tests/fixtures/mv2-golden.json` model 2, checked under V8 by vitest and under JavaScriptCore by `npm run test:jsc` (Bun, in CI).
 
 The free model's variable cards (`src/sim/free/cards.ts`, #173) are pure data too: append-only card ids whose index is the wire code, a catalogue per model version (`CARDS_BY_MV`, ADR-0008) and a seeded draw of 3 eligible cards per pause. `src/sim/free/interventions.ts` (#174) sanitizes an intervention log (`{tick, card, side}`) and compiles it. `simulateFreeBattle(…, { interventions })` applies it at the top of the tick loop: instant ops once, and trait multipliers recomputed from base copies on every start or expiry. An empty log changes nothing ([MODEL.md §3.9](docs/MODEL.md#39-variable-cards-free-model)).
 

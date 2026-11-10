@@ -653,7 +653,7 @@ const MV2: Readonly<Record<FreeSpeciesId, SpeciesRevision>> = {
   homoErectus: { flight: flight([1.5, 2, 4, 'S'], [5, 20, 60, 'S'], null) },
   tiger: { flight: flight([1.4, 2, 10, 'D'], [5, 15, 60, 'S']) },
   lion: { flight: flight([3.7, 6.7, 10, 'D'], [10, 30, 90, 'S'], null) },
-  wolf: { flight: flight([2, 6, 15, 'S'], [5, 20, 60, 'S'], null) },
+  wolf: { flight: flight([6, 15, 25, 'S'], [5, 20, 60, 'S'], null) },
   hyena: { flight: flight([1.9, 3.3, 10, 'D'], [5, 20, 60, 'S'], null) },
   polarBear: {
     traits: {
@@ -661,7 +661,7 @@ const MV2: Readonly<Record<FreeSpeciesId, SpeciesRevision>> = {
       recoveryTime: [60, 120, 300, 'S'],
       morale: [0.4, 0.6, 0.8, 'S'],
     },
-    flight: flight([1.5, 2, 3, 'D'], [5, 10, 30, 'S']),
+    flight: flight([1.5, 2, 3, 'S'], [5, 10, 30, 'S']),
   },
   hippo: { flight: flight([1.5, 2, 4, 'S'], [20, 60, 180, 'S']) },
   raptor: { flight: flight([2, 3, 4, 'S'], [10, 30, 90, 'S'], null) },

@@ -62,23 +62,24 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | P8 free model on the parameters page                    | #170      | Open                                                                                                         |
 | R1 "provisional model" banner decision                  | #166      | Recommendation: keep until the sign-off, #170 and #169 are done (CALIBRATION.md §10); owner decides          |
 | Usability test (5–8 people, 18–35) and anonymous survey | #166      | Kit ready in [docs/research/USABILITY.md](docs/research/USABILITY.md); the owner runs it, results not in yet |
-| Free-model calibration follow-ups                       | #167–#169 | Open (#169 needs an owner decision)                                                                          |
+| Free-model calibration follow-ups                       | #167–#169 | #169 done in review with #197 (model 2: per-species flight traits, deterministic math); #167, #168 open      |
 
 ### M3 — live variable cards (epic #126)
 
-| Item                                                    | Issue | Status         |
-| ------------------------------------------------------- | ----- | -------------- |
-| Variable-card catalogue versioned by `mv`               | #173  | Done (#192)    |
-| Tick-indexed intervention hook                          | #174  | Done in review |
-| Priority scheduler over warm workers                    | #175  | Done (#201)    |
-| Battle events derived from frames                       | #176  | Done in review |
-| Seamless trace swap at the playhead                     | #177  | Done in review |
-| Replay with interventions and a warm live worker        | #178  | Done in review |
-| Branch hook and live-chance job                         | #179  | Done in review |
-| `live` log in v3 config and free result link v3         | #180  | Open           |
-| Re-simulation gate, card-pause budget, pre-battle cards | #181  | Open           |
-| What-if shift display                                   | #182  | Open           |
-| Live battle mode                                        | #183  | Open           |
+| Item                                                    | Issue | Status                                                                                                 |
+| ------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------ |
+| Variable-card catalogue versioned by `mv`               | #173  | Done (#192)                                                                                            |
+| Tick-indexed intervention hook                          | #174  | Done in review                                                                                         |
+| Priority scheduler over warm workers                    | #175  | Done (#201)                                                                                            |
+| Battle events derived from frames                       | #176  | Done in review                                                                                         |
+| Seamless trace swap at the playhead                     | #177  | Done in review                                                                                         |
+| Replay with interventions and a warm live worker        | #178  | Done in review                                                                                         |
+| Branch hook and live-chance job                         | #179  | Done in review                                                                                         |
+| Same link, same battle in every JS engine (model 2)     | #197  | Done in review: deterministic math under free `mv` 2 and classic model 2, Bun cross-engine check in CI |
+| `live` log in v3 config and free result link v3         | #180  | Open                                                                                                   |
+| Re-simulation gate, card-pause budget, pre-battle cards | #181  | Open                                                                                                   |
+| What-if shift display                                   | #182  | Open                                                                                                   |
+| Live battle mode                                        | #183  | Open                                                                                                   |
 
 ### M6 — animals batch A
 

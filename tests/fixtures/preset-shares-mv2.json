@@ -44,14 +44,14 @@
     {
       "id": "bear-wolf-pack",
       "matchup": "brownBear 1 v wolf 8",
-      "wins": [156, 44, 0],
+      "wins": [136, 64, 0],
       "share": {
-        "a": 0.78,
-        "b": 0.22,
+        "a": 0.68,
+        "b": 0.32,
         "draw": 0
       },
-      "medianS": 50.2,
-      "rout": 0.9852941176470589,
+      "medianS": 69.55000000000001,
+      "rout": 0.9696180555555556,
       "close": false
     },
     {

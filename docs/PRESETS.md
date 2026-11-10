@@ -65,6 +65,43 @@ The `close` tag is never chosen by hand: for every preset, held or not, the test
 
 ## Fixture
 
+There is one fixture per free model version (`mv`, ADR-0008): `tests/fixtures/preset-shares.json` for model 1 and `tests/fixtures/preset-shares-mv2.json` for model 2 (#169, #197). Every preset must reproduce the row of every model a link can name; only the newest model, which Simple mode runs, must pass the checks above. An older model's fixture is never rewritten.
+
+### Model 2 (the checked fixture)
+
+Measured on `feat/169-197-flight-determinism` (model 2: deterministic math and per-species flight traits, [SPECIES.md §11.6](SPECIES.md#116-flight-traits-model-2-169)). `tests/fixtures/preset-shares-mv2.json` is authoritative.
+
+| Preset (`id`)            | Sides                         | A wins | B wins | Draws |  Median | Rout share | Close | Status         |
+| ------------------------ | ----------------------------- | -----: | -----: | ----: | ------: | ---------: | ----- | -------------- |
+| `lion-tiger`             | lion 1 v tiger 1              | 58.5 % | 41.0 % | 0.5 % |  22.5 s |      100 % | yes   | override       |
+| `pride-five-tigers`      | lion 5 v tiger 5              | 62.0 % | 37.0 % | 1.0 % |  26.2 s |      100 % | yes   | hold           |
+| `tiger-bear`             | tiger 1 v brown bear 1        | 18.5 % | 81.5 % |   0 % |  30.6 s |      100 % | no    | override       |
+| `bear-wolf-pack`         | brown bear 1 v wolf 8         | 78.0 % | 22.0 % |   0 % |  50.2 s |     98.5 % | no    | override       |
+| `buffalo-pride`          | buffalo 1 v lion 6            | 16.5 % | 83.0 % | 0.5 % | 133.8 s |     73.6 % | no    | passes         |
+| `elephants-pride`        | elephant 5 v lion 30          |  100 % |    0 % |   0 % |  37.2 s |     93.8 % | no    | override (new) |
+| `mammoth-wolves`         | mammoth 1 v wolf 12           |  100 % |    0 % |   0 % |  45.8 s |     94.2 % | no    | override (new) |
+| `trex-mirror`            | _T. rex_ 1 v _T. rex_ 1       | 51.0 % | 49.0 % |   0 % |  95.2 s |      100 % | yes   | override       |
+| `trex-squad-tiger-horde` | _T. rex_ 10 v tiger 100       |  100 % |    0 % |   0 % |  27.4 s |     86.4 % | no    | override (new) |
+| `trex-erectus-100`       | _T. rex_ 1 v _H. erectus_ 100 |  100 % |    0 % |   0 % |  41.7 s |     97.9 % | no    | hold           |
+| `lions-hyenas`           | lion 3 v spotted hyena 10     | 46.5 % | 53.5 % |   0 % |  24.4 s |     99.8 % | yes   | hold           |
+| `polar-bear-brown-bear`  | polar bear 1 v brown bear 1   | 76.5 % | 22.0 % | 1.5 % |  67.2 s |      100 % | no    | override       |
+| `elephant-hippo`         | elephant 1 v hippo 1          | 86.5 % | 13.5 % |   0 % |  95.3 s |      100 % | no    | override       |
+| `raptors-trex`           | _Utahraptor_ 12 v _T. rex_ 1  |    0 % |  100 % |   0 % |  64.6 s |     95.9 % | no    | override (new) |
+| `elephant-rhino`         | elephant 1 v white rhino 1    | 93.5 % |  6.5 % |   0 % |  71.3 s |      100 % | no    | override       |
+| `hippo-rhino`            | hippo 1 v white rhino 1       | 43.5 % | 56.0 % | 0.5 % |  95.8 s |      100 % | yes   | override       |
+| `trex-spinosaurus`       | _T. rex_ 1 v _Spinosaurus_ 1  | 96.5 % |  3.5 % |   0 % | 112.0 s |      100 % | no    | override       |
+| `trex-triceratops`       | _T. rex_ 1 v _Triceratops_ 1  | 62.0 % | 38.0 % |   0 % |  91.1 s |      100 % | yes   | override       |
+
+What changed against model 1 (below):
+
+- **Flight now acts where one side far outweighs the other.** The tiger horde ends with most tigers fled (rout 2.2 % → 86.4 %) within about half a minute (median 140.6 s → 27.4 s), the picture the classic model gave (MODEL.md §6). Lions against elephants, wolves against a mammoth and raptors against _T. rex_ break off more often too, which takes them over the 90 % rout limit; the four presets marked "(new)" got documented overrides ([Overrides and holds](#overrides-and-holds)).
+- **Duels of similar animals barely move.** `lion-tiger`, `pride-five-tigers` and `trex-mirror` are identical: no flight trait acts between animals of similar mass, and their runs happen to draw no normal deviate whose last bit changed. The close tags all hold.
+- **The white rhino gives way to the elephant.** `elephant-rhino` goes from 73.5 % to 93.5 % for the elephant: the rhino's low threshold (1.25×, "relatively unaggressive") makes the 1.6× heavier elephant a threat. `elephant-hippo` moves less (81.5 % → 86.5 %).
+- **The polar bear yields more to the brown bear** (82.0 % → 76.5 %): model 2's researched polar bear rows lower its morale (it yields to grizzlies, [Miller 2015]).
+- **`lions-hyenas` stays close** (hyenas 62.5 % → 53.5 %) and stays on hold: its rout share (99.8 %) and median (24.4 s) still fail.
+
+### Model 1
+
 Measured on `main` at 0e5bfd8 plus this change; the engine is unchanged. The `polar-bear-brown-bear` row was appended with the polar bear (#184), the `elephant-hippo` row with the hippo (#186) the `raptors-trex` row with the raptor pack (#188) the `elephant-rhino` and `hippo-rhino` rows with the white rhinoceros (#187) the `trex-spinosaurus` row with _Spinosaurus_ (#185) and the `trex-triceratops` row with _Triceratops_ (#189); the earlier rows did not change. `tests/fixtures/preset-shares.json` is authoritative; update this table with it.
 
 | Preset (`id`)            | Sides                         | A wins | B wins | Draws |  Median | Rout share | Close | Status   |
@@ -101,21 +138,25 @@ What the numbers show:
 
 ## Overrides and holds
 
-| Preset                  | Kind     | Allowed                   | Reason                                                                                                                                                                                                                           |
-| ----------------------- | -------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `lion-tiger`            | override | rout 100 %, median ≥ 20 s | One on one, the loser flees once its morale breaks and there is no group for a rout to spread through. Two big cats of similar size settle it in a few strikes. It is the landing default of design §3.2.                        |
-| `tiger-bear`            | override | rout 100 %                | One on one, as above.                                                                                                                                                                                                            |
-| `trex-mirror`           | override | rout 100 %                | One on one, as above.                                                                                                                                                                                                            |
-| `polar-bear-brown-bear` | override | rout 100 %                | One on one, as above. Added with the polar bear (#184); the median (71 s) passes unaided.                                                                                                                                        |
-| `elephant-hippo`        | override | rout 100 %                | One on one, as above. Added with the hippo (#186); the median (119 s) passes unaided. The hippo's flight follows the current model (#169); its per-species flight traits will re-check this row.                                 |
-| `elephant-rhino`        | override | rout 100 %                | One on one, as above. Added with the white rhino (#187); the median (114 s) passes unaided. The rhino's flight follows the current model (#169); its per-species flight traits will re-check this row.                           |
-| `hippo-rhino`           | override | rout 100 %                | One on one, as above. Added with the white rhino (#187); the median (103 s) passes unaided. Both species' flight follows the current model (#169), as above.                                                                     |
-| `trex-spinosaurus`      | override | rout 100 %                | One on one, as above. Added with _Spinosaurus_ (#185); the median (112 s) passes unaided. Its flight follows the current model (#169), as above.                                                                                 |
-| `trex-triceratops`      | override | rout 100 %                | One on one, as above. Added with _Triceratops_ (#189); the median (92 s) passes unaided. Its flight follows the current model (#169), as above.                                                                                  |
-| `bear-wolf-pack`        | override | rout 100 %                | Field records: most meetings of brown bears and wolves over a carcass end with one side withdrawing rather than with injuries ([SPECIES.md §5](SPECIES.md#brown-bears-and-wolves)), so a fight that ends in a rout matches them. |
-| `pride-five-tigers`     | hold     | –                         | Every member of the losing side flees (rout share 100 %), and the median is 26 s.                                                                                                                                                |
-| `trex-erectus-100`      | hold     | –                         | 97 % of the _H. erectus_ that leave the fight flee rather than being incapacitated.                                                                                                                                              |
-| `lions-hyenas`          | hold     | –                         | 98 % of the losing side's members flee, and the median is 26 s.                                                                                                                                                                  |
+| Preset                   | Kind     | Allowed                   | Reason                                                                                                                                                                                                                                                           |
+| ------------------------ | -------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lion-tiger`             | override | rout 100 %, median ≥ 20 s | One on one, the loser flees once its morale breaks and there is no group for a rout to spread through. Two big cats of similar size settle it in a few strikes. It is the landing default of design §3.2.                                                        |
+| `tiger-bear`             | override | rout 100 %                | One on one, as above.                                                                                                                                                                                                                                            |
+| `trex-mirror`            | override | rout 100 %                | One on one, as above.                                                                                                                                                                                                                                            |
+| `polar-bear-brown-bear`  | override | rout 100 %                | One on one, as above. Added with the polar bear (#184); the median (71 s) passes unaided.                                                                                                                                                                        |
+| `elephant-hippo`         | override | rout 100 %                | One on one, as above. Added with the hippo (#186); the median (119 s) passes unaided. Re-checked under model 2 (#169): still passes with the override (rout 100 %, median 95 s).                                                                                 |
+| `elephant-rhino`         | override | rout 100 %                | One on one, as above. Added with the white rhino (#187); the median (114 s) passes unaided. Re-checked under model 2 (#169): still passes with the override (median 71 s).                                                                                       |
+| `hippo-rhino`            | override | rout 100 %                | One on one, as above. Added with the white rhino (#187); the median (103 s) passes unaided. Re-checked under model 2 (#169): still passes with the override (median 96 s).                                                                                       |
+| `trex-spinosaurus`       | override | rout 100 %                | One on one, as above. Added with _Spinosaurus_ (#185); the median (112 s) passes unaided. Re-checked under model 2 (#169): still passes with the override.                                                                                                       |
+| `trex-triceratops`       | override | rout 100 %                | One on one, as above. Added with _Triceratops_ (#189); the median (92 s) passes unaided. Re-checked under model 2 (#169): still passes with the override.                                                                                                        |
+| `bear-wolf-pack`         | override | rout 100 %                | Field records: most meetings of brown bears and wolves over a carcass end with one side withdrawing rather than with injuries ([SPECIES.md §5](SPECIES.md#brown-bears-and-wolves)), so a fight that ends in a rout matches them.                                 |
+| `elephants-pride`        | override | rout 100 % (model 2)      | Field records: adult elephants mob and chase off lions, and lion prides succeed only at night with more than 27 lions against fewer than 5 elephants, mostly on young ones (SPECIES.md §11.6). Lions that break off match them. Model 1 passed unaided (89.1 %). |
+| `mammoth-wolves`         | override | rout 100 % (model 2)      | The living analogue: wolves avoid injury from large prey, wounding it and waiting rather than pressing an attack (SPECIES.md §11.6). Model 1 passed unaided (89.8 %).                                                                                            |
+| `raptors-trex`           | override | rout 100 % (model 2)      | Each raptor is outmatched about twenty times by mass; living large carnivores rarely press attacks that far above their prey size (SPECIES.md §11.6). Model 1 passed unaided (83.3 %).                                                                           |
+| `trex-squad-tiger-horde` | override | median ≥ 20 s (model 2)   | Tigers break off within seconds of reaching an animal far above their prey size (SPECIES.md §11.6); the classic model gave the same picture, a median of about 26 s with most tigers fleeing (MODEL.md §6). Model 1 passed unaided (140.6 s, 2.2 % fled).        |
+| `pride-five-tigers`      | hold     | –                         | Every member of the losing side flees (rout share 100 %), and the median is 26 s.                                                                                                                                                                                |
+| `trex-erectus-100`       | hold     | –                         | 97 % of the _H. erectus_ that leave the fight flee rather than being incapacitated.                                                                                                                                                                              |
+| `lions-hyenas`           | hold     | –                         | 98 % of the losing side's members flee, and the median is 26 s.                                                                                                                                                                                                  |
 
 A hold is released by one of: an owner-accepted override with a reason, other head counts (design §6 lists `lions-hyenas` at 3 v 10 as a proposal), or a morale retune under a new model version (R4 a, ADR-0008). Until then Simple mode leaves these three out. They are the only presets of _H. erectus_ and spotted hyenas, so release checklist item 5 ("each species with at least one preset", design §1.4) needs one of them released, or another preset for those species, before 1.0.
 
@@ -151,7 +192,9 @@ The fixture is meant to change with the model, unlike the goldens, which never c
 
 ```bash
 UPDATE_PRESET_FIXTURE=1 npx vitest run tests/presets.test.ts
-npx prettier --write tests/fixtures/preset-shares.json
+npx prettier --write tests/fixtures/preset-shares-mv2.json
 ```
+
+The variable rewrites only the newest model's fixture (`FIXTURES[FREE_MODEL_VERSION]` in the test). A new model version adds its own file to `FIXTURES`; the older ones stay as measured.
 
 Then update the [fixture table](#fixture), and the [overrides and holds](#overrides-and-holds) if a check result changed.

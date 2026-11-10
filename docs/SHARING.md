@@ -15,7 +15,7 @@ The DOM-free core (`config-code.ts`, `result-codec.ts`, `result-text.ts`, `messa
 
 ## Config code
 
-- Code: `TVT2-` + the same payload as `#s=` (`encodeConfig`). `TVT2-` alone is the defaults. The prefix is matched case-insensitively.
+- Code: `TVT2-` + the same payload as `#s=` (`encodeConfig`). `TVT2-` alone is the defaults of classic model 1, the code the defaults had before #197; the current defaults name their model version (`TVT2-eyJ2IjoyLCJtdiI6Mn0`, `{"v":2,"mv":2}`). The prefix is matched case-insensitively.
 - The paste field accepts a code, a full URL with `#s=` (other fragment parts such as `chk=` are ignored; a URL without `s=` is rejected), or a bare payload.
 - Validation order: length (≤ 8192) → base64url alphabet → `JSON.parse` → v1 upgrade (`upgradeV1`) → `sanitizeConfig`, through `configFromObject` in `src/ui/share.ts`, the same path as `#s=` links.
 - `.json` file: `{ "app": "trex-vs-tiger", "kind": "config", "v": 2, "config": <configDiff>, "exportedAt": "<ISO time>" }`, saved through `<a download>` with an object URL, loaded with `file.text()`. Files over 64 KB are rejected before reading; `v` < 2 means v1 names inside `config`.
@@ -43,7 +43,14 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 
 ### Model version (`mv`)
 
-[ADR-0008](adr/0008-live-interventions-and-model-version.md): a free link reproduces its results under the model version it names. `FREE_MODEL_VERSION` in `src/sim/free/config.ts` is the newest version this build runs (1 today), and `FreeConfig.mv` is the version a config runs under.
+[ADR-0008](adr/0008-live-interventions-and-model-version.md): a free link reproduces its results under the model version it names. `FREE_MODEL_VERSION` in `src/sim/free/version.ts` (re-exported by `src/sim/free/config.ts`) is the newest version this build runs, and `FreeConfig.mv` is the version a config runs under.
+
+| `mv` | Free engine                                                                                                                                                                                                                                                | Since                             |
+| ---: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+|    1 | as shipped through v0.2.26: the engine's own `Math`, no flight traits                                                                                                                                                                                      | #124 (absent in every older link) |
+|    2 | deterministic math (#197, [MODEL.md §2.2](MODEL.md#22-random-numbers-and-determinism)) and per-species flight traits with researched polar bear rows (#169, [SPECIES.md §11.6](SPECIES.md#116-flight-traits-model-2-169)); the card catalogue is model 1's | this change; every new link       |
+
+- **New links name the newest model.** The defaults, every preset, a cold Simple page and the species guide's "Try it" links run model 2, so their links carry `"mv":2`. An opened link keeps the model it names while it is edited (a species switch takes that model's presets), so editing an old link never changes its model silently.
 
 - **Absent means 1.** Every v3 link, `TVT3-` code and free result link made before `mv` existed decodes as model 1, and so does any other input without `mv` (`sanitizeFreeConfig`, the golden fixtures).
 - **The encoder omits `mv` while it is 1** and writes any other version right after `m`: `{"v":3,"m":"free","mv":2,"a":…}`. Writing `mv: 1` into every link was the alternative; it was rejected because it would change the bytes of every free link from now on. With the omission, a model 1 link made today is byte for byte the link the earlier encoder made, and every existing test and golden is unchanged.
@@ -58,6 +65,7 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 
 - **Builds up to v0.2.16 have no `mv` check.** They ignore the key, so a page cached from one of them opens a newer settings link with all its values under model 1, decodes a newer free result link as valid and offers **Run it yourself** for it. Pages already in a cache cannot be changed; the rules above hold for builds from #124 on.
 
+- **Classic links (#197).** A classic payload (`v: 2`) carries the classic model version `mv` the same way: absent means 1 (`sanitizeConfig`, every classic link and `TVT2-` code made before #197, the v1 and v2 goldens), and the encoder writes it whenever it is not 1, right after `v` (`configDiff`): `{"v":2,"mv":2,"heavyCount":1,…}`. `CLASSIC_MODEL_VERSION` in `src/sim/config.ts` is 2: the same model computed with the deterministic math. A classic payload naming a version this build does not run (newer, or malformed) opens the classic defaults, without its values (`configFromObject`); unlike the free model there is no newer-model note yet. The defaults now encode as `{"v":2,"mv":2}`, so a classic link at the defaults always carries `#s=`; the bare `{"v":2}` of the classic address (#158 review) is the model 1 defaults. A bare `#chk=…` "Run it yourself" link was a link of the defaults when the defaults had no `s=`, so it opens the model 1 defaults with its check (`routeLink`). Builds before #197 ignore the key and run such a link under model 1.
 - `freeModelVersion(raw)` in `src/ui/share-free.ts` reads `mv` from a payload; `tests/free-model-version.test.ts` holds payloads written by the encoder before `mv` existed and checks that they decode as model 1 and re-encode byte for byte.
 
 ## Link routing
