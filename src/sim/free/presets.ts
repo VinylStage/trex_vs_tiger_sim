@@ -1,4 +1,4 @@
-import { sanitizeFreeConfig, type FreeConfig } from './config.ts';
+import { FREE_MODEL_VERSION, sanitizeFreeConfig, type FreeConfig } from './config.ts';
 import { FREE_SPECIES, type FreeSpeciesId } from './species.ts';
 
 /**
@@ -303,9 +303,13 @@ export const FREE_PRESETS: readonly FreePreset[] = [
 /** Presets Simple mode may show: every preset not on hold. */
 export const readyPresets = (): FreePreset[] => FREE_PRESETS.filter((p) => p.hold === undefined);
 
-/** The free config of a preset: species and counts on defaults, at the given seed. */
-export function presetConfig(p: FreePreset, seed?: number): FreeConfig {
+/**
+ * The free config of a preset: species and counts on defaults, at the given seed, under model
+ * version `mv` (the newest by default; the preset fixture also measures older ones).
+ */
+export function presetConfig(p: FreePreset, seed?: number, mv = FREE_MODEL_VERSION): FreeConfig {
   return sanitizeFreeConfig({
+    mv,
     sides: [
       { species: p.a.sp, count: p.a.n },
       { species: p.b.sp, count: p.b.n },

@@ -102,8 +102,14 @@ const OLD_FREE = {
 
 /** A classic v1 payload: no `v`, v1 names (`trexCount`, `tiger.*`). */
 const V1 = b64({ trexCount: 4, tigerCount: 60, params: { 'tiger.mass': [90, 150, 200] } });
-/** A classic v2 settings link as the encoder writes it. */
-const V2_CONFIG: ScenarioConfig = { ...defaultConfig(), heavyCount: 3, packCount: 40, seed: 7 };
+/**
+ * The defaults as the links made before classic model 2 and free `mv` 2 (#197, #169) hold them:
+ * model 1. Every old link below is built from them.
+ */
+const CLASSIC_V1_DEFAULTS: ScenarioConfig = { ...defaultConfig(), mv: 1 };
+const FREE_V1_DEFAULTS = { ...defaultFreeConfig(), mv: 1 };
+/** A classic v2 settings link as the encoder wrote it before #197. */
+const V2_CONFIG: ScenarioConfig = { ...CLASSIC_V1_DEFAULTS, heavyCount: 3, packCount: 40, seed: 7 };
 const V2_HASH = hashFromConfig(V2_CONFIG);
 /** A classic result link and its "Run it yourself" fragment. */
 const CLASSIC_SUMMARY = { n: 500, h: 480, p: 15, d: 5 };
@@ -113,7 +119,7 @@ if (!CLASSIC_RESULT.ok || !FREE_RESULT.ok || FREE_RESULT.kind !== 'free') {
   throw new Error('fixture result links do not decode');
 }
 const CLASSIC_REPRO = reproduceHash(CLASSIC_RESULT.config, CLASSIC_RESULT.summary);
-const DEFAULT_REPRO = reproduceHash(defaultConfig(), CLASSIC_SUMMARY);
+const DEFAULT_REPRO = reproduceHash(CLASSIC_V1_DEFAULTS, CLASSIC_SUMMARY);
 const FREE_REPRO = reproduceFreeHash(FREE_RESULT.config, FREE_RESULT.summary);
 const NEWER = b64({ v: 3, m: 'free', mv: FREE_MODEL_VERSION + 1, a: { sp: 'lion', n: 3 } });
 
@@ -155,14 +161,14 @@ const FIXTURES: readonly Fixture[] = [
     name: 'classic "Run it yourself" of the defaults (bare #chk=)',
     tail: DEFAULT_REPRO,
     mode: 'classic',
-    config: defaultConfig(),
+    config: CLASSIC_V1_DEFAULTS,
     check: true,
   },
   {
     name: 'free v3 settings link (defaults)',
     tail: `#s=${OLD_FREE.defaults}`,
     mode: 'free',
-    config: defaultFreeConfig(),
+    config: FREE_V1_DEFAULTS,
     check: false,
   },
   {
@@ -265,7 +271,11 @@ describe('old links reaching the lobby', () => {
       expect(route.mode).toBe(f.mode);
       expect(route.config).toEqual(f.config);
       if (route.mode === 'classic') {
-        expect(route.config).toEqual(configFromHash(hash) ?? defaultConfig());
+        // A bare `#chk=` is a link of the model 1 defaults (#197); other fragments without a
+        // payload open the current defaults.
+        expect(route.config).toEqual(
+          configFromHash(hash) ?? (f.tail === DEFAULT_REPRO ? CLASSIC_V1_DEFAULTS : defaultConfig()),
+        );
       } else if (route.mode === 'free') {
         expect(route.newerModel).toBe(f.newerModel ?? false);
       }
@@ -338,7 +348,7 @@ describe('routeLink', () => {
 
   it('opens a classic "Run it yourself" link without config at the defaults, check kept', () => {
     const r = routeLink(DEFAULT_REPRO, '');
-    expect(r).toEqual({ mode: 'classic', config: defaultConfig(), check: CLASSIC_SUMMARY });
+    expect(r).toEqual({ mode: 'classic', config: CLASSIC_V1_DEFAULTS, check: CLASSIC_SUMMARY });
   });
 });
 
@@ -384,11 +394,15 @@ describe('Simple mode on the play page (#146)', () => {
   });
 
   it('keeps malformed payloads and settings codes in the fragment on the classic defaults', () => {
-    for (const hash of ['#s=%%', `#TVT3-${OLD_FREE.defaults}`, '#tvt2-x', '#chk=%%']) {
+    for (const hash of ['#s=%%', `#TVT3-${OLD_FREE.defaults}`, '#tvt2-x']) {
       const r = routeLink(hash, '');
       expect(r.mode).toBe('classic');
       expect(r.config).toEqual(defaultConfig());
     }
+    // A bare `#chk=` was a link of the defaults, and the defaults were model 1 (#197).
+    const r = routeLink('#chk=%%', '');
+    expect(r.mode).toBe('classic');
+    expect(r.config).toEqual(CLASSIC_V1_DEFAULTS);
   });
 });
 
@@ -411,7 +425,7 @@ describe('Simple links (#154)', () => {
     const plain = JSON.stringify(decoded(PLAIN_HASH));
     expect(JSON.stringify(decoded(SIMPLE_HASH))).toBe(`${plain.slice(0, -1)},"ui":"simple"}`);
     // Without the option the encoder writes what it wrote before #154 (the fixtures' bytes).
-    expect(hashFromFreeConfig(defaultFreeConfig())).toBe(`#s=${OLD_FREE.defaults}`);
+    expect(hashFromFreeConfig(FREE_V1_DEFAULTS)).toBe(`#s=${OLD_FREE.defaults}`);
     const edited = freeConfigFromHash(`#s=${OLD_FREE.edited}`);
     expect(edited && hashFromFreeConfig(edited)).toBe(`#s=${OLD_FREE.edited}`);
   });
@@ -419,7 +433,7 @@ describe('Simple links (#154)', () => {
   it('decodes to the same config as the unmarked link: the engine, mv and seed never see it', () => {
     expect(freeConfigFromHash(SIMPLE_HASH)).toEqual(freeConfigFromHash(PLAIN_HASH));
     expect(freeConfigFromHash(SIMPLE_HASH)).toEqual(RAN);
-    expect(freeConfigFromHash(SIMPLE_HASH)?.mv).toBe(1);
+    expect(freeConfigFromHash(SIMPLE_HASH)?.mv).toBe(RAN.mv);
     expect(Object.keys(RAN)).not.toContain('ui');
   });
 
@@ -593,17 +607,23 @@ describe('a link pasted into an open play page (hashchange, #154 review)', () =>
 
 describe('the classic address at the defaults (#158 review)', () => {
   it('carries the bare v2 payload, so a copied classic link reopens classic', () => {
-    const hash = classicHashFromConfig(defaultConfig());
-    expect(hashFromConfig(defaultConfig())).toBe('');
+    // The defaults of classic model 1, as before #197.
+    const hash = classicHashFromConfig(CLASSIC_V1_DEFAULTS);
+    expect(hashFromConfig(CLASSIC_V1_DEFAULTS)).toBe('');
     expect(hash).toBe('#s=eyJ2IjoyfQ');
     for (const search of ['', '?tour=1']) {
       const route = routeLink(hash, search);
       expect(route.mode).toBe('classic');
-      expect(route.config).toEqual(defaultConfig());
+      expect(route.config).toEqual(CLASSIC_V1_DEFAULTS);
       if (route.mode === 'classic') expect(route.check).toBeNull();
     }
-    expect(routeHashChange(hash, '')).toEqual({ mode: 'classic', config: defaultConfig() });
-    expect(configFromHash(hash)).toEqual(defaultConfig());
+    expect(routeHashChange(hash, '')).toEqual({ mode: 'classic', config: CLASSIC_V1_DEFAULTS });
+    expect(configFromHash(hash)).toEqual(CLASSIC_V1_DEFAULTS);
+    // The current defaults name their model version, so their plain hash is never empty.
+    const current = classicHashFromConfig(defaultConfig());
+    expect(current).toBe(hashFromConfig(defaultConfig()));
+    expect(current).toBe('#s=eyJ2IjoyLCJtdiI6Mn0');
+    expect(routeLink(current, '')).toEqual({ mode: 'classic', config: defaultConfig(), check: null });
   });
 
   it('writes exactly the old hash for every other config', () => {

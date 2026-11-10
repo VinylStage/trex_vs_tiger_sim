@@ -1,4 +1,5 @@
 import { individualFactor } from '../distributions.ts';
+import { DET_MATH, NATIVE_MATH } from '../detmath.ts';
 import { CONSTANTS, DT } from '../engine.ts';
 import { Rng, deriveSeed } from '../rng.ts';
 import { SpatialGrid } from '../spatial.ts';
@@ -12,7 +13,7 @@ import {
   type CompiledLog,
   type Intervention,
 } from './interventions.ts';
-import { FREE_SPECIES } from './species.ts';
+import { freeSpeciesAt } from './species.ts';
 import { TRAITS, TRAIT_BOUNDS, type TraitId } from './traits.ts';
 
 /**
@@ -380,6 +381,10 @@ export function simulateFreeBattle(
 ): FreeBattleOutput {
   const C = CONSTANTS;
   const F = FREE_CONSTANTS;
+  // From `mv` 2 the deterministic math of src/sim/detmath.ts (#197), so a link gives the same
+  // battle in every JavaScript engine; `mv` 1 keeps the engine's own `Math`.
+  const det = config.mv >= 2;
+  const { sin, cos, atan2, log: ln, hypot } = det ? DET_MATH : NATIVE_MATH;
   const L = config.arenaSize;
   const cv = config.individualCV;
   const nA = config.sides[0].count;
@@ -387,11 +392,11 @@ export function simulateFreeBattle(
   const n = nA + nB;
   const offOf = (side: number): number => (side === 0 ? 0 : nA);
   const cntOf = (side: number): number => (side === 0 ? nA : nB);
-  const spA = FREE_SPECIES[config.sides[0].species];
-  const spB = FREE_SPECIES[config.sides[1].species];
+  const spA = freeSpeciesAt(config.sides[0].species, config.mv);
+  const spB = freeSpeciesAt(config.sides[1].species, config.mv);
   const rngs = [
-    new Rng(deriveSeed(config.seed, run, SALT_A)),
-    new Rng(deriveSeed(config.seed, run, SALT_B)),
+    new Rng(deriveSeed(config.seed, run, SALT_A), det),
+    new Rng(deriveSeed(config.seed, run, SALT_B), det),
   ];
   const val = (s: number, id: string): number =>
     row[(SIDE_COLUMNS[s] as Readonly<Record<string, number>>)[id] as number] as number;
@@ -404,6 +409,18 @@ export function simulateFreeBattle(
   const hide = [spA.constants.hide, spB.constants.hide];
   const intim = [spA.constants.intimidation, spB.constants.intimidation];
   const canLatch = [spA.canLatch, spB.canLatch];
+  // Flight traits (#169, from `mv` 2): species constants, each side's preset mode. Model 1 has
+  // none, so `flightOn` is false there and nothing below reads them.
+  const flightOn = config.morale && (spA.flight !== null || spB.flight !== null);
+  const threatRatio = [
+    spA.flight?.threatRatio.range.mode ?? 0,
+    spB.flight?.threatRatio.range.mode ?? 0,
+  ];
+  const threatTime = [
+    spA.flight?.threatTime.range.mode ?? 0,
+    spB.flight?.threatTime.range.mode ?? 0,
+  ];
+  const soloShock = [spA.flight?.soloShock.range.mode ?? 0, spB.flight?.soloShock.range.mode ?? 0];
   const latchRatio = glob('latchRatio');
   const knockRatio = glob('knockRatio');
   const woundRef = glob('woundRef');
@@ -472,6 +489,10 @@ export function simulateFreeBattle(
   const carry = new Float64Array(n);
   const engaged = new Int32Array(n);
   const moraleLoss = new Float64Array(n);
+  // Flight (#169): morale lost per tick while outmatched, and the enemy each agent faces this
+  // tick (its target while approaching, the nearest enemy while recovering; −1 for none).
+  const threatLoss = new Float64Array(n);
+  const facing = new Int32Array(n).fill(-1);
   // Pack-buff state. `buffed` is fixed for the whole tick (computed before phase 1).
   const buffed = new Uint8Array(n);
   const cohesive = new Uint8Array(n);
@@ -528,10 +549,13 @@ export function simulateFreeBattle(
       shake[i] = t.shakeRate;
       morale[i] = t.morale;
       moraleLoss[i] = t.moraleLoss;
+      if (flightOn && (threatTime[s] as number) > 0) {
+        threatLoss[i] = (Math.max(0, t.morale - C.routThreshold) / (threatTime[s] as number)) * DT;
+      }
       const a = rng.next() * TAU;
       const d = discR * Math.sqrt(rng.next());
-      x[i] = cx + dir * Math.cos(a) * d;
-      y[i] = L / 2 + Math.sin(a) * d;
+      x[i] = cx + dir * cos(a) * d;
+      y[i] = L / 2 + sin(a) * d;
       h[i] = s === 0 ? 0 : Math.PI;
       cd[i] = rng.next() * t.strikeInterval;
       retarget[i] = rng.next() * F.retarget;
@@ -677,6 +701,44 @@ export function simulateFreeBattle(
   };
   const newlyDead = (i: number): boolean =>
     nstate[i] === FreeState.Dead && state[i] !== FreeState.Dead;
+  /**
+   * Flight (#169) solitary shock for side `s`: like the death contagion above, but every present
+   * agent counts, buffed or not, and each loses the same `loss` per fallen ally nearby.
+   */
+  const soloContagion = (
+    s: number,
+    f: { cols: number; size: number; counts: Int32Array },
+    loss: number,
+  ): void => {
+    const off = offOf(s);
+    const cnt = cntOf(s);
+    let any = false;
+    for (let k = 0; k < cnt; k++) {
+      const i = off + k;
+      if (!newlyDead(i)) continue;
+      if (!any) {
+        f.counts.fill(0);
+        any = true;
+      }
+      const c = cellOf(y[i] as number, f) * f.cols + cellOf(x[i] as number, f);
+      f.counts[c] = (f.counts[c] as number) + 1;
+    }
+    if (!any) return;
+    for (let k = 0; k < cnt; k++) {
+      const j = off + k;
+      if ((state[j] as number) >= FreeState.Dead || nstate[j] === FreeState.Dead) continue;
+      const cx = cellOf(x[j] as number, f);
+      const cy = cellOf(y[j] as number, f);
+      let m = 0;
+      for (let row = Math.max(0, cy - 1); row <= Math.min(f.cols - 1, cy + 1); row++) {
+        for (let col = Math.max(0, cx - 1); col <= Math.min(f.cols - 1, cx + 1); col++) {
+          m += f.counts[row * f.cols + col] as number;
+        }
+      }
+      if (m <= 0) continue;
+      morale[j] = (morale[j] as number) - loss * Math.min(m, F.contagionDeathCap);
+    }
+  };
   const isRoutedNow = (i: number): boolean => routedNow[i] === 1;
   const ownLoss = (j: number): number => moraleLoss[j] as number;
   const countAllies = (i: number, r: number, cap: number, onlyBuffed: boolean): number => {
@@ -728,7 +790,7 @@ export function simulateFreeBattle(
     // With no buffed ally engaged anywhere every score is a plain distance: the nearest wins.
     if (engagedBySide[s] === 0 || (focusBonus[s] as number) <= 0) return near;
     const e = 1 - s;
-    const d0 = Math.hypot(
+    const d0 = hypot(
       (x[near] as number) - (x[i] as number),
       (y[near] as number) - (y[i] as number),
     );
@@ -761,8 +823,7 @@ export function simulateFreeBattle(
     const dy = (y[j] as number) - (y[striker] as number);
     const d = Math.sqrt(dx * dx + dy * dy);
     if (d > (reach[striker] as number) + (scratch[ENEMY_R] as number)) return;
-    if (Math.abs(wrap(Math.atan2(dy, dx) - (h[striker] as number))) > (arc[striker] as number))
-      return;
+    if (Math.abs(wrap(atan2(dy, dx) - (h[striker] as number))) > (arc[striker] as number)) return;
     const score = state[j] === FreeState.Latched && host[j] === striker ? d - 1000 : d;
     if (score < (scratch[BEST_SCORE] as number)) {
       scratch[BEST_SCORE] = score;
@@ -788,8 +849,8 @@ export function simulateFreeBattle(
     nh[i] = head;
     if (step <= 0) return;
     const v = step * (Math.abs(dh) > Math.PI / 3 ? 0.5 : 1);
-    nx[i] = (x[i] as number) + Math.cos(head) * v;
-    ny[i] = (y[i] as number) + Math.sin(head) * v;
+    nx[i] = (x[i] as number) + cos(head) * v;
+    ny[i] = (y[i] as number) + sin(head) * v;
   };
 
   // --- trace ---
@@ -895,7 +956,7 @@ export function simulateFreeBattle(
           const cap = F.supportCountCap;
           const a = countAllies(i, C.moraleRadius, cap, true);
           const e = countEnemies(i, C.moraleRadius, cap);
-          const c = (supportK[s] as number) * Math.log((a + 1) / (e + 1));
+          const c = (supportK[s] as number) * ln((a + 1) / (e + 1));
           support[i] = Math.max(-F.supportCap, Math.min(F.supportCap, c));
           if (support[i] !== 0) st.support += 1;
         }
@@ -978,6 +1039,7 @@ export function simulateFreeBattle(
           t = target[i] = buffed[i] && sw.focus ? focusTarget(i) : nearestEnemy(i);
           retarget[i] = F.retarget;
         }
+        facing[i] = t;
         if (t < 0) continue;
         const dx = (x[t] as number) - (x[i] as number);
         const dy = (y[t] as number) - (y[i] as number);
@@ -991,30 +1053,30 @@ export function simulateFreeBattle(
           ? (radius[s] as number) + rT + F.contactMargin
           : F.strikeStop * (reach[i] as number) + rT;
         // E1 coordinated approach: a slot around the target's rear, sidestepping its strike cone.
-        let heading = Math.atan2(dy, dx);
+        let heading = atan2(dy, dx);
         let gap = dist - stop;
         if (slotTarget[i] === t && buffed[i]) {
           const m = slotN[t] as number;
           const spread = Math.min(TAU / m, C.flankOffset);
           const ang = (h[t] as number) + Math.PI + ((slot[i] as number) - (m - 1) / 2) * spread;
-          const ax = (x[t] as number) + Math.cos(ang) * stop - (x[i] as number);
-          const ay = (y[t] as number) + Math.sin(ang) * stop - (y[i] as number);
+          const ax = (x[t] as number) + cos(ang) * stop - (x[i] as number);
+          const ay = (y[t] as number) + sin(ang) * stop - (y[i] as number);
           const near = dist < (reach[t] as number) + C.dangerMargin;
-          const rel = near ? wrap(Math.atan2(-dy, -dx) - (h[t] as number)) : 0;
+          const rel = near ? wrap(atan2(-dy, -dx) - (h[t] as number)) : 0;
           const danger = near && Math.abs(rel) < (arc[t] as number) + C.dangerArcPad;
           gap = Math.sqrt(ax * ax + ay * ay);
           if (danger) {
             heading = (h[t] as number) + (rel >= 0 ? 1 : -1) * (Math.PI / 2);
             gap = Math.max(gap, (sprint[i] as number) * DT);
           } else if (gap > F.contactMargin) {
-            heading = Math.atan2(ay, ax);
+            heading = atan2(ay, ax);
           } else {
             gap = 0;
           }
           if (gap > 0) stats[s as 0 | 1].coordinate += 1;
         }
         if (gap <= 0) {
-          steer(i, Math.atan2(dy, dx), 0);
+          steer(i, atan2(dy, dx), 0);
           continue;
         }
         let speed: number;
@@ -1040,11 +1102,12 @@ export function simulateFreeBattle(
       } else if (st === FreeState.Recover) {
         stamina[i] = Math.min(1, (stamina[i] as number) + DT / (recovery[i] as number));
         const e = nearestEnemy(i);
+        facing[i] = e;
         if (e >= 0) {
           const dx = (x[i] as number) - (x[e] as number);
           const dy = (y[i] as number) - (y[e] as number);
           if (dx * dx + dy * dy < C.recoverDistance * C.recoverDistance) {
-            steer(i, Math.atan2(dy, dx), (cruise[i] as number) * DT);
+            steer(i, atan2(dy, dx), (cruise[i] as number) * DT);
           }
         }
         recTimer[i] = (recTimer[i] as number) - DT;
@@ -1057,8 +1120,8 @@ export function simulateFreeBattle(
         const e = nearestEnemy(i);
         const away =
           e >= 0
-            ? Math.atan2((y[i] as number) - (y[e] as number), (x[i] as number) - (x[e] as number))
-            : Math.atan2((y[i] as number) - L / 2, (x[i] as number) - L / 2);
+            ? atan2((y[i] as number) - (y[e] as number), (x[i] as number) - (x[e] as number))
+            : atan2((y[i] as number) - L / 2, (x[i] as number) - L / 2);
         let speed = cruise[i] as number;
         if ((stamina[i] as number) > 0) {
           speed = sprint[i] as number;
@@ -1081,8 +1144,8 @@ export function simulateFreeBattle(
       const hst = host[i] as number;
       const a = (h[hst] as number) + (latchAng[i] as number);
       const r = (radius[side[hst] as number] as number) + (radius[side[i] as number] as number);
-      x[i] = (x[hst] as number) + Math.cos(a) * r;
-      y[i] = (y[hst] as number) + Math.sin(a) * r;
+      x[i] = (x[hst] as number) + cos(a) * r;
+      y[i] = (y[hst] as number) + sin(a) * r;
     }
 
     // --- phase 2: act ---
@@ -1149,7 +1212,7 @@ export function simulateFreeBattle(
             if (rng.next() < p * crowd(i, t)) {
               nstate[i] = FreeState.Latched;
               host[i] = t;
-              latchAng[i] = wrap(Math.atan2(dy, dx) - (h[t] as number));
+              latchAng[i] = wrap(atan2(dy, dx) - (h[t] as number));
             } else {
               latchCd[i] = C.latchRetry;
             }
@@ -1193,6 +1256,25 @@ export function simulateFreeBattle(
     }
 
     // --- phase 3: apply ---
+    // Flight (#169): an agent within reach of an active enemy that outmatches it by mass (or
+    // riding one) loses morale at its own rate. Uses the moved positions; draws nothing.
+    if (flightOn) {
+      for (let i = 0; i < n; i++) {
+        const st = state[i] as number;
+        if (st >= FreeState.Routed || (threatLoss[i] as number) <= 0) continue;
+        const s = side[i] as number;
+        const e = st === FreeState.Latched ? (host[i] as number) : (facing[i] as number);
+        if (e < 0 || (state[e] as number) >= FreeState.Routed) continue;
+        if ((mass[e] as number) < (threatRatio[s] as number) * (mass[i] as number)) continue;
+        if (st !== FreeState.Latched) {
+          const dx = (x[e] as number) - (x[i] as number);
+          const dy = (y[e] as number) - (y[i] as number);
+          const r = (reach[e] as number) + (radius[s] as number) + C.dangerMargin;
+          if (dx * dx + dy * dy > r * r) continue;
+        }
+        moraleAcc[i] = (moraleAcc[i] as number) - (threatLoss[i] as number);
+      }
+    }
     for (let i = 0; i < n; i++) {
       if ((state[i] as number) >= FreeState.Dead) continue;
       const s = side[i] as number;
@@ -1228,14 +1310,23 @@ export function simulateFreeBattle(
           );
       }
     }
+    // Flight (#169): a non-social side's members lose `soloShock` per ally just incapacitated
+    // within `moraleRadius` (social species carry 0: their shock is the pack buff's).
+    if (flightOn) {
+      for (let s = 0; s < 2; s++) {
+        if ((soloShock[s] as number) > 0 && !social[s]) {
+          soloContagion(s, deathFields[s] as (typeof deathFields)[0], soloShock[s] as number);
+        }
+      }
+    }
     for (let i = 0; i < n; i++) {
       const ns = nstate[i] as number;
       if (ns >= FreeState.Dead) continue;
       if (thrown[i]) {
         const hst = host[i] as number;
         const a = (h[hst] as number) + (latchAng[i] as number);
-        x[i] = (x[i] as number) + Math.cos(a) * C.throwDistance;
-        y[i] = (y[i] as number) + Math.sin(a) * C.throwDistance;
+        x[i] = (x[i] as number) + cos(a) * C.throwDistance;
+        y[i] = (y[i] as number) + sin(a) * C.throwDistance;
         nstate[i] = FreeState.Recover;
         host[i] = -1;
         recTimer[i] = C.recoverMinTime;
