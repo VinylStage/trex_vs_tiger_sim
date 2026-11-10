@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.27](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.26...trex-vs-tiger-sim-v0.2.27) (2026-11-10)
+
+
+### Features
+
+* **free:** branch hook and live-chance job ([#179](https://github.com/VinylStage/trex_vs_tiger_sim/issues/179)) ([#223](https://github.com/VinylStage/trex_vs_tiger_sim/issues/223)) ([6554f1e](https://github.com/VinylStage/trex_vs_tiger_sim/commit/6554f1e4f3a94528f9d53013d5118017a5d3b52b))
+* **worker:** replay with interventions and a warm live worker ([#178](https://github.com/VinylStage/trex_vs_tiger_sim/issues/178)) ([#221](https://github.com/VinylStage/trex_vs_tiger_sim/issues/221)) ([b174843](https://github.com/VinylStage/trex_vs_tiger_sim/commit/b1748437dd5cbd351d7309a44b9da7cc5300d6c8))
+
 ## [0.2.26](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.25...trex-vs-tiger-sim-v0.2.26) (2026-11-05)
 
 
