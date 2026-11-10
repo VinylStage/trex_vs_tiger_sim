@@ -76,7 +76,7 @@ Measured on `feat/169-197-flight-determinism` (model 2: deterministic math and p
 | `lion-tiger`             | lion 1 v tiger 1              | 58.5 % | 41.0 % | 0.5 % |  22.5 s |      100 % | yes   | override       |
 | `pride-five-tigers`      | lion 5 v tiger 5              | 62.0 % | 37.0 % | 1.0 % |  26.2 s |      100 % | yes   | hold           |
 | `tiger-bear`             | tiger 1 v brown bear 1        | 18.5 % | 81.5 % |   0 % |  30.6 s |      100 % | no    | override       |
-| `bear-wolf-pack`         | brown bear 1 v wolf 8         | 78.0 % | 22.0 % |   0 % |  50.2 s |     98.5 % | no    | override       |
+| `bear-wolf-pack`         | brown bear 1 v wolf 8         | 68.0 % | 32.0 % |   0 % |  69.6 s |     97.0 % | no    | override       |
 | `buffalo-pride`          | buffalo 1 v lion 6            | 16.5 % | 83.0 % | 0.5 % | 133.8 s |     73.6 % | no    | passes         |
 | `elephants-pride`        | elephant 5 v lion 30          |  100 % |    0 % |   0 % |  37.2 s |     93.8 % | no    | override (new) |
 | `mammoth-wolves`         | mammoth 1 v wolf 12           |  100 % |    0 % |   0 % |  45.8 s |     94.2 % | no    | override (new) |
