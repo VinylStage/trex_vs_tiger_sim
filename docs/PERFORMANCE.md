@@ -205,14 +205,15 @@ The non-social rows (tigers) re-measured on the same run: 0.93, 0.61 and 0.44.
 
 ## Deterministic math (#197)
 
-Model 2 of both engines replaces `Math.sin`, `cos`, `atan2` and `log` with `src/sim/detmath.ts`. Measured 2026-11-10 in vitest (Node 22, V8) on a 4-core container, 30 runs × 300 s per batch, median of 5 alternating rounds, wall time per simulated agent-step:
+Model 2 of both engines replaces `Math.sin`, `cos`, `atan2` and `log` with `src/sim/detmath.ts`. Measured 2026-11-10 in vitest (Node 22, V8) on a 4-core container, 30 runs × 300 s per batch, median of 5 alternating rounds, wall time per simulated agent-step, in two sessions:
 
-| Batch                                       | Model 1 (ns) | Model 2 (ns) | Ratio |
-| ------------------------------------------- | -----------: | -----------: | ----: |
-| Free, 10 _T. rex_ v 100 tigers, morale off  |        129.9 |        135.6 |  1.04 |
-| Classic, 10 _T. rex_ v 100 tigers (default) |        164.8 |        184.5 |  1.12 |
+| Batch                                       | Model 1 (ns)  | Model 2 (ns)  | Ratio     |
+| ------------------------------------------- | ------------- | ------------- | --------- |
+| Free, 10 _T. rex_ v 100 tigers, morale off  | 129.9 / 124.7 | 135.6 / 133.4 | 1.04–1.07 |
+| Free, _T. rex_ 1 v 50 wolves (pack buff)    | 405.2 / 396.1 | 478.0 / 430.4 | 1.09–1.18 |
+| Classic, 10 _T. rex_ v 100 tigers (default) | 164.8 / 172.3 | 184.5 / 187.0 | 1.09–1.12 |
 
-On their own the functions take about twice the time of V8's built-ins (dsin 36 ns against 16 ns before the reduction was streamlined); per agent-step the engines spend most of their time elsewhere. With morale on, model 2's per-agent-step figure for the free tiger horde is higher (about 2.2×) because far more tigers flee, and a fleeing agent searches for the nearest enemy every tick; the battle itself ends in about a fifth of the simulated time (median 27 s against 141 s), so a whole batch is cheaper. Not measured: real browsers.
+Per call the functions cost about twice V8's built-ins (2 million calls: `dsin` 31.8 ns against 16.2 ns, `dcos` 28.7 against 21.2, `datan2` 36.8 against 22.4, `dlog` 41.0 against 10.8). The wolf row also includes flight (wolves break off from the _T. rex_), so it overstates the math. With morale on, model 2's figure for the free tiger horde is higher per agent-step (about 2.2×) because far more tigers flee, and a fleeing agent searches for its nearest enemy every tick; the battle ends in about a fifth of the simulated time (median 27 s against 133 s), so a whole batch is cheaper. Issue #197 allows about 10 %; the free engine stays within it, the classic engine sits at its edge. Not measured: real browsers.
 
 ## Not changed
 
