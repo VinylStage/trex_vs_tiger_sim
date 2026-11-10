@@ -2,6 +2,8 @@ import { sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { simulateBattle } from '../sim/engine';
 import type { FreeConfig } from '../sim/free/config';
 import { simulateFreeBattle } from '../sim/free/engine';
+import { DT } from '../sim/engine';
+import { sanitizeInterventions } from '../sim/free/interventions';
 import { aggregate, runChunk, unpackSummaries } from '../sim/montecarlo';
 import { buildDesign, designRow, type Design } from '../sim/sampling';
 import { sanitizeFreeConfig } from '../sim/free/config';
@@ -22,6 +24,9 @@ const ctx = self as unknown as {
 };
 
 const PROGRESS_INTERVAL_MS = 100;
+
+/** Most branches one `branch-free` message runs; the live-chance job sends far fewer per chunk. */
+const MAX_BRANCHES = 256;
 
 // The design only depends on the config, so it is rebuilt once per scenario, not per chunk.
 let cachedKey = '';
@@ -79,9 +84,42 @@ function handle(msg: WorkerRequest): void {
   if (msg.type === 'replay-free') {
     const config = sanitizeFreeConfig(msg.config);
     const run = Math.max(0, Math.min(config.runs - 1, Math.floor(msg.run)));
-    const { trace } = simulateFreeBattle(config, designRow(freeDesignFor(config), run), run, true);
+    // The log may come from a shared link too: sanitized here as well as in the engine.
+    const interventions = sanitizeInterventions(
+      msg.interventions,
+      Math.round(config.maxTime / DT),
+      config.mv,
+      config,
+    );
+    const row = designRow(freeDesignFor(config), run);
+    const t0 = performance.now();
+    const { trace } = simulateFreeBattle(config, row, run, true, { interventions });
+    const liveSimMs = performance.now() - t0;
     if (!trace) throw new Error('engine returned no trace');
-    ctx.postMessage({ type: 'replay-free', jobId: msg.jobId, trace }, freeTraceTransferList(trace));
+    ctx.postMessage(
+      { type: 'replay-free', jobId: msg.jobId, trace, liveSimMs },
+      freeTraceTransferList(trace),
+    );
+    return;
+  }
+  if (msg.type === 'branch-free') {
+    const config = sanitizeFreeConfig(msg.config);
+    const run = Math.max(0, Math.min(config.runs - 1, Math.floor(msg.run)));
+    const interventions = sanitizeInterventions(
+      msg.interventions,
+      Math.round(config.maxTime / DT),
+      config.mv,
+      config,
+    );
+    const row = designRow(freeDesignFor(config), run);
+    const branches = Array.isArray(msg.branches) ? msg.branches.slice(0, MAX_BRANCHES) : [];
+    // The engine ignores a branch with an invalid tick or salt (`opts.branch`).
+    const outcomes = branches.map((b: unknown) => {
+      const o = typeof b === 'object' && b !== null ? (b as Record<string, unknown>) : {};
+      const branch = { tick: Number(o['tick']), salt: Number(o['salt']) };
+      return simulateFreeBattle(config, row, run, false, { interventions, branch }).summary.outcome;
+    });
+    ctx.postMessage({ type: 'branch-free', jobId: msg.jobId, outcomes });
     return;
   }
   if (msg.type === 'run' && isFreePayload(msg.config)) {

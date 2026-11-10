@@ -478,6 +478,20 @@ The # column is the wire code (zero-based), not the design's 1-based row number.
 - **Worked example** (`tests/free-interventions.test.ts`). Focus (accuracy ×1.2, 20 s) at tick 100 and Pitch dark (accuracy ×0.8, rest) at tick 150 give side A `base × 1.2` on [100, 150), `base × 1.2 × 0.8` on [150, 300) and `base × 0.8` from tick 300. Side B gets `base × 0.8` from tick 150. Adrenaline then Mud behaves the same way for speed. The test checks every agent's value before, inside and after each overlap. A fixture pins the summaries of fixed logs (`tests/fixtures/free-v3-interventions-golden.json`).
 - **No randomness.** No card draws random numbers, so a run with a log is as reproducible as one without, and every trace frame up to a card's tick equals the frame of the run without the card (frame thinning aside: [REPLAY.md §14](REPLAY.md#14-free-matchups)).
 
+**Branch hook and live win chance (#179).** `simulateFreeBattle(…, { branch: { tick, salt } })` replays a run up to the start of `tick` and lets it diverge from there ([RENEWAL-1.0 §10.1, §10.2 point 4](design/RENEWAL-1.0.md#102-live-step-fork-and-re-simulate-10)).
+
+- **Reseeding.** At the start of tick `tick`, before that tick's interventions, both side RNGs are replaced. The branch seed is `deriveSeed(seed, run, salt)`. Side A's new stream is `deriveSeed(branchSeed, 0, 3)` and side B's is `deriveSeed(branchSeed, 0, 4)`, the same split the run seed uses at spawn, so the two sides never share a stream. Nothing else changes: the spawn, the design row, the intervention log and the state at the branch tick are the parent's.
+- **Salts.** 3 and 4 belong to the sides and 5 is reserved for card RNG, so a branch salt is an integer of at least 6 (`BRANCH_SALT_MIN`). The live-chance job gives branch j salt 6 + j at every checkpoint.
+- **Unset changes nothing.** The hook is one integer comparison per tick, `step === branchTick`, with `branchTick = −1` unless a branch is set with an integer tick in [0, maxSteps) and an integer salt ≥ 6. An absent or invalid branch draws no random number and allocates nothing, so every golden is unchanged (`tests/free-branch.test.ts` also compares runs with invalid branches to the plain run).
+- **Prefix.** Every trace frame at a time ≤ `tick × dt` equals the parent's, with or without an intervention log. The same branch on the same inputs reproduces exactly.
+- **Live win chance, "실시간 예상 승률"** (`src/ui/live-chance.ts`).
+  - At k = 8 checkpoints, spread evenly over the live battle with `checkpointTicks`, B = 32 branches each run as one P2 job on the batch workers. Both numbers are **S**.
+  - Side A's chance at a checkpoint is `(A wins + draws / 2) / B`.
+  - After a card at tick T, the checkpoints before T keep their values, because they show what was known before the card. The checkpoints at or after T are placed again over the re-simulated battle and recomputed with the new log (`ticksAfterCard`, `mergeAfterCard`).
+  - Using the same salts at every checkpoint gives common random numbers, which steadies the timeline from one checkpoint to the next.
+  - The cost is k × B full runs, because each branch replays from tick 0. That is the fork-and-re-simulate design, and there is no stepper.
+- **Fallback, "전력 비율".** If the branches miss their budget (`runLiveChance(…, budgetMs)`), the bar shows side A's share of Σ (HP fraction × mass) over the animals still fighting, read from the live trace at the same times (never from a later frame). This is a strength share, not a probability. It is a separate type, `{ kind: 'strength', points: { t, ratio }[] }`, which has no `chance` field, so it cannot be passed where a win chance is expected (e.g. `decisiveMoment`). The UI labels it as 전력 비율 (#222, #183).
+
 ## 4. Constants
 
 These are fixed in `engine.ts`. They are not sampled and not editable in the UI. The pack contact radius is a species constant (§2.7; 0.8 m for the tiger).

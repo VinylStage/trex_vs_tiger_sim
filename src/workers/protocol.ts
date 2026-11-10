@@ -4,14 +4,36 @@ import type { FreeConfig } from '../sim/free/config';
 import type { FreeRunSummary, FreeTrace } from '../sim/free/engine';
 import type { FreeAggregate } from '../sim/free/aggregate';
 import type { AggregateResult } from '../sim/montecarlo';
+import type { Intervention } from '../sim/free/interventions';
 
 /** Main thread → worker. */
 export type WorkerRequest =
   /** A free-model config (`mode: 'free'`) runs on the free engine (src/sim/free). */
   | { type: 'run'; jobId: number; config: ScenarioConfig | FreeConfig; start: number; end: number }
   | { type: 'replay'; jobId: number; config: ScenarioConfig; run: number }
-  /** One free-model run re-simulated with its trace (src/sim/free/engine.ts, trace v3). */
-  | { type: 'replay-free'; jobId: number; config: FreeConfig; run: number }
+  /**
+   * One free-model run re-simulated with its trace (src/sim/free/engine.ts, trace v3), optionally
+   * under an intervention log (RENEWAL-1.0 §10.2). The worker sanitizes the log itself.
+   */
+  | {
+      type: 'replay-free';
+      jobId: number;
+      config: FreeConfig;
+      run: number;
+      interventions?: readonly Intervention[];
+    }
+  /**
+   * Branches of one free-model run (RENEWAL-1.0 §10.2 point 4): the run under `interventions`,
+   * once per `branches` entry with the engine's branch hook (`opts.branch`). Live chance, #179.
+   */
+  | {
+      type: 'branch-free';
+      jobId: number;
+      config: FreeConfig;
+      run: number;
+      interventions?: readonly Intervention[];
+      branches: readonly { tick: number; salt: number }[];
+    }
   /** `summaries` is `packSummaries(...)` of every run, transferred (src/sim/montecarlo.ts). */
   | { type: 'aggregate'; jobId: number; config: ScenarioConfig; summaries: Float64Array }
   /** `summaries` is `packFreeSummaries(...)` (src/sim/free/montecarlo.ts), transferred. */
@@ -22,7 +44,10 @@ export type WorkerResponse =
   | { type: 'progress'; jobId: number; done: number }
   | { type: 'result'; jobId: number; summaries: RunSummary[] | FreeRunSummary[] }
   | { type: 'replay'; jobId: number; trace: BattleTrace }
-  | { type: 'replay-free'; jobId: number; trace: FreeTrace }
+  /** `liveSimMs`: wall time of the simulation in the worker, without the message transfer. */
+  | { type: 'replay-free'; jobId: number; trace: FreeTrace; liveSimMs: number }
+  /** One `FreeOutcome` code per requested branch, in request order. */
+  | { type: 'branch-free'; jobId: number; outcomes: number[] }
   | { type: 'aggregate'; jobId: number; agg: AggregateResult }
   | { type: 'aggregate-free'; jobId: number; agg: FreeAggregate }
   | { type: 'error'; jobId: number; message: string };
