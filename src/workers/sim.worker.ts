@@ -2,6 +2,8 @@ import { sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import { simulateBattle } from '../sim/engine';
 import type { FreeConfig } from '../sim/free/config';
 import { simulateFreeBattle } from '../sim/free/engine';
+import { DT } from '../sim/engine';
+import { sanitizeInterventions } from '../sim/free/interventions';
 import { aggregate, runChunk, unpackSummaries } from '../sim/montecarlo';
 import { buildDesign, designRow, type Design } from '../sim/sampling';
 import { sanitizeFreeConfig } from '../sim/free/config';
@@ -79,9 +81,22 @@ function handle(msg: WorkerRequest): void {
   if (msg.type === 'replay-free') {
     const config = sanitizeFreeConfig(msg.config);
     const run = Math.max(0, Math.min(config.runs - 1, Math.floor(msg.run)));
-    const { trace } = simulateFreeBattle(config, designRow(freeDesignFor(config), run), run, true);
+    // The log may come from a shared link too: sanitized here as well as in the engine.
+    const interventions = sanitizeInterventions(
+      msg.interventions,
+      Math.round(config.maxTime / DT),
+      config.mv,
+      config,
+    );
+    const row = designRow(freeDesignFor(config), run);
+    const t0 = performance.now();
+    const { trace } = simulateFreeBattle(config, row, run, true, { interventions });
+    const liveSimMs = performance.now() - t0;
     if (!trace) throw new Error('engine returned no trace');
-    ctx.postMessage({ type: 'replay-free', jobId: msg.jobId, trace }, freeTraceTransferList(trace));
+    ctx.postMessage(
+      { type: 'replay-free', jobId: msg.jobId, trace, liveSimMs },
+      freeTraceTransferList(trace),
+    );
     return;
   }
   if (msg.type === 'run' && isFreePayload(msg.config)) {
