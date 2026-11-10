@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { DICTIONARIES } from '../src/i18n/dictionaries';
 import { MAX_WORK, defaultConfig } from '../src/sim/config';
 import { aggregateFree, routShare } from '../src/sim/free/aggregate';
-import { freeWorkEstimate, sanitizeFreeConfig } from '../src/sim/free/config';
+import { FREE_MODEL_VERSION, freeWorkEstimate, sanitizeFreeConfig } from '../src/sim/free/config';
 import { runAllFree } from '../src/sim/free/montecarlo';
 import {
   FREE_PRESETS,
@@ -24,11 +24,18 @@ import { bannedIn } from './banned-words';
  * the measured fixture, the rout check and the banned-words check.
  *
  * Unlike the goldens, the fixture is expected to change with the model: a model change shows up
- * as a fixture diff that the owner reviews. Rewrite it with `UPDATE_PRESET_FIXTURE=1` only
- * together with such a change.
+ * as a fixture diff that the owner reviews. There is one fixture per model version (`mv`,
+ * ADR-0008): the presets keep reproducing under every model a link can name, and only the newest
+ * model, the one Simple mode runs, must pass the checks. `UPDATE_PRESET_FIXTURE=1` rewrites only
+ * the newest model's fixture, together with a change of that model; older ones are never
+ * rewritten (`preset-shares.json` is model 1, #169/#197 added `preset-shares-mv2.json`).
  */
 
-const FIXTURE = new URL('./fixtures/preset-shares.json', import.meta.url);
+const FIXTURES: Readonly<Record<number, URL>> = {
+  1: new URL('./fixtures/preset-shares.json', import.meta.url),
+  2: new URL('./fixtures/preset-shares-mv2.json', import.meta.url),
+};
+const FIXTURE = FIXTURES[FREE_MODEL_VERSION] as URL;
 /** The default seed, and fewer runs than the default 500 so the check stays fast (PRESETS.md). */
 const SEED = defaultConfig().seed;
 const RUNS = 200;
@@ -50,8 +57,8 @@ interface Fixture {
   presets: FixtureRow[];
 }
 
-function measure(p: FreePreset): FixtureRow {
-  const c = sanitizeFreeConfig({ ...presetConfig(p), seed: SEED, runs: RUNS });
+function measure(p: FreePreset, mv = FREE_MODEL_VERSION): FixtureRow {
+  const c = sanitizeFreeConfig({ ...presetConfig(p, undefined, mv), seed: SEED, runs: RUNS });
   const { summaries } = runAllFree(c);
   const agg = aggregateFree(c, summaries);
   const rout = routShare(summaries);
@@ -74,13 +81,15 @@ const toMeasure = (r: FixtureRow): PresetMeasure => ({
 });
 
 if (process.env['UPDATE_PRESET_FIXTURE']) {
-  const fixture: Fixture = { seed: SEED, runs: RUNS, presets: FREE_PRESETS.map(measure) };
+  const fixture: Fixture = { seed: SEED, runs: RUNS, presets: FREE_PRESETS.map((p) => measure(p)) };
   writeFileSync(FIXTURE, `${JSON.stringify(fixture, null, 1)}\n`);
 }
 
-const fixture = JSON.parse(readFileSync(FIXTURE, 'utf8')) as Fixture;
-const rowOf = (p: FreePreset): FixtureRow => {
-  const r = fixture.presets.find((x) => x.id === p.id);
+const fixtureOf = (mv: number): Fixture =>
+  JSON.parse(readFileSync(FIXTURES[mv] as URL, 'utf8')) as Fixture;
+const fixture = fixtureOf(FREE_MODEL_VERSION);
+const rowOf = (p: FreePreset, f: Fixture = fixture): FixtureRow => {
+  const r = f.presets.find((x) => x.id === p.id);
   if (!r) throw new Error(`no fixture row for ${p.id}`);
   return r;
 };
@@ -222,6 +231,29 @@ describe(`preset fixture (seed ${String(fixture.seed)}, ${String(fixture.runs)} 
     },
     120_000,
   );
+
+  it('keeps a fixture for every model version a link can name', () => {
+    expect(Object.keys(FIXTURES).map(Number)).toEqual(
+      Array.from({ length: FREE_MODEL_VERSION }, (_, i) => i + 1),
+    );
+  });
+
+  // Older models: every preset still reproduces its row under the model a link names. Presets
+  // added later than a model's fixture have no row there and are skipped.
+  for (let mv = 1; mv < FREE_MODEL_VERSION; mv++) {
+    const old = fixtureOf(mv);
+    it.each(
+      FREE_PRESETS.filter((p) => old.presets.some((r) => r.id === p.id)).map(
+        (p) => [p.id, p] as const,
+      ),
+    )(
+      `%s: model ${String(mv)} still reproduces its fixture`,
+      (_, p) => {
+        expect(measure(p, mv)).toEqual(rowOf(p, old));
+      },
+      120_000,
+    );
+  }
 
   it.each(FREE_PRESETS.map((p) => [p.id, p] as const))(
     '%s: carries the measured close tag, and passes the rout check or is on hold and still fails it',

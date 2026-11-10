@@ -1,7 +1,7 @@
 // Free-model calibration runs for docs/research/CALIBRATION.md (P8 of FREE-MATCHUPS.md §8,
 // RENEWAL-1.0.md §3.2 and §11 M2).
 //
-//   node scripts/calibration/run.mjs [--quick] [--out <file.json>] [--only <section>]
+//   node scripts/calibration/run.mjs [--quick] [--out <file.json>] [--only <section>] [--mv <n>]
 //
 // Dev-only. It loads the shipped engines from src/ through Vite's SSR module loader (Vite is
 // already a dev dependency), so it needs no other package and adds nothing to the site bundle.
@@ -9,7 +9,9 @@
 // same numbers. The default writes docs/research/calibration-results.json, and `--only <section>`
 // alone writes docs/research/calibration-<section>.json instead, so one section never replaces
 // the whole committed file; `--quick` cuts every run count to a tenth for a smoke test and writes
-// nothing unless --out is given.
+// nothing unless --out is given. `--mv <n>` runs free model version n and classic model
+// version n (default 1, the model every committed file without a suffix was measured with) and
+// adds `-mv<n>` to the default file names, so a new model never overwrites an older report.
 //
 // Sections:
 //   trex-tiger    T. rex vs tiger on both engines, same counts, seed and run count
@@ -31,6 +33,8 @@
 //                 the reference opponent and the elephant as the second
 //   triceratops   the same checks for Triceratops (#189), with T. rex (preset #13) as the
 //                 reference opponent and Spinosaurus as the second
+//   flight        the flight traits of model 2 (#169): every species in a matchup where they act,
+//                 and a one-at-a-time sweep of each flight trait over its sensitivity range
 
 import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -52,13 +56,15 @@ const option = (name) => {
 };
 const QUICK = flag('--quick');
 const ONLY = option('--only');
+const MV = Number(option('--mv') ?? 1);
+const SUFFIX = MV === 1 ? '' : `-mv${String(MV)}`;
 const OUT =
   option('--out') ??
   (QUICK
     ? undefined
     : ONLY
-      ? path.join(ROOT, 'docs', 'research', `calibration-${ONLY}.json`)
-      : DEFAULT_OUT);
+      ? path.join(ROOT, 'docs', 'research', `calibration-${ONLY}${SUFFIX}.json`)
+      : DEFAULT_OUT.replace(/\.json$/, `${SUFFIX}.json`));
 const runsOf = (n) => (QUICK ? Math.max(20, Math.round(n / 10)) : n);
 
 const server = await createServer({
@@ -179,6 +185,7 @@ function record(engine, n, runs, counts) {
 
 function runClassic({ a, b, na, nb, runs, morale = true }, tactic = 'flank') {
   const c = classicConfig.sanitizeConfig({
+    mv: MV,
     heavySpecies: a,
     packSpecies: b,
     heavyCount: na,
@@ -201,6 +208,7 @@ function runClassic({ a, b, na, nb, runs, morale = true }, tactic = 'flank') {
 
 function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED, paramsA, buffA }) {
   const c = freeConfig.sanitizeFreeConfig({
+    mv: MV,
     sides: [
       {
         species: a,
@@ -236,7 +244,7 @@ function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED, para
 }
 
 const label = (m) =>
-  `${m.a} ${m.na} v ${m.b} ${m.nb}${m.morale === false ? ' (morale off)' : ''}${m.globals ? ' (globals)' : ''}${m.paramsA ? ` (${Object.keys(m.paramsA).join(', ')} pinned)` : ''}${m.buffA ? ` (${Object.keys(m.buffA).join(', ')} pinned)` : ''}`;
+  `${m.a} ${m.na} v ${m.b} ${m.nb}${m.morale === false ? ' (morale off)' : ''}${m.globals ? ' (globals)' : ''}${m.paramsA ? ` (${Object.keys(m.paramsA).join(', ')} pinned)` : ''}${m.buffA ? ` (${Object.keys(m.buffA).join(', ')} pinned)` : ''}${m.flight ? ` (${m.flight})` : ''}`;
 
 function log(line) {
   stdout.write(`${line}\n`);
@@ -496,7 +504,7 @@ sections['polar-bear'] = () => {
   ].map(([b, nb]) => one({ a: PB, b, na: 1, nb, runs: runsOf(1000) }));
   // One-at-a-time sensitivity of every S trait: polar bear 1 v brown bear 1 with the trait pinned
   // at its preset min, then at its max, every other input at its preset.
-  const preset = speciesMod.FREE_SPECIES[PB].traits;
+  const preset = speciesMod.freeSpeciesAt(PB, MV).traits;
   const sTraits = Object.entries(preset).filter(([, t]) => t.evidence === 'S');
   const base = one({ a: PB, b: 'brownBear', na: 1, nb: 1, runs: runsOf(1000) });
   const sensitivity = sTraits.map(([k, t]) => {
@@ -579,7 +587,7 @@ sections['hippo'] = () => {
   ].map(([b, nb]) => one({ a: H, b, na: 1, nb, runs: runsOf(1000) }));
   // One-at-a-time sensitivity of every S trait: hippo 1 v elephant 1 with the trait pinned at its
   // preset min, then at its max, every other input at its preset.
-  const preset = speciesMod.FREE_SPECIES[H].traits;
+  const preset = speciesMod.freeSpeciesAt(H, MV).traits;
   const sTraits = Object.entries(preset).filter(([, t]) => t.evidence === 'S');
   const base = one({ a: H, b: 'elephant', na: 1, nb: 1, runs: runsOf(1000) });
   const sensitivity = sTraits.map(([k, t]) => {
@@ -667,7 +675,7 @@ sections['raptor'] = () => {
   ].map(([b, nb]) => one({ a: R, b, na: 1, nb, runs: runsOf(1000) }));
   // One-at-a-time sensitivity of every S trait, pack-buff traits included: preset #18 with the
   // trait pinned at its preset min, then at its max, every other input at its preset.
-  const sp = speciesMod.FREE_SPECIES[R];
+  const sp = speciesMod.freeSpeciesAt(R, MV);
   const pinned = (group, rows) =>
     Object.entries(rows)
       .filter(([, t]) => t.evidence === 'S')
@@ -758,7 +766,7 @@ sections['white-rhino'] = () => {
   ].map(([b, nb]) => one({ a: W, b, na: 1, nb, runs: runsOf(1000) }));
   // One-at-a-time sensitivity of every S trait against one opponent: the trait pinned at its
   // preset min, then at its max, every other input at its preset.
-  const preset = speciesMod.FREE_SPECIES[W].traits;
+  const preset = speciesMod.freeSpeciesAt(W, MV).traits;
   const sTraits = Object.entries(preset).filter(([, t]) => t.evidence === 'S');
   const sweepAgainst = (b) => {
     const m = { a: W, b, na: 1, nb: 1, runs: runsOf(1000) };
@@ -845,7 +853,7 @@ sections['spinosaurus'] = () => {
   // One-at-a-time sensitivity of every S trait against one opponent: the trait pinned at its
   // preset min, then at its max, every other input at its preset. The L rows (mass, bite) are
   // swept too, over their literature range, since the mass estimates disagree.
-  const preset = speciesMod.FREE_SPECIES[S].traits;
+  const preset = speciesMod.freeSpeciesAt(S, MV).traits;
   const swept = Object.entries(preset).filter(
     ([k, t]) => t.evidence === 'S' || k === 'mass' || k === 'strikeForce',
   );
@@ -932,7 +940,7 @@ sections['triceratops'] = () => {
   ].map(([b, nb]) => one({ a: S, b, na: 1, nb, runs: runsOf(1000) }));
   // One-at-a-time sensitivity of every S trait against one opponent: the trait pinned at its
   // preset min, then at its max, every other input at its preset. The L mass row is swept too.
-  const preset = speciesMod.FREE_SPECIES[S].traits;
+  const preset = speciesMod.freeSpeciesAt(S, MV).traits;
   const swept = Object.entries(preset).filter(([k, t]) => t.evidence === 'S' || k === 'mass');
   const sweepAgainst = (b) => {
     const m = { a: S, b, na: 1, nb: 1, runs: runsOf(1000) };
@@ -946,6 +954,62 @@ sections['triceratops'] = () => {
   const sensitivity = sweepAgainst('trex');
   const sensitivitySpinosaurus = sweepAgainst('spinosaurus');
   return { mirrors, sweeps, pairs, sanity, flight, sensitivity, sensitivitySpinosaurus };
+};
+
+// Model 2 flight traits (#169): each species as side A in a matchup where its flight acts, then
+// each flight trait pinned at its sensitivity range's min and max (the engine reads the mode, so
+// the sweep sets the mode of the cached model 2 entry and restores it).
+sections['flight'] = () => {
+  if (MV < 2) throw new Error('the flight section needs --mv 2 or later');
+  const one = (m) => {
+    const free = runFree(m);
+    logRow(label(m), free);
+    return { match: m, free };
+  };
+  const REF = [
+    ['tiger', 10, 'trex', 1],
+    ['lion', 10, 'elephant', 1],
+    ['wolf', 12, 'mammoth', 1],
+    ['hyena', 10, 'buffalo', 1],
+    ['homoErectus', 30, 'trex', 1],
+    ['raptor', 12, 'trex', 1],
+    ['polarBear', 1, 'trex', 1],
+    ['brownBear', 1, 'trex', 1],
+    ['buffalo', 1, 'elephant', 1],
+    ['elephant', 1, 'trex', 1],
+    ['mammoth', 1, 'trex', 1],
+    ['hippo', 1, 'elephant', 1],
+    ['whiteRhino', 1, 'elephant', 1],
+    ['trex', 3, 'triceratops', 3],
+    ['spinosaurus', 1, 'trex', 1],
+    ['triceratops', 1, 'trex', 1],
+  ];
+  return REF.map(([a, na, b, nb]) => {
+    const m = { a, b, na, nb, runs: runsOf(500) };
+    const base = one(m);
+    const f = speciesMod.freeSpeciesAt(a, MV).flight;
+    const traits = Object.entries(f)
+      .filter(([, t]) => t.evidence !== null)
+      .map(([k, t]) => {
+        const mode = t.range.mode;
+        const at = (v) => {
+          t.range.mode = v;
+          try {
+            return one({ ...m, flight: `${k}=${String(v)}` });
+          } finally {
+            t.range.mode = mode;
+          }
+        };
+        return {
+          trait: k,
+          range: { ...t.range },
+          evidence: t.evidence,
+          low: at(t.range.min),
+          high: at(t.range.max),
+        };
+      });
+    return { species: a, base, traits };
+  });
 };
 
 // --- run ---
@@ -962,6 +1026,7 @@ const result = {
   commit: head,
   node: version,
   seed: SEED,
+  mv: MV,
   quick: QUICK,
   defaults: 'arena 600 m, cap 1,200 s, LHS, CV 0.08, morale on, classic tactic flank',
   sections: {},

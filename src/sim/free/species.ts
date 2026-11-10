@@ -678,7 +678,7 @@ export const SPECIES_REVISIONS: Readonly<
 function revise(s: FreeSpecies, r: SpeciesRevision | undefined): FreeSpecies {
   if (!r) return s;
   const traits = { ...s.traits };
-  for (const [k, v] of Object.entries(r.traits ?? {})) traits[k as TraitId] = row(v as Row);
+  for (const [k, v] of Object.entries(r.traits ?? {})) traits[k as TraitId] = row(v);
   const flightRows = r.flight;
   return {
     ...s,

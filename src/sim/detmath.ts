@@ -74,85 +74,50 @@ function kernelCos(x: number, y: number): number {
 const INV_PIO2 = 6.36619772367581382433e-1;
 const PIO2_1 = 1.57079632673412561417;
 const PIO2_2 = 6.0771005063039659766e-11;
-const PIO2_2T = 2.02226624879595063154e-21;
 const PIO2_3 = 2.0222662487111664558e-21;
 const PIO2_3T = 8.47842766036889956997e-32;
 const PIO4 = 7.85398163397448278999e-1;
 
-/** Quadrant and reduced argument (head, tail) of the last `reduce` call. */
-let quadrant = 0;
-let red0 = 0;
-let red1 = 0;
-
 /**
- * x = n·π/2 + (red0 + red1) with |red0| ≲ π/4 (Cody–Waite with a three-part π/2, as fdlibm's
- * medium-size path, applied at every size). Accurate while |x| is below about 2^19·π/2; beyond
- * that it is still deterministic, only less accurate. The engines' angles stay below 2π.
+ * sin(ax) (`cos` false) or cos(ax) (`cos` true) for finite ax > π/4: ax = n·π/2 + (y0 + y1) with
+ * |y0| ≲ π/4 (Cody–Waite with a three-part π/2, as fdlibm's medium-size path, applied at every
+ * size), then the kernel of quadrant n. Accurate while ax is below about 2^19·π/2; beyond that it
+ * is still deterministic, only less accurate. The engines' angles stay below 2π.
  */
-function reduce(x: number): void {
-  const ax = x < 0 ? -x : x;
+function reduced(ax: number, cos: boolean): number {
   const fn = Math.floor(ax * INV_PIO2 + 0.5);
-  // fdlibm's first tail `fn * PIO2_1T` is replaced by the finer PIO2_2 + PIO2_2T at once.
+  // fdlibm's three steps, each dropping the previous tail for the finer next part of π/2.
   let t = ax - fn * PIO2_1;
   let w = fn * PIO2_2;
   let r = t - w;
-  w = fn * PIO2_2T - (t - r - w);
   t = r;
   w = fn * PIO2_3;
   r = t - w;
   w = fn * PIO2_3T - (t - r - w);
   const y0 = r - w;
   const y1 = r - y0 - w;
-  const n = fn % 4;
-  if (x < 0) {
-    red0 = -y0;
-    red1 = -y1;
-    quadrant = (4 - n) % 4;
-  } else {
-    red0 = y0;
-    red1 = y1;
-    quadrant = n;
-  }
+  // `fn & 3` is fn mod 4 for every integer fn (ToInt32 wraps modulo 2^32).
+  const q = ((fn & 3) + (cos ? 1 : 0)) & 3;
+  if (q === 0) return kernelSin(y0, y1);
+  if (q === 1) return kernelCos(y0, y1);
+  if (q === 2) return -kernelSin(y0, y1);
+  return -kernelCos(y0, y1);
 }
 
 /** Deterministic sine. NaN and ±Infinity give NaN. */
 export function dsin(x: number): number {
-  if (x !== x || x === Infinity || x === -Infinity) return NaN;
-  if (x <= PIO4 && x >= -PIO4) {
-    if (x < 7.450580596923828e-9 && x > -7.450580596923828e-9) return x;
-    return kernelSin(x, 0);
-  }
-  reduce(x);
-  switch (quadrant) {
-    case 0:
-      return kernelSin(red0, red1);
-    case 1:
-      return kernelCos(red0, red1);
-    case 2:
-      return -kernelSin(red0, red1);
-    default:
-      return -kernelCos(red0, red1);
-  }
+  const ax = x < 0 ? -x : x;
+  if (ax <= PIO4) return ax < 7.450580596923828e-9 ? x : kernelSin(x, 0);
+  if (!(ax < Infinity)) return NaN;
+  return x < 0 ? -reduced(ax, false) : reduced(ax, false);
 }
 
 /** Deterministic cosine. NaN and ±Infinity give NaN. */
 export function dcos(x: number): number {
-  if (x !== x || x === Infinity || x === -Infinity) return NaN;
-  if (x <= PIO4 && x >= -PIO4) {
-    if (x < 7.450580596923828e-9 && x > -7.450580596923828e-9) return 1;
-    return kernelCos(x, 0);
-  }
-  reduce(x);
-  switch (quadrant) {
-    case 0:
-      return kernelCos(red0, red1);
-    case 1:
-      return -kernelSin(red0, red1);
-    case 2:
-      return -kernelCos(red0, red1);
-    default:
-      return kernelSin(red0, red1);
-  }
+  const ax = x < 0 ? -x : x;
+  if (ax <= PIO4) return ax < 7.450580596923828e-9 ? 1 : kernelCos(ax, 0);
+  if (!(ax < Infinity)) return NaN;
+  return reduced(ax, true);
 }
 
 // --- atan and atan2 ---
@@ -207,14 +172,26 @@ function atanPos(x: number): number {
   return (ATAN_HI[id] as number) - (x * (s1 + s2) - (ATAN_LO[id] as number) - x);
 }
 
-const PI = 3.141592653589793116;
-const PI_LO = 1.2246467991473531772e-16;
-const PI_O_2 = 1.570796326794896558;
-const PI_O_4 = 7.85398163397448279e-1;
+const PI = Math.PI;
+const PI_LO = 1.2246467991473532e-16;
+const PI_O_2 = 1.5707963267948966;
+const PI_O_4 = 0.7853981633974483;
 const TWO60 = 1.152921504606847e18;
 
 /** Deterministic two-argument arctangent with the quadrant rules of `Math.atan2`. */
 export function datan2(y: number, x: number): number {
+  // Fast path: both finite and non-zero (every call the engines make with distinct points).
+  if (y !== 0 && x !== 0 && y - y === 0 && x - x === 0) {
+    const ay = y < 0 ? -y : y;
+    const ax = x < 0 ? -x : x;
+    const q = ay / ax;
+    let z: number;
+    if (q > TWO60) z = PI_O_2 + 0.5 * PI_LO;
+    else if (x < 0 && q < 1 / TWO60) z = 0;
+    else z = atanPos(q);
+    if (x > 0) return y > 0 ? z : -z;
+    return y > 0 ? PI - (z - PI_LO) : z - PI_LO - PI;
+  }
   if (x !== x || y !== y) return NaN;
   // m: bit 1 set when x is negative (or −0), bit 0 when y is.
   const yNeg = y < 0 || (y === 0 && 1 / y < 0);
@@ -289,7 +266,7 @@ export function dlog(x: number): number {
   const dk = k;
   if ((0x000fffff & (2 + hx)) < 3) {
     if (f === 0) return k === 0 ? 0 : dk * LN2_HI + dk * LN2_LO;
-    const R = f * f * (0.5 - 0.33333333333333333 * f);
+    const R = f * f * (0.5 - 0.3333333333333333 * f);
     return k === 0 ? f - R : dk * LN2_HI - (R - dk * LN2_LO - f);
   }
   const s = f / (2 + f);

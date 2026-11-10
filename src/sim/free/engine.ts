@@ -922,8 +922,8 @@ export function simulateFreeBattle(
   for (; step < maxSteps; step++) {
     if (step === branchTick) {
       const seed = deriveSeed(config.seed, run, (br as { salt: number }).salt);
-      rngs[0] = new Rng(deriveSeed(seed, 0, SALT_A));
-      rngs[1] = new Rng(deriveSeed(seed, 0, SALT_B));
+      rngs[0] = new Rng(deriveSeed(seed, 0, SALT_A), det);
+      rngs[1] = new Rng(deriveSeed(seed, 0, SALT_B), det);
     }
     if (step === ivDue) ivDue = (ivApply as (step: number) => number)(step);
     // Spatial index and per-target counts from the snapshot.

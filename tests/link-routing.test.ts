@@ -274,7 +274,8 @@ describe('old links reaching the lobby', () => {
         // A bare `#chk=` is a link of the model 1 defaults (#197); other fragments without a
         // payload open the current defaults.
         expect(route.config).toEqual(
-          configFromHash(hash) ?? (f.tail === DEFAULT_REPRO ? CLASSIC_V1_DEFAULTS : defaultConfig()),
+          configFromHash(hash) ??
+            (f.tail === DEFAULT_REPRO ? CLASSIC_V1_DEFAULTS : defaultConfig()),
         );
       } else if (route.mode === 'free') {
         expect(route.newerModel).toBe(f.newerModel ?? false);
@@ -623,7 +624,11 @@ describe('the classic address at the defaults (#158 review)', () => {
     const current = classicHashFromConfig(defaultConfig());
     expect(current).toBe(hashFromConfig(defaultConfig()));
     expect(current).toBe('#s=eyJ2IjoyLCJtdiI6Mn0');
-    expect(routeLink(current, '')).toEqual({ mode: 'classic', config: defaultConfig(), check: null });
+    expect(routeLink(current, '')).toEqual({
+      mode: 'classic',
+      config: defaultConfig(),
+      check: null,
+    });
   });
 
   it('writes exactly the old hash for every other config', () => {

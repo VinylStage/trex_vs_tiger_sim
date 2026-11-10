@@ -370,8 +370,7 @@ export function simulateBattle(
     const dy = py - (ry[biter] as number);
     const d = len(dx, dy);
     if (d > (rReach[biter] as number) + packRadius) return;
-    if (Math.abs(wrap(atan2(dy, dx) - (rh[biter] as number))) > (rArc[biter] as number))
-      return;
+    if (Math.abs(wrap(atan2(dy, dx) - (rh[biter] as number))) > (rArc[biter] as number)) return;
     const score = s === PackState.Latched && tHost[j] === biter ? d - 1000 : d;
     if (score < bestScore) {
       bestScore = score;
