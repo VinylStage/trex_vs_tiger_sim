@@ -32,6 +32,7 @@ import {
   type BuffTraitId,
   type TraitId,
 } from './traits.ts';
+import { FREE_MODEL_VERSION, isFreeModelVersion } from './version.ts';
 
 /**
  * Free-model scenario (docs/design/FREE-MATCHUPS.md §2). Two symmetric sides, any species on
@@ -120,16 +121,7 @@ export const GLOBALS: readonly GlobalDef[] = [
   },
 ];
 
-/**
- * Newest model version (`mv`, ADR-0008) of the free engine in this build. A change that alters
- * any free result raises it, and every version from 1 up to it stays runnable, so a link
- * reproduces under the version it names. Wherever `mv` is absent it means 1.
- */
-export const FREE_MODEL_VERSION = 1;
-
-/** Whether `v` is a model version this build runs: an integer from 1 to FREE_MODEL_VERSION. */
-export const isFreeModelVersion = (v: unknown): v is number =>
-  typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= FREE_MODEL_VERSION;
+export { FREE_MODEL_VERSION, isFreeModelVersion } from './version.ts';
 
 export interface FreeConfig {
   mode: 'free';
@@ -165,9 +157,16 @@ export const DEFAULT_FREE_SPECIES: readonly [FreeSpeciesId, FreeSpeciesId] = ['t
 
 const isLatchTrait = (k: TraitId): boolean => (LATCH_TRAIT_IDS as readonly string[]).includes(k);
 
-/** Preset side for a species: trait and buff presets, inactive traits neutral. */
-export function defaultSide(species: FreeSpeciesId, count = 1): SideConfig {
-  return { species, count, params: traitRanges(species), buff: buffRanges(species) };
+/**
+ * Preset side for a species under model version `mv` (the newest by default): trait and buff
+ * presets, inactive traits neutral.
+ */
+export function defaultSide(
+  species: FreeSpeciesId,
+  count = 1,
+  mv: number = FREE_MODEL_VERSION,
+): SideConfig {
+  return { species, count, params: traitRanges(species, mv), buff: buffRanges(species, mv) };
 }
 
 export const defaultPackBuff = (): PackBuffSwitches =>
@@ -234,11 +233,11 @@ const isObject = (v: unknown): v is Record<string, unknown> =>
 const record = (v: unknown): Record<string, unknown> => (isObject(v) ? v : {});
 
 /** One side from untrusted input; `count` is clamped per side here and for the total later. */
-function sanitizeSide(input: unknown, fallbackSpecies: FreeSpeciesId): SideConfig {
+function sanitizeSide(input: unknown, fallbackSpecies: FreeSpeciesId, mv: number): SideConfig {
   const o = record(input);
   const species = pick(o['species'], FREE_SPECIES_IDS, fallbackSpecies);
   const s = FREE_SPECIES[species];
-  const side = defaultSide(species);
+  const side = defaultSide(species, 1, mv);
   side.count = num(o['count'], 1, FREE_LIMITS.sideCount, true);
   const rawParams = record(o['params']);
   for (const k of TRAIT_IDS) {
@@ -271,9 +270,12 @@ function sanitizeSide(input: unknown, fallbackSpecies: FreeSpeciesId): SideConfi
 export function sanitizeFreeConfig(input: unknown): FreeConfig {
   const d = defaultFreeConfig();
   const o = record(input);
+  // Absent means 1 (ADR-0008), so inputs written before `mv` existed keep running model 1. The
+  // version comes first: it decides the species presets the sides start from.
+  const mv = isFreeModelVersion(o['mv']) ? o['mv'] : 1;
   const rawSides = Array.isArray(o['sides']) ? (o['sides'] as unknown[]) : [];
-  const a = sanitizeSide(rawSides[0], DEFAULT_FREE_SPECIES[0]);
-  const b = sanitizeSide(rawSides[1], DEFAULT_FREE_SPECIES[1]);
+  const a = sanitizeSide(rawSides[0], DEFAULT_FREE_SPECIES[0], mv);
+  const b = sanitizeSide(rawSides[1], DEFAULT_FREE_SPECIES[1], mv);
   // Total cap: side B gives way, so side A's count is always what was asked for.
   b.count = clamp(b.count, FREE_LIMITS.sideCount[0], FREE_LIMITS.totalCount - a.count);
 
@@ -299,8 +301,7 @@ export function sanitizeFreeConfig(input: unknown): FreeConfig {
   );
   return {
     mode: 'free',
-    // Absent means 1 (ADR-0008), so inputs written before `mv` existed keep running model 1.
-    mv: isFreeModelVersion(o['mv']) ? o['mv'] : 1,
+    mv,
     sides,
     packBuff,
     globals,

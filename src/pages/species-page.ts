@@ -2,7 +2,7 @@ import { SPECIES_GUIDE } from '../content/species-guide.ts';
 import { DICTIONARIES } from '../i18n/dictionaries.ts';
 import type { Lang } from '../i18n/lang.ts';
 import { escapeHtml } from '../seo/html.ts';
-import { sanitizeFreeConfig } from '../sim/free/config.ts';
+import { FREE_MODEL_VERSION, sanitizeFreeConfig } from '../sim/free/config.ts';
 import { FREE_PRESETS, type FreePreset } from '../sim/free/presets.ts';
 import { FREE_SPECIES, FREE_SPECIES_IDS, type FreeSpeciesId } from '../sim/free/species.ts';
 import { HEAVY_SPECIES_IDS, PACK_SPECIES_IDS, erasNeverMet, type Era } from '../sim/species.ts';
@@ -76,6 +76,7 @@ export function tryOpponent(id: FreeSpeciesId): FreeSpeciesId {
  */
 export function tryItHref(id: FreeSpeciesId, lang: Lang): string {
   const base = sanitizeFreeConfig({
+    mv: FREE_MODEL_VERSION,
     sides: [
       { species: id, count: 1 },
       { species: tryOpponent(id), count: 1 },

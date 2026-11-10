@@ -15,6 +15,7 @@
 > - 랩터 무리(#188)는 기존 등록부에 없는 첫 사회성 종으로, 기본 종은 유타랍토르입니다(§4.13). 몸무게는 문헌 값(L), 무는 힘과 매달렸을 때의 초당 피해는 데이노니쿠스 연구에서 유도한 값(D), 속도와 행동 값은 추정(S)입니다. 함께 사냥했는지는 논쟁 중이라 무리 버프 값은 협동이 전혀 없는 경우(0)부터 사자 무리의 기본값까지를 범위로 둔 추정입니다. 추천 대결 "랩터 무리 vs 티라노"(12 대 1)가 이탈 점검을 예외 없이 통과해 쉬운 모드에 나옵니다. 벨로키랍토르와 데이노니쿠스 변형은 나중에 다룹니다.
 > - 흰코뿔소(#187)도 자유 대결 전용입니다(§4.14). 몸무게는 문헌 값(L), 최고 속도는 측정이 없어(U) 범위를 단 추정값(S)으로 바꿨고, 뿔은 해부 구조로만 다루며 뿔로 치는 힘은 추정(S), 몸 반경은 몸무게에서 유도했습니다(D). 추천 대결 "코끼리 vs 코뿔소"와 "하마 vs 코뿔소"가 쉬운 모드에 나옵니다.
 > - 스피노사우루스(#185)도 자유 대결 전용이며, 물이 없는 "육상 대결"로만 나옵니다(§4.15). 몸무게와 무는 힘은 문헌 값(L)이고, 네 발 / 두 발 자세와 물속 생활 정도는 논쟁 중이라 속도 · 선회 · 행동 값은 범위를 넓게 잡은 추정값(S)입니다. 대결 화면과 종 도감에 "반수생, 육상 대결" 표시가 붙고, 추천 대결 "티라노 vs 스피노 (육상 대결)"가 쉬운 모드에 나옵니다.
+> - 이탈 특성(#169, §11.6): 모델 버전 2부터 모든 종이 세 가지 이탈 특성을 갖습니다. 상대가 자기 몸무게의 몇 배 이상이면 "압도당했다"고 보는지(`threatRatio`), 그런 상대의 공격 범위 안에 얼마나 머물면 물러나는지(`threatTime`), 혼자 사는 종이 가까운 동료가 쓰러질 때 잃는 사기(`soloShock`)입니다. 먹이 크기 선호 연구에서 유도한 값(호랑이 · 사자 · 하이에나의 기준 배율, D) 말고는 모두 측정이 없는 추정(S)이고, 범위마다 민감도를 쟀습니다. 북극곰의 행동 값(질주 지속, 회복, 사기)도 불곰 값 대신 북극곰 연구에 맞춘 값으로 바꿨습니다. 모델 1 링크는 예전 값 그대로입니다.
 > - 트리케라톱스(#189)도 자유 대결 전용입니다(§4.16). 몸무게는 문헌 값의 범위(L), 뛰는 속도와 뿔로 치는 힘은 측정할 수 없어 범위를 단 추정값(S)이고, 뿔의 위력은 물소 · 코뿔소와 같은 뾰족한 뿔 값을 씁니다. 무리 생활의 증거가 어린 개체 화석 한 곳 정도라 혼자 다니는 종으로 다룹니다. 티라노와 같은 시대 · 같은 곳에 살았고 티라노의 이빨 자국이 아문 뿔 화석이 있어, 추천 대결 "티라노 vs 트리케라톱스"는 "기록 있음" 태그를 달고 쉬운 모드에 나옵니다.
 
 Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#species`, `/en/parameters/#species`) repeat the presets and are checked against the registry by `tests/pages.test.ts`. The species guide (`/species/`, `/en/species/`, #162) is generated from the registries at build time and checked by `tests/species-page.test.ts` ([PAGES.md](PAGES.md#species-guide)); adding a species to `FREE_SPECIES` adds its section there, and the test then asks for its entry in `src/content/species-guide.ts` (scientific name and a short note, both languages). The research behind this document, including the phase-2 and deferred species and the change plan, is in [research/SPECIES.md](research/SPECIES.md).
@@ -32,6 +33,7 @@ Source of truth: `src/sim/species.ts`. The parameter pages (`/parameters/#specie
 9. [Content rules](#9-content-rules)
 10. [References](#10-references)
 11. [Free-model traits (#50)](#11-free-model-traits-50)
+    - [11.6 Flight traits (model 2, #169)](#116-flight-traits-model-2-169)
 
 ## 1. Roles and parameters
 
@@ -336,7 +338,8 @@ Unchanged from MODEL.md §5.2. One additional documented interaction is worth a 
 The first species without a legacy entry: the classic engine does not offer it, and its free entry is built from its own source sheet with `defineFreeSpecies` (§11.5). The full sheet, with the free trait names, the sensitivity range of every **S** value and its measured swing, is in [research/SPECIES.md §5.5](research/SPECIES.md#55-polar-bear-heavy-phase-2-shipped-in-the-free-model-184); the calibration is in [research/CALIBRATION.md §13](research/CALIBRATION.md#13-polar-bear-184).
 
 - **Evidence.** Adult males 300–800 kg, females 150–300 kg; up to about 40 km/h (an estimate); usual travel 5.5 km/h [WP: Polar bear]. It hunts young walruses; adults are too formidable [WP: Polar bear]. No bite force is published in the table used for the BFQ formula (§3.2), so strike force is **S**.
-- **Model.** Mechanically like the brown bear: solitary (no pack buff), strikes in a frontal cone and does not latch. Every behaviour row and both constants (`hide` 0.5, `intimidation` 1) are the brown bear's. Only mass, speed, strike force, reach and body radius differ.
+- **Model.** Mechanically like the brown bear: solitary (no pack buff), strikes in a frontal cone and does not latch. Under model 1 every behaviour row and both constants (`hide` 0.5, `intimidation` 1) are the brown bear's; only mass, speed, strike force, reach and body radius differ.
+- **Model 2 (#169).** Researched polar bear values replace three of the brown bear's behaviour rows: `sprintEndurance` 10 / 25 / 60 s and `recoveryTime` 60 / 120 / 300 s (running is costly and heats it [Hurst 1982a, b]), `morale` 0.4 / 0.6 / 0.8 (it yields to grizzlies [Miller 2015]), all **S**; and it gets flight traits (§11.6). The other rows and both constants were reviewed and kept ([research/SPECIES.md §14.5](research/SPECIES.md#145-polar-bear-behaviour-rows-model-2)). The table below is model 1.
 - **Glyph.** Body radius is the brown bear's scaled by (mass ratio)^(1/3) (**D**), and the replay sizes the glyph from it: a dot of 0.95 m at the mode, larger than the brown bear's 0.75 m. Runs whose sampled radius reaches 1 m draw triangles, as the buffalo's top value does.
 - **Content check.** `adSafe`: yes. Era: extant. Overlap: with every living species "no recorded encounter"; with the brown bear the ranges meet in the Arctic and wild hybrids are recorded [WP: Polar bear], which is the preset's "Why?", not a recorded fight; with _T. rex_ "never met"; with the woolly mammoth and _H. erectus_ "no recorded overlap". No what-if tag. Korean counter 마리; text-share symbol 🐻‍❄️.
 - **Preset.** `polar-bear-brown-bear`, 1 v 1 (design §6 #17), ready in Simple mode through the one-on-one rout override ([PRESETS.md](PRESETS.md#overrides-and-holds)).
@@ -372,7 +375,7 @@ Built from its own source sheet with `defineFreeSpecies` (§11.5), like the pola
 - **Glyph.** Body radius is the buffalo's scaled by (mass ratio)^(1/3) (**D**): 1 / 1.15 / 1.55 m. Every value is at least 1 m, so the replay always draws the hippo as a triangle, 3.2 m long at the mode.
 - **Content check.** `adSafe`: yes. Era: extant. Overlap: lions and spotted hyenas prey on young hippos, and lion prides occasionally on adults [WP: Hippopotamus], which free mode has no badge for; with every other living species "no recorded encounter"; with _T. rex_ "never met"; with the woolly mammoth and _H. erectus_ "no recorded overlap". No what-if tag. Korean counter 마리; text-share symbol 🦛.
 - **Presets.** `elephant-hippo`, 1 v 1 (design §6 #16), ready in Simple mode through the one-on-one rout override ([PRESETS.md](PRESETS.md#overrides-and-holds)). #15 (hippo vs rhino) joined with the white rhinoceros (#187, §4.14).
-- **Flight (#169).** Tuned under the current flight model. The per-species flight traits decided on #169 (with #197, under a new model version) will re-check this species.
+- **Flight (#169).** Tuned under model 1. Model 2 gives it flight traits (§11.6) and re-checks it in [research/CALIBRATION.md §19](research/CALIBRATION.md#19-flight-traits-and-model-2-169-197).
 
 | Free trait        | Unit  |   min |  mode |   max | Basis | Source / rationale                                                  |
 | ----------------- | ----- | ----: | ----: | ----: | :---: | ------------------------------------------------------------------- |
@@ -408,7 +411,7 @@ The first social species built from its own source sheet with `defineFreeSpecies
 - **Glyph.** Body radius is the lion's 0.8 m scaled by (mass ÷ 180 kg)^(1/3) (**D**): 0.95 / 1.05 / 1.1 m. At 1 m and above the replay draws triangles, so most runs draw the raptors as triangles.
 - **Content check.** `adSafe`: yes. Era: 139–125 Ma, so it shares no time with any other species in the roster and carries the what-if tag on the species guide, like _T. rex_. Overlap: with _T. rex_ "never met" (about 70 million years apart); with every living species and the woolly mammoth "never met". Korean counter 마리; no text-share symbol yet, so it falls back to 🔷 / 🔶 (an owner decision, as 🦖 is _T. rex_'s).
 - **Presets.** `raptors-trex`, 12 v 1 (design §6 #18), ready in Simple mode with no override ([PRESETS.md](PRESETS.md#fixture)).
-- **Flight (#169).** Tuned under the current flight model. The per-species flight traits decided on #169 (with #197, under a new model version) will re-check this species.
+- **Flight (#169).** Tuned under model 1. Model 2 gives it flight traits (§11.6) and re-checks it in [research/CALIBRATION.md §19](research/CALIBRATION.md#19-flight-traits-and-model-2-169-197).
 
 | Free trait        | Unit  |   min |  mode |  max | Basis | Source / rationale                                                         |
 | ----------------- | ----- | ----: | ----: | ---: | :---: | -------------------------------------------------------------------------- |
@@ -444,7 +447,7 @@ Built from its own source sheet with `defineFreeSpecies` (§11.5), like the hipp
 - **Glyph.** Body radius is the buffalo's scaled by (mass ratio)^(1/3) (**D**): 1.1 / 1.25 / 1.6 m, so the replay always draws the rhino as a triangle.
 - **Content check.** `adSafe`: yes; no shipped text mentions the horn trade. Era: extant. Overlap: documented with the elephant (young orphan bulls killed up to 49 white rhinos at Pilanesberg [Slotow & van Dyk 2001], which stopped once older bulls were introduced [Slotow 2000]) and with lions and spotted hyenas (calves, rarely adults [WP; ADW]); free mode has no badge for either. With the hippo and every other living species "no recorded encounter"; with _T. rex_ and _Utahraptor_ "never met"; with the woolly mammoth and _H. erectus_ "no recorded overlap". No what-if tag. Korean counter 마리; text-share symbol 🦏.
 - **Presets.** `elephant-rhino`, 1 v 1 (design §6 #14), and `hippo-rhino`, 1 v 1 (#15, close in the fixture), both ready in Simple mode through the one-on-one rout override ([PRESETS.md](PRESETS.md#overrides-and-holds)).
-- **Flight (#169).** Tuned under the current flight model. The per-species flight traits decided on #169 (with #197, under a new model version) will re-check this species.
+- **Flight (#169).** Tuned under model 1. Model 2 gives it flight traits (§11.6) and re-checks it in [research/CALIBRATION.md §19](research/CALIBRATION.md#19-flight-traits-and-model-2-169-197).
 
 | Free trait        | Unit  |   min |  mode |   max | Basis | Source / rationale                                                                            |
 | ----------------- | ----- | ----: | ----: | ----: | :---: | --------------------------------------------------------------------------------------------- |
@@ -478,7 +481,7 @@ Built from its own source sheet with `defineFreeSpecies` (§11.5), like the whit
 - **Glyph.** Body radius is _T. rex_'s scaled by (mass ratio)^(1/3) (**D**): 2.05 / 2.45 / 2.95 m, so the replay draws it as a triangle.
 - **Content check.** `adSafe`: yes. Era: 100–94 Ma (Cenomanian, North Africa [WP: Spinosaurus]), so it shares no time with any other species in the roster and carries the what-if tag on the species guide, like _T. rex_ and _Utahraptor_. Overlap: "never met" with every species, _T. rex_ included (about 30 million years later, in North America). Korean counter 마리; no text-share symbol, so it falls back to 🔷 / 🔶 (🦖 is _T. rex_'s; an owner decision, as for the raptor). The film that popularised the _T. rex_ pairing is not named in any shipped text.
 - **Presets.** `trex-spinosaurus`, 1 v 1 (design §6 #12), ready in Simple mode through the one-on-one rout override ([PRESETS.md](PRESETS.md#overrides-and-holds)). Not close: _T. rex_ wins 96.5 %.
-- **Flight (#169).** Tuned under the current flight model. The per-species flight traits decided on #169 (with #197, under a new model version) will re-check this species.
+- **Flight (#169).** Tuned under model 1. Model 2 gives it flight traits (§11.6) and re-checks it in [research/CALIBRATION.md §19](research/CALIBRATION.md#19-flight-traits-and-model-2-169-197).
 
 | Free trait        | Unit  |   min |  mode |   max | Basis | Source / rationale                                               |
 | ----------------- | ----- | ----: | ----: | ----: | :---: | ---------------------------------------------------------------- |
@@ -512,7 +515,7 @@ Built from its own source sheet with `defineFreeSpecies` (§11.5), like the whit
 - **Glyph.** Body radius is the buffalo's scaled by (mass ratio)^(1/3) (**D**): 1.65 / 2 / 2.25 m, so the replay draws it as a triangle.
 - **Content check.** `adSafe`: yes. Era: 68–66 Ma (late Maastrichtian, western North America [WP: Triceratops]), the same as _T. rex_. Overlap with _T. rex_: **documented** (the healed bite above, and _T. rex_ feeding traces on a _Triceratops_ pelvis [Erickson & Olson 1996, via WP]); free mode has no matchup badge, so preset #13 carries the `documented` tag instead. With every living species and the woolly mammoth "never met", with _Utahraptor_ and _Spinosaurus_ "never met". It shares time with _T. rex_, so neither carries the what-if tag any more: _T. rex_ lost it with this species. Korean counter 마리; no text-share symbol exists for a horned dinosaur, so it falls back to 🔷 / 🔶.
 - **Presets.** `trex-triceratops`, 1 v 1 (design §6 #13), ready in Simple mode through the one-on-one rout override ([PRESETS.md](PRESETS.md#overrides-and-holds)). Close in the fixture: _T. rex_ 61.5 %, _Triceratops_ 38.5 %.
-- **Flight (#169).** Tuned under the current flight model. The per-species flight traits decided on #169 (with #197, under a new model version) will re-check this species.
+- **Flight (#169).** Tuned under model 1. Model 2 gives it flight traits (§11.6) and re-checks it in [research/CALIBRATION.md §19](research/CALIBRATION.md#19-flight-traits-and-model-2-169-197).
 
 | Free trait        | Unit  |   min |  mode |    max | Basis | Source / rationale                                                      |
 | ----------------- | ----- | ----: | ----: | -----: | :---: | ----------------------------------------------------------------------- |
@@ -676,6 +679,14 @@ Access: **[FT]** full text read; **[Abs]** abstract or search summary; **[WP]** 
 
 - **[Bishop 2019]** Bishop P.J. Testing the function of dromaeosaurid (Dinosauria, Theropoda) 'sickle claws' through musculoskeletal modelling and optimization. _PeerJ_ 7:e7577. <https://doi.org/10.7717/peerj.7577> [FT, via Europe PMC PMC6717499, read 2026-11-05]
 - **[Alexander & Pond 1992]** Alexander R.McN., Pond C.M. Locomotion and bone strength of the white rhinoceros, _Ceratotherium simum_. _J. Zool._ 227:63–69. <https://doi.org/10.1111/j.1469-7998.1992.tb04344.x> [Abs]
+- **[Hayward 2006]** Hayward M.W. Prey preferences of the spotted hyaena (_Crocuta crocuta_) and degree of dietary overlap with the lion (_Panthera leo_). _J. Zool._ 270:606–614. <https://doi.org/10.1111/j.1469-7998.2006.00183.x> [Abs]
+- **[Hayward & Kerley 2005]** Hayward M.W., Kerley G.I.H. Prey preferences of the lion (_Panthera leo_). _J. Zool._ 267:309–322. <https://doi.org/10.1017/S0952836905007508> [Abs]
+- **[Hayward 2012]** Hayward M.W., Jędrzejewski W., Jędrzejewska B. Prey preferences of the tiger _Panthera tigris_. _J. Zool._ 286:221–231. <https://doi.org/10.1111/j.1469-7998.2011.00871.x> [Abs]
+- **[Hurst 1982a]** Hurst R.J., Øritsland N.A., Watts P.D. Body mass, temperature and cost of walking in polar bears. _Acta Physiol. Scand._ 115:391–395. <https://doi.org/10.1111/j.1748-1716.1982.tb07096.x> [Abs]
+- **[Hurst 1982b]** Hurst R.J. et al. Polar bear locomotion: body temperature and energetic cost. _Can. J. Zool._ 60:40–44. <https://doi.org/10.1139/z82-005> [Abs]
+- **[Miller 2015]** Miller S., Wilder J., Wilson R.R. Polar bear–grizzly bear interactions during the autumn open-water period in Alaska. _J. Mammal._ 96:1317–1325. <https://doi.org/10.1093/jmammal/gyv140> [Abs]
+- **[Owen-Smith & Mills 2008]** Owen-Smith N., Mills M.G.L. Predator–prey size relationships in an African large-mammal food web. _J. Anim. Ecol._ 77:173–183. <https://doi.org/10.1111/j.1365-2656.2007.01314.x> [Abs]
+- **[Valeix 2007]** Valeix M., Chamaillé-Jammes S., Fritz H. Interference competition and temporal niche shifts: elephants and herbivore communities at waterholes. _Oecologia_ 153:739–748. <https://doi.org/10.1007/s00442-007-0764-5> [Abs]
 - **[Bates & Falkingham 2012]** Estimating maximum bite performance in _Tyrannosaurus rex_ using multi-body dynamics. _Biology Letters_ 8:660–664. <https://doi.org/10.1098/rsbl.2012.0056> [MODEL]
 - **[Christiansen & Wroe 2007]** Bite forces and evolutionary adaptations to feeding ecology in carnivores. _Ecology_ 88:347–358. <https://doi.org/10.1890/0012-9658(2007)88[347:BFAEAT]2.0.CO;2> [WP]
 - **[D'Amore 2011]** D'Amore D.C. et al. The effects of biting and pulling on the forces generated during feeding in the Komodo dragon. _PLoS ONE_ 6:e26226. <https://doi.org/10.1371/journal.pone.0026226> [FT]
@@ -849,6 +860,7 @@ The _Utahraptor_ row is not taken from a pack study: whether dromaeosaurids hunt
 Every species above except the polar bear, the hippo, the raptor pack, the white rhino, _Spinosaurus_ and _Triceratops_ has a legacy entry, and its free entry reads from it (§11.1). The polar bear (§4.11, #184) is the first species built the way this section describes, the hippo (§4.12, #186) the second, the raptor pack (§4.13, #188) the first social one, with latch and pack-buff rows, the white rhino (§4.14, #187) the fourth, _Spinosaurus_ (§4.15, #185) the fifth and _Triceratops_ (§4.16, #189) the sixth. A species added after the free model, such as the batches of the [1.0 renewal](design/RENEWAL-1.0.md#5-new-animals-roadmap), joins the free model alone. The legacy registry, the classic engine and every classic link stay as they are.
 
 - **Registry.** Append the id to `FREE_SPECIES_IDS` (append-only, never renamed) and build its entry with the standalone constructor `defineFreeSpecies(id, sheet)` in `src/sim/free/species.ts`. The sheet (`FreeSpeciesSheet`) holds everything the free model reads: `era`, `adSafe`, `social`, `canLatch`, the constants `hide` and `intimidation`, one preset row `[min, mode, max, evidence]` per individual trait, and the six pack-buff rows of a social species (`buff: null` otherwise). Latch rows are given only when the species can latch. Inactive traits get the neutral values of §11.1. The constructor throws when the rows do not match the flags.
+- **Flight traits.** From model 2 every species needs its three flight rows in `MV2` (`SPECIES_REVISIONS[2]`, §11.6). The map is typed by `FreeSpeciesId`, so the typecheck fails until they are added; source them like any other row.
 - **Same as a derived entry.** `tests/free-species.test.ts` rebuilds every current entry from its own sheet with the constructor and checks that the result equals the registry entry, so a standalone species reaches the engine in exactly the form a derived one does.
 - **Names and counters.** `speciesName`, `speciesShort`, `teamLabel` and `speciesCounter` in `src/ui/i18n.ts` take an id of either registry (`AnySpeciesId`). The typecheck therefore fails until both dictionaries (`src/i18n/ko.ts`, `en.ts`) have `species.<id>`, `species.<id>.one` and `species.<id>.other`. The Korean counter is `마리` unless `KO_COUNTERS` names another one (§9).
 - **Text-share symbol.** `SPECIES_EMOJI` in `src/share/result-text.ts` is keyed by free species id. A species without an entry falls back to 🔷 for side A and 🔶 for side B ([SHARING.md](SHARING.md)). The side decides, not the species' classic role: `tests/free-result.test.ts` puts the mammoth, a classic heavy, on side B and expects 🔶.
@@ -861,3 +873,34 @@ Every species above except the polar bear, the hippo, the raptor pack, the white
   - `tests/free-species.test.ts`, "marks every pairing ad-safe, mirror matchups included": when `adSafe` is false, which no species is today ([ADSENSE.md §6](ADSENSE.md#6-per-matchup-ad-safety)).
 
   The era and ad-safety test ("carries the era and adSafe flag of its legacy entries") runs only for species with a legacy entry and needs no change.
+
+### 11.6 Flight traits (model 2, #169)
+
+From free model version 2 (`mv` 2, with the deterministic math of #197) every species carries three flight traits, so flight follows each species' recorded behaviour rather than one global rule (owner decision on #169, 2026-11-02). They are species constants, like `hide`: not sampled, not in links, not in the design matrix. The engine reads the mode; the range is the sensitivity range, swept in [research/CALIBRATION.md §19](research/CALIBRATION.md#19-flight-traits-and-model-2-169-197). Under model 1 a species has no flight traits (`flight` is null) and every model 1 result is unchanged. Source of truth: `SPECIES_REVISIONS[2]` in `src/sim/free/species.ts`, read through `freeSpeciesAt(id, mv)`. Full research, sources and the rows kept: [research/SPECIES.md §14](research/SPECIES.md#14-flight-traits-for-model-2-169).
+
+- **`threatRatio`** (×): an active enemy at least this many times the agent's own mass outmatches it.
+- **`threatTime`** (s): within an outmatching enemy's strike reach (+ the agent's body radius + the 4 m `dangerMargin`), or riding it, an agent's morale falls linearly from its starting value to the rout threshold over this time, on top of wound losses. Only with morale on.
+- **`soloShock`** (morale per ally): a member of a non-social species loses it for each ally incapacitated within 40 m (`moraleRadius`) in a tick, at most 3 (`contagionDeathCap`). Social species carry 0 (inactive): their shock is the pack buff's contagion (§11.4).
+
+| Species        | `threatRatio` (×) | Basis | `threatTime` (s) | `soloShock`     | Main source                                                   |
+| -------------- | ----------------- | :---: | ---------------- | --------------- | ------------------------------------------------------------- |
+| _T. rex_       | 1.5 / 2 / 4       | **S** | 20 / 60 / 180    | 0 / 0.04 / 0.08 | No data; living carnivores' 2× rule [Owen-Smith & Mills 2008] |
+| Elephant       | 1.2 / 1.5 / 3     | **S** | 20 / 60 / 180    | 0 / 0.04 / 0.08 | Dominant at waterholes [Valeix 2007]; mobs lions              |
+| Buffalo        | 1.2 / 1.5 / 3     | **S** | 15 / 45 / 120    | 0 / 0.04 / 0.08 | Drives off lions; yields to elephants [Valeix 2007]           |
+| Brown bear     | 1.5 / 2 / 4       | **S** | 10 / 30 / 90     | 0 / 0.04 / 0.08 | 2× rule; dominant over wolves and polar bears [Miller 2015]   |
+| Woolly mammoth | 1.2 / 1.5 / 3     | **S** | 20 / 60 / 180    | 0 / 0.04 / 0.08 | Elephant analogue                                             |
+| _H. erectus_   | 1.5 / 2 / 4       | **S** | 5 / 20 / 60      | – (social)      | No data; 2× rule as a stand-in                                |
+| Tiger          | 1.4 / 2 / 10      |   D   | 5 / 15 / 60      | 0 / 0.04 / 0.08 | Preferred prey 60–250 kg [Hayward 2012]; 2× rule              |
+| Lion           | 3.7 / 6.7 / 10    |   D   | 10 / 30 / 90     | – (social)      | Preferred prey 190–550 kg [Hayward & Kerley 2005]; ~1 t line  |
+| Gray wolf      | 6 / 15 / 25       | **S** | 5 / 20 / 60      | – (social)      | Packs hunt bison with 9–13 wolves [MacNulty 2014]             |
+| Spotted hyena  | 1.9 / 3.3 / 10    |   D   | 5 / 20 / 60      | – (social)      | Preferred prey 56–182 kg, buffalo avoided [Hayward 2006]      |
+| Polar bear     | 1.5 / 2 / 3       | **S** | 5 / 10 / 30      | 0 / 0.04 / 0.08 | Avoids adult walruses; yields to grizzlies [Miller 2015]      |
+| Hippopotamus   | 1.5 / 2 / 4       | **S** | 20 / 60 / 180    | 0 / 0.04 / 0.08 | Aggressive; adults rarely preyed upon                         |
+| _Utahraptor_   | 2 / 3 / 4         | **S** | 10 / 30 / 90     | – (social)      | No data; between the solitary rule and the lion               |
+| White rhino    | 1 / 1.25 / 2      | **S** | 5 / 20 / 60      | 0 / 0.04 / 0.08 | "Relatively unaggressive"; killed by young bull elephants     |
+| _Spinosaurus_  | 1 / 1.5 / 2       | **S** | 10 / 30 / 90     | 0 / 0.04 / 0.08 | No data; a fish specialist                                    |
+| _Triceratops_  | 1.2 / 1.5 / 3     | **S** | 15 / 45 / 120    | 0 / 0.04 / 0.08 | No data; horned-herbivore analogue (buffalo)                  |
+
+**D** rows divide the bounds of a cited preferred-prey range (or the ~1,000 kg megaherbivore line of [Owen-Smith & Mills 2008]) by the species' mass mode. No study measures a disengage time or a morale loss, so every `threatTime` and `soloShock` is **S**, and the docs say so; `soloShock` is one shared row, half the classic tiger's `moraleLoss` mode at its mode.
+
+Model 2 also replaces three of the polar bear's behaviour rows (§4.11). Every other trait row and constant is the same in both models (`tests/free-flight.test.ts`).

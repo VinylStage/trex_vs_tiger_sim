@@ -584,9 +584,12 @@
                 the very same battle.
               </li>
               <li>
-                Within one browser engine the results are bit-identical. Across engines, rounding in
-                trigonometric and logarithm functions can make individual battles diverge, while the
-                statistics agree.
+                Links made from model version 2 on (every new link) give bit-identical results in
+                every browser engine: the simulator computes its own trigonometric and logarithm
+                functions from basic arithmetic, and a test checks two engines against each other.
+                Older links keep their original model: within one browser engine they are
+                bit-identical, while across engines rounding in those functions can make individual
+                battles diverge, with the same statistics.
               </li>
               <li>
                 The sampling design depends on the number of runs: battle 7 of a 100-run batch is
@@ -898,9 +901,13 @@
               <i>T. rex</i> against tigers. Under the classic model's default tactic the tigers
               circle to the rear; in the free model they go straight in. With one
               <i>T. rex</i> against 20 tigers, the tigers' win share drops from about 46% to about
-              2%, close to the classic “direct” tactic. Free-model tigers also almost never flee a
-              much larger opponent and fight on until incapacitated; whether that needs
-              recalibrating is under review.
+              2%, close to the classic “direct” tactic. Under the first free model, tigers almost
+              never fled a much larger opponent. From model version 2 every species has its own,
+              researched flight traits: how much heavier an opponent must be to outmatch it, how
+              long it stays within that opponent's reach, and for animals that live alone how much a
+              nearby ally's fall unsettles it. Now most tigers withdraw from a T. rex, as in the
+              classic model, and a group of predators no longer beats an animal many times their
+              size.
             </p>
             <p>
               Free results therefore still carry the “provisional” note. The comparison tables and

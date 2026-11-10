@@ -1,3 +1,5 @@
+import { DET_MATH, NATIVE_MATH, type MathSet } from './detmath.ts';
+
 /** splitmix32 step: good avalanche, used for seeding and hashing. */
 export function splitmix32(state: number): number {
   let z = (state + 0x9e3779b9) | 0;
@@ -18,8 +20,15 @@ export class Rng {
   private c: number;
   private d: number;
   private spare: number | null = null;
+  /** `log`, `sin` and `cos` of `normal()`: the engine's own or the deterministic set (#197). */
+  private readonly math: MathSet;
 
-  constructor(seed: number) {
+  /**
+   * @param deterministic use the deterministic `log`, `sin` and `cos` (src/sim/detmath.ts) in
+   *   `normal()`, as free `mv` 2 and classic model version 2 do. The integer stream is the same.
+   */
+  constructor(seed: number, deterministic = false) {
+    this.math = deterministic ? DET_MATH : NATIVE_MATH;
     let s = seed >>> 0;
     s = splitmix32(s);
     this.a = s;
@@ -62,8 +71,9 @@ export class Rng {
     let u = 0;
     while (u === 0) u = this.next();
     const v = this.next();
-    const r = Math.sqrt(-2 * Math.log(u));
-    this.spare = r * Math.sin(2 * Math.PI * v);
-    return r * Math.cos(2 * Math.PI * v);
+    const m = this.math;
+    const r = Math.sqrt(-2 * m.log(u));
+    this.spare = r * m.sin(2 * Math.PI * v);
+    return r * m.cos(2 * Math.PI * v);
   }
 }

@@ -27,7 +27,10 @@ export type ParseError = 'empty' | 'length' | 'alphabet' | 'json' | 'shape' | 'n
 
 export type ParseResult = { ok: true; config: ScenarioConfig } | { ok: false; error: ParseError };
 
-/** The copy/paste code of a config (`TVT2-` alone for the defaults). */
+/**
+ * The copy/paste code of a config. `TVT2-` alone is the defaults of classic model 1, the code
+ * the defaults had before #197; the current defaults name their model version.
+ */
 export function configCode(config: ScenarioConfig): string {
   return CODE_PREFIX + encodeConfig(config);
 }
@@ -35,7 +38,7 @@ export function configCode(config: ScenarioConfig): string {
 const isPlainObject = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
 
-/** Strictly decode a bare `encodeConfig` payload; `''` is the defaults. */
+/** Strictly decode a bare `encodeConfig` payload; `''` is the model 1 defaults (as before #197). */
 export function parsePayload(payload: string): ParseResult {
   if (payload.length > MAX_SHARE_LENGTH) return { ok: false, error: 'length' };
   if (!/^[A-Za-z0-9_-]*$/.test(payload)) return { ok: false, error: 'alphabet' };

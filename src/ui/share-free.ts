@@ -82,11 +82,12 @@ function diffRanges<K extends string>(
   return Object.keys(out).length > 0 ? out : null;
 }
 
-function sideDiff(side: SideConfig): Record<string, unknown> {
+/** A side's edits, diffed against the species presets of the config's model version. */
+function sideDiff(side: SideConfig, mv: number): Record<string, unknown> {
   const out: Record<string, unknown> = { sp: side.species, n: side.count };
-  const p = diffRanges(TRAIT_IDS, side.params, traitRanges(side.species));
+  const p = diffRanges(TRAIT_IDS, side.params, traitRanges(side.species, mv));
   if (p) out['p'] = p;
-  const bf = diffRanges(BUFF_TRAIT_IDS, side.buff, buffRanges(side.species));
+  const bf = diffRanges(BUFF_TRAIT_IDS, side.buff, buffRanges(side.species, mv));
   if (bf) out['bf'] = bf;
   return out;
 }
@@ -102,8 +103,8 @@ export function freeConfigDiff(
   const d = defaultFreeConfig();
   const out: Record<string, unknown> = { v: FREE_SHARE_VERSION, m: FREE_MODE_MARKER };
   if (config.mv !== 1) out['mv'] = config.mv;
-  out['a'] = sideDiff(config.sides[0]);
-  out['b'] = sideDiff(config.sides[1]);
+  out['a'] = sideDiff(config.sides[0], config.mv);
+  out['b'] = sideDiff(config.sides[1], config.mv);
   const off = PACK_BUFF_EFFECTS.filter((e) => !config.packBuff[e]);
   if (off.length > 0) out['buff'] = Object.fromEntries(off.map((e) => [e, false]));
   const g = diffRanges(

@@ -1,4 +1,5 @@
 import type { ScenarioConfig } from './config.ts';
+import { DET_MATH, NATIVE_MATH } from './detmath.ts';
 import { individualFactor } from './distributions.ts';
 import {
   DeathCause,
@@ -174,7 +175,11 @@ export function simulateBattle(
   options: TraceOptions = {},
 ): BattleOutput {
   const C = CONSTANTS;
-  const rng = new Rng(deriveSeed(config.seed, run, BATTLE_SALT));
+  // Model version 2 uses the deterministic math of src/sim/detmath.ts (#197); version 1 keeps
+  // the engine's own `Math`, so links made before it reproduce as they did.
+  const det = config.mv >= 2;
+  const { sin, cos, atan2 } = det ? DET_MATH : NATIVE_MATH;
+  const rng = new Rng(deriveSeed(config.seed, run, BATTLE_SALT), det);
   const N = config.heavyCount;
   const M = config.packCount;
   const L = config.arenaSize;
@@ -273,8 +278,8 @@ export function simulateBattle(
   for (let j = 0; j < M; j++) {
     const a = rng.next() * TAU;
     const d = discR * Math.sqrt(rng.next());
-    tx[j] = L / 2 + sep / 2 + Math.cos(a) * d;
-    ty[j] = L / 2 + Math.sin(a) * d;
+    tx[j] = L / 2 + sep / 2 + cos(a) * d;
+    ty[j] = L / 2 + sin(a) * d;
     tMass[j] = indiv(P['pack.mass']);
     tHp[j] = tMaxHp[j] = tMass[j] as number;
     tSprint[j] = indiv(P['pack.sprintSpeed']);
@@ -358,15 +363,14 @@ export function simulateBattle(
       // Latched pack animals ride their host; use the host's current pose, not last tick's position.
       const h = tHost[j] as number;
       const a = (rh[h] as number) + (tLatchAng[j] as number);
-      px = (rx[h] as number) + Math.cos(a) * (radius + packRadius);
-      py = (ry[h] as number) + Math.sin(a) * (radius + packRadius);
+      px = (rx[h] as number) + cos(a) * (radius + packRadius);
+      py = (ry[h] as number) + sin(a) * (radius + packRadius);
     }
     const dx = px - (rx[biter] as number);
     const dy = py - (ry[biter] as number);
     const d = len(dx, dy);
     if (d > (rReach[biter] as number) + packRadius) return;
-    if (Math.abs(wrap(Math.atan2(dy, dx) - (rh[biter] as number))) > (rArc[biter] as number))
-      return;
+    if (Math.abs(wrap(atan2(dy, dx) - (rh[biter] as number))) > (rArc[biter] as number)) return;
     const score = s === PackState.Latched && tHost[j] === biter ? d - 1000 : d;
     if (score < bestScore) {
       bestScore = score;
@@ -400,8 +404,8 @@ export function simulateBattle(
   };
 
   const moveToward = (j: number, angle: number, step: number): void => {
-    tx[j] = (tx[j] as number) + Math.cos(angle) * step;
-    ty[j] = (ty[j] as number) + Math.sin(angle) * step;
+    tx[j] = (tx[j] as number) + cos(angle) * step;
+    ty[j] = (ty[j] as number) + sin(angle) * step;
   };
 
   // --- Trace ---
@@ -462,7 +466,7 @@ export function simulateBattle(
       if (target >= 0) {
         const dx = (tx[target] as number) - (rx[i] as number);
         const dy = (ty[target] as number) - (ry[i] as number);
-        const dh = wrap(Math.atan2(dy, dx) - (rh[i] as number));
+        const dh = wrap(atan2(dy, dx) - (rh[i] as number));
         const maxTurn = (rTurn[i] as number) * DT;
         rh[i] = wrap((rh[i] as number) + Math.max(-maxTurn, Math.min(maxTurn, dh)));
         const dist = len(dx, dy);
@@ -473,8 +477,8 @@ export function simulateBattle(
           );
           const turnPenalty = Math.abs(dh) > Math.PI / 3 ? 0.5 : 1;
           const v = (rSpeed[i] as number) * carry * turnPenalty * DT;
-          rx[i] = Math.min(L, Math.max(0, (rx[i] as number) + Math.cos(rh[i] as number) * v));
-          ry[i] = Math.min(L, Math.max(0, (ry[i] as number) + Math.sin(rh[i] as number) * v));
+          rx[i] = Math.min(L, Math.max(0, (rx[i] as number) + cos(rh[i] as number) * v));
+          ry[i] = Math.min(L, Math.max(0, (ry[i] as number) + sin(rh[i] as number) * v));
         }
       }
 
@@ -536,23 +540,23 @@ export function simulateBattle(
           const dy = (ry[r] as number) - (ty[j] as number);
           const dist = len(dx, dy);
           const contact = radius + packRadius + 0.5;
-          const rel = wrap(Math.atan2(-dy, -dx) - (rh[r] as number));
+          const rel = wrap(atan2(-dy, -dx) - (rh[r] as number));
 
           let aimX = rx[r] as number;
           let aimY = ry[r] as number;
           let heading: number;
           if (config.packTactic === 'flank') {
             const back = (rh[r] as number) + Math.PI + (tSide[j] as number) * C.flankOffset;
-            aimX += Math.cos(back) * radius;
-            aimY += Math.sin(back) * radius;
+            aimX += cos(back) * radius;
+            aimY += sin(back) * radius;
             const danger =
               dist < (rReach[r] as number) + C.dangerMargin &&
               Math.abs(rel) < (rArc[r] as number) + C.dangerArcPad;
             heading = danger
               ? (rh[r] as number) + (rel >= 0 ? 1 : -1) * (Math.PI / 2)
-              : Math.atan2(aimY - (ty[j] as number), aimX - (tx[j] as number));
+              : atan2(aimY - (ty[j] as number), aimX - (tx[j] as number));
           } else {
-            heading = Math.atan2(dy, dx);
+            heading = atan2(dy, dx);
           }
 
           let speed: number;
@@ -589,7 +593,7 @@ export function simulateBattle(
               tState[j] = PackState.Latched;
               tHost[j] = r;
               tLatchAng[j] = wrap(
-                Math.atan2(
+                atan2(
                   (ty[j] as number) - (ry[r] as number),
                   (tx[j] as number) - (rx[r] as number),
                 ) - (rh[r] as number),
@@ -610,8 +614,8 @@ export function simulateBattle(
             break;
           }
           const a = (rh[h] as number) + (tLatchAng[j] as number);
-          tx[j] = (rx[h] as number) + Math.cos(a) * (radius + packRadius);
-          ty[j] = (ry[h] as number) + Math.sin(a) * (radius + packRadius);
+          tx[j] = (rx[h] as number) + cos(a) * (radius + packRadius);
+          ty[j] = (ry[h] as number) + sin(a) * (radius + packRadius);
           const dmg = (tDps[j] as number) * DT * hide;
           rHp[h] = (rHp[h] as number) - dmg;
           rWound[h] = (rWound[h] as number) + dmg;
@@ -640,7 +644,7 @@ export function simulateBattle(
             const dx = (tx[j] as number) - (rx[r] as number);
             const dy = (ty[j] as number) - (ry[r] as number);
             if (len(dx, dy) < C.recoverDistance) {
-              moveToward(j, Math.atan2(dy, dx), (tCruise[j] as number) * DT);
+              moveToward(j, atan2(dy, dx), (tCruise[j] as number) * DT);
             }
           }
           tRecoverTimer[j] = (tRecoverTimer[j] as number) - DT;
@@ -655,11 +659,11 @@ export function simulateBattle(
           const r = nearestHeavy(j);
           let away: number;
           if (r >= 0)
-            away = Math.atan2(
+            away = atan2(
               (ty[j] as number) - (ry[r] as number),
               (tx[j] as number) - (rx[r] as number),
             );
-          else away = Math.atan2((ty[j] as number) - L / 2, (tx[j] as number) - L / 2);
+          else away = atan2((ty[j] as number) - L / 2, (tx[j] as number) - L / 2);
           let speed = tCruise[j] as number;
           if ((tStamina[j] as number) > 0) {
             speed = tSprint[j] as number;

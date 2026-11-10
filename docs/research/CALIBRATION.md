@@ -11,6 +11,7 @@
 > - **흰코뿔소(#187, §16):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게(2톤)가 하마보다 조금 무거워 1:1에서 하마에 63%, 물소에 93% 이기고, 코끼리에는 26%, 매머드에는 18%만 이깁니다. 사자는 20마리가 되어도 56%로 아직 흰코뿔소가 앞서는데, 다 자란 흰코뿔소는 천적이 거의 없다는 기록과 맞습니다. 검증되지 않은 최고 속도는 결과에 거의 영향이 없고(코끼리 상대 +2.6%p, 하마 상대 0%p), 측정이 없는 뿔 힘 · 공격 간격 · 치명도 · 정확도가 가장 크게 흔듭니다(33–52%p). 이탈 모델(#169)은 바꾸지 않았습니다.
 > - **스피노사우루스(#185, §17, 육상 대결):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게(7.4톤)는 티라노(8톤)와 비슷하지만 무는 힘이 몇 배 약해(Sakamoto 2022) 1:1에서 티라노에 3.5%만 이기고, 세 마리가 되어야 티라노 한 마리를 넘습니다(56%). 값 하나를 범위 끝으로 옮겨도 13.5%가 최고입니다. 논쟁 중인 자세(네 발 / 두 발)가 영향을 주는 속도 · 선회는 결과에 거의 영향이 없습니다(+0.3%p, +0.2%p). 코끼리에는 몸무게 덕분에 89% 이깁니다.
 > - **트리케라톱스(#189, §18):** 거울전 50:50(1:1, 3:3 모두 구간 안), 마릿수 곡선 4개 모두 단조, 진영 바꾸기 같음. 몸무게(8톤)가 티라노와 같고 뿔 힘을 몸무게에 맞춰 잡아, 1:1에서 티라노에 40%를 이깁니다(티라노 60%, 프리셋 "가까움"). 이 값은 맞추지 않았고, 측정이 없는 공격 간격 · 뿔 힘 · 치명도 · 정확도가 각각 45–53%p를 흔들며 문헌의 몸무게 범위도 25%p를 흔듭니다. 속도는 거의 영향이 없습니다(+1.1%p). 다른 대형 초식동물과 스피노사우루스에는 92–100% 이깁니다. 이탈 모델(#169)은 바꾸지 않았습니다.
+> - **모델 2(#169, #197, §19):** 종마다 이탈 특성(상대가 몇 배 무거우면 압도당했다고 보는지, 그 상대의 공격 범위에서 얼마나 버티는지, 혼자 사는 종이 가까운 동료가 쓰러질 때 잃는 사기)을 넣고 계산을 어느 자바스크립트 엔진에서도 같게 만든 새 모델 버전으로 다시 쟀습니다. 호랑이의 이탈 비율이 2.5–11.5%에서 19–92%로 올라 클래식 범위에 들어오고, 티라노 10 대 호랑이 100은 평균 13.5마리 전투 불능 · 86.5마리 이탈로 클래식과 같아졌습니다. 대신 호랑이는 50마리가 되어도 티라노 한 마리를 이기지 못하고(모델 1: 60%), 사자 · 랩터 · 늑대 무리도 자기보다 훨씬 큰 동물 앞에서는 물러나 이기지 못합니다. 거울전 · 진영 바꾸기 · 단조성 점검은 그대로 통과하고, 프리셋 네 개에 근거를 적은 예외를 달았습니다. 모델 1의 결과와 파일은 그대로입니다.
 > - **R1 "잠정 모델" 안내:** 기준(보정 보고서 + 소유자 승인 + 안내에 대한 결정, 그리고 가이드 · 모델 · 파라미터 페이지의 자유 모델 설명)을 아직 다 채우지 못했으므로 **지금은 내리지 말 것을 권합니다.** 소유자가 이 보고서를 승인하고, #170(파라미터 페이지)을 마치고, #169를 결정하면 내릴 수 있습니다. UI는 바꾸지 않았습니다.
 
 Status: measured 2026-10-28 on `main` at `12b5968` (v0.2.22), engines unchanged by this report. Issue [#166](https://github.com/VinylStage/trex_vs_tiger_sim/issues/166), part of [#125](https://github.com/VinylStage/trex_vs_tiger_sim/issues/125). Design: [RENEWAL-1.0.md §3.2](../design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode) (minimum P8 pass, owner decision R1) and [FREE-MATCHUPS.md §8](../design/FREE-MATCHUPS.md#8-phased-implementation-plan) (phase P8). **Not signed off by the owner yet.**
@@ -37,6 +38,7 @@ Every number below is a statement about the two models under their assumptions, 
 16. [White rhinoceros (#187)](#16-white-rhinoceros-187)
 17. [_Spinosaurus_ (#185)](#17-spinosaurus-185)
 18. [_Triceratops_ (#189)](#18-triceratops-189)
+19. [Flight traits and model 2 (#169, #197)](#19-flight-traits-and-model-2-169-197)
 
 ## 1. Questions
 
@@ -378,7 +380,7 @@ No ready preset contradicts its evidence on the winner. The one reading that con
 
 **Look like calibration problems** (filed):
 
-1. **#169** Solitary animals almost never flee a much larger opponent (tiger rout share 3–12 % in free vs 52–93 % in classic). Design-consistent but against the tiger evidence; affects the ready flagship preset. Owner decision.
+1. **#169** Solitary animals almost never flee a much larger opponent (tiger rout share 3–12 % in free vs 52–93 % in classic). Design-consistent but against the tiger evidence; affects the ready flagship preset. Owner decision: per-species flight traits under a new model version, shipped as model 2 ([§19](#19-flight-traits-and-model-2-169-197)).
 2. **#167** A lone _H. erectus_ never wins a duel against any carnivore and always flees.
 3. **#168** The wolf-vs-buffalo curve has no plateau at 9–13; the guard test is looser than the design.
 
@@ -388,12 +390,12 @@ No ready preset contradicts its evidence on the winner. The one reading that con
 
 ## 9. Follow-up issues
 
-| Issue                                                              | Kind                                                                 | Blocks the banner decision?       |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------- | --------------------------------- |
-| [#167](https://github.com/VinylStage/trex_vs_tiger_sim/issues/167) | Calibration: lone _H. erectus_ duels                                 | No (no ready preset)              |
-| [#168](https://github.com/VinylStage/trex_vs_tiger_sim/issues/168) | Calibration guard: wolf-vs-buffalo plateau                           | No                                |
-| [#169](https://github.com/VinylStage/trex_vs_tiger_sim/issues/169) | Calibration, owner decision: solitary animals rarely flee            | Recommended yes (flagship preset) |
-| [#170](https://github.com/VinylStage/trex_vs_tiger_sim/issues/170) | Docs: free-model traits on the parameters page (the missing P8 page) | Yes (part of the criterion)       |
+| Issue                                                              | Kind                                                                 | Blocks the banner decision? |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------- | --------------------------- |
+| [#167](https://github.com/VinylStage/trex_vs_tiger_sim/issues/167) | Calibration: lone _H. erectus_ duels                                 | No (no ready preset)        |
+| [#168](https://github.com/VinylStage/trex_vs_tiger_sim/issues/168) | Calibration guard: wolf-vs-buffalo plateau                           | No                          |
+| [#169](https://github.com/VinylStage/trex_vs_tiger_sim/issues/169) | Calibration, owner decision: solitary animals rarely flee            | Done in model 2 (§19)       |
+| [#170](https://github.com/VinylStage/trex_vs_tiger_sim/issues/170) | Docs: free-model traits on the parameters page (the missing P8 page) | Yes (part of the criterion) |
 
 ## 10. The R1 "provisional model" banner
 
@@ -422,7 +424,7 @@ FREE-MATCHUPS.md D1 ties the same step to "free-model calibration (P8) is done".
 
 1. the owner signs off this report (with any objections filed as issues),
 2. #170 adds the free model to the parameters page, and
-3. #169 is decided: either "keep it" (documented, nothing to wait for) or a retune shipped under a new model version.
+3. #169 is decided: either "keep it" (documented, nothing to wait for) or a retune shipped under a new model version. Decided 2026-11-02 and shipped as model 2 (§19); this condition is met once that change is merged.
 
 Issues #167 and #168 need not hold the banner: no ready preset uses a lone _H. erectus_ against a carnivore, and the plateau question is about a guard's wording.
 
@@ -431,7 +433,7 @@ When it goes, the "provisional model" wording in the share contexts and the guid
 ## 11. Owner decisions
 
 1. **Sign off this report** (RENEWAL-1.0 §3.2 item 2), or list objections.
-2. **#169**: keep solitary animals' near-zero flight, or retune under `mv` 2.
+2. **#169**: decided 2026-11-02 (per-species flight traits under `mv` 2, with #197); measured in §19.
 3. **The banner**: accept the recommendation in §10, remove it now, or keep it with other wording.
 4. **R4 holds**: unchanged by this report; `pride-five-tigers`, `trex-erectus-100` and `lions-hyenas` still fail only the rout check.
 
@@ -451,9 +453,11 @@ node scripts/calibration/run.mjs --only white-rhino  # writes docs/research/cali
 node scripts/calibration/tables.mjs docs/research/calibration-white-rhino.json
 node scripts/calibration/run.mjs --only spinosaurus  # writes docs/research/calibration-spinosaurus.json (§17)
 node scripts/calibration/tables.mjs docs/research/calibration-spinosaurus.json
+node scripts/calibration/run.mjs --mv 2      # model 2 (§19): every section, flight included, to calibration-results-mv2.json
+node scripts/calibration/run.mjs --mv 2 --only flight   # one section of model 2: calibration-flight-mv2.json
 ```
 
-Sections: `trex-tiger`, `classic`, `presets`, `species-notes`, `interference`, `symmetry`, `monotonic`, `polar-bear` (§13) and `hippo` (§14). `--only <section>` without `--out` writes `calibration-<section>.json`, so one section never replaces the committed results. A full run writes every section, `polar-bear` and `hippo` included, to `calibration-results.json`, and `presets` then also measures `polar-bear-brown-bear` and `elephant-hippo`. Every batch has a fixed seed, so a rerun on the same commit gives the same numbers within the same JavaScript engine (MODEL.md §2.2). Measured with Node v22.22.0. When the free engine changes (a new `mv`), rerun both scripts, update the tables and recheck §8 and §10.
+Sections: `trex-tiger`, `classic`, `presets`, `species-notes`, `interference`, `symmetry`, `monotonic`, `polar-bear` (§13) and `hippo` (§14). `--only <section>` without `--out` writes `calibration-<section>.json`, so one section never replaces the committed results. A full run writes every section, `polar-bear` and `hippo` included, to `calibration-results.json`, and `presets` then also measures `polar-bear-brown-bear` and `elephant-hippo`. Every batch has a fixed seed, so a rerun on the same commit gives the same numbers within the same JavaScript engine (MODEL.md §2.2). Measured with Node v22.22.0. When the free engine changes (a new `mv`), rerun both scripts with `--mv <n>`, which adds `-mv<n>` to the default file names so the older model's files stay as measured; update the tables and recheck §8 and §10. `--mv` defaults to 1, so the commands above still reproduce the model 1 files.
 
 The tables in this report: generated from docs/research/calibration-results.json (commit 12b5968, v22.22.0).
 
@@ -568,7 +572,7 @@ Polar bear 1 v brown bear 1 (the preset), 1,000 runs per row: each **S** trait o
 
 **Sanity against the brown bear and the tiger.** The polar bear is about twice the brown bear's mass at the mode (450 vs 220 kg), with a higher strike-force mode (1.5 vs 1.2 kN), and everything else equal. The model ranks it accordingly: it beats the brown bear in 83 % of duels in either side order, and against every shared opponent it does at least as well as the brown bear: tiger 97 vs 78 %, lion 96 vs 75 %, eight wolves 92 vs 70 %, buffalo 20 vs 7 %. The ordering follows from the inputs; its size rests mostly on unmeasured values (strike force, lethality, interval and accuracy, and morale each swing the duel by 20–40 pp). No single **S** value at either end of its range makes the brown bear the favourite (the lowest is 55.2 %, strike force at 0.8 kN); joint pessimistic values were not tested. There is no field record of an adult polar bear fighting a brown bear or a tiger to check the strength against.
 
-**Flight (#169).** The flight model is unchanged; this records how the polar bear behaves under it. Against an opponent of similar size the loser flees in practically every decided run (rout share 99.9–100 % against the brown bear, the tiger and the lion, as for every duel in §6). Against a much larger opponent the losing polar bear mostly fights on until incapacitated: it flees in 28 % of its losses to one _T. rex_, but in 77 % of its losses to an elephant and 70 % to a mammoth. That matches the pattern #169 describes for the tiger (solitary animals rarely flee a much larger opponent), less strongly against the two proboscideans. The decision on #169 applies to it unchanged.
+**Flight (#169).** The flight model is unchanged; this records how the polar bear behaves under it. Against an opponent of similar size the loser flees in practically every decided run (rout share 99.9–100 % against the brown bear, the tiger and the lion, as for every duel in §6). Against a much larger opponent the losing polar bear mostly fights on until incapacitated: it flees in 28 % of its losses to one _T. rex_, but in 77 % of its losses to an elephant and 70 % to a mammoth. That matches the pattern #169 describes for the tiger (solitary animals rarely flee a much larger opponent), less strongly against the two proboscideans. The decision on #169 applies to it unchanged. Re-run under model 2, with its researched behaviour rows and flight traits: [§19](#19-flight-traits-and-model-2-169-197).
 
 **Preset.** `polar-bear-brown-bear` (design §6 #17): polar bear 82.0 %, median 70.9 s, rout share 100 % in the fixture (200 runs). Not close; ready in Simple mode through the one-on-one override, as `tiger-bear` and `trex-mirror` ([PRESETS.md](../PRESETS.md#overrides-and-holds)).
 
@@ -700,7 +704,7 @@ Generated from docs/research/calibration-hippo.json (commit f70371c, v22.22.0).
 
 **Sanity against the other heavies.** At the mode the hippo (1.5 t) sits between the buffalo (0.6 t) and the elephant (3.2 t) and the model orders it so: it beats the buffalo in 92 %, the brown bear in 99 % and the polar bear in 98–99 % of duels, and loses to the elephant (16 %) and the mammoth (10 %). The size of the elephant's lead rests on unmeasured values: strike force, interval, lethality and accuracy each swing the duel by 23–31 pp, and no single **S** value at either end of its range makes the hippo the favourite (the highest is 35.5 %, strike interval at 1.5 s); joint optimistic values were not tested. The two **U** values that became **S** behave differently: top speed barely matters (+1.7 pp over 4–8.3 m/s), the bite is one of the two largest swings (+29.9 pp over 4–15 kN). No field record of an adult hippo fighting an elephant was found to check the strength against.
 
-**Flight (#169).** The flight model is unchanged; this records how the hippo behaves under it. One on one against an opponent of similar or larger size, the loser flees in practically every decided run (rout share 98.6–100 % against _T. rex_, the elephant, the mammoth and the buffalo). Unlike the polar bear (28 % against _T. rex_), the losing hippo does flee a much larger opponent, probably because its 1.5 t of HP outlasts the hits that break its morale (not traced here). Against small opponents the pattern of #169 shows from the other side: a lone lion or tiger that loses flees in only 50–66 % of runs. The presets were tuned against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §14 should be re-run then.
+**Flight (#169).** The flight model is unchanged; this records how the hippo behaves under it. One on one against an opponent of similar or larger size, the loser flees in practically every decided run (rout share 98.6–100 % against _T. rex_, the elephant, the mammoth and the buffalo). Unlike the polar bear (28 % against _T. rex_), the losing hippo does flee a much larger opponent, probably because its 1.5 t of HP outlasts the hits that break its morale (not traced here). Against small opponents the pattern of #169 shows from the other side: a lone lion or tiger that loses flees in only 50–66 % of runs. The presets were tuned against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §14 should be re-run then. Re-run under model 2: [§19](#19-flight-traits-and-model-2-169-197).
 
 **Preset.** `elephant-hippo` (design §6 #16): elephant 81.5 %, median 119.5 s, rout share 99.5 % in the fixture (200 runs). Not close; ready in Simple mode through the one-on-one override, as `tiger-bear` and `polar-bear-brown-bear` ([PRESETS.md](../PRESETS.md#overrides-and-holds)). Preset #15 (hippo vs rhino) joined with the white rhinoceros (#187, §16).
 
@@ -856,7 +860,7 @@ Generated from docs/research/calibration-raptor.json (commit 68cf53e, v22.22.0).
 
 **Sanity.** One 400 kg raptor beats one lion (85 %), one tiger (87 %) and one brown bear (64 %) and loses to one polar bear (26–28 %; 450 kg at the mode, with a wider strike arc); three raptors beat three lions (80 %). The derived bite (2.15 kN at the mode) is above the lion's 1.6 kN and the raptor has more than twice the lion's mass (HP), so its lead over the big cats follows from the two **D**/**L** rows rather than from an **S** value. No field record exists to check it against.
 
-**Flight (#169).** The flight model is unchanged; this records how the raptor behaves under it. A lone raptor against _T. rex_ flees in only 37 % of its losses (it is incapacitated in most), against the elephant and the mammoth in 79–87 %. The per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §15 should be re-run then.
+**Flight (#169).** The flight model is unchanged; this records how the raptor behaves under it. A lone raptor against _T. rex_ flees in only 37 % of its losses (it is incapacitated in most), against the elephant and the mammoth in 79–87 %. The per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §15 should be re-run then. Re-run under model 2: [§19](#19-flight-traits-and-model-2-169-197).
 
 **Preset.** `raptors-trex` (design §6 #18): raptors 7.5 %, median 154.6 s, rout share 83.3 % in the fixture (200 runs). Not close; ready in Simple mode with no override. The design's 12 v 1 proposal is kept: more raptors win more (17 % at 30) but rout more than the limit allows from about 25, so the matchup cannot be made close within the rout check under `mv` 1.
 
@@ -1014,7 +1018,7 @@ Generated from docs/research/calibration-white-rhino.json (commit 6de39b6, v22.2
 
 **Sanity against the other heavies.** At the mode the rhino (2 t) sits between the hippo (1.5 t) and the elephant (3.2 t), and the model orders it so: it beats the hippo in 63 %, the buffalo in 93 %, the brown bear in 99 % and the polar bear in 99 % of duels, and loses to the elephant (26 %) and the mammoth (18 %). As for the hippo, the size of these leads rests on unmeasured values: horn force, strike interval, lethality and accuracy each swing the elephant duel by 33–38 pp and the hippo duel by 47–52 pp. Against the elephant no single **S** value at either end of its range makes the rhino the favourite (the highest is 49.3 %, strike interval at 1.5 s); against the hippo four of them make the hippo the favourite: horn force, lethality and accuracy at their minimum, and strike interval at its maximum (rhino 30.6–41.0 %). Joint values were not tested. The one **U** value that became **S**, top speed, barely matters: +2.6 pp against the elephant and 0.0 pp against the hippo over 5–11.1 m/s. Morale is the largest behavioural swing (+16.5 and +24.2 pp).
 
-**Flight (#169).** The flight model is unchanged; this records how the rhino behaves under it. One on one against an opponent of similar or larger size, the loser flees in practically every decided run (rout share 98.7–100 % against _T. rex_, the elephant, the mammoth, the hippo and the buffalo). Against the bears the pattern of #169 shows from the other side: a lone brown bear that loses flees in only 50 % of runs, a lone lion in 27 % and a tiger in 42 %. The presets were tuned against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §16 should be re-run then.
+**Flight (#169).** The flight model is unchanged; this records how the rhino behaves under it. One on one against an opponent of similar or larger size, the loser flees in practically every decided run (rout share 98.7–100 % against _T. rex_, the elephant, the mammoth, the hippo and the buffalo). Against the bears the pattern of #169 shows from the other side: a lone brown bear that loses flees in only 50 % of runs, a lone lion in 27 % and a tiger in 42 %. The presets were tuned against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §16 should be re-run then. Re-run under model 2: [§19](#19-flight-traits-and-model-2-169-197).
 
 **Presets.** `elephant-rhino` (design §6 #14): elephant 73.5 %, median 114.3 s, rout share 100 % in the fixture (200 runs). Not close. `hippo-rhino` (design §6 #15): rhino 58.5 %, hippo 41.0 %, median 102.7 s, rout share 100 %: close (35–65 % for both), the first close heavy-against-heavy preset. Both are ready in Simple mode through the one-on-one override, as `elephant-hippo` ([PRESETS.md](../PRESETS.md#overrides-and-holds)). The fixture's 58.5 % (200 runs) and this section's 63.1 % (1,000 runs, rhino on side A) agree within their intervals.
 
@@ -1174,7 +1178,7 @@ Against the elephant:
 
 **What the contested body plan does here.** The quadruped reading (Ibrahim et al. 2014, 2020) and the biped reading (Henderson 2018; Sereno et al. 2022) differ mostly in how the animal moved on land and in water. On land the free model reads speed, turn rate and stamina, and all three matter little in this duel: top speed swings it by 0.3 pp over 2–6 m/s, turn rate by 0.2 pp, sprint endurance by 2.6 pp. The mass range, which spans the published estimates without the 12–20.9 t outlier, swings it by 3.1 pp against _T. rex_ and 9.9 pp against the elephant.
 
-**Flight (#169).** The flight model is unchanged; this records how _Spinosaurus_ behaves under it. One on one against another heavy, the loser flees in practically every decided run (rout share 97.5–99.9 % against _T. rex_, the elephant, the mammoth, the rhino, the hippo and the buffalo). As for the white rhino, a lone brown bear, tiger or lion that loses flees less often (72.8–92.9 %). The preset was measured against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §17 should be re-run then.
+**Flight (#169).** The flight model is unchanged; this records how _Spinosaurus_ behaves under it. One on one against another heavy, the loser flees in practically every decided run (rout share 97.5–99.9 % against _T. rex_, the elephant, the mammoth, the rhino, the hippo and the buffalo). As for the white rhino, a lone brown bear, tiger or lion that loses flees less often (72.8–92.9 %). The preset was measured against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §17 should be re-run then. Re-run under model 2: [§19](#19-flight-traits-and-model-2-169-197).
 
 **Preset.** `trex-spinosaurus` (design §6 #12): _T. rex_ 96.5 %, median 112.0 s, rout share 100 % in the fixture (200 runs). Not close. Ready in Simple mode through the one-on-one override ([PRESETS.md](../PRESETS.md#overrides-and-holds)). The fixture's 96.5 % (200 runs) and this section's 96.5 % (1,000 runs, _Spinosaurus_ on side A) agree.
 
@@ -1333,8 +1337,167 @@ Against _Spinosaurus_:
 
 **Against the other heavies.** _Triceratops_ ties _T. rex_ as the heaviest species in the roster at the mode (8 t) and wins at least 98.7 % against the elephant, the mammoth, the white rhino, the hippo and the buffalo, and 92.1 % against _Spinosaurus_. Its horn force is anchored on its own body weight (78.5 kN at the mode mass), the rule used for the rhino and the hippo, so it scales with mass; against _Spinosaurus_ that force swings the result by 23.1 pp.
 
-**Flight (#169).** The flight model is unchanged; this records how _Triceratops_ behaves under it. One on one against another heavy, the loser flees in practically every decided run (rout share 90.3–99.9 % against _T. rex_, _Spinosaurus_, the elephant, the mammoth, the rhino and the hippo). A lone buffalo, bear, tiger or lion that loses mostly ends incapacitated instead (rout share 0–13.7 %): one horn hit at 376 HP is close to or above their whole body mass. The preset was measured against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §18 should be re-run then.
+**Flight (#169).** The flight model is unchanged; this records how _Triceratops_ behaves under it. One on one against another heavy, the loser flees in practically every decided run (rout share 90.3–99.9 % against _T. rex_, _Spinosaurus_, the elephant, the mammoth, the rhino and the hippo). A lone buffalo, bear, tiger or lion that loses mostly ends incapacitated instead (rout share 0–13.7 %): one horn hit at 376 HP is close to or above their whole body mass. The preset was measured against this model; the per-species flight traits decided on #169 (with #197, under a new model version) will change these numbers, and §18 should be re-run then. Re-run under model 2: [§19](#19-flight-traits-and-model-2-169-197).
 
 **Preset.** `trex-triceratops` (design §6 #13): _T. rex_ 61.5 %, median 91.9 s, rout share 100 % in the fixture (200 runs). Close. Ready in Simple mode through the one-on-one override ([PRESETS.md](../PRESETS.md#overrides-and-holds)). The fixture's 61.5 % (200 runs) and this section's 60.1 % (1,000 runs, _Triceratops_ on side A) agree within the interval.
 
 The tables in this section: Generated from docs/research/calibration-triceratops.json (commit c61f9c6, v22.22.0).
+
+## 19. Flight traits and model 2 (#169, #197)
+
+Measured 2026-11-10 on `feat/169-197-flight-determinism` with `--mv 2` (free model version 2 and classic model version 2; per-section commits in the raw data, Node v22.22.0). Model 2 brings the per-species flight traits of #169 ([SPECIES.md §11.6](../SPECIES.md#116-flight-traits-model-2-169)), the polar bear's researched behaviour rows and, on both engines, the deterministic math of #197 ([MODEL.md §2.2](../MODEL.md#22-random-numbers-and-determinism)). Every section that model 2 can change was re-run: §3–§7 and the species sections §13–§18, plus a new sweep of the flight traits. Raw data: `calibration-results-mv2.json` (every section, `mv` 2). The model 1 report above and its files are unchanged and stay the record of model 1. Method and metrics as in §2: seed 20261019, every other input at its preset; "before" is model 1 from the files above, "after" model 2.
+
+Classic model 2 is the same model as classic model 1 with deterministic math: across §3–§5 its win shares move by at most 1.2 pp (the changed last bits of the normal deviates reshuffle individual runs), so the classic columns below are model 2 and compare directly with §3–§5.
+
+### 19.1 _T. rex_ vs tiger
+
+Tiger win share and the losing side's rout share (%), morale on. Classic is model 2.
+
+| Match-up (A v B)        | Runs | Tigers win, flank | Tigers win, direct | Tigers win, free mv 1 | Tigers win, free mv 2 | Rout % (flank / direct / free mv 1 / free mv 2) | Free median s (mv 1 / mv 2) | Free tigers incapacitated / fled, mean (mv 1 → mv 2) |
+| ----------------------- | ---: | ----------------: | -----------------: | --------------------: | --------------------: | ----------------------------------------------: | --------------------------: | ---------------------------------------------------: |
+| _T. rex_ 1 v tiger 1    | 2000 |               0.0 |                0.0 |         0.0 (0.0–0.2) |         0.0 (0.0–0.2) |                         52.0 / 3.6 / 2.5 / 19.1 |                     26 / 25 |                                1.0 / 0.0 → 0.8 / 0.2 |
+| _T. rex_ 1 v tiger 2    | 2000 |               0.0 |                0.0 |         0.0 (0.0–0.2) |         0.0 (0.0–0.2) |                         58.3 / 6.5 / 3.4 / 25.2 |                     31 / 30 |                                1.9 / 0.1 → 1.5 / 0.5 |
+| _T. rex_ 1 v tiger 3    | 2000 |               0.1 |                0.0 |         0.0 (0.0–0.2) |         0.0 (0.0–0.2) |                        67.3 / 10.7 / 3.2 / 33.1 |                     36 / 32 |                                2.9 / 0.1 → 2.0 / 1.0 |
+| _T. rex_ 1 v tiger 5    | 1000 |               0.4 |                0.0 |         0.0 (0.0–0.4) |         0.0 (0.0–0.4) |                        79.8 / 21.0 / 4.2 / 48.1 |                     52 / 35 |                                4.8 / 0.2 → 2.6 / 2.4 |
+| _T. rex_ 1 v tiger 10   | 1000 |              10.6 |                0.0 |         0.0 (0.0–0.4) |         0.0 (0.0–0.4) |                        90.0 / 43.7 / 5.1 / 69.1 |                    118 / 36 |                                9.5 / 0.5 → 3.1 / 6.9 |
+| _T. rex_ 1 v tiger 20   | 1000 |              46.2 |                0.0 |         1.8 (1.1–2.8) |         0.0 (0.0–0.4) |                        92.7 / 66.5 / 7.0 / 82.7 |                    189 / 37 |                              18.5 / 1.4 → 3.5 / 16.5 |
+| _T. rex_ 1 v tiger 30   | 1000 |              72.9 |                0.0 |      12.6 (10.7–14.8) |         0.0 (0.0–0.4) |                        90.1 / 75.9 / 8.7 / 87.7 |                    235 / 37 |                              26.7 / 2.6 → 3.7 / 26.3 |
+| _T. rex_ 1 v tiger 50   | 1000 |              92.0 |                1.5 |      60.3 (57.2–63.3) |         0.0 (0.0–0.4) |                       80.4 / 84.4 / 11.5 / 91.7 |                    226 / 38 |                              34.6 / 4.4 → 4.2 / 45.8 |
+| _T. rex_ 3 v tiger 30   |  500 |               0.0 |                0.0 |         0.0 (0.0–0.8) |         0.0 (0.0–0.8) |                        77.0 / 75.7 / 3.5 / 78.6 |                    117 / 31 |                              28.9 / 1.1 → 6.4 / 23.6 |
+| _T. rex_ 10 v tiger 100 |  500 |               0.0 |                0.0 |         0.0 (0.0–0.8) |         0.0 (0.0–0.8) |                        86.0 / 85.3 / 2.9 / 86.5 |                    133 / 27 |                             97.1 / 2.9 → 13.5 / 86.5 |
+| _T. rex_ 10 v tiger 300 |  500 |               0.0 |                0.0 |         1.2 (0.6–2.6) |         0.0 (0.0–0.8) |                        91.4 / 90.5 / 5.5 / 92.0 |                    265 / 32 |                          282.6 / 16.8 → 24.0 / 276.0 |
+
+With morale off, flight does nothing: free tigers win 0 % at 1, 10 and 100 against 1, 1 and 10 _T. rex_ in both models (classic flank: 0.1 %, 61.5 %, 0.0 %).
+
+- **The rout share now lies in the classic range.** Free tigers flee in 19.1–92.0 % of their losses (model 1: 2.5–11.5 %), close to classic `flank` (52–93 %) at the larger counts and between `direct` and `flank` one on one. The flagship army, 10 _T. rex_ v 100 tigers, ends with 13.5 tigers incapacitated and 86.5 fled on average (model 1: 97.1 and 2.9; classic about 14 and 86, MODEL.md §6), and its median drops from 133 s to 27 s (classic 26 s). This closes #169's finding.
+- **Tigers no longer win against one _T. rex_ at any count up to 50** (model 1: 1.8 % at 20, 12.6 % at 30, 60.3 % at 50; classic `flank` 46.2–92.0 %). An 8 t animal is 44 times a tiger's mass, far beyond the tiger's `threatRatio` range (1.4–10), so every tiger in its reach breaks off within its `threatTime` (5–60 s), and a lone _T. rex_ is never worn down. The flight sweep (§19.6) shows no value in the tiger's sensitivity ranges that lets 10 tigers win. This follows the evidence the owner asked for (tigers avoid injurious fights; prey of that size is far outside any recorded tiger prey), and it removes the model 1 answer to "how many tigers beat a _T. rex_?". Owner review item.
+- **Crowding no longer matters** for the tiger result (§3, `interference` off): tigers win 0 % at 10 and 20 with and without it, rout 68.6–82.7 %.
+
+### 19.2 Classic presets and SPECIES.md §7 match-ups (free engine)
+
+Side A win share and rout share (%) on the free engine, model 1 → model 2. The classic columns (model 2) are within 1.2 pp of §4–§5 and are not repeated.
+
+| Match-up (A v B)                | A wins, mv 1 | A wins, mv 2 | Rout, mv 1 | Rout, mv 2 |
+| ------------------------------- | -----------: | -----------: | ---------: | ---------: |
+| _T. rex_ 10 v tiger 100         |        100.0 |        100.0 |        2.9 |       86.5 |
+| _T. rex_ 1 v tiger 10           |         99.0 |        100.0 |        5.1 |       69.1 |
+| elephant 5 v lion 30            |        100.0 |        100.0 |       89.0 |       93.9 |
+| buffalo 1 v lion 6              |         16.7 |         17.1 |       73.4 |       74.1 |
+| buffalo 1 v hyena 15            |         26.2 |         81.2 |       79.2 |       95.7 |
+| brown bear 1 v wolf 8           |         69.8 |         70.5 |       96.9 |       97.0 |
+| brown bear 1 v tiger 1          |         77.8 |         79.0 |      100.0 |      100.0 |
+| mammoth 1 v wolf 12             |        100.0 |        100.0 |       89.5 |       93.9 |
+| _T. rex_ 1 v _H. erectus_ 100   |        100.0 |        100.0 |       97.2 |       97.9 |
+| elephant 1 v lion 27            |         94.2 |        100.0 |       95.0 |       98.0 |
+| buffalo 10 v lion 12            |         99.6 |         99.6 |       94.3 |       94.3 |
+| _T. rex_ 1 v lion 30            |         79.8 |        100.0 |       89.9 |       94.2 |
+| _T. rex_ 1 v wolf 50            |         99.8 |        100.0 |       93.6 |       95.3 |
+| mammoth 1 v wolf 30             |        100.0 |        100.0 |       93.7 |       96.0 |
+| mammoth 1 v hyena 15            |        100.0 |        100.0 |       92.3 |       95.1 |
+| mammoth 1 v lion 20             |         96.6 |        100.0 |       92.7 |       96.9 |
+| _T. rex_ 1 v _H. erectus_ 30    |        100.0 |        100.0 |       91.8 |       94.1 |
+| _T. rex_ 1 v _H. erectus_ 300   |        100.0 |        100.0 |       99.0 |       99.2 |
+| elephant 1 v _H. erectus_ 30    |        100.0 |        100.0 |       94.0 |       96.7 |
+| buffalo 1 v _H. erectus_ 20     |         99.0 |        100.0 |       93.8 |       97.1 |
+| _H. erectus_ 1 v wolf 1         |          0.0 |          0.0 |      100.0 |      100.0 |
+| _H. erectus_ 1 v wolf 3         |          0.0 |          0.0 |      100.0 |      100.0 |
+| _H. erectus_ 1 v hyena 1        |          0.0 |          0.0 |      100.0 |      100.0 |
+| _H. erectus_ 1 v tiger 1        |          0.0 |          0.0 |       99.8 |      100.0 |
+| _H. erectus_ 1 v lion 1         |          0.0 |          0.0 |       99.6 |      100.0 |
+| _H. erectus_ 1 v _H. erectus_ 1 |         50.2 |         50.2 |        0.0 |        0.0 |
+| _H. erectus_ 1 v _H. erectus_ 2 |          7.8 |          7.8 |        0.4 |        0.4 |
+
+- **Carnivores break off against megaherbivores.** Lions against one elephant (27) or one _T. rex_ (30) win 0 % (model 1: 5.8 % and 20.2 %); wolves against one _T. rex_ (50) 0 % (0.2 %); hominins against one _T. rex_ (300) 0 % (model 1: 0 %). Lions against a lone buffalo, their preferred prey, are unchanged within noise (83.2 % → 82.8 %), and so are 12 lions against 10 buffalo (0.4 % → 0.4 %).
+- **Hyenas lose to a lone buffalo** (`buffalo 1 v hyena 15`: buffalo 26.2 % → 81.2 %): the buffalo is 11 times a hyena, above the hyena's threshold (3.3×, its preferred prey reach 182 kg and it significantly avoids buffalo [Hayward 2006]). Classic `flank` gives the hyenas 95.5 %, `direct` 42.0 %.
+- **The lone-_H. erectus_ duels (#167) are unchanged**: the hominin still wins none against a wolf, hyena, tiger or lion.
+
+### 19.3 Structural checks
+
+- **Mirror matches:** 17 of 17 (the 14 of §6 and the three 4,000-run wolf rechecks) have 0 inside the interval of the win-share difference. Largest gap: wolf 1 v wolf 1 at 1,000 runs, 52.2 % v 46.6 % (−0.6 to 11.8 pp), as in model 1; the rechecks are 50.5 / 48.3, 49.5 / 49.8 and 49.2 / 49.8 %.
+- **Side swaps:** all 3 of 3 pairs are symmetric (tiger 5 v lion 5, brown bear 1 v wolf 10, _T. rex_ 1 v tiger 10).
+- **Monotonicity (side B's win share as its count grows):**
+  - wolves v one brown bear (1–20): 0.2, 3.4, 14.0, 24.2, 31.4, 38.8, 47.2, 60.4, 67.4 % (model 1: 0.2, 3.6, 14.6, 24.4, 31.2, 38.8, 46.2, 60.0, 68.2 %). Non-decreasing.
+  - wolves v one buffalo (1–25): 0.0, 0.4, 1.4, 3.0, 7.0, 12.0, 12.2, 16.4, 16.6, 20.0, 24.0, 28.0 % (model 1: 0.0, 0.2, 1.8, 6.0, 14.0, 22.0, 24.4, 30.8, 34.0, 37.4, 45.2, 53.2 %). Non-decreasing.
+  - lions v one buffalo (1–10): 1.8, 22.0, 38.2, 61.2, 81.0, 87.2, 91.8 % (model 1: 1.8, 22.0, 38.6, 61.2, 81.8, 88.4, 93.0 %). Non-decreasing.
+  - lions v one elephant (5–60): 0.0, 0.0, 0.0, 0.7, 2.7, 5.0 % (model 1: 2.3, 2.3, 5.3, 8.0, 13.7, 26.7 %). Non-decreasing.
+- **The wolf-vs-buffalo curve (#168)** rises more slowly than in model 1 (28.0 % at 25 wolves against 53.2 %): the buffalo's mass varies per run and per animal, and the heavier draws exceed the wolf's threshold (15×), so some packs break off. It still has no plateau at 9–13; #168 stays open.
+
+### 19.4 Simple presets
+
+The model 2 fixture and its checks are in [PRESETS.md](../PRESETS.md#model-2-the-checked-fixture) (200 runs, the test's measure). At 500 runs (this report's `presets` section):
+
+| Preset                   | Sides                         | A wins, mv 1 → mv 2 | Median s, mv 1 → mv 2 | Rout, mv 1 → mv 2 |
+| ------------------------ | ----------------------------- | ------------------: | --------------------: | ----------------: |
+| `lion-tiger`             | lion 1 v tiger 1              |         56.0 → 56.0 |               22 → 22 |     100.0 → 100.0 |
+| `pride-five-tigers`      | lion 5 v tiger 5              |         57.8 → 57.8 |               27 → 27 |     100.0 → 100.0 |
+| `tiger-bear`             | tiger 1 v brown bear 1        |         23.6 → 22.0 |               33 → 32 |     100.0 → 100.0 |
+| `bear-wolf-pack`         | brown bear 1 v wolf 8         |         68.8 → 68.6 |               69 → 68 |       97.1 → 97.1 |
+| `buffalo-pride`          | buffalo 1 v lion 6            |         18.0 → 19.0 |             141 → 140 |       74.6 → 76.4 |
+| `elephants-pride`        | elephant 5 v lion 30          |       100.0 → 100.0 |               46 → 37 |       89.0 → 93.9 |
+| `mammoth-wolves`         | mammoth 1 v wolf 12           |       100.0 → 100.0 |               75 → 46 |       89.1 → 93.9 |
+| `trex-mirror`            | _T. rex_ 1 v _T. rex_ 1       |         49.0 → 49.0 |               96 → 96 |     100.0 → 100.0 |
+| `trex-squad-tiger-horde` | _T. rex_ 10 v tiger 100       |       100.0 → 100.0 |              133 → 27 |        2.9 → 86.5 |
+| `trex-erectus-100`       | _T. rex_ 1 v _H. erectus_ 100 |       100.0 → 100.0 |               45 → 42 |       97.2 → 97.9 |
+| `lions-hyenas`           | lion 3 v hyena 10             |         40.2 → 48.0 |               27 → 26 |       97.7 → 99.0 |
+| `polar-bear-brown-bear`  | polar bear 1 v brown bear 1   |            – → 76.6 |                – → 68 |         – → 100.0 |
+| `elephant-hippo`         | elephant 1 v hippo 1          |            – → 87.2 |                – → 95 |         – → 100.0 |
+| `raptors-trex`           | raptor 12 v _T. rex_ 1        |             – → 0.0 |                – → 66 |          – → 95.5 |
+| `elephant-rhino`         | elephant 1 v white rhino 1    |            – → 94.0 |                – → 72 |         – → 100.0 |
+| `hippo-rhino`            | hippo 1 v white rhino 1       |            – → 42.8 |                – → 96 |         – → 100.0 |
+| `trex-spinosaurus`       | _T. rex_ 1 v _Spinosaurus_ 1  |            – → 96.2 |               – → 115 |          – → 99.4 |
+| `trex-triceratops`       | _T. rex_ 1 v _Triceratops_ 1  |            – → 60.0 |                – → 91 |         – → 100.0 |
+
+No ready preset changes its winner. Four exceed a limit under model 2 and carry a documented override (PRESETS.md): `elephants-pride`, `mammoth-wolves` and `raptors-trex` the 90 % rout limit, `trex-squad-tiger-horde` the 30 s median. The three holds still fail the rout check. The close tags all hold.
+
+### 19.5 The species sections (§13–§18) under model 2
+
+Every check of §13–§18 re-run unchanged in its definition. Mirror matches and side swaps all keep 0 inside their intervals, and every count sweep stays monotonic within 3 pp. What moved:
+
+| Section | Reference match-up           | A wins, mv 1 → mv 2 | Largest S swing, mv 1 → mv 2 (pp) | Much larger opponents: A's rout share when it loses, mv 1 → mv 2     |
+| ------- | ---------------------------- | ------------------: | --------------------------------- | -------------------------------------------------------------------- |
+| §13     | polar bear 1 v brown bear 1  |         83.4 → 76.4 | `strikeForce` +39.7 → +33.6       | _T. rex_ 28.1 → 85.6; elephant 77.3 → 99.6; mammoth 69.6 → 99.5      |
+| §14     | hippo 1 v elephant 1         |         16.1 → 10.3 | `strikeInterval` -30.6 → -22.1    | _T. rex_ 98.6 → 99.5; elephant 100.0 → 100.0; mammoth 100.0 → 100.0  |
+| §15     | raptor 12 v _T. rex_ 1       |           7.1 → 0.0 | `turnRate` +10.2 → +0.0           | _T. rex_ 36.8 → 56.1; elephant 87.1 → 97.1; mammoth 79.4 → 95.2      |
+| §16     | white rhino 1 v elephant 1   |          26.4 → 6.2 | `strikeForce` +35.8 → +8.3        | _T. rex_ 99.9 → 100.0; elephant 100.0 → 100.0; mammoth 100.0 → 100.0 |
+| §17     | _Spinosaurus_ 1 v _T. rex_ 1 |           3.5 → 3.5 | `strikeInterval` -13.1 → -13.0    | _T. rex_ 99.2 → 99.2; elephant 97.6 → 99.5; mammoth 98.0 → 99.9      |
+| §18     | _Triceratops_ 1 v _T. rex_ 1 |         39.8 → 39.7 | `strikeInterval` -53.2 → -52.4    | _T. rex_ 99.9 → 100.0; elephant 99.9 → 100.0; mammoth 99.9 → 99.9    |
+
+- **Polar bear (§13).** Its researched rows lower its share against the brown bear (preset `polar-bear-brown-bear`: 83.4 % → 76.4 %); `morale`, now 0.4–0.8, is its second largest swing (+20.0 → +31.1 pp). It flees one _T. rex_ in 85.6 % of its losses (model 1: 28.1 %), and polar bears never beat one _T. rex_ at 1–16 (model 1: up to 46.6 % at 16). Wolves do a little better against it, with its lower morale (polar bear 1–7 pp lower at 2–20 wolves; 49.0 % against 30 wolves, model 1 51.8 %); tigers do worse (2–6 tigers: polar bear 84.6, 68.8, 53.0, 38.0, 28.8 %, model 1 74.0, 50.0, 31.8, 21.4, 12.4 %).
+- **Hippo (§14) and white rhino (§16).** Lions and hyenas now break off against both (one hippo against 20 lions: 98.8 % for the hippo, model 1 43.2 %; one rhino against 20 lions 99.4 %, model 1 56.4 %), which matches "adults rarely preyed upon" and the megaherbivore line of [Owen-Smith & Mills 2008], but leaves the record of lion prides occasionally taking adult hippos [WP] unreachable. Both yield to the elephant: the rhino (threshold 1.25×) wins 26.4 % → 6.2 % one on one and needs six against one elephant for 42.8 % (model 1 99.2 %), so its unmeasured strike values swing it far less (`strikeForce` +35.8 → +8.3 pp). The hippo against the elephant 16.1 % → 10.3 %. Against the hippo the rhino is unchanged within noise (63.1 % → 60.1 %).
+- **Raptor pack (§15).** Raptors never beat one _T. rex_ in model 2 at 1–30 (model 1: 17.0 % at 30), and neither do lions at 8–30 (model 1: 2.0–17.4 %): each is outmatched 20 to 50 times. The rout check of §15 is therefore no longer "passed unaided": `raptors-trex` routs 95.5 % at 500 runs and carries an override (§19.4). Against the hippo the pack breaks off too (8 raptors: 3.6 %, model 1 48.4 %); against the buffalo nothing changes (the buffalo is 1.5 times a raptor). With the preset at 0 %, its one-at-a-time sensitivity is flat: no single S value of the raptor, pack-buff traits included, lifts it above 0 %.
+- **_Spinosaurus_ (§17) and _Triceratops_ (§18).** Their duels with _T. rex_ do not move (3.5 % → 3.5 %, 39.8 % → 39.7 %): neither outweighs the other by any threshold. Lions and raptors now break off against both at every count (100 % for the heavy at 1–20 lions and 1–30 raptors). Against the elephant _Spinosaurus_ wins more (88.9 % → 95.4 %), because the elephant (threshold 1.5×) yields to the 7.4 t animal; _Triceratops_ is unchanged. The largest swings stay with the unmeasured strike values (§17, §18).
+
+### 19.6 Sensitivity of the flight traits
+
+Each species as side A in a match-up where its flight acts; each flight trait pinned at its sensitivity range's min, then its max, every other input at its preset (500 runs). The engine reads the mode, so the sweep moves the mode. Win share and rout share of side A when it loses (%), min → max.
+
+| Match-up (A v B)             | Preset: A wins / rout | `threatRatio` range: A wins; rout | `threatTime` range: A wins; rout   | `soloShock` range: A wins; rout    |
+| ---------------------------- | --------------------: | --------------------------------- | ---------------------------------- | ---------------------------------- |
+| tiger 10 v _T. rex_ 1        |            0.0 / 69.1 | 1.4–10: 0.0 → 0.0; 69.1 → 69.1    | 5–60: 0.0 → 0.0; 82.9 → 39.5       | 0–0.08: 0.0 → 0.0; 59.2 → 74.7     |
+| lion 10 v elephant 1         |            0.0 / 96.5 | 3.7–10: 0.0 → 0.0; 96.5 → 96.5    | 10–90: 0.0 → 0.0; 98.4 → 93.7      | – (social)                         |
+| wolf 12 v mammoth 1          |            0.0 / 94.2 | 6–25: 0.0 → 0.0; 94.2 → 94.2      | 5–60: 0.0 → 0.0; 96.2 → 92.2       | – (social)                         |
+| hyena 10 v buffalo 1         |            5.8 / 96.9 | 1.9–10: 5.8 → 19.6; 96.9 → 94.7   | 5–60: 0.0 → 32.4; 98.4 → 91.0      | – (social)                         |
+| _H. erectus_ 30 v _T. rex_ 1 |            0.0 / 94.2 | 1.5–4: 0.0 → 0.0; 94.2 → 94.2     | 5–60: 0.0 → 0.0; 96.5 → 93.0       | – (social)                         |
+| raptor 12 v _T. rex_ 1       |            0.0 / 95.5 | 2–4: 0.0 → 0.0; 95.5 → 95.5       | 10–90: 0.0 → 0.2; 97.8 → 90.6      | – (social)                         |
+| polar bear 1 v _T. rex_ 1    |            0.0 / 83.8 | 1.5–3: 0.0 → 0.0; 83.8 → 83.8     | 5–30: 0.0 → 0.0; 93.8 → 65.6       | 0–0.08: 0.0 → 0.0; 83.8 → 83.8     |
+| brown bear 1 v _T. rex_ 1    |            0.0 / 15.2 | 1.5–4: 0.0 → 0.0; 15.2 → 15.2     | 10–90: 0.0 → 0.0; 42.4 → 8.2       | 0–0.08: 0.0 → 0.0; 15.2 → 15.2     |
+| buffalo 1 v elephant 1       |            0.4 / 98.8 | 1.2–3: 0.4 → 0.4; 98.8 → 98.8     | 15–120: 0.0 → 1.0; 100.0 → 96.6    | 0–0.08: 0.4 → 0.4; 98.8 → 98.8     |
+| elephant 1 v _T. rex_ 1      |           0.4 / 100.0 | 1.2–3: 0.4 → 0.6; 100.0 → 99.6    | 20–180: 0.4 → 0.6; 100.0 → 100.0   | 0–0.08: 0.4 → 0.4; 100.0 → 100.0   |
+| mammoth 1 v _T. rex_ 1       |           0.8 / 100.0 | 1.2–3: 0.4 → 1.2; 100.0 → 99.8    | 20–180: 0.8 → 0.8; 100.0 → 100.0   | 0–0.08: 0.8 → 0.8; 100.0 → 100.0   |
+| hippo 1 v elephant 1         |          12.0 / 100.0 | 1.5–4: 5.8 → 17.0; 100.0 → 100.0  | 20–180: 11.4 → 12.6; 100.0 → 100.0 | 0–0.08: 12.0 → 12.0; 100.0 → 100.0 |
+| white rhino 1 v elephant 1   |           4.8 / 100.0 | 1–2: 2.0 → 23.6; 100.0 → 100.0    | 5–60: 4.4 → 7.8; 100.0 → 100.0     | 0–0.08: 4.8 → 4.8; 100.0 → 100.0   |
+| _T. rex_ 3 v _Triceratops_ 3 |           61.6 / 99.9 | 1.5–4: 61.2 → 61.6; 99.9 → 99.9   | 20–180: 61.6 → 61.6; 99.9 → 99.9   | 0–0.08: 61.6 → 61.6; 99.9 → 99.9   |
+| _Spinosaurus_ 1 v _T. rex_ 1 |            4.4 / 99.0 | 1–2: 2.4 → 4.4; 99.4 → 99.0       | 10–90: 4.4 → 4.4; 99.0 → 99.0      | 0–0.08: 4.4 → 4.4; 99.0 → 99.0     |
+| _Triceratops_ 1 v _T. rex_ 1 |          40.8 / 100.0 | 1.2–3: 38.0 → 41.0; 100.0 → 100.0 | 15–120: 40.8 → 41.0; 100.0 → 100.0 | 0–0.08: 40.8 → 40.8; 100.0 → 100.0 |
+
+- **`threatTime` is the flight trait that matters most.** Over its range it moves the rout share of the outmatched side by 3–43 pp (tigers 82.9 % → 39.5 %, the polar bear 93.8 % → 65.6 %, the brown bear 42.4 % → 8.2 % against one _T. rex_), but it changes the winner only for hyenas against a lone buffalo (0 % → 32.4 %).
+- **`threatRatio` matters only where a match-up sits near the threshold:** the rhino (2.0 % → 23.6 % against the elephant over 1–2×), the hippo (5.8 % → 17.0 % over 1.5–4×) and hyenas against a buffalo (5.8 % → 19.6 % over 1.9–10×). Elsewhere the opponent is far above or below every value in the range.
+- **`soloShock` matters only in groups of a solitary species:** 10 tigers' rout share 59.2 % → 74.7 % over 0–0.08; one on one it has nothing to act on.
+- **No flight value in its range lets a carnivore group beat a much larger animal** (tigers, lions, wolves, hominins and raptors all stay at 0–0.2 %). That outcome rests on the thresholds' order of magnitude, which the prey-size literature supports, not on the S values' exact place.
+
+### 19.7 Verdicts
+
+- **#169 is addressed as decided:** flight is per-species, sourced, tagged and swept, and the tiger's rout share is back in the range the tiger's own evidence and the classic model suggest. The flagship preset now reads as the classic one did (most tigers withdraw).
+- **The structural checks still pass** under model 2: mirror matches, side swaps and monotonic count sweeps, in §6 and in every species section.
+- **Owner review items:** carnivore groups never beat a much larger animal any more (tigers v _T. rex_, lions v elephant, raptors v _T. rex_, lions v hippo or rhino); four preset overrides (§19.4); the rhino's low threshold against the elephant; hyenas against a lone buffalo.
+- **Open as before:** #167 (lone hominin duels, unchanged), #168 (no plateau in the wolf-vs-buffalo curve, now lower), #170 (parameters page). Cross-engine identity of model 2 is a CI check (MODEL.md §2.2); a manual check in real Safari and Chrome remains for after release (#197).

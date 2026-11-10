@@ -249,6 +249,8 @@ Any agent with riders rolls `shakeRate × DT` per rider per tick (legacy 619). A
 
 With `morale` on, every agent routs below `routThreshold` (0.2) and flees as the legacy Routed state (654–676), on both sides. Large animals get high, **S** morale presets and lose morale mainly through heavy wounds (§4.3), so a _T. rex_ routs only when badly hurt. With `morale` off nobody routs. Non-social species are **not** affected by allies' deaths or routs (no morale shock): that shock is part of the pack layer (§5, E4), because the legacy shock applied to the solitary tiger only by virtue of its role.
 
+**Model 2 (#169).** Flight became a per-species trait set, by owner decision: from free model version 2 an agent within reach of an enemy that outweighs it by its species' `threatRatio` loses morale over its `threatTime`, and members of non-social species lose a weak `soloShock` for each nearby ally incapacitated. Model 1 keeps the rule above. Values and sources: [SPECIES.md §11.6](../SPECIES.md#116-flight-traits-model-2-169).
+
 ### 4.6 Fairness: simultaneous resolution
 
 Mirror matchups must not favour side A because of update order. Each tick:

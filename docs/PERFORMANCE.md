@@ -203,6 +203,18 @@ The non-social rows (tigers) re-measured on the same run: 0.93, 0.61 and 0.44.
 
 **Regression test.** `tests/free-perf.test.ts` has two halves. In every `npm test` it checks the deterministic part of the claim: `freeWorkEstimate` counts the same agent-steps as `workEstimate` for the same matchup (and exactly `FREE_WORK_WEIGHT_BUFF` times as many with an active pack buff), and seeded 10 v 100 batches (tigers, and wolves with the buff on) never simulate more (weighted) agent-steps than the budget counted. The timing gates (the free engine costs at most 1.5× the legacy engine per agent-step at 10 v 100 with tigers, and per weighted agent-step with wolves and the buff on; median of 7 interleaved rounds after a warm-up) run only with `BENCH=1 npx vitest run tests/free-perf.test.ts`: wall time is not deterministic, and in the default suite a single slow round on a loaded machine failed them (#82). Run the gates whenever `src/sim/free/engine.ts` changes.
 
+## Deterministic math (#197)
+
+Model 2 of both engines replaces `Math.sin`, `cos`, `atan2` and `log` with `src/sim/detmath.ts`. Measured 2026-11-10 in vitest (Node 22, V8) on a 4-core container, 30 runs × 300 s per batch, median of 5 alternating rounds, wall time per simulated agent-step, in two sessions:
+
+| Batch                                       | Model 1 (ns)  | Model 2 (ns)  | Ratio     |
+| ------------------------------------------- | ------------- | ------------- | --------- |
+| Free, 10 _T. rex_ v 100 tigers, morale off  | 129.9 / 124.7 | 135.6 / 133.4 | 1.04–1.07 |
+| Free, _T. rex_ 1 v 50 wolves (pack buff)    | 405.2 / 396.1 | 478.0 / 430.4 | 1.09–1.18 |
+| Classic, 10 _T. rex_ v 100 tigers (default) | 164.8 / 172.3 | 184.5 / 187.0 | 1.09–1.12 |
+
+Per call the functions cost about twice V8's built-ins (2 million calls: `dsin` 31.8 ns against 16.2 ns, `dcos` 28.7 against 21.2, `datan2` 36.8 against 22.4, `dlog` 41.0 against 10.8). The wolf row also includes flight (wolves break off from the _T. rex_), so it overstates the math. With morale on, model 2's figure for the free tiger horde is higher per agent-step (about 2.2×) because far more tigers flee, and a fleeing agent searches for its nearest enemy every tick; the battle ends in about a fifth of the simulated time (median 27 s against 133 s), so a whole batch is cheaper. Issue #197 allows about 10 %; the free engine stays within it, the classic engine sits at its edge. Not measured: real browsers.
+
 ## Not changed
 
 - No `SharedArrayBuffer`: it needs cross-origin isolation, which conflicts with third-party ad iframes ([research §3](research/PERFORMANCE.md)). Transfers are already zero-copy.

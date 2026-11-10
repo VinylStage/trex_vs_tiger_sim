@@ -1045,7 +1045,10 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
   });
 
   const d = defaultConfig();
-  const keys = (Object.keys(d) as (keyof ScenarioConfig)[]).filter((k) => k !== 'params');
+  // The model version `mv` (#197) names the engine's math, not a scenario setting: no section.
+  const keys = (Object.keys(d) as (keyof ScenarioConfig)[]).filter(
+    (k) => k !== 'params' && k !== 'mv',
+  );
   const choices: Partial<Record<keyof ScenarioConfig, readonly string[]>> = {
     sampling: SAMPLING_METHODS,
     packTactic: PACK_TACTICS,
