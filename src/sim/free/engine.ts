@@ -233,7 +233,18 @@ export interface FreeBattleOptions {
    * that tick's interventions and before anything else of the tick. It must not write the view.
    */
   inspect?: { ticks: readonly number[]; at: (step: number, view: FreeAgentView) => void };
+  /**
+   * Branch hook (RENEWAL-1.0 §10.1, live win chance): at the start of tick `tick`, both side RNGs
+   * are reseeded from `deriveSeed(config.seed, run, salt)`, so the run is identical to the run
+   * without it up to that tick and diverges after. `salt` is an integer ≥ `BRANCH_SALT_MIN`
+   * (3 and 4 are the sides', 5 is reserved for card RNG); `tick` an integer in [0, maxSteps).
+   * Absent or out of range, nothing changes.
+   */
+  branch?: { tick: number; salt: number };
 }
+
+/** Lowest salt of a branch stream (RENEWAL-1.0 §10.1). */
+export const BRANCH_SALT_MIN = 6;
 
 const TURN_BOUNDS = [TRAIT_BOUNDS.turnRate[0] * DEG, TRAIT_BOUNDS.turnRate[1] * DEG] as const;
 const clamp = (v: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, v));
@@ -830,12 +841,29 @@ export function simulateFreeBattle(
     ivApply = runner.apply;
   }
 
+  // Branch hook: −1 unless a valid branch is set, so the check below never passes without one.
+  const br = opts?.branch;
+  const branchTick =
+    br !== undefined &&
+    Number.isInteger(br.tick) &&
+    br.tick >= 0 &&
+    br.tick < maxSteps &&
+    Number.isInteger(br.salt) &&
+    br.salt >= BRANCH_SALT_MIN
+      ? br.tick
+      : -1;
+
   const killed = [0, 0];
   let outcome: FreeOutcomeCode = FreeOutcome.Draw;
   let step = 0;
   if (trace) record(0);
 
   for (; step < maxSteps; step++) {
+    if (step === branchTick) {
+      const seed = deriveSeed(config.seed, run, (br as { salt: number }).salt);
+      rngs[0] = new Rng(deriveSeed(seed, 0, SALT_A));
+      rngs[1] = new Rng(deriveSeed(seed, 0, SALT_B));
+    }
     if (step === ivDue) ivDue = (ivApply as (step: number) => number)(step);
     // Spatial index and per-target counts from the snapshot.
     (grids[0] as SpatialGrid).rebuild(

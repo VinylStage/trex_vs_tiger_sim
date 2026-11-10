@@ -22,6 +22,18 @@ export type WorkerRequest =
       run: number;
       interventions?: readonly Intervention[];
     }
+  /**
+   * Branches of one free-model run (RENEWAL-1.0 §10.2 point 4): the run under `interventions`,
+   * once per `branches` entry with the engine's branch hook (`opts.branch`). Live chance, #179.
+   */
+  | {
+      type: 'branch-free';
+      jobId: number;
+      config: FreeConfig;
+      run: number;
+      interventions?: readonly Intervention[];
+      branches: readonly { tick: number; salt: number }[];
+    }
   /** `summaries` is `packSummaries(...)` of every run, transferred (src/sim/montecarlo.ts). */
   | { type: 'aggregate'; jobId: number; config: ScenarioConfig; summaries: Float64Array }
   /** `summaries` is `packFreeSummaries(...)` (src/sim/free/montecarlo.ts), transferred. */
@@ -34,6 +46,8 @@ export type WorkerResponse =
   | { type: 'replay'; jobId: number; trace: BattleTrace }
   /** `liveSimMs`: wall time of the simulation in the worker, without the message transfer. */
   | { type: 'replay-free'; jobId: number; trace: FreeTrace; liveSimMs: number }
+  /** One `FreeOutcome` code per requested branch, in request order. */
+  | { type: 'branch-free'; jobId: number; outcomes: number[] }
   | { type: 'aggregate'; jobId: number; agg: AggregateResult }
   | { type: 'aggregate-free'; jobId: number; agg: FreeAggregate }
   | { type: 'error'; jobId: number; message: string };
