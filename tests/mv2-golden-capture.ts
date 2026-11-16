@@ -16,7 +16,8 @@ import { Rng } from '../src/sim/rng';
 import { designRow } from '../src/sim/sampling';
 
 /*
- * Golden cases of free `mv` 2 and classic model 2 (#169, #197), shared by the V8 test
+ * Golden cases of free `mv` 2 and classic model 2 (#169, #197), in both flight modes of free
+ * `mv` 2 (`allIn`, the default, and `realistic`; docs/MODEL.md §4.6), shared by the V8 test
  * (tests/mv2-golden.test.ts, vitest on Node) and the JavaScriptCore check
  * (scripts/cross-engine/check-goldens.mjs, run with Bun). No test framework here, so both
  * engines run exactly this code. The fixture is tests/fixtures/mv2-golden.json; like every
@@ -33,12 +34,32 @@ export const FREE_CASES: {
     input: { runs: 40, sides: [{ species: 'trex' }, { species: 'trex' }] },
   },
   {
-    name: 'trex 1 v tiger 10 (flight)',
+    name: 'trex 1 v tiger 10 (allIn, the default)',
     input: { runs: 30, sides: [{ species: 'trex' }, { species: 'tiger', count: 10 }] },
   },
   {
-    name: 'trex 10 v tiger 100 (flight, solitary shock)',
+    name: 'trex 1 v tiger 10 (realistic flight)',
     input: {
+      runs: 30,
+      flight: 'realistic',
+      sides: [{ species: 'trex' }, { species: 'tiger', count: 10 }],
+    },
+  },
+  {
+    name: 'trex 10 v tiger 100 (allIn, the default)',
+    input: {
+      runs: 8,
+      maxTime: 300,
+      sides: [
+        { species: 'trex', count: 10 },
+        { species: 'tiger', count: 100 },
+      ],
+    },
+  },
+  {
+    name: 'trex 10 v tiger 100 (realistic flight, solitary shock)',
+    input: {
+      flight: 'realistic',
       runs: 8,
       maxTime: 300,
       sides: [
@@ -61,6 +82,23 @@ export const FREE_CASES: {
       runs: 10,
       maxTime: 300,
       sides: [{ species: 'raptor', count: 12 }, { species: 'trex' }],
+    },
+  },
+  {
+    name: 'lion 10 v elephant 1 (realistic flight, social)',
+    input: {
+      runs: 20,
+      maxTime: 300,
+      flight: 'realistic',
+      sides: [{ species: 'lion', count: 10 }, { species: 'elephant' }],
+    },
+  },
+  {
+    name: 'polarBear 1 v trex 1 (realistic flight, revised polar bear)',
+    input: {
+      runs: 20,
+      flight: 'realistic',
+      sides: [{ species: 'polarBear' }, { species: 'trex' }],
     },
   },
   {
@@ -176,6 +214,7 @@ export function captureFree(
 ): CapturedCase {
   const config = sanitizeFreeConfig({ ...input, mv: 2 });
   if (config.mv !== 2) throw new Error('model 2 is not runnable');
+  if (config.flight !== (input['flight'] ?? 'allIn')) throw new Error('flight mode not accepted');
   const design = buildFreeDesign(config);
   const summaries = opts
     ? [simulateFreeBattle(config, designRow(design, 0), 0, false, opts).summary]

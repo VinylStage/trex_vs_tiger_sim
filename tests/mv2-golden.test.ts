@@ -10,8 +10,9 @@ import {
 } from './mv2-golden-capture';
 
 /**
- * Golden fixture of free `mv` 2 and classic model 2 (#169, #197): deterministic math and the
- * per-species flight traits. Like every golden it must never be regenerated; the older goldens
+ * Golden fixture of free `mv` 2 and classic model 2 (#169, #197): deterministic math, and the
+ * per-species flight traits in both flight modes (`allIn` by default, `realistic` where a case
+ * names it; docs/MODEL.md §4.6). Like every golden it must never be regenerated; the older goldens
  * keep pinning model 1. The same fixture is checked under JavaScriptCore by
  * `npm run test:jsc` (scripts/cross-engine/check-goldens.mjs), so both engines must give these
  * numbers bit for bit (docs/MODEL.md §2.2).

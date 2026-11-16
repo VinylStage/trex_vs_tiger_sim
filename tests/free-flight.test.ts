@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { routShare } from '../src/sim/free/aggregate';
-import { sanitizeFreeConfig } from '../src/sim/free/config';
+import { defaultFreeConfig, sanitizeFreeConfig } from '../src/sim/free/config';
 import { runAllFree } from '../src/sim/free/montecarlo';
 import {
   FREE_SPECIES,
@@ -10,11 +10,19 @@ import {
   traitRanges,
 } from '../src/sim/free/species';
 import { FLIGHT_TRAIT_IDS, TRAIT_IDS } from '../src/sim/free/traits';
-import { freeConfigDiff } from '../src/ui/share-free';
+import {
+  freeConfigDiff,
+  freeConfigFromHash,
+  freeConfigFromObject,
+  hashFromFreeConfig,
+} from '../src/ui/share-free';
+import { defaultSimpleConfig, hasHiddenEdits, simpleRunConfig } from '../src/ui/simple-model';
+import { FREE_PRESETS, presetConfig } from '../src/sim/free/presets';
 
 /*
- * Per-species flight traits of model 2 (#169, docs/SPECIES.md §11.6) and the polar bear's
- * revised behaviour rows. Model 1 is pinned by the older goldens; model 2 by
+ * Per-species flight traits of model 2 (#169, docs/SPECIES.md §11.6), the flight mode that turns
+ * them on (`realistic`) or off (`allIn`, the default; owner decision 2026-11-16, docs/MODEL.md
+ * §4.6) and the polar bear's revised behaviour rows. Model 1 is pinned by the older goldens; model 2 by
  * tests/mv2-golden.test.ts.
  */
 
@@ -80,22 +88,85 @@ describe('flight traits in the registry', () => {
 });
 
 describe('flight in the engine', () => {
-  const rout = (mv: number, morale = true): number => {
+  const rout = (mv: number, morale = true, flight?: string): number => {
     const c = sanitizeFreeConfig({
       mv,
       runs: 60,
       morale,
+      ...(flight === undefined ? {} : { flight }),
       sides: [{ species: 'trex' }, { species: 'tiger', count: 10 }],
     });
     return routShare(runAllFree(c).summaries);
   };
 
-  it('lets tigers break off against a T. rex under model 2 (#169)', () => {
+  it('lets tigers break off against a T. rex under model 2 in realistic mode (#169)', () => {
     expect(rout(1)).toBeLessThan(0.2);
-    expect(rout(2)).toBeGreaterThan(0.5);
+    expect(rout(2, true, 'realistic')).toBeGreaterThan(0.5);
   });
 
-  it('does nothing with morale off: nobody flees in either model', () => {
-    expect([rout(1, false), rout(2, false)]).toEqual([0, 0]);
+  it('keeps the flight traits inactive in the default allIn mode (owner decision 2026-11-16)', () => {
+    expect(rout(2)).toBeLessThan(0.2);
+    expect(rout(2, true, 'allIn')).toBe(rout(2));
+    // Model 1 has no flight traits, so a flight mode changes nothing there.
+    expect(rout(1, true, 'realistic')).toBe(rout(1));
+  });
+
+  it('does nothing with morale off: nobody flees in either model or mode', () => {
+    expect([rout(1, false), rout(2, false), rout(2, false, 'realistic')]).toEqual([0, 0, 0]);
+  });
+});
+
+describe('flight mode in the config and the link', () => {
+  const sides = [{ species: 'trex' }, { species: 'tiger', count: 10 }];
+
+  it('defaults to allIn, accepts realistic under model 2 and forces allIn under model 1', () => {
+    expect(defaultFreeConfig().flight).toBe('allIn');
+    expect(sanitizeFreeConfig({ mv: 2, sides }).flight).toBe('allIn');
+    expect(sanitizeFreeConfig({ mv: 2, sides, flight: 'realistic' }).flight).toBe('realistic');
+    for (const bad of ['REALISTIC', 'all', 1, null, true, '__proto__']) {
+      expect(sanitizeFreeConfig({ mv: 2, sides, flight: bad }).flight, String(bad)).toBe('allIn');
+    }
+    expect(sanitizeFreeConfig({ mv: 1, sides, flight: 'realistic' }).flight).toBe('allIn');
+    expect(sanitizeFreeConfig({ sides, flight: 'realistic' }).flight).toBe('allIn');
+  });
+
+  it('writes the mode into a link only for realistic under model 2, and reads it back', () => {
+    const allIn = sanitizeFreeConfig({ mv: 2, sides });
+    const realistic = sanitizeFreeConfig({ mv: 2, sides, flight: 'realistic' });
+    expect(freeConfigDiff(allIn)).not.toHaveProperty('flight');
+    expect(freeConfigDiff(realistic)['flight']).toBe('realistic');
+    expect(freeConfigFromHash(hashFromFreeConfig(realistic))).toEqual(realistic);
+    expect(freeConfigFromHash(hashFromFreeConfig(allIn))).toEqual(allIn);
+    // The Simple marker stays last.
+    expect(Object.keys(freeConfigDiff(realistic, { simple: true })).slice(-2)).toEqual([
+      'flight',
+      'ui',
+    ]);
+  });
+
+  it('leaves model 1 links as they were: never written, ignored when present', () => {
+    const mv1 = sanitizeFreeConfig({ mv: 1, sides });
+    expect(freeConfigDiff(mv1)).not.toHaveProperty('flight');
+    const forged = freeConfigFromObject({
+      v: 3,
+      m: 'free',
+      a: { sp: 'trex', n: 1 },
+      b: { sp: 'tiger', n: 10 },
+      flight: 'realistic',
+    });
+    expect(forged.mv).toBe(1);
+    expect(forged.flight).toBe('allIn');
+  });
+
+  it('is allIn for every preset and the cold Simple page', () => {
+    expect(defaultSimpleConfig().flight).toBe('allIn');
+    for (const p of FREE_PRESETS) expect(presetConfig(p).flight, p.id).toBe('allIn');
+  });
+
+  it('is a hidden edit for Simple mode, which always runs allIn', () => {
+    const realistic = sanitizeFreeConfig({ mv: 2, sides, flight: 'realistic' });
+    expect(simpleRunConfig(realistic, 1).flight).toBe('allIn');
+    expect(hasHiddenEdits(realistic)).toBe(true);
+    expect(hasHiddenEdits(sanitizeFreeConfig({ mv: 2, sides }))).toBe(false);
   });
 });

@@ -3,6 +3,7 @@
   "node": "v22.22.0",
   "seed": 20261019,
   "mv": 2,
+  "flight": "realistic",
   "quick": false,
   "defaults": "arena 600 m, cap 1,200 s, LHS, CV 0.08, morale on, classic tactic flank",
   "sections": {

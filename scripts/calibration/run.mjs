@@ -2,6 +2,7 @@
 // RENEWAL-1.0.md §3.2 and §11 M2).
 //
 //   node scripts/calibration/run.mjs [--quick] [--out <file.json>] [--only <section>] [--mv <n>]
+//                                    [--flight allIn|realistic]
 //
 // Dev-only. It loads the shipped engines from src/ through Vite's SSR module loader (Vite is
 // already a dev dependency), so it needs no other package and adds nothing to the site bundle.
@@ -12,6 +13,10 @@
 // nothing unless --out is given. `--mv <n>` runs free model version n and classic model
 // version n (default 1, the model every committed file without a suffix was measured with) and
 // adds `-mv<n>` to the default file names, so a new model never overwrites an older report.
+// `--flight` picks the free engine's flight mode from model 2 on (docs/MODEL.md §4.6): `allIn`, the
+// default and the mode every Simple preset runs, or `realistic`, which adds `-realistic` to the
+// default file names. The `flight` section always runs `realistic` (it sweeps the flight traits,
+// which act only there), so a full `allIn` run skips it.
 //
 // Sections:
 //   trex-tiger    T. rex vs tiger on both engines, same counts, seed and run count
@@ -57,7 +62,10 @@ const option = (name) => {
 const QUICK = flag('--quick');
 const ONLY = option('--only');
 const MV = Number(option('--mv') ?? 1);
-const SUFFIX = MV === 1 ? '' : `-mv${String(MV)}`;
+const FLIGHT = option('--flight') ?? 'allIn';
+if (FLIGHT !== 'allIn' && FLIGHT !== 'realistic') throw new Error(`unknown flight mode ${FLIGHT}`);
+if (MV < 2 && FLIGHT !== 'allIn') throw new Error('model 1 has no flight mode');
+const SUFFIX = `${MV === 1 ? '' : `-mv${String(MV)}`}${FLIGHT === 'realistic' ? '-realistic' : ''}`;
 const OUT =
   option('--out') ??
   (QUICK
@@ -209,6 +217,7 @@ function runClassic({ a, b, na, nb, runs, morale = true }, tactic = 'flank') {
 function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED, paramsA, buffA }) {
   const c = freeConfig.sanitizeFreeConfig({
     mv: MV,
+    flight: FLIGHT,
     sides: [
       {
         species: a,
@@ -961,6 +970,7 @@ sections['triceratops'] = () => {
 // the sweep sets the mode of the cached model 2 entry and restores it).
 sections['flight'] = () => {
   if (MV < 2) throw new Error('the flight section needs --mv 2 or later');
+  if (FLIGHT !== 'realistic') throw new Error('the flight section needs --flight realistic');
   const one = (m) => {
     const free = runFree(m);
     logRow(label(m), free);
@@ -1027,6 +1037,7 @@ const result = {
   node: version,
   seed: SEED,
   mv: MV,
+  flight: MV >= 2 ? FLIGHT : undefined,
   quick: QUICK,
   defaults: 'arena 600 m, cap 1,200 s, LHS, CV 0.08, morale on, classic tactic flank',
   sections: {},
@@ -1034,6 +1045,8 @@ const result = {
 const started = Date.now();
 for (const [name, fn] of Object.entries(sections)) {
   if (ONLY && ONLY !== name) continue;
+  // The flight traits act only in `realistic`; a full `allIn` run has nothing to sweep.
+  if (!ONLY && name === 'flight' && FLIGHT !== 'realistic') continue;
   log(`# ${name}`);
   const t0 = Date.now();
   result.sections[name] = fn();

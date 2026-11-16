@@ -48,6 +48,11 @@ export function withMorale(c: FreeConfig, morale: boolean): FreeConfig {
   return sanitizeFreeConfig({ ...c, morale });
 }
 
+/** Set the flight mode (`allIn` or `realistic`, mv 2+); anything else keeps the default. */
+export function withFlightMode(c: FreeConfig, flight: string): FreeConfig {
+  return sanitizeFreeConfig({ ...c, flight });
+}
+
 /** Switch one pack-buff effect on or off (design §5.5). */
 export function withBuffSwitch(c: FreeConfig, effect: PackBuffEffect, on: boolean): FreeConfig {
   return sanitizeFreeConfig({ ...c, packBuff: { ...c.packBuff, [effect]: on } });

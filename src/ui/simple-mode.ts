@@ -1,5 +1,5 @@
 import type { FreeAggregate } from '../sim/free/aggregate';
-import { FREE_LIMITS, type FreeConfig } from '../sim/free/config';
+import { FREE_LIMITS, hasFlightMode, type FreeConfig } from '../sim/free/config';
 import { readyPresets } from '../sim/free/presets';
 import { FREE_SPECIES, FREE_SPECIES_IDS } from '../sim/free/species';
 import { h } from './dom';
@@ -220,6 +220,8 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
     if (a.species === 'spinosaurus' || b.species === 'spinosaurus') {
       out.push(h('p', { class: 'free-note', text: t('matchup.landDuel') }));
     }
+    // Simple always runs `allIn` (MODEL.md §4.6); its note says so, and where the other mode is.
+    if (hasFlightMode(c)) out.push(h('p', { class: 'free-note', text: t('simple.flightNote') }));
     if (hasHiddenEdits(c)) out.push(h('p', { class: 'free-note', text: t('simple.hiddenEdits') }));
     const seed = opts.linkSeed();
     out.push(

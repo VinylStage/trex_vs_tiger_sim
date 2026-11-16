@@ -18,6 +18,7 @@ import type { WorkerRequest, WorkerResponse } from '../src/workers/protocol';
 import {
   sideBuffState,
   withBuffSwitch,
+  withFlightMode,
   withMorale,
   withNumber,
   withSampling,
@@ -91,6 +92,9 @@ describe('form to config (free-form-model)', () => {
     c = withNumber(c, 'individualCV', 0.1);
     c = withSampling(c, 'random');
     c = withMorale(c, false);
+    c = withFlightMode(c, 'realistic');
+    expect(c.flight).toBe('realistic');
+    expect(withFlightMode(c, 'bogus').flight).toBe('allIn');
     expect(c.sides.map((s) => [s.species, s.count])).toEqual([
       ['tiger', 3],
       ['tiger', 5],

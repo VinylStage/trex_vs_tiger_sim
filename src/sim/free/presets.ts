@@ -156,11 +156,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '보츠와나 사부티에서는 큰 사자 무리가 어린 코끼리를 사냥한 기록이 있습니다(Joubert 2006; Power & Compion 2009).',
       en: 'At Savuti in Botswana, a large lion pride was recorded hunting young elephants (Joubert 2006; Power & Compion 2009).',
     },
-    check: {
-      maxRoutShare: 1,
-      reason:
-        'Field records: adult elephants mob and chase off lions, and lion prides that hunt elephants succeed only at night, with more than 27 lions against fewer than 5 elephants, mostly on young ones (SPECIES.md §11.6). Lions that break off rather than fight on match them (#169).',
-    },
   },
   {
     id: 'mammoth-wolves',
@@ -175,7 +170,7 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     check: {
       maxRoutShare: 1,
       reason:
-        'Field records of the living analogue: wolves avoid the risk of injury from large prey, wounding it and waiting rather than pressing an attack, and a large prey animal that stands its ground is often left alone (SPECIES.md §11.6). Wolves that break off match them (#169).',
+        'At the fixture measure the wolves rout 90.1 % under model 2 (fight to the end), 0.1 pp over the limit (model 1: 89.8 %, the same model before deterministic math reshuffled individual runs). Field records of the living analogue: wolves avoid the risk of injury from large prey, wounding it and waiting rather than pressing an attack, and a large prey animal that stands its ground is often left alone (SPECIES.md §11.6), so a pack that breaks off matches them.',
     },
   },
   {
@@ -199,11 +194,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     why: {
       ko: '두 종은 만난 적이 없습니다(약 6,600만 년 차이). 호랑이는 혼자 사는 동물이라 무리 이탈이 번지지 않습니다.',
       en: 'Never met (about 66 million years apart); tigers live alone, so no group rout spreads among them.',
-    },
-    check: {
-      minMedianS: 20,
-      reason:
-        'Tigers avoid injurious fights and break off against an animal far above their prey size (SPECIES.md §11.6, #169), so most withdraw within seconds of reaching the T. rex. The classic model gave the same picture: a median of about 26 s with most tigers fleeing (MODEL.md §6).',
     },
   },
   {
@@ -264,11 +254,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '두 종은 만난 적이 없습니다(약 7천만 년 차이). 유타랍토르는 가장 큰 랩터였지만 티라노보다 스무 배쯤 가볍습니다. 여러 마리의 화석이 한곳에서 함께 발견되어 무리를 지었다고 보지만, 함께 사냥했는지는 논쟁 중입니다.',
       en: 'Never met (about 70 million years apart). Utahraptor was the largest known raptor, yet about twenty times lighter than T. rex. Fossils of several were found together, so it probably lived in groups; whether raptors hunted together is debated.',
     },
-    check: {
-      maxRoutShare: 1,
-      reason:
-        'Each raptor is outmatched about twenty times by mass, and living large carnivores rarely press attacks on animals that far above their usual prey size (SPECIES.md §11.6), so a losing pack breaks off rather than fighting on (#169).',
-    },
   },
   {
     id: 'elephant-rhino',
@@ -325,7 +310,8 @@ export const readyPresets = (): FreePreset[] => FREE_PRESETS.filter((p) => p.hol
 
 /**
  * The free config of a preset: species and counts on defaults, at the given seed, under model
- * version `mv` (the newest by default; the preset fixture also measures older ones).
+ * version `mv` (the newest by default; the preset fixture also measures older ones), in the
+ * default flight mode `allIn` (owner decision 2026-11-16): every Simple preset fights to the end.
  */
 export function presetConfig(p: FreePreset, seed?: number, mv = FREE_MODEL_VERSION): FreeConfig {
   return sanitizeFreeConfig({

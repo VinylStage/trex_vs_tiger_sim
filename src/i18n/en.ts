@@ -577,6 +577,15 @@ export const en: Dictionary = {
   'free.sameSpecies': 'Same-species match-up',
   'free.settings': 'Shared settings',
   'free.moraleHelp': 'When off, neither side flees, however low its morale.',
+  'field.flightMode': 'Flight mode',
+  'flight.allIn': 'Fight to the end',
+  'flight.realistic': 'Realistic',
+  'free.flightHelp':
+    'Fight to the end: a thought experiment in which no animal backs off just because its opponent is bigger. Realistic: an animal facing one far heavier than itself breaks off, as its species does in the field.',
+  'flight.note.allIn':
+    'Fight to the end: no animal backs off from a much bigger opponent; it flees only when wounds or fallen allies break its morale.',
+  'flight.note.realistic':
+    'Realistic: an animal facing one far heavier than itself soon breaks off, as its species does in the field, so a group rarely beats one much larger animal.',
   'free.arenaHelp': 'Square arena. Animals that flee and cross the edge leave the fight.',
   'free.provisional':
     'The free-matchup model is still being calibrated. These numbers are provisional; use them as a rough guide.',
@@ -644,6 +653,8 @@ export const en: Dictionary = {
   'simple.quickCounts': 'Quick picks',
   'simple.socialChips':
     'For a group-living species the quick picks stop at {n}; type a larger number in the field.',
+  'simple.flightNote':
+    'A thought experiment: every animal fights to the end, however much bigger its opponent. Realistic mode, in which animals back off from a far bigger opponent, is under Advanced.',
   'simple.hiddenEdits':
     'Values changed under Advanced are not used here: a Run in Simple mode uses the defaults for everything except species and counts.',
   'simple.seedNote':

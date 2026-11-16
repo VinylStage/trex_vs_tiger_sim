@@ -573,6 +573,15 @@ export const ko = {
   'free.sameSpecies': '같은 종 대결',
   'free.settings': '공통 설정',
   'free.moraleHelp': '끄면 양쪽 모두 사기가 떨어져도 도주하지 않습니다.',
+  'field.flightMode': '도주 방식',
+  'flight.allIn': '끝까지 싸우기',
+  'flight.realistic': '현실 모드',
+  'free.flightHelp':
+    '끝까지 싸우기: 상대가 아무리 커도 몸집 차이 때문에 물러서지 않는 사고 실험입니다. 현실 모드: 자기보다 훨씬 무거운 상대 앞에서는 그 종의 연구값대로 물러납니다.',
+  'flight.note.allIn':
+    '끝까지 싸우기: 몸집이 훨씬 큰 상대라도 물러서지 않습니다. 다치거나 동료가 쓰러져 사기가 꺾일 때만 도주합니다.',
+  'flight.note.realistic':
+    '현실 모드: 자기보다 훨씬 무거운 상대 앞에서는 그 종의 연구값대로 곧 물러납니다. 큰 동물 하나를 상대로 한 무리는 대개 이기지 못합니다.',
   'free.arenaHelp': '정사각형 경기장. 도주한 개체는 경계를 벗어나면 전투에서 이탈합니다.',
   'free.provisional':
     '자유 대결 모델은 아직 보정 중입니다. 아래 숫자는 잠정값이니 참고로만 보세요.',
@@ -638,6 +647,8 @@ export const ko = {
   'simple.quickCounts': '빠른 선택',
   'simple.socialChips':
     '무리 생활 종은 빠른 선택이 {n}까지입니다. 더 많이는 숫자를 직접 입력하세요.',
+  'simple.flightNote':
+    '모든 동물이 몸집 차이와 상관없이 끝까지 싸우는 사고 실험입니다. 훨씬 큰 상대 앞에서 물러나는 현실 모드는 고급 모드에서 고를 수 있습니다.',
   'simple.hiddenEdits':
     '고급 설정에서 바꾼 값은 간단 모드에서 쓰지 않습니다. 여기서 실행하면 종과 수 말고는 모두 기본값으로 계산합니다.',
   'simple.seedNote':

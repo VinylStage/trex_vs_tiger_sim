@@ -123,6 +123,27 @@ export const GLOBALS: readonly GlobalDef[] = [
 
 export { FREE_MODEL_VERSION, isFreeModelVersion } from './version.ts';
 
+/**
+ * Flight mode of a free config under model version 2 or later (owner decision 2026-11-16,
+ * docs/MODEL.md §4.6):
+ *
+ * - `allIn` ("Fight to the end"): the thought experiment. The per-species flight traits of #169
+ *   are inactive; everything else is the config's model version. The default.
+ * - `realistic`: the flight traits act (docs/SPECIES.md §11.6), so an animal far outmatched by
+ *   mass breaks off.
+ *
+ * Model 1 has no flight traits, so its configs are always `allIn` and its links never carry it.
+ */
+export const FLIGHT_MODES = ['allIn', 'realistic'] as const;
+export type FlightMode = (typeof FLIGHT_MODES)[number];
+export const DEFAULT_FLIGHT_MODE: FlightMode = 'allIn';
+
+/** The first model version with flight traits, and so with a flight mode to choose. */
+export const FLIGHT_MODE_SINCE_MV = 2;
+
+/** Whether the config's model version has a flight mode to choose (`mv` 2 or later). */
+export const hasFlightMode = (c: Pick<FreeConfig, 'mv'>): boolean => c.mv >= FLIGHT_MODE_SINCE_MV;
+
 export interface FreeConfig {
   mode: 'free';
   /** Model version the config runs under (ADR-0008). */
@@ -138,6 +159,8 @@ export interface FreeConfig {
   individualCV: number;
   /** Morale and fleeing for both sides (design §4.5). */
   morale: boolean;
+  /** Flight mode (`mv` 2+; always `allIn` under model 1). */
+  flight: FlightMode;
 }
 
 /** Either model's config. Legacy configs carry no `mode`. */
@@ -190,6 +213,7 @@ export function defaultFreeConfig(): FreeConfig {
     sampling: d.sampling,
     individualCV: d.individualCV,
     morale: d.morale,
+    flight: DEFAULT_FLIGHT_MODE,
   };
 }
 
@@ -312,6 +336,8 @@ export function sanitizeFreeConfig(input: unknown): FreeConfig {
     sampling: pick(o['sampling'], SAMPLING_METHODS, d.sampling),
     individualCV: num(o['individualCV'], d.individualCV, LIMITS.individualCV, false),
     morale: typeof o['morale'] === 'boolean' ? o['morale'] : d.morale,
+    // Only a model with flight traits has a mode to choose; model 1 is always `allIn`.
+    flight: mv >= FLIGHT_MODE_SINCE_MV ? pick(o['flight'], FLIGHT_MODES, d.flight) : 'allIn',
   };
 }
 

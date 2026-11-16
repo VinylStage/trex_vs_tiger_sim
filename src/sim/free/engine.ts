@@ -420,9 +420,11 @@ export function simulateFreeBattle(
   const hide = [spA.constants.hide, spB.constants.hide];
   const intim = [spA.constants.intimidation, spB.constants.intimidation];
   const canLatch = [spA.canLatch, spB.canLatch];
-  // Flight traits (#169, from `mv` 2): species constants, each side's preset mode. Model 1 has
-  // none, so `flightOn` is false there and nothing below reads them.
-  const flightOn = config.morale && (spA.flight !== null || spB.flight !== null);
+  // Flight traits (#169, from `mv` 2): species constants, each side's preset mode. They act only
+  // in the `realistic` flight mode; `allIn` (the default) and model 1 (which has none) leave
+  // `flightOn` false, and nothing below reads them.
+  const flightOn =
+    config.morale && config.flight === 'realistic' && (spA.flight !== null || spB.flight !== null);
   const threatRatio = [
     spA.flight?.threatRatio.range.mode ?? 0,
     spB.flight?.threatRatio.range.mode ?? 0,

@@ -1,9 +1,11 @@
 import {
+  DEFAULT_FLIGHT_MODE,
   FREE_MODEL_VERSION,
   GLOBALS,
   PACK_BUFF_EFFECTS,
   defaultFreeConfig,
   globalPresets,
+  hasFlightMode,
   isFreeModelVersion,
   sanitizeFreeConfig,
   type FreeConfig,
@@ -35,6 +37,10 @@ import {
  * `mv` is the model version (ADR-0008). Absent means 1, and the encoder writes it only when it is
  * not 1, so every link of model 1 is byte-identical to the links made before `mv` existed.
  *
+ * `flight: "realistic"` is the flight mode of `mv` 2 and later (docs/MODEL.md §4.6). Absent means
+ * `allIn`, the default, and the encoder writes it only for `realistic`; under `mv` 1 the decoder
+ * ignores it, since model 1 has no flight traits.
+ *
  * `ui: "simple"` (#154) marks a link written by Simple mode, appended last. It is not part of the
  * config: the decoder never reads it into `FreeConfig`, so the engine, `mv` and the reproduction
  * check never see it, and builds before #154 ignore it like any unknown key. Only the link
@@ -48,6 +54,11 @@ export const FREE_CODE_PREFIX = `TVT${FREE_SHARE_VERSION}-`;
 /** Payload key and value of the Simple-mode marker (#154, docs/SHARING.md#simple-links). */
 export const SIMPLE_KEY = 'ui';
 export const SIMPLE_MARKER = 'simple';
+/**
+ * Payload key of the flight mode (owner decision 2026-11-16, docs/SHARING.md#flight-mode-flight).
+ * Read only under `mv` 2 or later; absent means `allIn`.
+ */
+export const FLIGHT_KEY = 'flight';
 
 /** How a free config is written into a link. */
 export interface FreeLinkOptions {
@@ -114,6 +125,11 @@ export function freeConfigDiff(
   );
   if (g) out['g'] = g;
   for (const k of SCALARS) if (config[k] !== d[k]) out[k] = config[k];
+  // Flight mode (mv 2+): written only when it is not the default, so a model 1 link and every
+  // `allIn` link stay as they were.
+  if (hasFlightMode(config) && config.flight !== DEFAULT_FLIGHT_MODE) {
+    out[FLIGHT_KEY] = config.flight;
+  }
   if (opts.simple) out[SIMPLE_KEY] = SIMPLE_MARKER;
   return out;
 }
@@ -199,6 +215,7 @@ export function freeConfigFromObject(raw: Record<string, unknown>): FreeConfig {
     globals: expandRanges(raw['g']),
   };
   for (const k of SCALARS) if (Object.hasOwn(raw, k)) input[k] = raw[k];
+  if (Object.hasOwn(raw, FLIGHT_KEY)) input['flight'] = raw[FLIGHT_KEY];
   return sanitizeFreeConfig(input);
 }
 

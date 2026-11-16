@@ -15,6 +15,7 @@ import { FREE_MODEL_VERSION, defaultFreeConfig } from '../src/sim/free/config';
 import { routeHashChange, routeLink } from '../src/ui/link-route';
 import {
   withBuffSwitch,
+  withFlightMode,
   withMorale,
   withNumber,
   withSideCount,
@@ -468,6 +469,7 @@ describe('Simple links (#154)', () => {
       ['an edited run count', withNumber(RAN, 'runs', 120)],
       ['an edited arena', withNumber(RAN, 'arenaSize', 300)],
       ['morale off', withMorale(RAN, false)],
+      ['the realistic flight mode', withFlightMode(RAN, 'realistic')],
       ['a pack buff switched off', withBuffSwitch(RAN, 'focus', false)],
       [
         'an edited trait range',
