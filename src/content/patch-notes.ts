@@ -59,6 +59,35 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.27',
+    date: '2026-11-16',
+    title: {
+      ko: '어느 브라우저에서나 같은 결과, 그리고 현실 모드 🧭',
+      en: 'Same result in every browser, plus a realistic mode 🧭',
+    },
+    prs: [225, 221, 223],
+    items: [
+      {
+        cat: 'improved',
+        refs: [197, 225],
+        ko: '새 계산 방식(모델 2)이 들어왔어요. 같은 링크면 크롬이든 사파리든 똑같은 결과가 나와요. 예전에 공유한 링크는 예전 계산 그대로 재현돼요.',
+        en: 'A new model (model 2) is in. The same link now gives the same result in Chrome, Safari and every other browser. Links shared before keep their old results.',
+      },
+      {
+        cat: 'new',
+        refs: [169, 225],
+        ko: '고급 설정에 "도주 방식"이 생겼어요. 기본은 "끝까지 싸우기"이고, "현실 모드"를 고르면 동물마다 연구된 습성대로 훨씬 큰 상대를 만나면 도망쳐요. 현실 모드에서는 호랑이 무리도 티렉스를 피해 흩어져요.',
+        en: 'Advanced settings get a flight mode. The default is "Fight to the end"; "Realistic" makes each animal break off from much larger opponents the way studies describe. In realistic mode even a tiger pack scatters before a T. rex.',
+      },
+      {
+        cat: 'improved',
+        refs: [178, 179, 221, 223],
+        ko: '실시간 변수 카드와 실시간 예상 승률을 위한 엔진 작업을 마쳤어요. 화면에는 다음 업데이트부터 보여요.',
+        en: 'The engine work for live variable cards and the live win chance is done. It shows up on screen in a coming update.',
+      },
+    ],
+  },
+  {
     version: '0.2.26',
     date: '2026-11-05',
     title: {
