@@ -215,6 +215,8 @@ Model 2 of both engines replaces `Math.sin`, `cos`, `atan2` and `log` with `src/
 
 Per call the functions cost about twice V8's built-ins (2 million calls: `dsin` 31.8 ns against 16.2 ns, `dcos` 28.7 against 21.2, `datan2` 36.8 against 22.4, `dlog` 41.0 against 10.8). The wolf row also includes flight (wolves break off from the _T. rex_), so it overstates the math. With morale on, model 2's figure for the free tiger horde is higher per agent-step (about 2.2×) because far more tigers flee, and a fleeing agent searches for its nearest enemy every tick; the battle ends in about a fifth of the simulated time (median 27 s against 133 s), so a whole batch is cheaper. Issue #197 allows about 10 %; the free engine stays within it, the classic engine sits at its edge. Not measured: real browsers.
 
+**Flight mode (owner decision 2026-11-16).** In `allIn`, the default, the engine skips the flight pass entirely (`flightOn` is false), so its cost is model 2's math alone. Measured 2026-11-16 the same way (vitest, Node 22, 4-core container, 30 runs × 300 s, median of 5 alternating rounds, wall time per simulated agent-step, morale on): 10 _T. rex_ v 100 tigers 165.8 ns in `allIn` against 362.8 ns in `realistic`, where most tigers flee and a fleeing agent searches for its nearest enemy every tick (its battles end in about a fifth of the time, so a `realistic` batch is still cheaper); 10 lions v 1 elephant 365.0 against 369.1 ns (+1 %, the flight pass itself). Simple and every preset run `allIn`.
+
 ## Not changed
 
 - No `SharedArrayBuffer`: it needs cross-origin isolation, which conflicts with third-party ad iframes ([research §3](research/PERFORMANCE.md)). Transfers are already zero-copy.
