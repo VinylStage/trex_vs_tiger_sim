@@ -90,7 +90,8 @@ describe('free config defaults', () => {
 describe('sanitizeFreeConfig', () => {
   it('returns the defaults for garbage', () => {
     for (const bad of [null, 1, 'x', [], { sides: 'no' }, { sides: [1, 2] }]) {
-      expect(sanitizeFreeConfig(bad)).toEqual(defaultFreeConfig());
+      // No `mv` means model 1 (ADR-0008); the default T. rex sides are the same in every model.
+      expect(sanitizeFreeConfig(bad)).toEqual({ ...defaultFreeConfig(), mv: 1 });
     }
   });
 
@@ -111,8 +112,8 @@ describe('sanitizeFreeConfig', () => {
     (id) => {
       const c = sanitizeFreeConfig({ sides: [{ species: id }, { species: 'tiger' }] });
       expect(c.sides[0].species).toBe(id);
-      expect(c.sides[0].params).toEqual(traitRanges(id));
-      expect(c.sides[0].buff).toEqual(buffRanges(id));
+      expect(c.sides[0].params).toEqual(traitRanges(id, c.mv));
+      expect(c.sides[0].buff).toEqual(buffRanges(id, c.mv));
       expect(sanitizeFreeConfig(c)).toEqual(c);
     },
   );

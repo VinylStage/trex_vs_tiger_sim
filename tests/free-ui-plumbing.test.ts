@@ -18,6 +18,7 @@ import type { WorkerRequest, WorkerResponse } from '../src/workers/protocol';
 import {
   sideBuffState,
   withBuffSwitch,
+  withFlightMode,
   withMorale,
   withNumber,
   withSampling,
@@ -91,6 +92,9 @@ describe('form to config (free-form-model)', () => {
     c = withNumber(c, 'individualCV', 0.1);
     c = withSampling(c, 'random');
     c = withMorale(c, false);
+    c = withFlightMode(c, 'realistic');
+    expect(c.flight).toBe('realistic');
+    expect(withFlightMode(c, 'bogus').flight).toBe('allIn');
     expect(c.sides.map((s) => [s.species, s.count])).toEqual([
       ['tiger', 3],
       ['tiger', 5],
@@ -260,7 +264,8 @@ describe('share link v3', () => {
     const legacy = decodeConfig(encodeFreeConfig(tigersVsLions()));
     expect(legacy).not.toHaveProperty('mode');
     expect([legacy.heavySpecies, legacy.packSpecies]).toEqual(['trex', 'tiger']);
-    expect(encodeConfig(defaultConfig())).toBe('');
+    // The classic model 1 defaults still encode as nothing; model 2 names its version (#197).
+    expect(encodeConfig({ ...defaultConfig(), mv: 1 })).toBe('');
   });
 
   it('requires the mode marker', () => {

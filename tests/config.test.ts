@@ -100,7 +100,8 @@ describe('sanitizeConfig hardening', () => {
   it('ignores prototype keys', () => {
     const c = sanitizeConfig(JSON.parse('{"__proto__":{"polluted":1},"params":{"__proto__":{}}}'));
     expect(({} as Record<string, unknown>)['polluted']).toBeUndefined();
-    expect(c).toEqual(defaultConfig());
+    // No `mv` in the input means classic model 1 (#197); everything else is the defaults.
+    expect(c).toEqual({ ...defaultConfig(), mv: 1 });
   });
 });
 

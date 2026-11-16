@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CONSTANTS, DT } from '../src/sim/engine';
 import { CARD_IDS, type CardId } from '../src/sim/free/cards';
-import { sanitizeFreeConfig, type FreeConfig } from '../src/sim/free/config';
+import { FREE_MODEL_VERSION, sanitizeFreeConfig, type FreeConfig } from '../src/sim/free/config';
 import { buildFreeDesign } from '../src/sim/free/design';
 import {
   FreeState,
@@ -127,7 +127,7 @@ describe('sanitizeInterventions', () => {
     for (const card of [-1, CARD_IDS.length, 1.5, '7', null]) {
       expect(sanitizeInterventions([[10, card, 0]], maxSteps, 1, on)).toEqual([]);
     }
-    for (const mv of [0, 2, 1.5, Number.NaN]) {
+    for (const mv of [0, FREE_MODEL_VERSION + 1, 1.5, Number.NaN]) {
       expect(sanitizeInterventions([[10, code('focus'), 0]], maxSteps, mv, on)).toEqual([]);
     }
   });

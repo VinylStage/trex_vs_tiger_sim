@@ -55,15 +55,17 @@ const json = (payload: string): Record<string, unknown> =>
 const encode = (obj: unknown): string => Buffer.from(JSON.stringify(obj)).toString('base64url');
 
 describe('model version of the free config', () => {
-  it('is 1 in this build, for the defaults and wherever it is absent', () => {
-    expect(FREE_MODEL_VERSION).toBe(1);
-    expect(defaultFreeConfig().mv).toBe(1);
+  it('is 2 in this build for the defaults, and 1 wherever it is absent (#169, #197)', () => {
+    expect(FREE_MODEL_VERSION).toBe(2);
+    expect(defaultFreeConfig().mv).toBe(2);
     expect(sanitizeFreeConfig({}).mv).toBe(1);
     expect(sanitizeFreeConfig({ mv: 1 }).mv).toBe(1);
+    expect(sanitizeFreeConfig({ mv: 2 }).mv).toBe(2);
   });
 
   it('accepts only integers from 1 to FREE_MODEL_VERSION', () => {
     expect(isFreeModelVersion(1)).toBe(true);
+    expect(isFreeModelVersion(2)).toBe(true);
     for (const v of [0, -1, 1.5, FREE_MODEL_VERSION + 1, Number.NaN, '1', null, undefined, [1]]) {
       expect(isFreeModelVersion(v)).toBe(false);
       expect(sanitizeFreeConfig({ mv: v }).mv).toBe(1);
@@ -100,8 +102,11 @@ describe('links made before mv existed', () => {
         globals: { latchRatio: { min: 2.5, mode: 3, max: 4 } },
       }),
     );
-    expect(freeConfigFromHash(`#s=${OLD.defaults}`)).toEqual(defaultFreeConfig());
-    expect(freeConfigCode(defaultFreeConfig())).toBe(`TVT3-${OLD.defaults}`);
+    // The old defaults link is the model 1 defaults; the current defaults name mv 2.
+    const v1Defaults = { ...defaultFreeConfig(), mv: 1 };
+    expect(freeConfigFromHash(`#s=${OLD.defaults}`)).toEqual(v1Defaults);
+    expect(freeConfigCode(v1Defaults)).toBe(`TVT3-${OLD.defaults}`);
+    expect(freeConfigDiff(defaultFreeConfig())['mv']).toBe(2);
   });
 
   it('keep free result links decoding and re-encoding unchanged', () => {
@@ -122,7 +127,7 @@ describe('the encoder', () => {
   it('omits mv while it is 1 and writes any other version after the mode marker', () => {
     const c = sanitizeFreeConfig({ sides: [{ species: 'lion', count: 5 }, { species: 'tiger' }] });
     expect(Object.keys(freeConfigDiff(c))).toEqual(['v', 'm', 'a', 'b']);
-    // A later model (not runnable here yet) is written explicitly.
+    // A later model is written explicitly.
     const later = freeConfigDiff({ ...c, mv: 2 });
     expect(Object.keys(later)).toEqual(['v', 'm', 'mv', 'a', 'b']);
     expect(later['mv']).toBe(2);

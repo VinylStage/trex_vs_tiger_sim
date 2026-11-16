@@ -32,6 +32,7 @@ import {
   type BuffTraitId,
   type TraitId,
 } from './traits.ts';
+import { FREE_MODEL_VERSION, isFreeModelVersion } from './version.ts';
 
 /**
  * Free-model scenario (docs/design/FREE-MATCHUPS.md §2). Two symmetric sides, any species on
@@ -120,16 +121,28 @@ export const GLOBALS: readonly GlobalDef[] = [
   },
 ];
 
-/**
- * Newest model version (`mv`, ADR-0008) of the free engine in this build. A change that alters
- * any free result raises it, and every version from 1 up to it stays runnable, so a link
- * reproduces under the version it names. Wherever `mv` is absent it means 1.
- */
-export const FREE_MODEL_VERSION = 1;
+export { FREE_MODEL_VERSION, isFreeModelVersion } from './version.ts';
 
-/** Whether `v` is a model version this build runs: an integer from 1 to FREE_MODEL_VERSION. */
-export const isFreeModelVersion = (v: unknown): v is number =>
-  typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= FREE_MODEL_VERSION;
+/**
+ * Flight mode of a free config under model version 2 or later (owner decision 2026-11-16,
+ * docs/MODEL.md §3.8):
+ *
+ * - `allIn` ("Fight to the end"): the thought experiment. The per-species flight traits of #169
+ *   are inactive; everything else is the config's model version. The default.
+ * - `realistic`: the flight traits act (docs/SPECIES.md §11.6), so an animal far outmatched by
+ *   mass breaks off.
+ *
+ * Model 1 has no flight traits, so its configs are always `allIn` and its links never carry it.
+ */
+export const FLIGHT_MODES = ['allIn', 'realistic'] as const;
+export type FlightMode = (typeof FLIGHT_MODES)[number];
+export const DEFAULT_FLIGHT_MODE: FlightMode = 'allIn';
+
+/** The first model version with flight traits, and so with a flight mode to choose. */
+export const FLIGHT_MODE_SINCE_MV = 2;
+
+/** Whether the config's model version has a flight mode to choose (`mv` 2 or later). */
+export const hasFlightMode = (c: Pick<FreeConfig, 'mv'>): boolean => c.mv >= FLIGHT_MODE_SINCE_MV;
 
 export interface FreeConfig {
   mode: 'free';
@@ -146,6 +159,8 @@ export interface FreeConfig {
   individualCV: number;
   /** Morale and fleeing for both sides (design §4.5). */
   morale: boolean;
+  /** Flight mode (`mv` 2+; always `allIn` under model 1). */
+  flight: FlightMode;
 }
 
 /** Either model's config. Legacy configs carry no `mode`. */
@@ -165,9 +180,16 @@ export const DEFAULT_FREE_SPECIES: readonly [FreeSpeciesId, FreeSpeciesId] = ['t
 
 const isLatchTrait = (k: TraitId): boolean => (LATCH_TRAIT_IDS as readonly string[]).includes(k);
 
-/** Preset side for a species: trait and buff presets, inactive traits neutral. */
-export function defaultSide(species: FreeSpeciesId, count = 1): SideConfig {
-  return { species, count, params: traitRanges(species), buff: buffRanges(species) };
+/**
+ * Preset side for a species under model version `mv` (the newest by default): trait and buff
+ * presets, inactive traits neutral.
+ */
+export function defaultSide(
+  species: FreeSpeciesId,
+  count = 1,
+  mv: number = FREE_MODEL_VERSION,
+): SideConfig {
+  return { species, count, params: traitRanges(species, mv), buff: buffRanges(species, mv) };
 }
 
 export const defaultPackBuff = (): PackBuffSwitches =>
@@ -191,6 +213,7 @@ export function defaultFreeConfig(): FreeConfig {
     sampling: d.sampling,
     individualCV: d.individualCV,
     morale: d.morale,
+    flight: DEFAULT_FLIGHT_MODE,
   };
 }
 
@@ -234,11 +257,11 @@ const isObject = (v: unknown): v is Record<string, unknown> =>
 const record = (v: unknown): Record<string, unknown> => (isObject(v) ? v : {});
 
 /** One side from untrusted input; `count` is clamped per side here and for the total later. */
-function sanitizeSide(input: unknown, fallbackSpecies: FreeSpeciesId): SideConfig {
+function sanitizeSide(input: unknown, fallbackSpecies: FreeSpeciesId, mv: number): SideConfig {
   const o = record(input);
   const species = pick(o['species'], FREE_SPECIES_IDS, fallbackSpecies);
   const s = FREE_SPECIES[species];
-  const side = defaultSide(species);
+  const side = defaultSide(species, 1, mv);
   side.count = num(o['count'], 1, FREE_LIMITS.sideCount, true);
   const rawParams = record(o['params']);
   for (const k of TRAIT_IDS) {
@@ -271,9 +294,12 @@ function sanitizeSide(input: unknown, fallbackSpecies: FreeSpeciesId): SideConfi
 export function sanitizeFreeConfig(input: unknown): FreeConfig {
   const d = defaultFreeConfig();
   const o = record(input);
+  // Absent means 1 (ADR-0008), so inputs written before `mv` existed keep running model 1. The
+  // version comes first: it decides the species presets the sides start from.
+  const mv = isFreeModelVersion(o['mv']) ? o['mv'] : 1;
   const rawSides = Array.isArray(o['sides']) ? (o['sides'] as unknown[]) : [];
-  const a = sanitizeSide(rawSides[0], DEFAULT_FREE_SPECIES[0]);
-  const b = sanitizeSide(rawSides[1], DEFAULT_FREE_SPECIES[1]);
+  const a = sanitizeSide(rawSides[0], DEFAULT_FREE_SPECIES[0], mv);
+  const b = sanitizeSide(rawSides[1], DEFAULT_FREE_SPECIES[1], mv);
   // Total cap: side B gives way, so side A's count is always what was asked for.
   b.count = clamp(b.count, FREE_LIMITS.sideCount[0], FREE_LIMITS.totalCount - a.count);
 
@@ -299,8 +325,7 @@ export function sanitizeFreeConfig(input: unknown): FreeConfig {
   );
   return {
     mode: 'free',
-    // Absent means 1 (ADR-0008), so inputs written before `mv` existed keep running model 1.
-    mv: isFreeModelVersion(o['mv']) ? o['mv'] : 1,
+    mv,
     sides,
     packBuff,
     globals,
@@ -311,6 +336,8 @@ export function sanitizeFreeConfig(input: unknown): FreeConfig {
     sampling: pick(o['sampling'], SAMPLING_METHODS, d.sampling),
     individualCV: num(o['individualCV'], d.individualCV, LIMITS.individualCV, false),
     morale: typeof o['morale'] === 'boolean' ? o['morale'] : d.morale,
+    // Only a model with flight traits has a mode to choose; model 1 is always `allIn`.
+    flight: mv >= FLIGHT_MODE_SINCE_MV ? pick(o['flight'], FLIGHT_MODES, d.flight) : 'allIn',
   };
 }
 

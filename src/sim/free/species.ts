@@ -11,14 +11,17 @@ import {
 } from '../species.ts';
 import {
   BUFF_TRAIT_IDS,
+  FLIGHT_TRAIT_IDS,
   LATCH_TRAIT_IDS,
   NEUTRAL,
   TRAIT_IDS,
   fixed,
   type BuffTraitId,
+  type FlightTraitId,
   type TraitId,
 } from './traits.ts';
 import type { FreeConfig } from './config.ts';
+import { FREE_MODEL_VERSION } from './version.ts';
 
 /**
  * Unified species registry of the free model (docs/design/FREE-MATCHUPS.md §2, docs/SPECIES.md
@@ -82,6 +85,11 @@ export interface FreeSpecies {
   };
   readonly traits: Readonly<Record<TraitId, TraitPreset>>;
   readonly buff: Readonly<Record<BuffTraitId, TraitPreset>>;
+  /**
+   * Flight traits (#169), from model version 2 on; null under model 1, whose engine has none.
+   * The engine reads each row's mode; the range is the sensitivity range (SPECIES.md §11.6).
+   */
+  readonly flight: Readonly<Record<FlightTraitId, TraitPreset>> | null;
 }
 
 const row = ([min, mode, max, evidence]: Row): TraitPreset => ({
@@ -207,6 +215,7 @@ function heavyBased(id: Exclude<HeavySpeciesId, 'homoErectus'>, extras: HeavyExt
     constants: { hide: h.constants.hide, intimidation: h.constants.intimidation },
     traits: complete(id, { ...fromHeavy(id), ...mapRows(extras), ...NO_LATCH }),
     buff: NO_BUFF,
+    flight: null,
   };
 }
 
@@ -226,6 +235,7 @@ function packBased(
     constants: { hide: 1, intimidation: 1 },
     traits: complete(id, { ...fromPack(id), ...mapRows(extras) }),
     buff: buff ? buffRows(buff) : NO_BUFF,
+    flight: null,
   };
 }
 
@@ -275,6 +285,7 @@ export function defineFreeSpecies(id: FreeSpeciesId, sheet: FreeSpeciesSheet): F
       ...(sheet.canLatch ? {} : NO_LATCH),
     }),
     buff: sheet.buff ? buffRows(sheet.buff) : NO_BUFF,
+    flight: null,
   };
 }
 
@@ -363,6 +374,7 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
       routShock: [0, 0.05, 0.1, 'S'],
       reliefStamina: [0.2, 0.3, 0.5, 'S'],
     }),
+    flight: null,
   },
   tiger: packBased(
     'tiger',
@@ -608,6 +620,101 @@ export const FREE_SPECIES: Readonly<Record<FreeSpeciesId, FreeSpecies>> = {
   }),
 };
 
+/**
+ * What a model version changes in a species entry (ADR-0008 §5: old links keep the values of
+ * their own version). Trait rows and constants replace those of the previous version; `flight`
+ * sets the flight traits. Sources: docs/SPECIES.md §11.6 and research/SPECIES.md §7.
+ */
+export interface SpeciesRevision {
+  readonly traits?: Readonly<Partial<Record<TraitId, Row>>>;
+  readonly constants?: Readonly<Partial<FreeSpecies['constants']>>;
+  /** Rows of a non-social species; null rows (inactive) for a social species' `soloShock`. */
+  readonly flight?: Readonly<Record<FlightTraitId, Row | null>>;
+}
+
+/** Shared flight rows (SPECIES.md §11.6): no study measures either, so one **S** value each. */
+const SOLO_SHOCK: Row = [0, 0.04, 0.08, 'S'];
+const flight = (
+  threatRatio: Row,
+  threatTime: Row,
+  soloShock: Row | null = SOLO_SHOCK,
+): Record<FlightTraitId, Row | null> => ({ threatRatio, threatTime, soloShock });
+
+/**
+ * Model version 2 (#169): flight traits for every species and researched polar bear behaviour
+ * rows in place of the brown bear's. Every row is sourced in docs/SPECIES.md §11.6.
+ */
+const MV2: Readonly<Record<FreeSpeciesId, SpeciesRevision>> = {
+  trex: { flight: flight([1.5, 2, 4, 'S'], [20, 60, 180, 'S']) },
+  elephant: { flight: flight([1.2, 1.5, 3, 'S'], [20, 60, 180, 'S']) },
+  buffalo: { flight: flight([1.2, 1.5, 3, 'S'], [15, 45, 120, 'S']) },
+  brownBear: { flight: flight([1.5, 2, 4, 'S'], [10, 30, 90, 'S']) },
+  mammoth: { flight: flight([1.2, 1.5, 3, 'S'], [20, 60, 180, 'S']) },
+  homoErectus: { flight: flight([1.5, 2, 4, 'S'], [5, 20, 60, 'S'], null) },
+  tiger: { flight: flight([1.4, 2, 10, 'D'], [5, 15, 60, 'S']) },
+  lion: { flight: flight([3.7, 6.7, 10, 'D'], [10, 30, 90, 'S'], null) },
+  wolf: { flight: flight([6, 15, 25, 'S'], [5, 20, 60, 'S'], null) },
+  hyena: { flight: flight([1.9, 3.3, 10, 'D'], [5, 20, 60, 'S'], null) },
+  polarBear: {
+    traits: {
+      sprintEndurance: [10, 25, 60, 'S'],
+      recoveryTime: [60, 120, 300, 'S'],
+      morale: [0.4, 0.6, 0.8, 'S'],
+    },
+    flight: flight([1.5, 2, 3, 'S'], [5, 10, 30, 'S']),
+  },
+  hippo: { flight: flight([1.5, 2, 4, 'S'], [20, 60, 180, 'S']) },
+  raptor: { flight: flight([2, 3, 4, 'S'], [10, 30, 90, 'S'], null) },
+  whiteRhino: { flight: flight([1, 1.25, 2, 'S'], [5, 20, 60, 'S']) },
+  spinosaurus: { flight: flight([1, 1.5, 2, 'S'], [10, 30, 90, 'S']) },
+  triceratops: { flight: flight([1.2, 1.5, 3, 'S'], [15, 45, 120, 'S']) },
+};
+
+/** Revisions per model version; version 1 is `FREE_SPECIES` itself. Append-only. */
+export const SPECIES_REVISIONS: Readonly<
+  Record<number, Readonly<Partial<Record<FreeSpeciesId, SpeciesRevision>>>>
+> = { 2: MV2 };
+
+function revise(s: FreeSpecies, r: SpeciesRevision | undefined): FreeSpecies {
+  if (!r) return s;
+  const traits = { ...s.traits };
+  for (const [k, v] of Object.entries(r.traits ?? {})) traits[k as TraitId] = row(v);
+  const flightRows = r.flight;
+  return {
+    ...s,
+    constants: { ...s.constants, ...r.constants },
+    traits,
+    flight: flightRows
+      ? (Object.fromEntries(
+          FLIGHT_TRAIT_IDS.map((k) => {
+            const v = flightRows[k];
+            return [k, v ? row(v) : inactive(0)];
+          }),
+        ) as Record<FlightTraitId, TraitPreset>)
+      : s.flight,
+  };
+}
+
+const atVersion = new Map<string, FreeSpecies>();
+
+/**
+ * The entry of species `id` under model version `mv`: `FREE_SPECIES[id]` with the revisions of
+ * versions 2 to `mv` applied in order. Model 1 is the registry entry itself. Cached, so the
+ * engine can call it per battle.
+ */
+export function freeSpeciesAt(id: FreeSpeciesId, mv: number): FreeSpecies {
+  const base = FREE_SPECIES[id];
+  if (mv <= 1) return base;
+  const key = `${String(mv)}:${id}`;
+  let s = atVersion.get(key);
+  if (!s) {
+    s = base;
+    for (let v = 2; v <= mv; v++) s = revise(s, SPECIES_REVISIONS[v]?.[id]);
+    atVersion.set(key, s);
+  }
+  return s;
+}
+
 export const isFreeSpecies = (v: unknown): v is FreeSpeciesId =>
   typeof v === 'string' && (FREE_SPECIES_IDS as readonly string[]).includes(v);
 
@@ -621,9 +728,15 @@ export function freeMatchupAdSafe(c: Pick<FreeConfig, 'sides'>): boolean {
   return c.sides.every((s) => isFreeSpecies(s.species) && FREE_SPECIES[s.species].adSafe);
 }
 
-/** Preset triangles of a species' individual traits, in `TRAIT_IDS` order (fresh objects). */
-export function traitRanges(id: FreeSpeciesId): Record<TraitId, Triangular> {
-  const t = FREE_SPECIES[id].traits;
+/**
+ * Preset triangles of a species' individual traits under model version `mv` (the newest by
+ * default), in `TRAIT_IDS` order (fresh objects).
+ */
+export function traitRanges(
+  id: FreeSpeciesId,
+  mv: number = FREE_MODEL_VERSION,
+): Record<TraitId, Triangular> {
+  const t = freeSpeciesAt(id, mv).traits;
   return Object.fromEntries(TRAIT_IDS.map((k) => [k, { ...t[k].range }])) as Record<
     TraitId,
     Triangular
@@ -631,8 +744,11 @@ export function traitRanges(id: FreeSpeciesId): Record<TraitId, Triangular> {
 }
 
 /** Preset triangles of a species' pack-buff traits (neutral for a non-social species). */
-export function buffRanges(id: FreeSpeciesId): Record<BuffTraitId, Triangular> {
-  const b = FREE_SPECIES[id].buff;
+export function buffRanges(
+  id: FreeSpeciesId,
+  mv: number = FREE_MODEL_VERSION,
+): Record<BuffTraitId, Triangular> {
+  const b = freeSpeciesAt(id, mv).buff;
   return Object.fromEntries(BUFF_TRAIT_IDS.map((k) => [k, { ...b[k].range }])) as Record<
     BuffTraitId,
     Triangular

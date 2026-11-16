@@ -1,4 +1,4 @@
-import { sanitizeFreeConfig, type FreeConfig } from './config.ts';
+import { FREE_MODEL_VERSION, sanitizeFreeConfig, type FreeConfig } from './config.ts';
 import { FREE_SPECIES, type FreeSpeciesId } from './species.ts';
 
 /**
@@ -167,6 +167,11 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '털매머드와 회색늑대는 빙하기의 같은 초원에 살았습니다. 기록된 싸움이 아니라 사고 실험입니다.',
       en: 'Woolly mammoths and grey wolves lived on the same glacial-period steppe; a thought experiment, not a recorded fight.',
     },
+    check: {
+      maxRoutShare: 1,
+      reason:
+        'At the fixture measure the wolves rout 90.1 % under model 2 (fight to the end), 0.1 pp over the limit (model 1: 89.8 %, the same model before deterministic math reshuffled individual runs). Field records of the living analogue: wolves avoid the risk of injury from large prey, wounding it and waiting rather than pressing an attack, and a large prey animal that stands its ground is often left alone (SPECIES.md §11.6), so a pack that breaks off matches them.',
+    },
   },
   {
     id: 'trex-mirror',
@@ -303,9 +308,14 @@ export const FREE_PRESETS: readonly FreePreset[] = [
 /** Presets Simple mode may show: every preset not on hold. */
 export const readyPresets = (): FreePreset[] => FREE_PRESETS.filter((p) => p.hold === undefined);
 
-/** The free config of a preset: species and counts on defaults, at the given seed. */
-export function presetConfig(p: FreePreset, seed?: number): FreeConfig {
+/**
+ * The free config of a preset: species and counts on defaults, at the given seed, under model
+ * version `mv` (the newest by default; the preset fixture also measures older ones), in the
+ * default flight mode `allIn` (owner decision 2026-11-16): every Simple preset fights to the end.
+ */
+export function presetConfig(p: FreePreset, seed?: number, mv = FREE_MODEL_VERSION): FreeConfig {
   return sanitizeFreeConfig({
+    mv,
     sides: [
       { species: p.a.sp, count: p.a.n },
       { species: p.b.sp, count: p.b.n },

@@ -1,4 +1,9 @@
-import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/config.ts';
+import {
+  defaultConfig,
+  isClassicModelVersion,
+  sanitizeConfig,
+  type ScenarioConfig,
+} from '../sim/config.ts';
 import { PARAMS } from '../sim/params.ts';
 import { speciesRanges } from '../sim/species.ts';
 
@@ -8,12 +13,16 @@ export const SHARE_KEY = 's';
  * Payload format version, stored as `v`. `sanitizeConfig` ignores it.
  * v1 (no `v` or `v: 1`) used `trex.*`/`tiger.*` ids and `trexCount`/`tigerCount`/`tigerTactic`;
  * it is upgraded through `upgradeV1` and reproduces bit-identically (tests/v1-golden.test.ts).
+ *
+ * `mv` is the classic model version (#197, docs/SHARING.md#model-version-mv). Absent means 1, and
+ * the encoder writes it whenever it is not 1, so every link made before it keeps reproducing
+ * under model 1 and every new link names model 2.
  */
 export const SHARE_VERSION = 2;
 /** Reject absurdly long fragments before decoding. */
 export const MAX_SHARE_LENGTH = 8192;
 
-type ScalarKey = Exclude<keyof ScenarioConfig, 'params' | 'heavySpecies' | 'packSpecies'>;
+type ScalarKey = Exclude<keyof ScenarioConfig, 'params' | 'heavySpecies' | 'packSpecies' | 'mv'>;
 const SCALAR_KEYS: readonly ScalarKey[] = [
   'heavyCount',
   'packCount',
@@ -51,6 +60,7 @@ export function base64UrlDecode(encoded: string): string {
 export function configDiff(config: ScenarioConfig): Record<string, unknown> {
   const d = defaultConfig();
   const out: Record<string, unknown> = {};
+  if (config.mv !== 1) out['mv'] = config.mv;
   if (config.heavySpecies !== d.heavySpecies) out['heavy'] = config.heavySpecies;
   if (config.packSpecies !== d.packSpecies) out['pack'] = config.packSpecies;
   for (const k of SCALAR_KEYS) {
@@ -138,6 +148,9 @@ export function upgradeV1(o: Record<string, unknown>): Record<string, unknown> {
  * exported file): v1 upgrade, then `sanitizeConfig`. Never throws.
  */
 export function configFromObject(raw: Record<string, unknown>): ScenarioConfig {
+  // A model version this build does not run (a newer one, or anything that is not a version):
+  // none of the payload's values can be read under another model, so it opens the defaults.
+  if (Object.hasOwn(raw, 'mv') && !isClassicModelVersion(raw['mv'])) return defaultConfig();
   // Main ignored `v`, so anything that is not a number ≥ 2 is a v1 payload.
   const v = raw['v'];
   const o = typeof v !== 'number' || !(v >= 2) ? upgradeV1(raw) : raw;

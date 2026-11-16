@@ -71,8 +71,19 @@ export function routeLink(hash: string, search: string): LinkRoute {
       check,
     };
   }
-  const config = configFromHash(hash) ?? defaultConfig();
+  const config = configFromHash(hash) ?? fragmentDefaults(hash);
   return { mode: 'classic', config, check: checkFromHash(hash, config) };
+}
+
+/**
+ * The classic config of a fragment without a settings payload. A bare `#chk=` is a "Run it
+ * yourself" link of the defaults made before classic model 2 (#197), when the defaults encoded as
+ * no `s=` at all, so it keeps model 1; every other such fragment opens the current defaults.
+ */
+function fragmentDefaults(hash: string): ScenarioConfig {
+  const d = defaultConfig();
+  const h = hash.startsWith('#') ? hash.slice(1) : hash;
+  return h.split('&').some((part) => part.startsWith('chk=')) ? { ...d, mv: 1 } : d;
 }
 
 /** What a fragment pasted into an open play page (`hashchange`) opens, if anything. */

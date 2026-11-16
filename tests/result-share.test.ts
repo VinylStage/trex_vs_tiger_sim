@@ -281,8 +281,8 @@ describe('reproduction check links', () => {
     expect(checkFromHash(hash, c)).toEqual(summary);
   });
 
-  it('works for the defaults (no s=)', () => {
-    const c = defaultConfig();
+  it('works for the defaults of classic model 1 (no s=, as before #197)', () => {
+    const c = { ...defaultConfig(), mv: 1 };
     const s = summarize(fakeAgg(500, 500, 0, 0));
     const hash = reproduceHash(c, s);
     expect(hash.startsWith('#chk=')).toBe(true);
@@ -324,9 +324,14 @@ describe('config code', () => {
     expect(parseConfigInput(encodeConfig(c))).toEqual({ ok: true, config: c });
   });
 
-  it('treats an empty code as the defaults', () => {
-    expect(configCode(defaultConfig())).toBe(CODE_PREFIX);
-    expect(parseConfigInput(CODE_PREFIX)).toEqual({ ok: true, config: defaultConfig() });
+  it('treats an empty code as the defaults of classic model 1 (the code they had before #197)', () => {
+    const v1Defaults = { ...defaultConfig(), mv: 1 };
+    expect(configCode(v1Defaults)).toBe(CODE_PREFIX);
+    expect(parseConfigInput(CODE_PREFIX)).toEqual({ ok: true, config: v1Defaults });
+    // The current defaults name their model version.
+    const code = configCode(defaultConfig());
+    expect(code).toBe(`${CODE_PREFIX}${encodeConfig(defaultConfig())}`);
+    expect(parseConfigInput(code)).toEqual({ ok: true, config: defaultConfig() });
   });
 
   it('upgrades v1 payloads like the #s= link', () => {

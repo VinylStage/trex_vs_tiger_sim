@@ -155,3 +155,26 @@ export const NEUTRAL: Readonly<Record<(typeof LATCH_TRAIT_IDS)[number] | BuffTra
 };
 
 export const fixed = (v: number): Triangular => ({ min: v, mode: v, max: v });
+
+/**
+ * Flight traits (#169, docs/SPECIES.md §11.6), read by the engine from model version 2 on. They
+ * are species constants, like `hide`: not sampled, not in links and not in the design matrix, so
+ * the matrix of every model version keeps its layout. Each preset row still carries a sensitivity
+ * range, which the calibration sweeps (docs/research/CALIBRATION.md §19).
+ *
+ * - `threatRatio`: an active enemy at least this many times the agent's own mass outmatches it.
+ * - `threatTime`: seconds within an outmatching enemy's reach (plus `dangerMargin`), or riding
+ *   it, after which an unhurt agent breaks off: its morale falls linearly from its starting value
+ *   to the rout threshold over that time, on top of any wound losses.
+ * - `soloShock`: morale an agent of a non-social species loses for each ally incapacitated within
+ *   `moraleRadius` (40 m) in a tick, at most `contagionDeathCap` allies. Social species keep the
+ *   pack buff's contagion instead and carry 0.
+ */
+export const FLIGHT_TRAIT_IDS = ['threatRatio', 'threatTime', 'soloShock'] as const;
+export type FlightTraitId = (typeof FLIGHT_TRAIT_IDS)[number];
+
+export const FLIGHT_TRAITS: readonly TraitDef<FlightTraitId>[] = [
+  def('threatRatio', '×', 0.1, false),
+  def('threatTime', 's', 1, false),
+  def('soloShock', '0-1', 0.005, false),
+];

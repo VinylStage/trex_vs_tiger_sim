@@ -14,7 +14,22 @@ import {
 export type SamplingMethod = 'lhs' | 'random';
 export type PackTactic = 'flank' | 'direct';
 
+/**
+ * Newest model version of the classic engine in this build (#197). Version 1 is the engine as it
+ * shipped through v0.2.26; version 2 computes the same model with the deterministic math of
+ * src/sim/detmath.ts, so a link gives the same battle in every JavaScript engine. Every version
+ * from 1 up to it stays runnable. Wherever `mv` is absent (every classic link made before #197)
+ * it means 1, like the free engine's `mv` (ADR-0008).
+ */
+export const CLASSIC_MODEL_VERSION = 2;
+
+/** Whether `v` is a classic model version this build runs: an integer from 1 to the newest. */
+export const isClassicModelVersion = (v: unknown): v is number =>
+  typeof v === 'number' && Number.isInteger(v) && v >= 1 && v <= CLASSIC_MODEL_VERSION;
+
 export interface ScenarioConfig {
+  /** Classic model version the config runs under (absent in a link means 1). */
+  mv: number;
   /** Species on the heavy side (src/sim/species.ts). */
   heavySpecies: HeavySpeciesId;
   /** Species on the pack side. */
@@ -47,6 +62,7 @@ export const PACK_TACTICS: readonly PackTactic[] = ['flank', 'direct'];
 
 export function defaultConfig(): ScenarioConfig {
   return {
+    mv: CLASSIC_MODEL_VERSION,
     heavySpecies: DEFAULT_HEAVY,
     packSpecies: DEFAULT_PACK,
     heavyCount: 10,
@@ -147,6 +163,8 @@ export function sanitizeConfig(input: unknown): ScenarioConfig {
     maxRunsFor({ maxTime, heavyCount, packCount }),
   );
   return {
+    // Absent means 1, so inputs written before `mv` existed keep running model 1.
+    mv: isClassicModelVersion(o['mv']) ? o['mv'] : 1,
     heavySpecies,
     packSpecies,
     heavyCount,

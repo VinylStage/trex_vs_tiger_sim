@@ -15,7 +15,7 @@ The DOM-free core (`config-code.ts`, `result-codec.ts`, `result-text.ts`, `messa
 
 ## Config code
 
-- Code: `TVT2-` + the same payload as `#s=` (`encodeConfig`). `TVT2-` alone is the defaults. The prefix is matched case-insensitively.
+- Code: `TVT2-` + the same payload as `#s=` (`encodeConfig`). `TVT2-` alone is the defaults of classic model 1, the code the defaults had before #197; the current defaults name their model version (`TVT2-eyJ2IjoyLCJtdiI6Mn0`, `{"v":2,"mv":2}`). The prefix is matched case-insensitively.
 - The paste field accepts a code, a full URL with `#s=` (other fragment parts such as `chk=` are ignored; a URL without `s=` is rejected), or a bare payload.
 - Validation order: length (≤ 8192) → base64url alphabet → `JSON.parse` → v1 upgrade (`upgradeV1`) → `sanitizeConfig`, through `configFromObject` in `src/ui/share.ts`, the same path as `#s=` links.
 - `.json` file: `{ "app": "trex-vs-tiger", "kind": "config", "v": 2, "config": <configDiff>, "exportedAt": "<ISO time>" }`, saved through `<a download>` with an object URL, loaded with `file.text()`. Files over 64 KB are rejected before reading; `v` < 2 means v1 names inside `config`.
@@ -30,6 +30,7 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 - **Settings code** `TVT3-<v3 payload>`. Pasting one (or a v3 link) into the classic import field switches to free mode and applies it; free mode has a "Copy settings code" button. `TVT2-` stays the classic code.
 - **Result links** (`/r/`) of free results use result format **v2** with the v3 config; the result page, the card, the text share and the link preview handle both ([Free result links](#free-result-links)).
 - **Model version** `mv`, absent while it is 1 ([Model version](#model-version-mv)).
+- **Flight mode** `flight` of model 2, absent while it is `allIn` ([Flight mode](#flight-mode-flight)).
 - **Simple-mode marker** `ui: "simple"`, appended last, only in links Simple mode writes ([Simple links](#simple-links)).
 
 | v3 key      | Meaning                                                                              | Written                                             |
@@ -39,11 +40,19 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 | `a`, `b`    | per side `sp` species, `n` count, `p` / `bf` edited ranges                           | always (`p`, `bf` only when edited)                 |
 | `buff`, `g` | switches turned off, edited global constants                                         | only when not the default                           |
 | scalars     | `runs`, `seed`, `arenaSize`, `maxTime`, `sampling`, `individualCV`, `morale`         | only when not the default                           |
+| `flight`    | `"realistic"`: flight mode of `mv` 2+ ([Flight mode](#flight-mode-flight))           | only for `realistic` under `mv` 2+, after scalars   |
 | `ui`        | `"simple"`: written by Simple mode, reopens in Simple (#154); not part of the config | only by Simple mode, for a config it can show, last |
 
 ### Model version (`mv`)
 
-[ADR-0008](adr/0008-live-interventions-and-model-version.md): a free link reproduces its results under the model version it names. `FREE_MODEL_VERSION` in `src/sim/free/config.ts` is the newest version this build runs (1 today), and `FreeConfig.mv` is the version a config runs under.
+[ADR-0008](adr/0008-live-interventions-and-model-version.md): a free link reproduces its results under the model version it names. `FREE_MODEL_VERSION` in `src/sim/free/version.ts` (re-exported by `src/sim/free/config.ts`) is the newest version this build runs, and `FreeConfig.mv` is the version a config runs under.
+
+| `mv` | Free engine                                                                                                                                                                                                                                                                                                               | Since                             |
+| ---: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+|    1 | as shipped through v0.2.26: the engine's own `Math`, no flight traits                                                                                                                                                                                                                                                     | #124 (absent in every older link) |
+|    2 | deterministic math (#197, [MODEL.md §2.2](MODEL.md#22-random-numbers-and-determinism)) and per-species flight traits, active in the `realistic` [flight mode](#flight-mode-flight), with researched polar bear rows (#169, [SPECIES.md §11.6](SPECIES.md#116-flight-traits-model-2-169)); the card catalogue is model 1's | this change; every new link       |
+
+- **New links name the newest model.** The defaults, every preset, a cold Simple page and the species guide's "Try it" links run model 2, so their links carry `"mv":2`. An opened link keeps the model it names while it is edited (a species switch takes that model's presets), so editing an old link never changes its model silently.
 
 - **Absent means 1.** Every v3 link, `TVT3-` code and free result link made before `mv` existed decodes as model 1, and so does any other input without `mv` (`sanitizeFreeConfig`, the golden fixtures).
 - **The encoder omits `mv` while it is 1** and writes any other version right after `m`: `{"v":3,"m":"free","mv":2,"a":…}`. Writing `mv: 1` into every link was the alternative; it was rejected because it would change the bytes of every free link from now on. With the omission, a model 1 link made today is byte for byte the link the earlier encoder made, and every existing test and golden is unchanged.
@@ -58,7 +67,18 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 
 - **Builds up to v0.2.16 have no `mv` check.** They ignore the key, so a page cached from one of them opens a newer settings link with all its values under model 1, decodes a newer free result link as valid and offers **Run it yourself** for it. Pages already in a cache cannot be changed; the rules above hold for builds from #124 on.
 
+- **Classic links (#197).** A classic payload (`v: 2`) carries the classic model version `mv` the same way: absent means 1 (`sanitizeConfig`, every classic link and `TVT2-` code made before #197, the v1 and v2 goldens), and the encoder writes it whenever it is not 1, right after `v` (`configDiff`): `{"v":2,"mv":2,"heavyCount":1,…}`. `CLASSIC_MODEL_VERSION` in `src/sim/config.ts` is 2: the same model computed with the deterministic math. A classic payload naming a version this build does not run (newer, or malformed) opens the classic defaults, without its values (`configFromObject`); unlike the free model there is no newer-model note yet. The defaults now encode as `{"v":2,"mv":2}`, so a classic link at the defaults always carries `#s=`; the bare `{"v":2}` of the classic address (#158 review) is the model 1 defaults. A bare `#chk=…` "Run it yourself" link was a link of the defaults when the defaults had no `s=`, so it opens the model 1 defaults with its check (`routeLink`). Builds before #197 ignore the key and run such a link under model 1.
 - `freeModelVersion(raw)` in `src/ui/share-free.ts` reads `mv` from a payload; `tests/free-model-version.test.ts` holds payloads written by the encoder before `mv` existed and checks that they decode as model 1 and re-encode byte for byte.
+
+### Flight mode (`flight`)
+
+Owner decision 2026-11-16 ([MODEL.md §3.8](MODEL.md#38-morale-and-rout)). From free model 2 a config has a flight mode: `allIn` ("끝까지 싸우기" / "Fight to the end", the default) leaves the per-species flight traits of #169 inactive, `realistic` ("현실 모드" / "Realistic") lets them act. `FreeConfig.flight` holds it and `sanitizeFreeConfig` accepts only those two strings; anything else is `allIn`.
+
+- **Absent means `allIn`.** The encoder writes `flight` only for `realistic`, after the scalars and before `ui`: `{"v":3,"m":"free","mv":2,"a":…,"b":…,"flight":"realistic"}`. Every link of the defaults, a preset or a cold Simple page carries no `flight` key.
+- **Model 1 has no flight mode.** A model 1 config is always `allIn`, the encoder never writes the key for it, and a model 1 payload that carries one (hand-made: no encoder ever wrote it) decodes as `allIn`, so model 1 links and `tests/fixtures/preset-shares.json` are unchanged.
+- **Simple runs `allIn`.** The flight mode is a setting Simple does not show, so `simpleRunConfig` drops it and a `realistic` config counts as a hidden edit (`hasHiddenEdits`): its link carries no Simple marker, and a marked link that names `realistic` opens the free form of Advanced mode ([Simple links](#simple-links)).
+- **No released build runs model 2.** Released builds treat `mv` 2 as a newer model (above) and open their defaults, so no page reads a model 2 link while ignoring `flight`.
+- `tests/free-flight.test.ts` checks the sanitizer, the encoder and decoder, model 1 and Simple; the model 2 golden holds cases in both modes.
 
 ## Link routing
 
@@ -74,20 +94,20 @@ Plain anchors such as `#faq` and other queries (`?utm_…`, the `?_r=` reload ma
 
 **Step 2: the play page opens the fragment.** `routeLink(hash)` in `src/ui/link-route.ts` is the pure helper the app reads its starting fragment with:
 
-| Fragment                                                                                           | Opens                                                                                                |
-| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `#s=<v3>` (`m: "free"`), with or without `&chk=`                                                   | Free mode with that config, and the free reproduction check when `chk=` validates                    |
-| `#s=<v3>` of a model this build does not run                                                       | Free mode at the free defaults, `newerModel` set, so the address is kept ([`mv`](#model-version-mv)) |
-| `#s=<v1 or v2>`, with or without `&chk=`; `#chk=` alone                                            | Classic with that config (the defaults for `#chk=` alone), and the classic reproduction check        |
-| `#s=<v3>` with `ui: "simple"` that Simple can show, model this build runs, with or without `&chk=` | **Simple mode** with that config, and the free reproduction check when `chk=` validates (#154)       |
-| no app state and no tour deep link (a cold play page)                                              | **Simple mode** at the default preset, lion vs tiger 1:1 (#146)                                      |
-| a malformed payload, a settings code; `?tour` alone                                                | Classic at the defaults                                                                              |
+| Fragment                                                                                           | Opens                                                                                                       |
+| -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `#s=<v3>` (`m: "free"`), with or without `&chk=`                                                   | Free mode with that config, and the free reproduction check when `chk=` validates                           |
+| `#s=<v3>` of a model this build does not run                                                       | Free mode at the free defaults, `newerModel` set, so the address is kept ([`mv`](#model-version-mv))        |
+| `#s=<v1 or v2>`, with or without `&chk=`; `#chk=` alone                                            | Classic with that config (the model 1 defaults for `#chk=` alone, #197), and the classic reproduction check |
+| `#s=<v3>` with `ui: "simple"` that Simple can show, model this build runs, with or without `&chk=` | **Simple mode** with that config, and the free reproduction check when `chk=` validates (#154)              |
+| no app state and no tour deep link (a cold play page)                                              | **Simple mode** at the default preset, lion vs tiger 1:1 (#146)                                             |
+| a malformed payload, a settings code; `?tour` alone                                                | Classic at the defaults                                                                                     |
 
 For every link made before #154 (none carries `ui`) this is the same decision `startApp` made on `/` before #142 (free when `freeConfigFromHash` finds a v3 payload, otherwise `configFromHash(hash) ?? defaultConfig()`). It now lives in one tested function, `routeLink(hash, search)`.
 
 **Cold play page (#146).** Only a play page with nothing to open changes: no app state in the fragment (`hashHasAppState` in `src/pages/routes.ts`, the same test the lobby forwarder applies, so `''`, `#`, `#main` or `#faq`) and no `tour` parameter (`hasTourParam`, the lobby's own query test, so `?_r=…` and `?utm_…` count as cold while `?tour=0`, which the lobby forwards, still opens classic at the defaults without the tour, as on `main`). It opens Simple mode instead of classic at the defaults, and leaves the address as it is (a plain anchor such as `#main` stays) until the first Run or **Copy settings link** (`simpleKeepsAddress`). No link the lobby forwards is cold, so every old link type opens as before; `tests/link-routing.test.ts` checks that for every fixture, through the lobby and on the play page directly, and checks the cold cases. A Simple Run writes its config, fresh seed included (R3), into the address as a v3 link with the Simple-mode marker, so that link (and a reload) opens Simple again ([Simple links](#simple-links)).
 
-**Classic at the defaults (#158 review).** While the classic simulator is shown, the app writes `classicHashFromConfig` (`src/ui/share.ts`): the same hash as `hashFromConfig` for every config except the defaults, where that would be empty and a copied link would open Simple on a cold play page. At the defaults it writes the bare v2 payload `#s=eyJ2IjoyfQ` (`{"v":2}`), which decodes to the defaults and routes to classic like any v2 link. Links that already exist open exactly as before; only the address the app writes for classic at the defaults changed (it used to be empty), and `tests/link-routing.test.ts` checks both.
+**Classic at the defaults (#158 review).** While the classic simulator is shown, the app writes `classicHashFromConfig` (`src/ui/share.ts`): the same hash as `hashFromConfig` for every config except the defaults, where that would be empty and a copied link would open Simple on a cold play page. At the defaults it writes the bare v2 payload `#s=eyJ2IjoyfQ` (`{"v":2}`), which decodes to the defaults and routes to classic like any v2 link. From classic model 2 (#197) the defaults encode as `{"v":2,"mv":2}`, so `hashFromConfig` is never empty for them and the fallback applies only to the model 1 defaults; `{"v":2}` now opens those. Links that already exist open exactly as before; only the address the app writes for classic at the defaults changed (it used to be empty), and `tests/link-routing.test.ts` checks both.
 
 ### Simple links
 
@@ -142,7 +162,7 @@ Summary `s`:
 
 Unknown keys, a wrong `v`, `r` over 4096 characters or outside the base64url alphabet are rejected. When only `s` fails, the page still offers **Run it yourself** with the config from `c`.
 
-The numbers are a **snapshot**: V8 and JavaScriptCore agree statistically but not run for run ([MODEL.md §2.2](MODEL.md)), so the page shows the shared numbers as they were and labels them so. **Run it yourself** opens `/play/#s=<config>&chk=<summary>` (`/en/play/` on the English page); after the person presses Run (never automatically) with unchanged settings, the app reports _exactly the same_, _reproduced within the 95 % CI_ (every shared rate inside the new run's Wilson interval) or _differs_. The `chk=` part is dropped from the address as soon as the app starts, so a reload does not repeat the check.
+The numbers are a **snapshot**: under model 1, V8 and JavaScriptCore agree statistically but not run for run; from model 2 they agree run for run ([MODEL.md §2.2](MODEL.md#22-random-numbers-and-determinism)), so the page shows the shared numbers as they were and labels them so. **Run it yourself** opens `/play/#s=<config>&chk=<summary>` (`/en/play/` on the English page); after the person presses Run (never automatically) with unchanged settings, the app reports _exactly the same_, _reproduced within the 95 % CI_ (every shared rate inside the new run's Wilson interval) or _differs_. The `chk=` part is dropped from the address as soon as the app starts, so a reload does not repeat the check.
 
 In the simulator, **Share result** appears under the verdict after a run: Web Share where available, otherwise the link is copied (with the fallback dialog). **Open result page** opens the same link.
 

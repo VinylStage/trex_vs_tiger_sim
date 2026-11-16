@@ -67,6 +67,7 @@ describe('simple run config', () => {
     ]);
     expect(r.seed).toBe(12345);
     const expected = sanitizeFreeConfig({
+      mv: c.mv,
       sides: [
         { species: 'wolf', count: 8 },
         { species: 'brownBear', count: 1 },

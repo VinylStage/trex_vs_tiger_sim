@@ -25,7 +25,7 @@ const withSide = (c: FreeConfig, i: FreeSideIndex, side: SideConfig): FreeConfig
 /** Pick a species for a side: its presets replace the side's ranges; the count stays. */
 export function withSideSpecies(c: FreeConfig, i: FreeSideIndex, species: string): FreeConfig {
   if (!(FREE_SPECIES_IDS as readonly string[]).includes(species)) return c;
-  return withSide(c, i, defaultSide(species as FreeSpeciesId, c.sides[i].count));
+  return withSide(c, i, defaultSide(species as FreeSpeciesId, c.sides[i].count, c.mv));
 }
 
 /** Set a side's head count (clamped per side and to the total by the sanitizer). */
@@ -46,6 +46,11 @@ export function withSampling(c: FreeConfig, sampling: string): FreeConfig {
 
 export function withMorale(c: FreeConfig, morale: boolean): FreeConfig {
   return sanitizeFreeConfig({ ...c, morale });
+}
+
+/** Set the flight mode (`allIn` or `realistic`, mv 2+); anything else keeps the default. */
+export function withFlightMode(c: FreeConfig, flight: string): FreeConfig {
+  return sanitizeFreeConfig({ ...c, flight });
 }
 
 /** Switch one pack-buff effect on or off (design §5.5). */

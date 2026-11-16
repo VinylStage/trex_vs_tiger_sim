@@ -2,9 +2,11 @@ import { LIMITS, SAMPLING_METHODS } from '../sim/config';
 import { routNotice, type FreeAggregate } from '../sim/free/aggregate';
 import { FreeOutcome, type FreeRunSummary } from '../sim/free/engine';
 import {
+  FLIGHT_MODES,
   FREE_LIMITS,
   GLOBALS,
   PACK_BUFF_EFFECTS,
+  hasFlightMode,
   sanitizeFreeConfig,
   type FreeConfig,
 } from '../sim/free/config';
@@ -30,6 +32,7 @@ import { formatBound, formatShare } from './verdict';
 import {
   sideBuffState,
   withBuffSwitch,
+  withFlightMode,
   withMorale,
   withNumber,
   withSampling,
@@ -529,6 +532,21 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
         h('small', { class: 'hint', id: `${mid}-hint`, text: t('free.moraleHelp') }),
       ),
     );
+
+    // Flight mode (owner decision 2026-11-16, MODEL.md §3.8): only a model with flight traits.
+    if (hasFlightMode(cfg)) {
+      const fid = nextId('free-flight');
+      const fsel = h('select', { id: fid });
+      for (const m of FLIGHT_MODES) {
+        fsel.append(h('option', { attrs: { value: m }, text: t(`flight.${m}`) }));
+      }
+      fsel.value = cfg.flight;
+      fsel.addEventListener('change', () => {
+        cfg = withFlightMode(cfg, fsel.value);
+        commit(fid);
+      });
+      grid.append(field(t('field.flightMode'), t('free.flightHelp'), fsel, fid));
+    }
     return h('fieldset', { class: 'free-shared' }, h('legend', { text: t('free.settings') }), grid);
   }
 
@@ -544,6 +562,10 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     // Spinosaurus carries its "semi-aquatic; land duel" label wherever it is shown (#185).
     if (a.species === 'spinosaurus' || b.species === 'spinosaurus') {
       out.push(h('p', { class: 'free-note', text: t('matchup.landDuel') }));
+    }
+    // The flight mode carries its one-line note like the labels above (MODEL.md §3.8).
+    if (hasFlightMode(cfg)) {
+      out.push(h('p', { class: 'free-note', text: t(`flight.note.${cfg.flight}`) }));
     }
     out.push(h('p', { class: 'free-note', text: t('free.badge.note') }));
     return out;

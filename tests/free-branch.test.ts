@@ -32,6 +32,15 @@ const configs: FreeConfig[] = [
       { species: 'tiger', count: 2 },
     ],
   }),
+  // Model 2 (#169, #197): deterministic math and flight traits under the same hook.
+  sanitizeFreeConfig({
+    mv: 2,
+    runs: 6,
+    sides: [
+      { species: 'trex', count: 1 },
+      { species: 'tiger', count: 6 },
+    ],
+  }),
 ];
 
 const sim = (config: FreeConfig, run: number, opts?: FreeBattleOptions) =>

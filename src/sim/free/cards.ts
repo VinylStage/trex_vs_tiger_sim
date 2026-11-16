@@ -136,8 +136,12 @@ const CARDS_MV1: CardCatalogue = {
   },
 };
 
-/** Card catalogue per model version (ADR-0008 §5). Old versions are kept, never edited. */
-export const CARDS_BY_MV: Readonly<Record<number, CardCatalogue>> = { 1: CARDS_MV1 };
+/**
+ * Card catalogue per model version (ADR-0008 §5). Old versions are kept, never edited. Model 2
+ * (#169, #197) changed the engine's math and flight, not the cards, so it shares model 1's
+ * catalogue.
+ */
+export const CARDS_BY_MV: Readonly<Record<number, CardCatalogue>> = { 1: CARDS_MV1, 2: CARDS_MV1 };
 
 /** The catalogue of model version `mv`; only an integer key is looked up, never a prototype one. */
 const catalogueFor = (mv: number): CardCatalogue | undefined =>
