@@ -13,7 +13,7 @@
 // nothing unless --out is given. `--mv <n>` runs free model version n and classic model
 // version n (default 1, the model every committed file without a suffix was measured with) and
 // adds `-mv<n>` to the default file names, so a new model never overwrites an older report.
-// `--flight` picks the free engine's flight mode from model 2 on (docs/MODEL.md §4.6): `allIn`, the
+// `--flight` picks the free engine's flight mode from model 2 on (docs/MODEL.md §3.8): `allIn`, the
 // default and the mode every Simple preset runs, or `realistic`, which adds `-realistic` to the
 // default file names. The `flight` section always runs `realistic` (it sweeps the flight traits,
 // which act only there), so a full `allIn` run skips it.

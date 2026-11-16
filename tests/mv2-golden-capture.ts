@@ -17,7 +17,7 @@ import { designRow } from '../src/sim/sampling';
 
 /*
  * Golden cases of free `mv` 2 and classic model 2 (#169, #197), in both flight modes of free
- * `mv` 2 (`allIn`, the default, and `realistic`; docs/MODEL.md §4.6), shared by the V8 test
+ * `mv` 2 (`allIn`, the default, and `realistic`; docs/MODEL.md §3.8), shared by the V8 test
  * (tests/mv2-golden.test.ts, vitest on Node) and the JavaScriptCore check
  * (scripts/cross-engine/check-goldens.mjs, run with Bun). No test framework here, so both
  * engines run exactly this code. The fixture is tests/fixtures/mv2-golden.json; like every

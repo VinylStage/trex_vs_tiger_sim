@@ -51,18 +51,18 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 
 ### M2 — play/learn split, Simple mode, usability (epic #125)
 
-| Item                                                    | Issue     | Status                                                                                                       |
-| ------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------ |
-| Lobby `/` and the app at `/play/`, old links forwarded  | #142      | Done (#143, v0.2.18)                                                                                         |
-| Simple mode with an Advanced switch                     | #146      | Done (#151, v0.2.19)                                                                                         |
-| Simple links reopen in Simple                           | #154      | Done (#155, v0.2.20)                                                                                         |
-| Simple tour and the Advanced settings manual            | #158      | Done (#159, v0.2.21)                                                                                         |
-| `/learn/` hub, Play/Learn nav groups, `/species/` guide | #162      | Done (#163, v0.2.22)                                                                                         |
-| P8 calibration report and model-page section            | #166      | Done in review: [docs/research/CALIBRATION.md](docs/research/CALIBRATION.md); awaits the owner's sign-off    |
-| P8 free model on the parameters page                    | #170      | Open                                                                                                         |
-| R1 "provisional model" banner decision                  | #166      | Recommendation: keep until the sign-off, #170 and #169 are done (CALIBRATION.md §10); owner decides          |
-| Usability test (5–8 people, 18–35) and anonymous survey | #166      | Kit ready in [docs/research/USABILITY.md](docs/research/USABILITY.md); the owner runs it, results not in yet |
-| Free-model calibration follow-ups                       | #167–#169 | #169 done in review with #197 (model 2: per-species flight traits, deterministic math); #167, #168 open      |
+| Item                                                    | Issue     | Status                                                                                                                                                                                                             |
+| ------------------------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Lobby `/` and the app at `/play/`, old links forwarded  | #142      | Done (#143, v0.2.18)                                                                                                                                                                                               |
+| Simple mode with an Advanced switch                     | #146      | Done (#151, v0.2.19)                                                                                                                                                                                               |
+| Simple links reopen in Simple                           | #154      | Done (#155, v0.2.20)                                                                                                                                                                                               |
+| Simple tour and the Advanced settings manual            | #158      | Done (#159, v0.2.21)                                                                                                                                                                                               |
+| `/learn/` hub, Play/Learn nav groups, `/species/` guide | #162      | Done (#163, v0.2.22)                                                                                                                                                                                               |
+| P8 calibration report and model-page section            | #166      | Done in review: [docs/research/CALIBRATION.md](docs/research/CALIBRATION.md); awaits the owner's sign-off                                                                                                          |
+| P8 free model on the parameters page                    | #170      | Open                                                                                                                                                                                                               |
+| R1 "provisional model" banner decision                  | #166      | Recommendation: keep until the sign-off, #170 and #169 are done (CALIBRATION.md §10); owner decides                                                                                                                |
+| Usability test (5–8 people, 18–35) and anonymous survey | #166      | Kit ready in [docs/research/USABILITY.md](docs/research/USABILITY.md); the owner runs it, results not in yet                                                                                                       |
+| Free-model calibration follow-ups                       | #167–#169 | #169 done in review with #197 (model 2: deterministic math; per-species flight traits in the opt-in `realistic` flight mode, `allIn` "Fight to the end" the default by owner decision 2026-11-16); #167, #168 open |
 
 ### M3 — live variable cards (epic #126)
 

@@ -22,7 +22,7 @@ import { FREE_PRESETS, presetConfig } from '../src/sim/free/presets';
 /*
  * Per-species flight traits of model 2 (#169, docs/SPECIES.md §11.6), the flight mode that turns
  * them on (`realistic`) or off (`allIn`, the default; owner decision 2026-11-16, docs/MODEL.md
- * §4.6) and the polar bear's revised behaviour rows. Model 1 is pinned by the older goldens; model 2 by
+ * §3.8) and the polar bear's revised behaviour rows. Model 1 is pinned by the older goldens; model 2 by
  * tests/mv2-golden.test.ts.
  */
 

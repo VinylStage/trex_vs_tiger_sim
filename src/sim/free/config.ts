@@ -125,7 +125,7 @@ export { FREE_MODEL_VERSION, isFreeModelVersion } from './version.ts';
 
 /**
  * Flight mode of a free config under model version 2 or later (owner decision 2026-11-16,
- * docs/MODEL.md §4.6):
+ * docs/MODEL.md §3.8):
  *
  * - `allIn` ("Fight to the end"): the thought experiment. The per-species flight traits of #169
  *   are inactive; everything else is the config's model version. The default.

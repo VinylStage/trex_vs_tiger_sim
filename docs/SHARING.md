@@ -30,6 +30,7 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 - **Settings code** `TVT3-<v3 payload>`. Pasting one (or a v3 link) into the classic import field switches to free mode and applies it; free mode has a "Copy settings code" button. `TVT2-` stays the classic code.
 - **Result links** (`/r/`) of free results use result format **v2** with the v3 config; the result page, the card, the text share and the link preview handle both ([Free result links](#free-result-links)).
 - **Model version** `mv`, absent while it is 1 ([Model version](#model-version-mv)).
+- **Flight mode** `flight` of model 2, absent while it is `allIn` ([Flight mode](#flight-mode-flight)).
 - **Simple-mode marker** `ui: "simple"`, appended last, only in links Simple mode writes ([Simple links](#simple-links)).
 
 | v3 key      | Meaning                                                                              | Written                                             |
@@ -39,16 +40,17 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 | `a`, `b`    | per side `sp` species, `n` count, `p` / `bf` edited ranges                           | always (`p`, `bf` only when edited)                 |
 | `buff`, `g` | switches turned off, edited global constants                                         | only when not the default                           |
 | scalars     | `runs`, `seed`, `arenaSize`, `maxTime`, `sampling`, `individualCV`, `morale`         | only when not the default                           |
+| `flight`    | `"realistic"`: flight mode of `mv` 2+ ([Flight mode](#flight-mode-flight))           | only for `realistic` under `mv` 2+, after scalars   |
 | `ui`        | `"simple"`: written by Simple mode, reopens in Simple (#154); not part of the config | only by Simple mode, for a config it can show, last |
 
 ### Model version (`mv`)
 
 [ADR-0008](adr/0008-live-interventions-and-model-version.md): a free link reproduces its results under the model version it names. `FREE_MODEL_VERSION` in `src/sim/free/version.ts` (re-exported by `src/sim/free/config.ts`) is the newest version this build runs, and `FreeConfig.mv` is the version a config runs under.
 
-| `mv` | Free engine                                                                                                                                                                                                                                                | Since                             |
-| ---: | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-|    1 | as shipped through v0.2.26: the engine's own `Math`, no flight traits                                                                                                                                                                                      | #124 (absent in every older link) |
-|    2 | deterministic math (#197, [MODEL.md §2.2](MODEL.md#22-random-numbers-and-determinism)) and per-species flight traits with researched polar bear rows (#169, [SPECIES.md §11.6](SPECIES.md#116-flight-traits-model-2-169)); the card catalogue is model 1's | this change; every new link       |
+| `mv` | Free engine                                                                                                                                                                                                                                                                                                               | Since                             |
+| ---: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+|    1 | as shipped through v0.2.26: the engine's own `Math`, no flight traits                                                                                                                                                                                                                                                     | #124 (absent in every older link) |
+|    2 | deterministic math (#197, [MODEL.md §2.2](MODEL.md#22-random-numbers-and-determinism)) and per-species flight traits, active in the `realistic` [flight mode](#flight-mode-flight), with researched polar bear rows (#169, [SPECIES.md §11.6](SPECIES.md#116-flight-traits-model-2-169)); the card catalogue is model 1's | this change; every new link       |
 
 - **New links name the newest model.** The defaults, every preset, a cold Simple page and the species guide's "Try it" links run model 2, so their links carry `"mv":2`. An opened link keeps the model it names while it is edited (a species switch takes that model's presets), so editing an old link never changes its model silently.
 
@@ -67,6 +69,16 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 
 - **Classic links (#197).** A classic payload (`v: 2`) carries the classic model version `mv` the same way: absent means 1 (`sanitizeConfig`, every classic link and `TVT2-` code made before #197, the v1 and v2 goldens), and the encoder writes it whenever it is not 1, right after `v` (`configDiff`): `{"v":2,"mv":2,"heavyCount":1,…}`. `CLASSIC_MODEL_VERSION` in `src/sim/config.ts` is 2: the same model computed with the deterministic math. A classic payload naming a version this build does not run (newer, or malformed) opens the classic defaults, without its values (`configFromObject`); unlike the free model there is no newer-model note yet. The defaults now encode as `{"v":2,"mv":2}`, so a classic link at the defaults always carries `#s=`; the bare `{"v":2}` of the classic address (#158 review) is the model 1 defaults. A bare `#chk=…` "Run it yourself" link was a link of the defaults when the defaults had no `s=`, so it opens the model 1 defaults with its check (`routeLink`). Builds before #197 ignore the key and run such a link under model 1.
 - `freeModelVersion(raw)` in `src/ui/share-free.ts` reads `mv` from a payload; `tests/free-model-version.test.ts` holds payloads written by the encoder before `mv` existed and checks that they decode as model 1 and re-encode byte for byte.
+
+### Flight mode (`flight`)
+
+Owner decision 2026-11-16 ([MODEL.md §3.8](MODEL.md#38-morale-and-rout)). From free model 2 a config has a flight mode: `allIn` ("끝까지 싸우기" / "Fight to the end", the default) leaves the per-species flight traits of #169 inactive, `realistic` ("현실 모드" / "Realistic") lets them act. `FreeConfig.flight` holds it and `sanitizeFreeConfig` accepts only those two strings; anything else is `allIn`.
+
+- **Absent means `allIn`.** The encoder writes `flight` only for `realistic`, after the scalars and before `ui`: `{"v":3,"m":"free","mv":2,"a":…,"b":…,"flight":"realistic"}`. Every link of the defaults, a preset or a cold Simple page carries no `flight` key.
+- **Model 1 has no flight mode.** A model 1 config is always `allIn`, the encoder never writes the key for it, and a model 1 payload that carries one (hand-made: no encoder ever wrote it) decodes as `allIn`, so model 1 links and `tests/fixtures/preset-shares.json` are unchanged.
+- **Simple runs `allIn`.** The flight mode is a setting Simple does not show, so `simpleRunConfig` drops it and a `realistic` config counts as a hidden edit (`hasHiddenEdits`): its link carries no Simple marker, and a marked link that names `realistic` opens the free form of Advanced mode ([Simple links](#simple-links)).
+- **No released build runs model 2.** Released builds treat `mv` 2 as a newer model (above) and open their defaults, so no page reads a model 2 link while ignoring `flight`.
+- `tests/free-flight.test.ts` checks the sanitizer, the encoder and decoder, model 1 and Simple; the model 2 golden holds cases in both modes.
 
 ## Link routing
 

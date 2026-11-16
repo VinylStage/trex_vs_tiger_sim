@@ -220,7 +220,7 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
     if (a.species === 'spinosaurus' || b.species === 'spinosaurus') {
       out.push(h('p', { class: 'free-note', text: t('matchup.landDuel') }));
     }
-    // Simple always runs `allIn` (MODEL.md §4.6); its note says so, and where the other mode is.
+    // Simple always runs `allIn` (MODEL.md §3.8); its note says so, and where the other mode is.
     if (hasFlightMode(c)) out.push(h('p', { class: 'free-note', text: t('simple.flightNote') }));
     if (hasHiddenEdits(c)) out.push(h('p', { class: 'free-note', text: t('simple.hiddenEdits') }));
     const seed = opts.linkSeed();

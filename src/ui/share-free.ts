@@ -37,7 +37,7 @@ import {
  * `mv` is the model version (ADR-0008). Absent means 1, and the encoder writes it only when it is
  * not 1, so every link of model 1 is byte-identical to the links made before `mv` existed.
  *
- * `flight: "realistic"` is the flight mode of `mv` 2 and later (docs/MODEL.md §4.6). Absent means
+ * `flight: "realistic"` is the flight mode of `mv` 2 and later (docs/MODEL.md §3.8). Absent means
  * `allIn`, the default, and the encoder writes it only for `realistic`; under `mv` 1 the decoder
  * ignores it, since model 1 has no flight traits.
  *

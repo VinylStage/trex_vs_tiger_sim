@@ -533,7 +533,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       ),
     );
 
-    // Flight mode (owner decision 2026-11-16, MODEL.md §4.6): only a model with flight traits.
+    // Flight mode (owner decision 2026-11-16, MODEL.md §3.8): only a model with flight traits.
     if (hasFlightMode(cfg)) {
       const fid = nextId('free-flight');
       const fsel = h('select', { id: fid });
@@ -563,7 +563,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     if (a.species === 'spinosaurus' || b.species === 'spinosaurus') {
       out.push(h('p', { class: 'free-note', text: t('matchup.landDuel') }));
     }
-    // The flight mode carries its one-line note like the labels above (MODEL.md §4.6).
+    // The flight mode carries its one-line note like the labels above (MODEL.md §3.8).
     if (hasFlightMode(cfg)) {
       out.push(h('p', { class: 'free-note', text: t(`flight.note.${cfg.flight}`) }));
     }
