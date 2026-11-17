@@ -78,7 +78,7 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | Same link, same battle in every JS engine (model 2)     | #197  | Done in review: deterministic math under free `mv` 2 and classic model 2, Bun cross-engine check in CI |
 | `live` log in v3 config and free result link v3         | #180  | Done in review                                                                                         |
 | Re-simulation gate, card-pause budget, pre-battle cards | #181  | Done in review                                                                                         |
-| What-if shift display                                   | #182  | Open                                                                                                   |
+| What-if shift display                                   | #182  | Done in review                                                                                         |
 | Live battle mode                                        | #183  | Open                                                                                                   |
 
 ### M6 — animals batch A

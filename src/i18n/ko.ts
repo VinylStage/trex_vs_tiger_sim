@@ -700,6 +700,10 @@ export const ko = {
   'live.gate.noWhatIf': '효과 계산 생략: 대결 규모가 큼',
   'live.gate.preBattle': '대결 규모가 커서 출전 전 변수만 씁니다',
   'live.gate.noCards': '대결 규모가 커서 이번 대결은 변수 카드 없이 진행합니다',
+  // What-if shift of an offered card (#182, RENEWAL-1.0 §10.2 point 3; src/ui/what-if.ts)
+  'whatIf.basis': '같은 대결 {n}판 기준 · 지금 전황과는 별개',
+  'whatIf.line': '{side} 승률 {before} → {after} ({delta}%p)',
+  'whatIf.swing': '판도 변화',
 } as const;
 
 export type MsgKey = keyof typeof ko;

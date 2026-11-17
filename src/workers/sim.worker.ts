@@ -59,14 +59,29 @@ function handleFree(msg: Extract<WorkerRequest, { type: 'run' }>): void {
   const design = freeDesignFor(config);
   const start = Math.max(0, Math.min(config.runs, Math.floor(msg.start)));
   const end = Math.max(start, Math.min(config.runs, Math.floor(msg.end)));
+  // A what-if batch (#182) plays one card log in every run; it may come from a link, so it is
+  // sanitized here as well as in the engine.
+  const interventions = sanitizeInterventions(
+    msg.interventions,
+    Math.round(config.maxTime / DT),
+    config.mv,
+    config,
+  );
   let last = performance.now();
-  const summaries = runFreeChunk(config, design, start, end, (done) => {
-    const now = performance.now();
-    if (now - last >= PROGRESS_INTERVAL_MS) {
-      last = now;
-      ctx.postMessage({ type: 'progress', jobId: msg.jobId, done });
-    }
-  });
+  const summaries = runFreeChunk(
+    config,
+    design,
+    start,
+    end,
+    (done) => {
+      const now = performance.now();
+      if (now - last >= PROGRESS_INTERVAL_MS) {
+        last = now;
+        ctx.postMessage({ type: 'progress', jobId: msg.jobId, done });
+      }
+    },
+    interventions,
+  );
   ctx.postMessage({ type: 'result', jobId: msg.jobId, summaries });
 }
 
