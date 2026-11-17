@@ -251,6 +251,8 @@ export const ko = {
   'stat.ofN': '{n}{counter} 중',
   'stat.killed': '전투 불능 {PackPl} (평균)',
   'stat.routed': '도주한 {PackPl} (평균)',
+  'stat.standing': '끝까지 남은 {PackPl} (평균)',
+  'stat.part': '{n}{counter} 중 {pct} · 5–95%: {p5}–{p95}',
   'stat.exchange': '교환비',
   'stat.exchangeSub': '{heavy} 1{heavyCounter} 손실당 전투 불능 {packPl}',
   'stat.exchangeInf': '{heavy} 손실 없음',

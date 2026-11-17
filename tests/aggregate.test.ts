@@ -9,6 +9,7 @@ import {
   unpackSummaries,
 } from '../src/sim/montecarlo';
 import { Rng } from '../src/sim/rng';
+import { packShares } from '../src/ui/app-model';
 import { ranks, spearman } from '../src/sim/stats';
 
 /** The rank function before typed arrays (#24), kept as the reference. */
@@ -70,5 +71,23 @@ describe('aggregate', () => {
     // structuredClone stands in for postMessage; Infinity and NaN must survive it too.
     const viaWorker = structuredClone(aggregate(c, design, unpackSummaries(packed)));
     expect(viaWorker).toStrictEqual(aggregate(c, design, summaries));
+  });
+
+  it.each(cases)('splits the pack into still standing, routed and incapacitated (#42)', (c) => {
+    const { design, summaries } = runAll(c);
+    const agg = aggregate(c, design, summaries);
+    const active = summaries.map((s) => s.packActive).sort((a, b) => a - b);
+    expect(agg.packActive.mean).toBeCloseTo(active.reduce((a, b) => a + b, 0) / active.length, 12);
+    expect(agg.packActive.p5).toBeLessThanOrEqual(agg.packActive.p95);
+    expect(agg.packKilled.mean + agg.packRouted.mean + agg.packActive.mean).toBeCloseTo(
+      c.packCount,
+      9,
+    );
+    const shares = packShares(agg, c.packCount);
+    expect(shares.killed + shares.routed + shares.active).toBeCloseTo(1, 12);
+    for (const v of Object.values(shares)) {
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(1);
+    }
   });
 });
