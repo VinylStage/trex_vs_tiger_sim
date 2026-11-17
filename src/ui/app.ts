@@ -1,6 +1,6 @@
 import { defaultConfig, sanitizeConfig, type ScenarioConfig } from '../sim/config';
 import type { RunSummary } from '../sim/engine';
-import type { AggregateResult } from '../sim/montecarlo';
+import type { AggregateResult, Distribution } from '../sim/montecarlo';
 import type { ParamId } from '../sim/params';
 import { HEAVY_SPECIES, type SpeciesId } from '../sim/species';
 import {
@@ -20,6 +20,7 @@ import {
   exchangeCard,
   isStale,
   outcomeKey,
+  packShares,
   progressNote,
   tornadoHeight,
   type Message,
@@ -948,7 +949,7 @@ export function startApp(root: HTMLElement): void {
     draw: { label: 'outcome.draw', marker: 'mk-draw' },
   };
 
-  /** The eight summary cards; values are placeholders until `agg` exists. */
+  /** The nine summary cards; values are placeholders until `agg` exists. */
   function renderCards(agg: AggregateResult | null, cfg: ScenarioConfig): void {
     const blank = '…';
     const none = '\u00a0';
@@ -970,6 +971,25 @@ export function startApp(root: HTMLElement): void {
       : (['heavy', 'pack', 'draw'] as const).map((k) =>
           card(t(OUTCOME_CARD[k].label), blank, shareSkeleton, OUTCOME_CARD[k].marker),
         );
+    // Still standing / routed / incapacitated (#42): mean count, its share of the pack and the
+    // 5–95% range of the count; the three shares add up to 1 (packShares).
+    const fates = agg ? packShares(agg, cfg.packCount) : null;
+    const pack = formatInt(cfg.packCount);
+    const part = (d: Distribution | null, share: number): string =>
+      t('stat.part', {
+        n: pack,
+        counter: speciesCounter(cfg.packSpecies),
+        pct: d ? formatPct(share, 0) : '00%',
+        p5: d ? formatNum(d.p5, 0) : pack,
+        p95: d ? formatNum(d.p95, 0) : pack,
+      });
+    const packCards = (
+      [
+        ['stat.standing', agg?.packActive ?? null, fates?.active ?? 0],
+        ['stat.routed', agg?.packRouted ?? null, fates?.routed ?? 0],
+        ['stat.killed', agg?.packKilled ?? null, fates?.killed ?? 0],
+      ] as const
+    ).map(([label, d, share]) => card(t(label), d ? formatNum(d.mean, 1) : blank, part(d, share)));
     let exchange: [string, string] = [blank, none];
     if (agg) {
       const ex = exchangeCard(agg.exchangeRatio);
@@ -992,16 +1012,7 @@ export function startApp(root: HTMLElement): void {
         agg ? formatNum(agg.heavySurvivors.mean, 2) : blank,
         of(cfg.heavyCount, cfg.heavySpecies),
       ),
-      card(
-        t('stat.killed'),
-        agg ? formatNum(agg.packKilled.mean, 1) : blank,
-        of(cfg.packCount, cfg.packSpecies),
-      ),
-      card(
-        t('stat.routed'),
-        agg ? formatNum(agg.packRouted.mean, 1) : blank,
-        of(cfg.packCount, cfg.packSpecies),
-      ),
+      ...packCards,
       card(t('stat.exchange'), exchange[0], exchange[1]),
     );
   }
