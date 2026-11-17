@@ -415,7 +415,7 @@ FREE-MATCHUPS.md D1 ties the same step to "free-model calibration (P8) is done".
 | ------------------ | ------------------------------------------------------------------------------------------------------------------- |
 | 1. Guide           | Done (Advanced manual, #158)                                                                                        |
 | 1. Model page      | Done in #166 (`/model/#free-model`)                                                                                 |
-| 1. Parameters page | **Open: #170**                                                                                                      |
+| 1. Parameters page | Done in #170 (`/parameters/#free-model`)                                                                            |
 | 2. Report          | Done (this document): all 9 classic presets compared, plus the T. rex vs tiger grid and the SPECIES.md §7 match-ups |
 | 2. Owner sign-off  | **Open**                                                                                                            |
 | 3. Banner decision | This recommendation; the owner decides                                                                              |
