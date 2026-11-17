@@ -696,6 +696,10 @@ export const ko = {
     '한쪽: 체력과 최대 체력이 그 자리에서 ×1.5. 남은 시간 동안 공격 피해 ×1.5, 속도 ×0.85.',
   'card.pocket.name': '꼬마화 (만약에)',
   'card.pocket.effect': '한쪽: 체력과 최대 체력이 그 자리에서 ×0.6. 남은 시간 동안 속도 ×1.3.',
+  // Live-card gates (#181, RENEWAL-1.0 §10.2 point 5; src/ui/live-gates.ts)
+  'live.gate.noWhatIf': '효과 계산 생략: 대결 규모가 큼',
+  'live.gate.preBattle': '대결 규모가 커서 출전 전 변수만 씁니다',
+  'live.gate.noCards': '대결 규모가 커서 이번 대결은 변수 카드 없이 진행합니다',
 } as const;
 
 export type MsgKey = keyof typeof ko;
