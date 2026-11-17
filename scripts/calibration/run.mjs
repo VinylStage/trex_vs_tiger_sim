@@ -171,6 +171,9 @@ function record(engine, n, runs, counts) {
     out += loser.fled + loser.incap;
   }
   const dur = quantiles(runs.map((r) => r.duration));
+  // Runs per end reason (#230): wipe-out, rout, time limit, mutual (`EndReason`).
+  const endReasons = [0, 0, 0, 0];
+  for (const r of runs) endReasons[r.endReason] += 1;
   return {
     engine,
     runs: n,
@@ -180,6 +183,8 @@ function record(engine, n, runs, counts) {
     draw: wilson(draw, n),
     duration: dur,
     rout: out > 0 ? fled / out : null,
+    endReasons,
+    maxDuration: Math.max(...runs.map((r) => r.duration)),
     meanA: {
       incap: meanOf(runs.map((r) => r.a.incap)),
       fled: meanOf(runs.map((r) => r.a.fled)),
@@ -207,6 +212,7 @@ function runClassic({ a, b, na, nb, runs, morale = true }, tactic = 'flank') {
   const { summaries } = classicMc.runAll(c);
   const rows = summaries.map((s) => ({
     outcome: s.outcome === Outcome.Heavy ? 'a' : s.outcome === Outcome.Pack ? 'b' : 'draw',
+    endReason: s.endReason,
     duration: s.duration,
     a: { incap: c.heavyCount - s.heavyAlive, fled: 0 },
     b: { incap: s.packKilled, fled: s.packRouted },
@@ -235,6 +241,7 @@ function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED, para
   const { summaries } = freeMc.runAllFree(c);
   const rows = summaries.map((s) => ({
     outcome: s.outcome === FreeOutcome.A ? 'a' : s.outcome === FreeOutcome.B ? 'b' : 'draw',
+    endReason: s.endReason,
     duration: s.duration,
     a: { incap: s.aKilled, fled: s.aRouted },
     b: { incap: s.bKilled, fled: s.bRouted },
@@ -1039,7 +1046,8 @@ const result = {
   mv: MV,
   flight: MV >= 2 ? FLIGHT : undefined,
   quick: QUICK,
-  defaults: 'arena 600 m, cap 1,200 s, LHS, CV 0.08, morale on, classic tactic flank',
+  // The default time limit is per model version: 3,600 s from model 3 (#230), 1,200 s before.
+  defaults: `arena 600 m, cap ${MV >= 3 ? '3,600' : '1,200'} s, LHS, CV 0.08, morale on, classic tactic flank`,
   sections: {},
 };
 const started = Date.now();

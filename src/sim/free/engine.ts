@@ -539,6 +539,8 @@ export function simulateFreeBattle(
   const reliefTarget = new Int32Array(n).fill(-1);
   const wasBuffed = new Uint8Array(n);
   const routedNow = new Uint8Array(n);
+  // Model 3: escape heading of a routed agent, fixed on its first flight tick (NaN until then).
+  const escapeH = new Float64Array(n).fill(NaN);
   const engagedBySide = [0, 0];
 
   // --- spawn ---
@@ -1185,12 +1187,19 @@ export function simulateFreeBattle(
           target[i] = -1;
         }
       } else {
-        // Routed: flee from the nearest active enemy, sprinting while stamina lasts.
-        const e = nearestEnemy(i);
-        const away =
-          e >= 0
-            ? atan2((y[i] as number) - (y[e] as number), (x[i] as number) - (x[e] as number))
-            : atan2((y[i] as number) - L / 2, (x[i] as number) - L / 2);
+        // Routed: flee from the nearest active enemy, sprinting while stamina lasts. From model 3
+        // the heading of the first flight tick is kept until the agent is across the edge
+        // (#230): re-aiming every tick let an agent ringed by enemies, or overtaken by a pursuer,
+        // turn back and forth on the spot and never escape.
+        let away = v3 ? (escapeH[i] as number) : NaN;
+        if (Number.isNaN(away)) {
+          const e = nearestEnemy(i);
+          away =
+            e >= 0
+              ? atan2((y[i] as number) - (y[e] as number), (x[i] as number) - (x[e] as number))
+              : atan2((y[i] as number) - L / 2, (x[i] as number) - L / 2);
+          if (v3) escapeH[i] = away;
+        }
         let speed = cruise[i] as number;
         if ((stamina[i] as number) > 0) {
           speed = sprint[i] as number;

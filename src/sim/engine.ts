@@ -295,6 +295,8 @@ export function simulateBattle(
   const tTimer = new Float64Array(M);
   const tSide = new Int8Array(M);
   const tRecoverTimer = new Float64Array(M);
+  // Model 3: escape heading of a routed animal, fixed on its first flight tick (NaN until then).
+  const tEscape = new Float64Array(M).fill(NaN);
 
   const discR = Math.min(0.2 * L, 3 * Math.sqrt(M));
   for (let j = 0; j < M; j++) {
@@ -679,14 +681,21 @@ export function simulateBattle(
           break;
         }
         case PackState.Routed: {
-          const r = nearestHeavy(j);
-          let away: number;
-          if (r >= 0)
-            away = atan2(
-              (ty[j] as number) - (ry[r] as number),
-              (tx[j] as number) - (rx[r] as number),
-            );
-          else away = atan2((ty[j] as number) - L / 2, (tx[j] as number) - L / 2);
+          let away = v3 ? (tEscape[j] as number) : NaN;
+          if (Number.isNaN(away)) {
+            const r = nearestHeavy(j);
+            if (r >= 0)
+              away = atan2(
+                (ty[j] as number) - (ry[r] as number),
+                (tx[j] as number) - (rx[r] as number),
+              );
+            else away = atan2((ty[j] as number) - L / 2, (tx[j] as number) - L / 2);
+            // Model 3 (#230): the heading of the first flight tick is kept until the animal is
+            // across the edge. Re-aiming away from the nearest heavy every tick let an animal
+            // ringed by heavies, or overtaken by the one chasing it, turn back and forth on the
+            // spot, so it never escaped and the run reached the time limit.
+            if (v3) tEscape[j] = away;
+          }
           let speed = tCruise[j] as number;
           if ((tStamina[j] as number) > 0) {
             speed = tSprint[j] as number;
