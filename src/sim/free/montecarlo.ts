@@ -1,6 +1,7 @@
 import { designRow, type Design } from '../sampling';
 import type { FreeConfig } from './config';
 import { buildFreeDesign } from './design';
+import type { Intervention } from './interventions';
 import { emptyBuffStats, simulateFreeBattle, type BuffStats, type FreeRunSummary } from './engine';
 
 /**
@@ -78,16 +79,22 @@ export function unpackFreeSummaries(packed: Float64Array): FreeRunSummary[] {
   return out;
 }
 
+/**
+ * Runs `[start, end)` of `config`. With a non-empty `interventions` log every run plays it (the
+ * what-if batches, #182); without one each run is exactly the plain batch run.
+ */
 export function runFreeChunk(
   config: FreeConfig,
   design: Design,
   start: number,
   end: number,
   onProgress?: (done: number) => void,
+  interventions: readonly Intervention[] = [],
 ): FreeRunSummary[] {
   const out: FreeRunSummary[] = [];
+  const opts = interventions.length > 0 ? { interventions } : undefined;
   for (let run = start; run < end; run++) {
-    out.push(simulateFreeBattle(config, designRow(design, run), run).summary);
+    out.push(simulateFreeBattle(config, designRow(design, run), run, false, opts).summary);
     onProgress?.(run - start + 1);
   }
   return out;

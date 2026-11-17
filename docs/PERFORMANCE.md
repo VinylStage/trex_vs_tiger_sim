@@ -9,6 +9,7 @@
 > - 웹 글꼴이 바뀔 때 생기던 레이아웃 이동(CLS)은 글자 폭을 맞춘 대체 글꼴로 거의 0이 되었고, 언어 전환과 시작 시 긴 작업도 줄었습니다.
 > - 우선순위 스케줄러(#175)로 워커를 미리 데워 둔 채 재사용합니다. 작업을 취소하거나 새 작업으로 바꿔도 워커를 끄지 않으며, 한 덩어리는 최대 25회입니다. 배치 실행 시간은 측정 오차 범위 안에서 그대로입니다.
 > - 그 뒤 본문 최대 폭을 `ch`(숫자 0의 폭) 단위로 정하면서 글꼴이 바뀌는 순간 폭이 넓어져 이동이 다시 생겼습니다(#138). 폭을 `em`으로 바꿔서 12개 페이지·화면 조합의 합계가 0.0524에서 0.0034로 줄었습니다.
+> - 실시간 변수 카드의 두 관문(#181)은 측정값만으로 판단합니다. 재시뮬레이션 시간 × 1.5가 500 ms 이하일 때만 대결 중 카드를 쓰고, 카드 쉬는 시간의 계산량이 80%를 넘으면 효과 계산 횟수와 승률 체크포인트를 차례로 줄입니다. Node에서 잰 프리셋은 모두 첫 관문을 넉넉히 통과합니다.
 
 This page records what issue #24 changed for speed and responsiveness and the before/after numbers. The investigation, the original baselines and the full list of candidate changes are in [research/PERFORMANCE.md](research/PERFORMANCE.md).
 
@@ -83,6 +84,44 @@ The last row is chunked identically on both branches, so its 1.12 shows the nois
 To isolate the cost of the extra messages, the worst case (free 1 v 1 × 20,000, about 0.3 ms per run, 800 instead of 4 chunks) ran on **one** worker: warm 6,011 ms [5,122–6,471] old vs 6,372 ms [6,011–6,859] new, median of 9. That is about 6 %, or roughly 0.45 ms per extra chunk round trip, and it only shows up when single runs are this cheap. A default batch (500 runs, 12 → 20 chunks) adds 8 round trips, which is well inside the noise. Workers that stay warm across batches save the cold-start cost the old `cancel()` paid on every supersede: compare the cold and warm columns.
 
 The harness is not committed (it needs the bundled `main` pool next to the branch). To repeat it, bundle `src/workers/sim.worker.ts` and both `SimPool` versions, with the `?worker&url` import stubbed, and run the worker under a `self` shim on `worker_threads`.
+
+## Live-card gates (#181)
+
+`src/ui/live-gates.ts` decides, from measurements only, whether a match gets live cards and how much the card pause computes ([RENEWAL-1.0 §10.2](design/RENEWAL-1.0.md#102-live-step-fork-and-re-simulate-10) point 5, owner decision R6). It is pure and table-tested (`tests/live-gates.test.ts`); nothing in it reads a clock.
+
+- **Gate (a), re-simulation**: `liveSimMs × 1.5 ≤ 500 ms` (`resimGate`). `liveSimMs` is the live run's own simulation time in the live worker (`LiveReplay.liveSimMs`), not a batch average.
+- **Gate (b), card-pause budget**: `(3N + checkpoints after T × B) × msPerRun × c_obs ÷ batchWorkers ≤ 0.8 × pause` (`pauseGate`). `c_obs` defaults to 1.3 when no session-start check measured it, and is never taken below 1.
+- **Degradation** (`planLiveCards`), first fit wins:
+  1. N per card 200, then 100, then 50, with every checkpoint after the card;
+  2. N = 50 and only the next 2 checkpoints in the pause (`chance: 'near'`; the rest after the pause);
+  3. no what-if numbers and the "전력 비율" bar (`noWhatIf`, "효과 계산 생략: 대결 규모가 큼");
+  4. when gate (a) fails: pre-battle cards at tick 0 if `liveSimMs × 1.5 ≤ 0.5 × prediction window` ("대결 규모가 커서 출전 전 변수만 씁니다"), otherwise no cards ("…변수 카드 없이 진행합니다").
+- The factor 1.5 also applies to the pre-battle check, because the single simulation after a pick can last longer than the run without cards that was measured.
+
+**Presets in Node** (single thread, warm, model 2, 30 runs each with a trace, the 4 vCPU VM above, other jobs running; seed 1). The plan uses p90 as `liveSimMs` and p50 as `msPerRun`, with §10.2's example PC: 2 batch workers, `c_obs` 1.3, a 15 s pause, a 30 s prediction window, 5 checkpoints after the card, B = 32. Browser numbers will differ. The acceptance measurement of re-simulation p95 on the owner's reference streamer PC is still open (#126).
+
+| Preset                   | ms/run p50 | ms/run p90 | Plan         |
+| ------------------------ | ---------: | ---------: | ------------ |
+| `lion-tiger`             |        1.9 |        3.4 | live 200 all |
+| `pride-five-tigers`      |        7.1 |       11.9 | live 200 all |
+| `tiger-bear`             |        1.5 |        4.5 | live 200 all |
+| `bear-wolf-pack`         |       12.9 |       31.0 | live 200 all |
+| `buffalo-pride`          |        7.5 |       25.5 | live 200 all |
+| `elephants-pride`        |        9.5 |       24.9 | live 200 all |
+| `mammoth-wolves`         |       10.6 |       15.3 | live 200 all |
+| `trex-mirror`            |        2.2 |        6.7 | live 200 all |
+| `trex-squad-tiger-horde` |       28.1 |       68.6 | live 100 all |
+| `trex-erectus-100`       |       22.7 |       37.5 | live 200 all |
+| `lions-hyenas`           |        2.4 |        4.8 | live 200 all |
+| `polar-bear-brown-bear`  |        1.0 |        1.2 | live 200 all |
+| `elephant-hippo`         |        1.7 |        5.7 | live 200 all |
+| `raptors-trex`           |       10.4 |       19.5 | live 200 all |
+| `elephant-rhino`         |        1.3 |        2.3 | live 200 all |
+| `hippo-rhino`            |        1.3 |        2.5 | live 200 all |
+| `trex-spinosaurus`       |        1.4 |        2.4 | live 200 all |
+| `trex-triceratops`       |        1.2 |        2.7 | live 200 all |
+
+Every ready preset passes gate (a) with room to spare. Only `trex-squad-tiger-horde` drops to N = 100. The gates matter for large custom matchups, and later for the cup brackets (M5), which test every pair.
 
 ## Font swap
 

@@ -62,6 +62,8 @@ export interface LiveReplay {
   trace: FreeTrace;
   /** Simulation time in the live worker, without the message transfer (gate (a), §10.2). */
   liveSimMs: number;
+  /** The run's summary, when the worker sent it (Live battle mode shares it, #183). */
+  summary?: FreeRunSummary;
 }
 
 interface ReplayJob {
@@ -193,7 +195,9 @@ export class SimPool {
         if (this.liveJob === job) this.liveJob = null;
         const r = results[0];
         if (r?.type !== 'replay-free') throw new Error('unexpected worker response');
-        return { trace: r.trace, liveSimMs: r.liveSimMs };
+        const out: LiveReplay = { trace: r.trace, liveSimMs: r.liveSimMs };
+        if (r.summary) out.summary = r.summary;
+        return out;
       },
       (e: unknown) => {
         if (this.liveJob === job) this.liveJob = null;

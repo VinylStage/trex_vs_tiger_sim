@@ -8,8 +8,19 @@ import type { Intervention } from '../sim/free/interventions';
 
 /** Main thread → worker. */
 export type WorkerRequest =
-  /** A free-model config (`mode: 'free'`) runs on the free engine (src/sim/free). */
-  | { type: 'run'; jobId: number; config: ScenarioConfig | FreeConfig; start: number; end: number }
+  /**
+   * A free-model config (`mode: 'free'`) runs on the free engine (src/sim/free), each run under
+   * `interventions` when given (the what-if batches, #182; sanitized in the worker). A classic
+   * config ignores it.
+   */
+  | {
+      type: 'run';
+      jobId: number;
+      config: ScenarioConfig | FreeConfig;
+      start: number;
+      end: number;
+      interventions?: readonly Intervention[];
+    }
   | { type: 'replay'; jobId: number; config: ScenarioConfig; run: number }
   /**
    * One free-model run re-simulated with its trace (src/sim/free/engine.ts, trace v3), optionally
@@ -44,8 +55,17 @@ export type WorkerResponse =
   | { type: 'progress'; jobId: number; done: number }
   | { type: 'result'; jobId: number; summaries: RunSummary[] | FreeRunSummary[] }
   | { type: 'replay'; jobId: number; trace: BattleTrace }
-  /** `liveSimMs`: wall time of the simulation in the worker, without the message transfer. */
-  | { type: 'replay-free'; jobId: number; trace: FreeTrace; liveSimMs: number }
+  /**
+   * `liveSimMs`: wall time of the simulation in the worker, without the message transfer.
+   * `summary`: the run's summary (Live battle mode shares it, #183).
+   */
+  | {
+      type: 'replay-free';
+      jobId: number;
+      trace: FreeTrace;
+      liveSimMs: number;
+      summary?: FreeRunSummary;
+    }
   /** One `FreeOutcome` code per requested branch, in request order. */
   | { type: 'branch-free'; jobId: number; outcomes: number[] }
   | { type: 'aggregate'; jobId: number; agg: AggregateResult }

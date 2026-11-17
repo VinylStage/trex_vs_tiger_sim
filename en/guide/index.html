@@ -60,6 +60,7 @@
                 <li><a href="#advanced-classic">The classic lab</a></li>
                 <li><a href="#advanced-results">Reading the result cards</a></li>
                 <li><a href="#advanced-share">Sharing and reproducing</a></li>
+                <li><a href="#advanced-live">Live battle and variable cards</a></li>
                 <li><a href="#advanced-limits">Model limits and provisional calibration</a></li>
               </ol>
             </li>
@@ -809,6 +810,58 @@
                 </tbody>
               </table>
             </div>
+
+            <h3 id="advanced-live">Live battle and variable cards</h3>
+            <p>
+              The <strong>Live battle</strong> button under the free form shows one battle of the
+              current settings from start to end. Simple mode does not have it. When it is ready,
+              press <strong>Start</strong>. The bar above the arena is the <em>live win chance</em>:
+              the share of 32 battles, replayed exactly up to that moment and then left to differ,
+              that each side won. It holds its last value until the next checkpoint. When that work
+              does not finish in time, the bar becomes the <em>strength ratio</em> instead: the
+              remaining strength by HP × mass, out of 10. The strength ratio is not a win chance.
+            </p>
+            <ul>
+              <li>
+                The speed is set so that the rest of the battle takes about a minute, and it slows
+                down briefly at first contact and at the turning point. The replay's speed menu
+                changes it at any time.
+              </li>
+              <li>
+                Where the live win chance is closest to 50 % within 25–60 % of the battle, it stops
+                and offers three variable cards. You pick one; for a one-side card you also pick the
+                side. You can redraw once, or <strong>continue without a card</strong>. The first
+                card button takes the focus, so the keyboard reaches the cards at once.
+              </li>
+              <li>
+                The numbers under a card are “based on N battles of this matchup”: the win share in
+                N new battles of the same settings with and without the card at the same moment.
+                They do not depend on the battle on screen. A change of 15 points or more is marked
+                <em>Card swing</em>.
+              </li>
+              <li>
+                A pick simulates the same battle again with the card and carries on from where it
+                stopped; everything before that moment stays as it was.
+              </li>
+              <li>
+                When the battle is too large to simulate again quickly, the effect numbers are
+                skipped, or the cards are picked before the battle, or the battle runs without
+                cards. The page says which.
+              </li>
+              <li>
+                <strong>Include what-if cards</strong> adds what-if cards such as Giant size and
+                Pocket size. It is off by default.
+              </li>
+              <li>
+                At the end come the result and markers such as UPSET, COMEBACK, CARD SWING and PHOTO
+                FINISH. <strong>Copy result link</strong> makes a link that carries the card you
+                picked, so whoever opens it sees the same battle again, exactly.
+              </li>
+            </ul>
+            <p>
+              Cards are game variables, that is, assumptions: their sizes are set for the game, not
+              taken from biology (<a href="/en/model/#free-model">model page</a>).
+            </p>
 
             <h3 id="advanced-limits">Model limits and provisional calibration</h3>
             <p>

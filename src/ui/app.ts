@@ -64,6 +64,7 @@ import {
   parseFreeConfigInput,
 } from './share-free';
 import { copyText } from '../share/share-ui';
+import { freeCheckFromHash } from '../share/free-result-codec';
 import { createConfigTransfer } from './config-transfer';
 import { createReproduceCheck, createResultShare } from './result-share';
 import { hashHasAppState, pageLang, pagePath, playPageLang, switchedAppUrl } from '../pages/routes';
@@ -619,6 +620,10 @@ export function startApp(root: HTMLElement): void {
       startRoute.mode === 'simple' &&
       hashHasAppState(startHash) &&
       armLinkSeed(navigationType(), referrerIsPlayPage()),
+    // A live battle (#180) replays in Live battle mode, checked against its `chk=` snapshot.
+    ...(startRoute.mode === 'free' && startRoute.live
+      ? { live: { live: startRoute.live, check: freeCheckFromHash(startHash, startRoute.config) } }
+      : {}),
   });
 
   clear(root);
