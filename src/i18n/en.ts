@@ -259,6 +259,8 @@ export const en: Dictionary = {
   'stat.ofN': 'of {n}{counter}',
   'stat.killed': '{PackPl} incapacitated (mean)',
   'stat.routed': '{PackPl} routed (mean)',
+  'stat.standing': '{PackPl} still standing (mean)',
+  'stat.part': '{pct} of {n}{counter} · 5–95%: {p5}–{p95}',
   'stat.exchange': 'Exchange ratio',
   'stat.exchangeSub': '{packPl} incapacitated per {heavy}{heavyCounter} lost',
   'stat.exchangeInf': 'no {heavy} lost',

@@ -7,12 +7,14 @@ import { base64UrlDecode, base64UrlEncode } from '../ui/share.ts';
 import {
   freeConfigDiff,
   freeConfigFromObject,
+  freeLiveFromObject,
   freeModelVersion,
   freePayloadFromHash,
   freePayloadSimple,
   hashFromFreeConfig,
   isFreePayload,
   type FreeLinkOptions,
+  type FreeLive,
 } from '../ui/share-free.ts';
 import {
   CHECK_KEY,
@@ -31,10 +33,17 @@ import {
  * only "Run it yourself" carries on. Version 1 links (classic, src/share/result-codec.ts) are untouched: they
  * are decoded by the very same `decodeResult`, so they stay bit-compatible. Pure and DOM-free;
  * it imports the config schema, never the simulator (tests/result-share.test.ts guards that).
+ *
+ * Version 3 (#180, RENEWAL-1.0 §10.3) is the result of one live battle: `c` carries the `live`
+ * log (`{run, iv}`, src/ui/share-free.ts) and `s` is that one battle as a snapshot of one run
+ * (`n: 1`). A link without a live battle is still written as version 2, byte for byte as before,
+ * so only a live result needs a build that can replay it; older builds report `version`.
  */
 
 /** Format version of a free result payload (`v`). Classic results stay at RESULT_VERSION 1. */
 export const FREE_RESULT_VERSION = 2;
+/** Format version of a free result of one live battle (`c.live` present, #180). */
+export const FREE_LIVE_RESULT_VERSION = 3;
 
 type Tuple6 = [number, number, number, number, number, number];
 
@@ -108,13 +117,18 @@ export function summarizeFree(config: FreeConfig, agg: FreeAggregate): FreeResul
   return s;
 }
 
-/** The `r` value of a free result link (`opts.simple`: a Simple run made it, #154). */
+/**
+ * The `r` value of a free result link (`opts.simple`: a Simple run made it, #154). With
+ * `opts.live` it is a version 3 link of that live battle, and `summary` is the battle's own
+ * one-run snapshot.
+ */
 export function encodeFreeResult(
   config: FreeConfig,
   summary: FreeResultSummary,
   opts: FreeLinkOptions = {},
 ): string {
-  const body = { v: FREE_RESULT_VERSION, c: freeConfigDiff(config, opts), s: summary };
+  const v = opts.live ? FREE_LIVE_RESULT_VERSION : FREE_RESULT_VERSION;
+  const body = { v, c: freeConfigDiff(config, opts), s: summary };
   return base64UrlEncode(JSON.stringify(body));
 }
 
@@ -192,6 +206,8 @@ export type AnyDecodedResult =
       summary: FreeResultSummary;
       /** `c` carries the Simple-mode marker (#154); not part of the config. */
       simple: boolean;
+      /** The live battle of a version 3 link (#180), null for version 2. */
+      live: FreeLive | null;
     }
   | { ok: false; error: ResultError; config: ScenarioConfig | FreeConfig | null };
 
@@ -219,10 +235,18 @@ export function decodeAnyResult(r: string | null): AnyDecodedResult {
   // A snapshot of a model this build does not run can be neither shown nor rerun as its own.
   if (freeModelVersion(c) === null) return { ok: false, error: 'version', config: null };
   const config = freeConfigFromObject(c);
-  if (parsed['v'] !== FREE_RESULT_VERSION) return { ok: false, error: 'version', config };
+  const v = parsed['v'];
+  if (v !== FREE_RESULT_VERSION && v !== FREE_LIVE_RESULT_VERSION) {
+    return { ok: false, error: 'version', config };
+  }
+  // Version 3 needs a live log that replays exactly, and a one-battle snapshot; version 2 never
+  // reads `live`, as before.
+  const live = v === FREE_LIVE_RESULT_VERSION ? freeLiveFromObject(c, config) : null;
+  if (v === FREE_LIVE_RESULT_VERSION && live === null) return { ok: false, error: 'shape', config };
   const summary = validateFreeSummary(parsed['s'], config);
-  if (!summary) return { ok: false, error: 'summary', config };
-  return { ok: true, kind: 'free', config, summary, simple: freePayloadSimple(c) };
+  if (!summary || (live !== null && summary.n !== 1))
+    return { ok: false, error: 'summary', config };
+  return { ok: true, kind: 'free', config, summary, simple: freePayloadSimple(c), live };
 }
 
 /** Decode the result of a query string (`?r=…`), either version. */
@@ -233,7 +257,8 @@ export function decodeAnyResultQuery(search: string): AnyDecodedResult {
 
 /**
  * Simulator fragment for "run it yourself" of a free result: `#s=<v3>&chk=<summary>`, with the
- * Simple-mode marker in `s=` when `opts.simple` is set (the result link carried it, #154).
+ * Simple-mode marker in `s=` when `opts.simple` is set (the result link carried it, #154) and the
+ * live battle when `opts.live` is (#180).
  */
 export function reproduceFreeHash(
   config: FreeConfig,

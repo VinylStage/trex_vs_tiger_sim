@@ -5,6 +5,7 @@ import type { Lang } from '../i18n/lang.ts';
 import { dictionary } from '../i18n/registry.ts';
 import { DEFAULT_BASELINE } from './baseline.ts';
 import { buffApplies, decodeAnyResultQuery, type FreeResultSummary } from './free-result-codec.ts';
+import type { FreeLive } from '../ui/share-free.ts';
 import { sm, type ShareMsgKey } from './messages.ts';
 import type { ResultSummary } from './result-codec.ts';
 
@@ -274,9 +275,15 @@ export function freeSideName(config: FreeConfig, i: 0 | 1, n: number, lang: Lang
 
 /**
  * View of a free result. There is no baseline, so the tier never says "upset" and the context
- * line names the free model (and the same-species match-up for a mirror).
+ * line names the free model (and the same-species match-up for a mirror). A result of one live
+ * battle (`live`, #180) says so first, with its number of cards.
  */
-export function freeResultView(config: FreeConfig, s: FreeResultSummary, lang: Lang): ResultView {
+export function freeResultView(
+  config: FreeConfig,
+  s: FreeResultSummary,
+  lang: Lang,
+  live: FreeLive | null = null,
+): ResultView {
   const shares = freeSharesOf(s);
   const [a, b] = config.sides;
   const glyph = (i: 0 | 1): Glyph =>
@@ -305,9 +312,15 @@ export function freeResultView(config: FreeConfig, s: FreeResultSummary, lang: L
     heavyGlyph: glyph(0),
     packGlyph: glyph(1),
     seed: config.seed,
-    context: sm(lang, isMirror(config) ? 'free.contextMirror' : 'free.context'),
+    context: freeContext(config, lang, live),
     buffs,
   });
+}
+
+/** Context line of a free result: the model, the mirror, and a live battle's cards. */
+function freeContext(config: FreeConfig, lang: Lang, live: FreeLive | null): string {
+  const context = sm(lang, isMirror(config) ? 'free.contextMirror' : 'free.context');
+  return live ? sm(lang, 'free.contextLive', { n: live.iv.length, context }) : context;
 }
 
 /**
@@ -429,7 +442,7 @@ export function buildMeta(search: string, lang: Lang): ResultMeta | null {
   if (!res.ok) return null;
   const v =
     res.kind === 'free'
-      ? freeResultView(res.config, res.summary, lang)
+      ? freeResultView(res.config, res.summary, lang, res.live)
       : resultView(res.config, res.summary, lang);
   const runs = formatCount(res.summary.n, lang);
   return {

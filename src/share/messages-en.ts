@@ -112,6 +112,7 @@ export const shareEn: ShareDictionary = {
   'free.sideName': '{name} {side}',
   'free.context': 'Free matchup · provisional model',
   'free.contextMirror': 'Same-species match-up · free matchup · provisional model',
+  'free.contextLive': 'One live battle · variable cards: {n} · {context}',
   'free.standing': 'Mean {side} still standing',
   'free.fled': 'Mean {side} fled',
   'free.end': 'How runs ended',

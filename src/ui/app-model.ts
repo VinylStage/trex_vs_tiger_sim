@@ -1,4 +1,5 @@
 import { Outcome } from '../sim/engine';
+import type { AggregateResult } from '../sim/montecarlo';
 import type { MsgKey, Vars } from './i18n';
 
 /*
@@ -60,4 +61,28 @@ export function progressNote(s: ProgressState): { key: MsgKey; ms?: number } | n
     return s.etaMs === null ? { key: 'progress.etaPending' } : { key: 'progress.eta', ms: s.etaMs };
   if (s.cancelled) return { key: 'progress.cancelled' };
   return s.elapsedMs === null ? null : { key: 'progress.done', ms: s.elapsedMs };
+}
+
+/** How the pack animals ended a battle, as mean shares of the starting count (#42). */
+export interface PackShares {
+  killed: number;
+  routed: number;
+  active: number;
+}
+
+/**
+ * Mean shares of the starting pack that were incapacitated, fled (routed or left the arena) and
+ * still fighting at the end. They add up to 1, because each run's three counts add up to
+ * `packCount`; a pack of 0 gives 0 for each instead of dividing by zero.
+ */
+export function packShares(
+  agg: Pick<AggregateResult, 'packKilled' | 'packRouted' | 'packActive'>,
+  packCount: number,
+): PackShares {
+  if (!(packCount > 0)) return { killed: 0, routed: 0, active: 0 };
+  return {
+    killed: agg.packKilled.mean / packCount,
+    routed: agg.packRouted.mean / packCount,
+    active: agg.packActive.mean / packCount,
+  };
 }

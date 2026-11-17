@@ -7,9 +7,11 @@ import { configFromHash } from './share';
 import {
   freeConfigFromHash,
   freeHashModelNewer,
+  freeLiveFromObject,
   freeModelVersion,
   freePayloadFromHash,
   freePayloadSimple,
+  type FreeLive,
 } from './share-free';
 import { defaultSimpleConfig, simpleCanShow } from './simple-model';
 
@@ -32,6 +34,12 @@ export type LinkRoute =
       /** The payload names a newer model: the defaults open and the address is kept (ADR-0008). */
       newerModel: boolean;
       check: FreeResultSummary | null;
+      /**
+       * The link's live battle (`live`, #180); absent without one, so every other link routes
+       * exactly as before. Its snapshot (`chk=`) is of that one battle, so `check` is then null:
+       * a batch can neither reproduce nor contradict it.
+       */
+      live?: FreeLive;
     }
   | { mode: 'classic'; config: ScenarioConfig; check: ResultSummary | null }
   /**
@@ -61,9 +69,12 @@ export function routeLink(hash: string, search: string): LinkRoute {
     // marker or not (ADR-0008 §6).
     const raw = freePayloadFromHash(hash);
     const runsHere = raw !== null && freeModelVersion(raw) !== null;
-    if (runsHere && freePayloadSimple(raw) && simpleCanShow(free)) {
+    // A live battle opens the free form (Simple mode never plays cards, RENEWAL-1.0 §3.2).
+    const live = raw !== null && runsHere ? freeLiveFromObject(raw, free) : null;
+    if (live === null && runsHere && freePayloadSimple(raw) && simpleCanShow(free)) {
       return { mode: 'simple', config: free, check };
     }
+    if (live !== null) return { mode: 'free', config: free, newerModel, check: null, live };
     return {
       mode: 'free',
       config: free,

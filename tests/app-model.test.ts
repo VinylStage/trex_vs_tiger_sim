@@ -5,6 +5,7 @@ import {
   exchangeCard,
   isStale,
   outcomeKey,
+  packShares,
   progressNote,
   tornadoHeight,
 } from '../src/ui/app-model';
@@ -27,6 +28,14 @@ describe('app-model (#61)', () => {
     expect(isStale(null, a)).toBe(false);
     expect(isStale(structuredClone(a), a)).toBe(false);
     expect(isStale({ ...a, runs: a.runs + 1 }, a)).toBe(true);
+  });
+
+  it('packShares divides the mean counts by the pack size, and gives 0s for no pack (#42)', () => {
+    const d = (mean: number) => ({ mean, p5: 0, p50: 0, p95: 0 });
+    const agg = { packKilled: d(10), packRouted: d(72), packActive: d(18) };
+    expect(packShares(agg, 100)).toEqual({ killed: 0.1, routed: 0.72, active: 0.18 });
+    expect(packShares(agg, 0)).toEqual({ killed: 0, routed: 0, active: 0 });
+    expect(packShares(agg, Number.NaN)).toEqual({ killed: 0, routed: 0, active: 0 });
   });
 
   it('exchangeCard: a number, or a dash with the 0/0 or one-sided sub-line', () => {

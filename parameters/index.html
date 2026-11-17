@@ -36,7 +36,7 @@
             단위, 개체 변동 여부, 엔진 안에서 하는 일, 그리고 범위를 정한 근거를 적었습니다.
           </p>
           <p class="page-meta">
-            최종 수정 <time datetime="2026-10-28">2026년 10월 28일</time> · 값은 시뮬레이터 코드와
+            최종 수정 <time datetime="2026-11-17">2026년 11월 17일</time> · 값은 시뮬레이터 코드와
             자동으로 대조됩니다
           </p>
         </header>
@@ -50,6 +50,7 @@
             <li><a href="#species">종별 프리셋</a></li>
             <li><a href="#settings">시나리오 설정</a></li>
             <li><a href="#constants">고정 상수</a></li>
+            <li><a href="#free-model">자유 대결 모델 파라미터</a></li>
           </ol>
         </nav>
 
@@ -2989,6 +2990,3679 @@
             </div>
           </section>
 
+          <section id="free-model">
+            <h2>자유 대결 모델 파라미터</h2>
+            <p>
+              자유 대결(간단 모드와 고급 모드의 자유 대결 양식)은 위의 <code>heavy.*</code> ·
+              <code>pack.*</code> 역할 파라미터 대신, 어느 종이든 양쪽 진영에 세울 수 있도록 모든
+              종이 같은 특성 목록을 씁니다. 개체 특성 20가지, 사회성 종의 무리 버프 특성 6가지, 두
+              진영이 함께 쓰는 전역 상수 5가지를 실행마다 최소 · 최빈 · 최대 삼각분포에서 뽑고, 모델
+              2부터는 종마다 도주 특성 3가지가 더 있습니다. 클래식 실험실은 이 절의 값을 쓰지
+              않습니다.
+            </p>
+            <p>
+              아래 단위, 허용 범위, 근거 수준은 현재 모델 버전(<data data-k="free-mv" value="2"
+                >2</data
+              >) 기준이며 시뮬레이터 코드와 자동으로 대조됩니다. 종별 범위 전체와 출처는
+              <a href="/species/">종 도감</a>과
+              <a
+                href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/SPECIES.md#11-free-model-traits-50"
+                >docs/SPECIES.md §11</a
+              >에, 화면에서 쓰는 법은
+              <a href="/guide/#advanced-free">사용 방법의 고급 모드 설명</a>에 있습니다. 근거 글자의
+              뜻은 <a href="#species">종별 프리셋</a>과 같습니다.
+            </p>
+            <section id="free-traits">
+              <h3>개체 특성 (20개)</h3>
+              <p>
+                모든 종이 20가지를 모두 가집니다. 매달리지 못하는 종의 매달리기 특성 세 가지는
+                중립값으로 고정되어 엔진이 읽지 않습니다(아래 근거 표의 –). 허용 범위는 모든 종이
+                함께 씁니다. “클래식 대응”은 같은 값을 가져오는 클래식 파라미터이며, 자세한 근거는
+                그 카드에 있습니다.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-traits"
+              >
+                <table>
+                  <caption id="caption-free-traits">
+                    자유 대결의 개체 특성: 단위, 허용 범위, 개체 변동, 의미
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">특성</th>
+                      <th scope="col">단위</th>
+                      <th scope="col">허용 범위</th>
+                      <th scope="col">개체 변동</th>
+                      <th scope="col">클래식 대응</th>
+                      <th scope="col">의미</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-trait="mass" data-unit="kg" data-individual="true">
+                      <th scope="row">체중 <code>mass</code></th>
+                      <td>kg</td>
+                      <td>
+                        <data data-k="trait-lo" value="5">5</data> –
+                        <data data-k="trait-hi" value="20000">20,000</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-heavy.mass"><code>heavy.mass</code></a
+                        >, <a href="#param-pack.mass"><code>pack.mass</code></a>
+                      </td>
+                      <td>
+                        최대 체력이 됩니다 (1 kg = 1 HP). 체중의 비율이 매달리기와 밀쳐 내기 가능
+                        여부, 현실 모드에서는 위협 여부를 정합니다. 매달린 상대의 체중 합이 클수록
+                        느려집니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="bodyRadius" data-unit="m" data-individual="false">
+                      <th scope="row">몸 반경 <code>bodyRadius</code></th>
+                      <td>m</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.1">0.1</data> –
+                        <data data-k="trait-hi" value="8">8</data>
+                      </td>
+                      <td>미적용 (실행 단위)</td>
+                      <td>
+                        <a href="#param-heavy.bodyRadius"><code>heavy.bodyRadius</code></a> · 무리
+                        상수 <code>radius</code>
+                      </td>
+                      <td>
+                        접촉 거리, 공격 거리(상대 몸의 가장자리까지), 매달린 위치, 재생 화면의 도형
+                        크기에 쓰입니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="turnRate" data-unit="deg/s" data-individual="true">
+                      <th scope="row">선회 속도 <code>turnRate</code></th>
+                      <td>deg/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="5">5</data> –
+                        <data data-k="trait-hi" value="360">360</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-heavy.turnRate"><code>heavy.turnRate</code></a>
+                      </td>
+                      <td>
+                        1초에 바꿀 수 있는 최대 방향. 60°를 넘게 돌 때는 절반입니다. 상대를 공격
+                        범위에 먼저 넣는 쪽을 가릅니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="sprintSpeed" data-unit="m/s" data-individual="true">
+                      <th scope="row">질주 속도 <code>sprintSpeed</code></th>
+                      <td>m/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.5">0.5</data> –
+                        <data data-k="trait-hi" value="35">35</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-heavy.speed"><code>heavy.speed</code></a
+                        >, <a href="#param-pack.sprintSpeed"><code>pack.sprintSpeed</code></a>
+                      </td>
+                      <td>목표에서 60 m 안쪽에서 달리는 속도. 달리는 동안 지구력을 씁니다.</td>
+                    </tr>
+                    <tr data-trait="cruiseSpeed" data-unit="m/s" data-individual="true">
+                      <th scope="row">순항 속도 <code>cruiseSpeed</code></th>
+                      <td>m/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.5">0.5</data> –
+                        <data data-k="trait-hi" value="20">20</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-pack.cruiseSpeed"><code>pack.cruiseSpeed</code></a>
+                      </td>
+                      <td>
+                        목표에서 60 m 바깥, 그리고 물러날 때의 속도. 이동 중에 지구력이 천천히
+                        돌아옵니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="sprintEndurance" data-unit="s" data-individual="true">
+                      <th scope="row">질주 지구력 <code>sprintEndurance</code></th>
+                      <td>s</td>
+                      <td>
+                        <data data-k="trait-lo" value="1">1</data> –
+                        <data data-k="trait-hi" value="600">600</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-pack.sprintEndurance"><code>pack.sprintEndurance</code></a>
+                      </td>
+                      <td>
+                        가득 찬 지구력을 다 쓰기까지 질주할 수 있는 시간. 지치면 물러나 회복합니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="recoveryTime" data-unit="s" data-individual="true">
+                      <th scope="row">회복 시간 <code>recoveryTime</code></th>
+                      <td>s</td>
+                      <td>
+                        <data data-k="trait-lo" value="1">1</data> –
+                        <data data-k="trait-hi" value="3600">3,600</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-pack.recoveryTime"><code>pack.recoveryTime</code></a>
+                      </td>
+                      <td>회복 상태에서 바닥난 지구력을 다시 채우는 데 걸리는 시간.</td>
+                    </tr>
+                    <tr data-trait="strikeForce" data-unit="kN" data-individual="true">
+                      <th scope="row">공격 힘 <code>strikeForce</code></th>
+                      <td>kN</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.1">0.1</data> –
+                        <data data-k="trait-hi" value="150">150</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-heavy.biteForce"><code>heavy.biteForce</code></a>
+                      </td>
+                      <td>
+                        한 번의 공격(물기, 엄니, 뿔, 앞발, 손)의 힘. 한 번의 피해 = 공격 힘 × 피해
+                        계수 × 무작위 배율 0.7–1.3.
+                      </td>
+                    </tr>
+                    <tr data-trait="strikeLethality" data-unit="HP/kN" data-individual="false">
+                      <th scope="row">피해 계수 <code>strikeLethality</code></th>
+                      <td>HP/kN</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.1">0.1</data> –
+                        <data data-k="trait-hi" value="100">100</data>
+                      </td>
+                      <td>미적용 (실행 단위)</td>
+                      <td>
+                        <a href="#param-heavy.biteLethality"><code>heavy.biteLethality</code></a>
+                      </td>
+                      <td>공격 힘 1 kN이 깎는 체력. 힘을 피해로 바꿉니다.</td>
+                    </tr>
+                    <tr data-trait="strikeInterval" data-unit="s" data-individual="true">
+                      <th scope="row">공격 간격 <code>strikeInterval</code></th>
+                      <td>s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.2">0.2</data> –
+                        <data data-k="trait-hi" value="30">30</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-heavy.biteInterval"><code>heavy.biteInterval</code></a>
+                      </td>
+                      <td>한 개체가 두 번 공격하는 사이의 시간.</td>
+                    </tr>
+                    <tr data-trait="strikeReach" data-unit="m" data-individual="true">
+                      <th scope="row">공격 거리 <code>strikeReach</code></th>
+                      <td>m</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.3">0.3</data> –
+                        <data data-k="trait-hi" value="15">15</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-heavy.biteReach"><code>heavy.biteReach</code></a>
+                      </td>
+                      <td>
+                        공격이 닿는 거리. 공격하는 쪽의 중심에서 재고, 상대의 몸 반경을 더합니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="strikeArc" data-unit="deg" data-individual="true">
+                      <th scope="row">공격 각도 (반각) <code>strikeArc</code></th>
+                      <td>deg</td>
+                      <td>
+                        <data data-k="trait-lo" value="5">5</data> –
+                        <data data-k="trait-hi" value="180">180</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-heavy.biteArc"><code>heavy.biteArc</code></a>
+                      </td>
+                      <td>공격이 닿는 정면 부채꼴의 반각.</td>
+                    </tr>
+                    <tr data-trait="strikeAccuracy" data-unit="p" data-individual="true">
+                      <th scope="row">명중률 <code>strikeAccuracy</code></th>
+                      <td>p</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="1">1</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-heavy.biteAccuracy"><code>heavy.biteAccuracy</code></a>
+                      </td>
+                      <td>
+                        부채꼴 안의 상대를 공격할 때 맞힐 확률. 자기 몸에 매달린 상대에게는
+                        1.5배(최대 0.95).
+                      </td>
+                    </tr>
+                    <tr data-trait="latchChance" data-unit="p" data-individual="true">
+                      <th scope="row">매달리기 성공률 <code>latchChance</code></th>
+                      <td>p</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="1">1</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-pack.latchChance"><code>pack.latchChance</code></a>
+                      </td>
+                      <td>
+                        매달리기 시도가 성공할 확률. 상대가 매달리기 체중비 이상 무거울 때만
+                        시도합니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="latchEndurance" data-unit="s" data-individual="true">
+                      <th scope="row">매달리기 지구력 <code>latchEndurance</code></th>
+                      <td>s</td>
+                      <td>
+                        <data data-k="trait-lo" value="1">1</data> –
+                        <data data-k="trait-hi" value="1200">1,200</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-pack.latchEndurance"><code>pack.latchEndurance</code></a>
+                      </td>
+                      <td>가득 찬 지구력으로 매달려 버틸 수 있는 시간. 다 쓰면 떨어집니다.</td>
+                    </tr>
+                    <tr data-trait="latchDps" data-unit="HP/s" data-individual="true">
+                      <th scope="row">매달리기 피해 <code>latchDps</code></th>
+                      <td>HP/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="200">200</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-pack.dps"><code>pack.dps</code></a>
+                      </td>
+                      <td>
+                        매달린 동안 상대에게 주는 초당 피해. 상대의 가죽 배율 <code>hide</code>를
+                        곱합니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="shakeRate" data-unit="1/s" data-individual="true">
+                      <th scope="row">떨쳐내기 빈도 <code>shakeRate</code></th>
+                      <td>1/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="10">10</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-heavy.shakeRate"><code>heavy.shakeRate</code></a>
+                      </td>
+                      <td>
+                        매달린 상대 하나를 1초에 떨쳐 낼 확률. 떨쳐진 개체는 최대 체력의 10 %를
+                        잃습니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="bleed" data-unit="1/s" data-individual="false">
+                      <th scope="row">출혈 계수 <code>bleed</code></th>
+                      <td>1/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="0.1">0.1</data>
+                      </td>
+                      <td>미적용 (실행 단위)</td>
+                      <td>
+                        <a href="#param-pack.bleed"><code>pack.bleed</code></a>
+                      </td>
+                      <td>
+                        이 종이 입힌 상처의 출혈 계수. 상대는 매초 쌓인 상처 × 이 값만큼 체력을
+                        잃습니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="morale" data-unit="0-1" data-individual="true">
+                      <th scope="row">초기 사기 <code>morale</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="1">1</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-pack.morale"><code>pack.morale</code></a>
+                      </td>
+                      <td>
+                        시작 사기. 사기 · 도주 설정이 켜져 있으면 0.2 아래에서 도주합니다. 큰
+                        상처일수록 사기를 많이 잃습니다.
+                      </td>
+                    </tr>
+                    <tr data-trait="moraleLoss" data-unit="0-1" data-individual="true">
+                      <th scope="row">사기 손실 <code>moraleLoss</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="1">1</data>
+                      </td>
+                      <td>적용</td>
+                      <td>
+                        <a href="#param-pack.moraleLoss"><code>pack.moraleLoss</code></a>
+                      </td>
+                      <td>
+                        가까운 동료가 전투 불능이 될 때 버프 받은 사회성 종 개체가 잃는 사기(무리
+                        버프의 사기 전염). 비사회성 종에서는 쓰이지 않습니다.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                같은 특성이라도 종마다 근거가 다릅니다. 행동에 관한 값(명중률, 사기, 매달리기)은
+                모든 종에서 추정입니다.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-evidence"
+              >
+                <table class="species-table">
+                  <caption id="caption-free-evidence">
+                    종별 근거 수준 (개체 특성, 모델 2)
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">개체 특성</th>
+                      <th scope="col">티라노사우루스</th>
+                      <th scope="col">아프리카코끼리</th>
+                      <th scope="col">아프리카물소</th>
+                      <th scope="col">불곰</th>
+                      <th scope="col">털매머드</th>
+                      <th scope="col">호모 에렉투스</th>
+                      <th scope="col">호랑이</th>
+                      <th scope="col">사자</th>
+                      <th scope="col">회색늑대</th>
+                      <th scope="col">점박이하이에나</th>
+                      <th scope="col">북극곰</th>
+                      <th scope="col">하마</th>
+                      <th scope="col">유타랍토르</th>
+                      <th scope="col">흰코뿔소</th>
+                      <th scope="col">스피노사우루스</th>
+                      <th scope="col">트리케라톱스</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row"><code>mass</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="elephant" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="brownBear" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="homoErectus" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="polarBear" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="whiteRhino" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="spinosaurus" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="triceratops" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>bodyRadius</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="bodyRadius" data-ev="D">
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>turnRate</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="turnRate" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>sprintSpeed</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="sprintSpeed" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="sprintSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="sprintSpeed"
+                        data-ev="U"
+                      >
+                        <abbr class="ev ev-U" title="미검증 대중 수치">U</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="sprintSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="sprintSpeed"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="sprintSpeed" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="sprintSpeed" data-ev="U">
+                        <abbr class="ev ev-U" title="미검증 대중 수치">U</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="sprintSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="sprintSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>cruiseSpeed</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="cruiseSpeed" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="cruiseSpeed"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="cruiseSpeed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="cruiseSpeed" data-ev="U">
+                        <abbr class="ev ev-U" title="미검증 대중 수치">U</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="cruiseSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>sprintEndurance</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>recoveryTime</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeForce</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="strikeForce" data-ev="L">
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="strikeForce" data-ev="D">
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="strikeForce" data-ev="D">
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeForce"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="문헌 값">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeLethality</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeInterval</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeReach</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="strikeReach" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="strikeReach" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="strikeReach" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeArc</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeAccuracy</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>latchChance</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="latchChance" data-ev="">
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="latchChance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="latchChance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="latchChance" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="latchChance" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="latchChance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="latchChance" data-ev="">
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="latchChance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>latchEndurance</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>latchDps</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="elephant" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="latchDps"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>shakeRate</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>bleed</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="elephant" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="brownBear" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="bleed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="polarBear" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="whiteRhino" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="bleed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="bleed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>morale</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="elephant" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="brownBear" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="morale"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="polarBear" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="morale"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="morale"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="morale"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>moraleLoss</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section id="free-buff">
+              <h3>무리 버프 특성 (6개)</h3>
+              <p>
+                사회성 종(사자, 회색늑대, 점박이하이에나, 호모 에렉투스, 유타랍토르)만 씁니다. 한
+                진영에 2마리 이상이고 결속 반경 안에 동료가 있을 때 개체마다 켜집니다. 모두 실행
+                단위로만 뽑고(개체 변동 없음) 모두 추정(S)입니다. 비사회성 종은 0으로 고정되어
+                엔진이 읽지 않습니다.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-buff-traits"
+              >
+                <table>
+                  <caption id="caption-free-buff-traits">
+                    무리 버프 특성: 단위, 허용 범위, 의미
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">특성</th>
+                      <th scope="col">단위</th>
+                      <th scope="col">허용 범위</th>
+                      <th scope="col">의미</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-buff="cohesionRadius" data-unit="m">
+                      <th scope="row">결속 반경 <code>cohesionRadius</code></th>
+                      <td>m</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="500">500</data>
+                      </td>
+                      <td>도주하지 않는 동료가 이 거리 안에 있으면 버프가 켜집니다.</td>
+                    </tr>
+                    <tr data-buff="groupLatchGain" data-unit="×/rider">
+                      <th scope="row">집단 매달리기 이득 <code>groupLatchGain</code></th>
+                      <td>×/rider</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="1">1</data>
+                      </td>
+                      <td>
+                        집단 매달리기: 이미 매달린 버프 동료 한 마리마다 매달리기 확률에 1 + 이 값을
+                        곱합니다(최대 2배).
+                      </td>
+                    </tr>
+                    <tr data-buff="focusBonus" data-unit="m">
+                      <th scope="row">공동 목표 가중 <code>focusBonus</code></th>
+                      <td>m</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="100">100</data>
+                      </td>
+                      <td>
+                        공동 목표: 버프 동료가 이미 붙어 싸우는 상대일수록 그 수 × 이 거리만큼
+                        가깝게 칩니다.
+                      </td>
+                    </tr>
+                    <tr data-buff="moraleSupport" data-unit="0-1">
+                      <th scope="row">사기 지원 <code>moraleSupport</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="0.2">0.2</data>
+                      </td>
+                      <td>
+                        사기 지원(<code>k_c</code>): 40 m 안의 동료와 적 수의 비율(로그)에 곱해
+                        사기에 더하는 값. 최대 ±0.1.
+                      </td>
+                    </tr>
+                    <tr data-buff="routShock" data-unit="0-1">
+                      <th scope="row">이탈 충격 <code>routShock</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="0.2">0.2</data>
+                      </td>
+                      <td>결속 반경 안의 동료가 도주할 때 버프 받은 개체가 잃는 사기.</td>
+                    </tr>
+                    <tr data-buff="reliefStamina" data-unit="0-1">
+                      <th scope="row">교대 기준 지구력 <code>reliefStamina</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="1">1</data>
+                      </td>
+                      <td>
+                        교대: 매달린 버프 개체의 지구력이 이 값 아래로 내려가면 기운 있는 동료에게
+                        상대를 넘기고 물러납니다.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-buff-species"
+              >
+                <table class="species-table">
+                  <caption id="caption-free-buff-species">
+                    사회성 종의 무리 버프 범위 (최소 · 최빈 · 최대)
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">종</th>
+                      <th scope="col"><code>cohesionRadius</code> (m)</th>
+                      <th scope="col"><code>groupLatchGain</code> (×/rider)</th>
+                      <th scope="col"><code>focusBonus</code> (m)</th>
+                      <th scope="col"><code>moraleSupport</code> (0–1)</th>
+                      <th scope="col"><code>routShock</code> (0–1)</th>
+                      <th scope="col"><code>reliefStamina</code> (0–1)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">호모 에렉투스</th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="15 30 60"
+                          >15 · 30 · 60</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0 0.15 0.3"
+                          >0 · 0.15 · 0.3</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 15 30"
+                          >0 · 15 · 30</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">사자</th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="30 60 100"
+                          >30 · 60 · 100</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0.1 0.25 0.4"
+                          >0.1 · 0.25 · 0.4</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 20 40"
+                          >0 · 20 · 40</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">회색늑대</th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="30 60 120"
+                          >30 · 60 · 120</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0.1 0.3 0.5"
+                          >0.1 · 0.3 · 0.5</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 20 40"
+                          >0 · 20 · 40</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">점박이하이에나</th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="30 60 120"
+                          >30 · 60 · 120</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0.1 0.3 0.5"
+                          >0.1 · 0.3 · 0.5</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 20 40"
+                          >0 · 20 · 40</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.06 0.1"
+                          >0 · 0.06 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">유타랍토르</th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="30 60 100"
+                          >30 · 60 · 100</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0 0.12 0.25"
+                          >0 · 0.12 · 0.25</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 10 20"
+                          >0 · 10 · 20</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.025 0.05"
+                          >0 · 0.025 · 0.05</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.025 0.05"
+                          >0 · 0.025 · 0.05</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section id="free-globals">
+              <h3>전역 모델 상수 (5개)</h3>
+              <p>
+                두 진영이 함께 쓰는 가정입니다. 실행마다 아래 범위에서 하나씩 뽑고(개체 변동 없음),
+                모두 추정(S)입니다. 지금 화면에서는 기본 범위로 고정되어 있고, 설정 코드나 링크에
+                담긴 범위는 그대로 씁니다.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-global-constants"
+              >
+                <table>
+                  <caption id="caption-free-global-constants">
+                    전역 모델 상수: 기호, 기본 범위, 허용 범위, 의미
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">상수</th>
+                      <th scope="col">기호</th>
+                      <th scope="col">기본 범위 (최소 · 최빈 · 최대)</th>
+                      <th scope="col">허용 범위</th>
+                      <th scope="col">의미</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-global="latchRatio" data-unit="×">
+                      <th scope="row">매달리기 체중비 <code>latchRatio</code></th>
+                      <td><code>R_latch</code></td>
+                      <td>
+                        <data data-k="global-preset" value="2 3 5">2 · 3 · 5</data> ×
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="1">1</data> –
+                        <data data-k="global-hi" value="20">20</data> ×
+                      </td>
+                      <td>상대가 자기보다 이만큼 이상 무거워야 매달릴 수 있습니다.</td>
+                    </tr>
+                    <tr data-global="knockRatio" data-unit="×">
+                      <th scope="row">밀쳐 내기 체중비 <code>knockRatio</code></th>
+                      <td><code>K_knock</code></td>
+                      <td>
+                        <data data-k="global-preset" value="1.5 2 4">1.5 · 2 · 4</data> ×
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="1">1</data> –
+                        <data data-k="global-hi" value="20">20</data> ×
+                      </td>
+                      <td>
+                        공격한 쪽이 이만큼 이상 무거울 때만 맞은 상대가 뒤로 밀려나 회복에
+                        들어갑니다.
+                      </td>
+                    </tr>
+                    <tr data-global="woundRef" data-unit="HP/HP">
+                      <th scope="row">상처 기준 <code>woundRef</code></th>
+                      <td><code>woundRef</code></td>
+                      <td>
+                        <data data-k="global-preset" value="0.05 0.1 0.2">0.05 · 0.1 · 0.2</data>
+                        HP/HP <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="0.01">0.01</data> –
+                        <data data-k="global-hi" value="1">1</data> HP/HP
+                      </td>
+                      <td>
+                        한 번에 최대 체력의 이 비율 이상을 잃으면 상처로 인한 사기 손실을 전부
+                        받습니다. 작은 상처는 그만큼 적게 받습니다.
+                      </td>
+                    </tr>
+                    <tr data-global="interference" data-unit="1/ally">
+                      <th scope="row">혼잡 방해 <code>interference</code></th>
+                      <td><code>interference</code></td>
+                      <td>
+                        <data data-k="global-preset" value="0 0.1 0.3">0 · 0.1 · 0.3</data> 1/ally
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="0">0</data> –
+                        <data data-k="global-hi" value="1">1</data> 1/ally
+                      </td>
+                      <td>
+                        여럿이 같은 상대에 붙을 때, 협동 접근·포위로 면제되지 않은 동료 한 마리가 늘
+                        때마다 명중률과 매달리기 확률이 줄어드는 정도.
+                      </td>
+                    </tr>
+                    <tr data-global="buffGrace" data-unit="s">
+                      <th scope="row">버프 유예 시간 <code>buffGrace</code></th>
+                      <td><code>T_grace</code></td>
+                      <td>
+                        <data data-k="global-preset" value="0 2 5">0 · 2 · 5</data> s
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="0">0</data> –
+                        <data data-k="global-hi" value="30">30</data> s
+                      </td>
+                      <td>결속 반경 밖으로 나간 개체의 버프가 꺼지기까지 기다리는 시간.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section id="free-flight">
+              <h3>도주 특성 (모델 2, 현실 모드)</h3>
+              <p>
+                모델 2부터 모든 종이 도주 특성 세 가지를 가져, 자기보다 훨씬 무거운 상대 앞에서 그
+                종의 기록된 행동대로 물러납니다. 이 특성은 고급 모드의 <strong>도주 방식</strong>이
+                <strong>현실 모드</strong>이고 사기 · 도주 설정이 켜져 있을 때만 작동합니다.
+                기본값인 <strong>끝까지 싸우기</strong>와 간단 모드의 모든 대결에서는 쓰이지
+                않습니다.
+              </p>
+              <p>
+                <code>hide</code>처럼 종 상수이므로 샘플링하지 않고 링크에도 담기지 않습니다. 엔진은
+                최빈값만 쓰며, 최소와 최대는 보정에서 민감도를 재는 범위입니다. 사회성 종은 단독
+                충격이 없고(–), 대신 무리 버프의 사기 전염을 받습니다.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-flight-traits"
+              >
+                <table>
+                  <caption id="caption-free-flight-traits">
+                    도주 특성: 단위와 의미
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">특성</th>
+                      <th scope="col">단위</th>
+                      <th scope="col">의미</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-flight="threatRatio" data-unit="×">
+                      <th scope="row">위협 체중비 <code>threatRatio</code></th>
+                      <td>×</td>
+                      <td>
+                        활동 중인 적이 자기 체중의 이 배수 이상이면 자기보다 압도적인 상대로 봅니다.
+                      </td>
+                    </tr>
+                    <tr data-flight="threatTime" data-unit="s">
+                      <th scope="row">위협 버팀 시간 <code>threatTime</code></th>
+                      <td>s</td>
+                      <td>
+                        압도적인 상대의 공격 거리(+ 자기 몸 반경 + 4 m) 안에 있거나 그 상대에 매달려
+                        있으면, 다치지 않았어도 이 시간에 걸쳐 사기가 도주 기준까지 고르게
+                        떨어집니다. 상처로 잃는 사기와 따로 더해집니다.
+                      </td>
+                    </tr>
+                    <tr data-flight="soloShock" data-unit="0-1">
+                      <th scope="row">단독 충격 <code>soloShock</code></th>
+                      <td>0–1</td>
+                      <td>
+                        비사회성 종 개체가 40 m 안의 동료 하나가 전투 불능이 될 때마다 잃는 사기. 한
+                        번에 최대 3마리분입니다.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-flight-species"
+              >
+                <table class="species-table">
+                  <caption id="caption-free-flight-species">
+                    종별 도주 특성 (최소 · 최빈 · 최대, 엔진은 최빈값 사용)
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">종</th>
+                      <th scope="col"><code>threatRatio</code> (×)</th>
+                      <th scope="col"><code>threatTime</code> (s)</th>
+                      <th scope="col"><code>soloShock</code> (0–1)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row">티라노사우루스</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="trex"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 4"
+                          >1.5 · 2 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="trex"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="20 60 180"
+                          >20 · 60 · 180</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="trex"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">아프리카코끼리</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="elephant"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.2 1.5 3"
+                          >1.2 · 1.5 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="elephant"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="20 60 180"
+                          >20 · 60 · 180</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="elephant"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">아프리카물소</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="buffalo"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.2 1.5 3"
+                          >1.2 · 1.5 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="buffalo"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="15 45 120"
+                          >15 · 45 · 120</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="buffalo"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">불곰</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="brownBear"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 4"
+                          >1.5 · 2 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="brownBear"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="10 30 90"
+                          >10 · 30 · 90</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="brownBear"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">털매머드</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="mammoth"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.2 1.5 3"
+                          >1.2 · 1.5 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="mammoth"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="20 60 180"
+                          >20 · 60 · 180</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="mammoth"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">호모 에렉투스</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="homoErectus"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 4"
+                          >1.5 · 2 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="homoErectus"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 20 60"
+                          >5 · 20 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-flight-none"
+                        data-species="homoErectus"
+                        data-trait="soloShock"
+                      >
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">호랑이</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="tiger"
+                          data-trait="threatRatio"
+                          data-ev="D"
+                          value="1.4 2 10"
+                          >1.4 · 2 · 10</data
+                        >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="tiger"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 15 60"
+                          >5 · 15 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="tiger"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">사자</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="lion"
+                          data-trait="threatRatio"
+                          data-ev="D"
+                          value="3.7 6.7 10"
+                          >3.7 · 6.7 · 10</data
+                        >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="lion"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="10 30 90"
+                          >10 · 30 · 90</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-flight-none" data-species="lion" data-trait="soloShock">
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">회색늑대</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="wolf"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="6 15 25"
+                          >6 · 15 · 25</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="wolf"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 20 60"
+                          >5 · 20 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-flight-none" data-species="wolf" data-trait="soloShock">
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">점박이하이에나</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hyena"
+                          data-trait="threatRatio"
+                          data-ev="D"
+                          value="1.9 3.3 10"
+                          >1.9 · 3.3 · 10</data
+                        >
+                        <abbr class="ev ev-D" title="문헌에서 유도">D</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hyena"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 20 60"
+                          >5 · 20 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-flight-none" data-species="hyena" data-trait="soloShock">
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">북극곰</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="polarBear"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 3"
+                          >1.5 · 2 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="polarBear"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 10 30"
+                          >5 · 10 · 30</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="polarBear"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">하마</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hippo"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 4"
+                          >1.5 · 2 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hippo"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="20 60 180"
+                          >20 · 60 · 180</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hippo"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">유타랍토르</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="raptor"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="2 3 4"
+                          >2 · 3 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="raptor"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="10 30 90"
+                          >10 · 30 · 90</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td data-k="free-flight-none" data-species="raptor" data-trait="soloShock">
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">흰코뿔소</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="whiteRhino"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1 1.25 2"
+                          >1 · 1.25 · 2</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="whiteRhino"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 20 60"
+                          >5 · 20 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="whiteRhino"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">스피노사우루스</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="spinosaurus"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1 1.5 2"
+                          >1 · 1.5 · 2</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="spinosaurus"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="10 30 90"
+                          >10 · 30 · 90</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="spinosaurus"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">트리케라톱스</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="triceratops"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.2 1.5 3"
+                          >1.2 · 1.5 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="triceratops"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="15 45 120"
+                          >15 · 45 · 120</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="triceratops"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="추정">S</abbr>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </section>
           <aside class="cta">
             <p>
               <strong>범위를 직접 바꿔 보세요.</strong> 고급 설정에서 모든 파라미터를 수정할 수
