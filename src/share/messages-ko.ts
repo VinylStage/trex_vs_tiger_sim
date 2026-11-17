@@ -110,6 +110,7 @@ export const shareKo = {
   'free.sideName': '{name} {side}',
   'free.context': '자유 대결 · 잠정 모델',
   'free.contextMirror': '같은 종 대결 · 자유 대결 · 잠정 모델',
+  'free.contextLive': '실시간 대결 1판 · 변수 카드 {n}장 · {context}',
   'free.standing': '{side} 평균 끝까지 남음',
   'free.fled': '{side} 평균 이탈',
   'free.buff': '{side} 무리 버프 활성',

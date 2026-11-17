@@ -12,6 +12,12 @@ import {
   type SideConfig,
 } from '../sim/free/config.ts';
 import { buffRanges, traitRanges } from '../sim/free/species.ts';
+import { DT } from '../sim/engine.ts';
+import {
+  MAX_INTERVENTIONS,
+  sanitizeInterventions,
+  type Intervention,
+} from '../sim/free/interventions.ts';
 import { BUFF_TRAIT_IDS, TRAIT_IDS } from '../sim/free/traits.ts';
 import type { Triangular } from '../sim/params.ts';
 import {
@@ -41,6 +47,12 @@ import {
  * `allIn`, the default, and the encoder writes it only for `realistic`; under `mv` 1 the decoder
  * ignores it, since model 1 has no flight traits.
  *
+ * `live: {run, iv: [[tick, card, side], …]}` (#180, RENEWAL-1.0 §10.3) is the live battle of the
+ * link: run `run` of the config, under the intervention log `iv`, which that `mv`'s card
+ * catalogue defines. It is read only when every entry survives `sanitizeInterventions` unchanged
+ * (`freeLiveFromObject`), so a log that is accepted reproduces the battle exactly. It is not part
+ * of `FreeConfig`; links without it are unchanged.
+ *
  * `ui: "simple"` (#154) marks a link written by Simple mode, appended last. It is not part of the
  * config: the decoder never reads it into `FreeConfig`, so the engine, `mv` and the reproduction
  * check never see it, and builds before #154 ignore it like any unknown key. Only the link
@@ -60,10 +72,21 @@ export const SIMPLE_MARKER = 'simple';
  */
 export const FLIGHT_KEY = 'flight';
 
+/** Payload key of the live battle (#180, docs/SHARING.md#live-battle-live). */
+export const LIVE_KEY = 'live';
+
+/** The live battle of a link: run `run` of the config under the intervention log `iv`. */
+export interface FreeLive {
+  run: number;
+  iv: Intervention[];
+}
+
 /** How a free config is written into a link. */
 export interface FreeLinkOptions {
   /** Append the Simple-mode marker (`ui: "simple"`). The caller decides when Simple can show it. */
   simple?: boolean;
+  /** The live battle (`live`), written before the Simple marker; null or absent: none. */
+  live?: FreeLive | null;
 }
 
 const SCALARS = [
@@ -129,6 +152,12 @@ export function freeConfigDiff(
   // `allIn` link stay as they were.
   if (hasFlightMode(config) && config.flight !== DEFAULT_FLIGHT_MODE) {
     out[FLIGHT_KEY] = config.flight;
+  }
+  if (opts.live) {
+    out[LIVE_KEY] = {
+      run: opts.live.run,
+      iv: opts.live.iv.map((e) => [e.tick, e.card, e.side]),
+    };
   }
   if (opts.simple) out[SIMPLE_KEY] = SIMPLE_MARKER;
   return out;
@@ -217,6 +246,37 @@ export function freeConfigFromObject(raw: Record<string, unknown>): FreeConfig {
   for (const k of SCALARS) if (Object.hasOwn(raw, k)) input[k] = raw[k];
   if (Object.hasOwn(raw, FLIGHT_KEY)) input['flight'] = raw[FLIGHT_KEY];
   return sanitizeFreeConfig(input);
+}
+
+/**
+ * The live battle of a free payload (`live`), checked against the config the payload decodes to:
+ * `run` an integer in [0, config.runs), `iv` an array of at most MAX_INTERVENTIONS
+ * `[tick, card, side]` tuples that `sanitizeInterventions` keeps whole and in order under the
+ * config's `mv`, `maxTime` and `morale`. Null when `live` is absent or anything about it is off:
+ * a log that would lose or reorder an entry would replay another battle, so it is refused whole
+ * rather than repaired. Other keys inside `live` are ignored.
+ */
+export function freeLiveFromObject(
+  raw: Record<string, unknown>,
+  config: FreeConfig,
+): FreeLive | null {
+  if (!Object.hasOwn(raw, LIVE_KEY) || freeModelVersion(raw) === null) return null;
+  const live = raw[LIVE_KEY];
+  if (!isObject(live)) return null;
+  const run = live['run'];
+  const iv = live['iv'];
+  if (typeof run !== 'number' || !Number.isInteger(run) || run < 0 || run >= config.runs) {
+    return null;
+  }
+  if (!Array.isArray(iv) || iv.length > MAX_INTERVENTIONS) return null;
+  if (!iv.every((e) => Array.isArray(e) && e.length === 3)) return null;
+  const log = sanitizeInterventions(iv, Math.round(config.maxTime / DT), config.mv, config);
+  if (log.length !== iv.length) return null;
+  const same = log.every((e, i) => {
+    const r = iv[i] as unknown[];
+    return e.tick === r[0] && e.card === r[1] && e.side === r[2];
+  });
+  return same ? { run, iv: log } : null;
 }
 
 /** Decoded payload object, or null for anything malformed. */

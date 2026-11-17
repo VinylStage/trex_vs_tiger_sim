@@ -28,20 +28,22 @@ Free-matchup configs ([design §2.4–2.5](design/FREE-MATCHUPS.md#24-config-and
 
 - **Settings link** `#s=` with payload **v3** and the mode marker `m: "free"`, e.g. `{"v":3,"m":"free","a":{"sp":"tiger","n":5},"b":{"sp":"lion","n":5},"runs":1000}`. Per side `sp` species and `n` count, then `p`/`bf` edited trait and pack-buff ranges, `buff` switches turned off and `g` edited global constants, diffed against the species presets and the free defaults. A v3 link opens the simulator in free mode; every other link opens classic, and v1/v2 payloads decode exactly as before (the goldens guard them).
 - **Settings code** `TVT3-<v3 payload>`. Pasting one (or a v3 link) into the classic import field switches to free mode and applies it; free mode has a "Copy settings code" button. `TVT2-` stays the classic code.
-- **Result links** (`/r/`) of free results use result format **v2** with the v3 config; the result page, the card, the text share and the link preview handle both ([Free result links](#free-result-links)).
+- **Result links** (`/r/`) of free results use result format **v2** with the v3 config (**v3** for one live battle, #180); the result page, the card, the text share and the link preview handle both ([Free result links](#free-result-links)).
 - **Model version** `mv`, absent while it is 1 ([Model version](#model-version-mv)).
 - **Flight mode** `flight` of model 2, absent while it is `allIn` ([Flight mode](#flight-mode-flight)).
+- **Live battle** `live: {run, iv}`, one run of the config under a card log ([Live battle](#live-battle-live)).
 - **Simple-mode marker** `ui: "simple"`, appended last, only in links Simple mode writes ([Simple links](#simple-links)).
 
-| v3 key      | Meaning                                                                              | Written                                             |
-| ----------- | ------------------------------------------------------------------------------------ | --------------------------------------------------- |
-| `v`, `m`    | payload version 3, mode marker `"free"`                                              | always                                              |
-| `mv`        | model version ([Model version](#model-version-mv))                                   | only when not 1, right after `m`                    |
-| `a`, `b`    | per side `sp` species, `n` count, `p` / `bf` edited ranges                           | always (`p`, `bf` only when edited)                 |
-| `buff`, `g` | switches turned off, edited global constants                                         | only when not the default                           |
-| scalars     | `runs`, `seed`, `arenaSize`, `maxTime`, `sampling`, `individualCV`, `morale`         | only when not the default                           |
-| `flight`    | `"realistic"`: flight mode of `mv` 2+ ([Flight mode](#flight-mode-flight))           | only for `realistic` under `mv` 2+, after scalars   |
-| `ui`        | `"simple"`: written by Simple mode, reopens in Simple (#154); not part of the config | only by Simple mode, for a config it can show, last |
+| v3 key      | Meaning                                                                                | Written                                             |
+| ----------- | -------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `v`, `m`    | payload version 3, mode marker `"free"`                                                | always                                              |
+| `mv`        | model version ([Model version](#model-version-mv))                                     | only when not 1, right after `m`                    |
+| `a`, `b`    | per side `sp` species, `n` count, `p` / `bf` edited ranges                             | always (`p`, `bf` only when edited)                 |
+| `buff`, `g` | switches turned off, edited global constants                                           | only when not the default                           |
+| scalars     | `runs`, `seed`, `arenaSize`, `maxTime`, `sampling`, `individualCV`, `morale`           | only when not the default                           |
+| `flight`    | `"realistic"`: flight mode of `mv` 2+ ([Flight mode](#flight-mode-flight))             | only for `realistic` under `mv` 2+, after scalars   |
+| `live`      | `{run, iv: [[tick, card, side], …]}`: a live battle ([Live battle](#live-battle-live)) | only for a live battle, after `flight`, before `ui` |
+| `ui`        | `"simple"`: written by Simple mode, reopens in Simple (#154); not part of the config   | only by Simple mode, for a config it can show, last |
 
 ### Model version (`mv`)
 
@@ -79,6 +81,16 @@ Owner decision 2026-11-16 ([MODEL.md §3.8](MODEL.md#38-morale-and-rout)). From 
 - **Simple runs `allIn`.** The flight mode is a setting Simple does not show, so `simpleRunConfig` drops it and a `realistic` config counts as a hidden edit (`hasHiddenEdits`): its link carries no Simple marker, and a marked link that names `realistic` opens the free form of Advanced mode ([Simple links](#simple-links)).
 - **No released build runs model 2.** Released builds treat `mv` 2 as a newer model (above) and open their defaults, so no page reads a model 2 link while ignoring `flight`.
 - `tests/free-flight.test.ts` checks the sanitizer, the encoder and decoder, model 1 and Simple; the model 2 golden holds cases in both modes.
+
+### Live battle (`live`)
+
+#180, [RENEWAL-1.0 §10.3](design/RENEWAL-1.0.md#103-intervention-log-and-share-link-versioning). A free payload can carry one live battle: `live: {run, iv}`, where `run` is the run index of the config (its seed, its design row) and `iv` the intervention log, one `[tick, card, side]` tuple per card in tick order. `card` is the wire code (`CARD_IDS` index) and the catalogue of the payload's `mv` says what it does ([MODEL.md §3.9](MODEL.md#39-variable-cards-free-model)); `side` is 0, 1 or 2 (both). `src/ui/share-free.ts` writes it after `flight` and before `ui`: `{"v":3,"m":"free","mv":2,"a":…,"b":…,"live":{"run":3,"iv":[[20,7,0],[60,2,2]]}}`.
+
+- **It is not part of the config.** `FreeConfig` never holds it, so the engine, the batch and every link without it are unchanged; `freeLiveFromObject(raw, config)` reads it next to `freeConfigFromObject`.
+- **Accepted only whole.** `run` must be an integer in `[0, runs)`, `iv` an array of at most 64 three-element tuples, and `sanitizeInterventions` (under the payload's `mv`, `maxTime` and morale switch) must keep every entry in the same order. Anything else drops the whole `live`, never part of it: a log missing an entry, or sorted into another order, would replay a different battle. An empty `iv` is valid (a live battle without cards). Other keys inside `live` are ignored.
+- **Size.** The longest log (64 entries) with the largest config stays well under `MAX_SHARE_LENGTH` and `MAX_RESULT_LENGTH` (`tests/free-live-share.test.ts`).
+- **Opening one.** A `#s=` with a valid `live` always opens the free form (Simple mode never plays cards), and its `chk=` snapshot is of that one battle, so the batch reproduction check is not shown (`routeLink` returns `live` and no `check`). Until Live battle mode (#183) the free form opens the config and does not replay the battle.
+- Viewer names are never encoded.
 
 ## Link routing
 
@@ -182,6 +194,8 @@ A free result ([design §2.5](design/FREE-MATCHUPS.md#25-settings-codes-and-resu
 | `ab`, `bb` | pack buff: mean buffed share of agent-time, only for a side whose buff applies, optional         | finite, 0–1                           |
 | `at`, `bt` | pack buff: median seconds with at least one buffed member, only where the buff applies, optional | finite, 0–3600                        |
 | `ci`       | 95 % Wilson intervals `[aLo, aHi, bLo, bHi, dLo, dHi]`, optional                                 | six finite numbers in [0, 1], lo ≤ hi |
+
+**Version 3: one live battle** (#180). A result of a live battle is written as `{ v: 3, c, s }`: `c` carries the [`live`](#live-battle-live) log and `s` is that one battle as a snapshot of one run (`n: 1`, the same keys and checks as below, from `summarizeFree` over that run alone). Every other free result is still written as `v: 2`, byte for byte as before, so only a live result needs a build that can replay it; a build before #180 reports `version` for it. A `v: 3` link whose `live` is missing or not accepted whole is a `shape` error, and one whose `s` has `n` other than 1 a `summary` error (both keep the config for **Run it yourself**); a `live` key in a `v: 2` link is not read. The page and the link preview name it in the context line ("실시간 대결 1판 · 변수 카드 4장 · 자유 대결 · 잠정 모델" / "One live battle · variable cards: 4 · …"), and **Run it yourself** carries the log: `/play/#s=<v3 with live>&chk=<snapshot>`. Replaying the log reproduces the snapshot exactly (the summary and `chk=`, under `mv` 1 and 2, `tests/free-live-share.test.ts`).
 
 The buff applies to a side of a social species with two or more animals and at least one effect switched on; buff keys for any other side are rejected. The page lists per side the mean still standing, incapacitated and fled (`freeStats` in `result-text.ts`). The snapshot has no still-standing key, so the page shows `as − ar` (`bs − br`) to one decimal, clamped at 0 because `as` is rounded to two decimals and `ar` to one; that is the figure the app's still-standing card shows (#42), give or take 0.1. The format and its version stay as they are, so older links read the same way. **Run it yourself** opens `/play/#s=<v3>&chk=<summary>` in free mode, and free mode reports _same_ / _within the 95 % CI_ / _differs_ after the next Run, as for classic links.
 
