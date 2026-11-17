@@ -508,11 +508,17 @@
                 last tiger fall in the same tick, the tigers win.
               </li>
               <li>
-                <strong>T-Rex win</strong>: no tiger is still fighting (approaching, latched or
-                recovering). Every tiger is incapacitated, routed or gone, so a T-Rex win includes
-                battles that end because the tigers fled.
+                <strong>T-Rex win</strong>: no tiger is left in the battle. From model 3 that means
+                every tiger is incapacitated or has escaped across the arena edge: a fleeing tiger
+                still inside the arena stays in the battle, and a T-Rex can chase and bite it. Under
+                models 1 and 2 the battle ended the moment the last tiger started to flee, so the
+                replay stopped with the fleeing tigers still on screen (#230).
               </li>
-              <li><strong>Draw</strong>: the time limit is reached.</li>
+              <li>
+                <strong>Draw</strong>: the time limit is reached. Results show it as “Draw: time
+                limit”, never as a win. From model 3 the default limit is a safety cap of 3,600 s,
+                and ordinary battles end well before it.
+              </li>
             </ol>
             <p>
               Every battle records its outcome, duration, surviving T-Rex, tigers incapacitated,
@@ -905,14 +911,17 @@
               <i>T. rex</i> against tigers. Under the classic model's default tactic the tigers
               circle to the rear; in the free model they go straight in. With one
               <i>T. rex</i> against 20 tigers, the tigers' win share drops from about 46% to about
-              2%, close to the classic “direct” tactic. Free-model tigers almost never flee a much
-              larger opponent: by default every animal fights to the end, so the match-up answers
-              the thought experiment of who wins when nobody backs off. From model version 2 the
-              free form also offers a Realistic mode, in which every species has its own, researched
-              flight traits: how much heavier an opponent must be to outmatch it, how long it stays
-              within that opponent's reach, and for animals that live alone how much a nearby ally's
-              fall unsettles it. There most tigers withdraw from a T. rex, as in the classic model,
-              and a group of predators rarely beats an animal many times their size.
+              2%, close to the classic “direct” tactic. The free model's default, “Fight to the
+              end”, is the thought experiment of who wins when nobody backs off. From model 3 no
+              animal flees at all in that mode, so a battle runs until one side is incapacitated (up
+              to model 2 an animal still fled once wounds and fallen allies broke its morale). Every
+              result says how its runs ended: all incapacitated, ended in flight, or a draw on the
+              time limit. From model version 2 the free form also offers a Realistic mode, in which
+              every species has its own, researched flight traits: how much heavier an opponent must
+              be to outmatch it, how long it stays within that opponent's reach, and for animals
+              that live alone how much a nearby ally's fall unsettles it. There most tigers withdraw
+              from a T. rex, as in the classic model, and a group of predators rarely beats an
+              animal many times their size.
             </p>
             <p>
               Free results therefore still carry the “provisional” note. The comparison tables and

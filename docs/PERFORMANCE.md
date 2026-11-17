@@ -256,6 +256,27 @@ Per call the functions cost about twice V8's built-ins (2 million calls: `dsin` 
 
 **Flight mode (owner decision 2026-11-16).** In `allIn`, the default, the engine skips the flight pass entirely (`flightOn` is false), so its cost is model 2's math alone. Measured 2026-11-16 the same way (vitest, Node 22, 4-core container, 30 runs × 300 s, median of 5 alternating rounds, wall time per simulated agent-step, morale on): 10 _T. rex_ v 100 tigers 165.8 ns in `allIn` against 362.8 ns in `realistic`, where most tigers flee and a fleeing agent searches for its nearest enemy every tick (its battles end in about a fifth of the time, so a `realistic` batch is still cheaper); 10 lions v 1 elephant 365.0 against 369.1 ns (+1 %, the flight pass itself). Simple and every preset run `allIn`.
 
+## Battle end and model 3 (#230)
+
+Model 3 runs a battle until one side is out (MODEL.md §2.4): in `allIn` nobody routs, so a battle ends only when one side is incapacitated, and in `realistic` a routed agent stays in the battle until it escapes. The per-tick cost barely changes (one more count per tick; an agent with no enemy left fighting searches for the nearest routed one, a second grid query only then); the cost per run grows with the longer battles. Measured 2026-11-17 in vitest (Node 22, V8) on the 4-core container, one batch per row (20 runs for the 30+ agent presets, 60 for the others, seed 20261019), wall time per run on one core, model 2 against model 3, both `allIn`. Two calibration runs shared the machine, so treat the figures as ±20 %.
+
+| Preset (Simple runs)                      | Model 2 (ms/run) | Model 3 (ms/run) | Model 3, one Simple batch (core-s) |
+| ----------------------------------------- | ---------------: | ---------------: | ---------------------------------: |
+| `lion-tiger` (500)                        |              2.2 |              4.1 |                                2.1 |
+| `pride-five-tigers` (500)                 |              6.4 |             10.8 |                                5.4 |
+| `bear-wolf-pack` (500)                    |              9.1 |              9.7 |                                4.8 |
+| `elephants-pride` (500)                   |             11.5 |             71.0 |                               35.5 |
+| `mammoth-wolves` (500)                    |              6.4 |             24.7 |                               12.3 |
+| `trex-squad-tiger-horde` (500)            |             38.5 |             36.9 |                               18.5 |
+| `trex-erectus-100` (200)                  |             25.8 |            158.5 |                 31.7 (79.2 at 500) |
+| `raptors-trex` (500)                      |             11.3 |             20.1 |                               10.0 |
+| other duels (500)                         |          0.7–1.8 |          1.2–5.4 |                            0.6–2.7 |
+| 100 _H. erectus_ v 1 _T. rex_ (500, #230) |             23.2 |            213.3 |                              106.7 |
+
+A Simple batch spreads over the worker pool (one worker per core), so on a 4-core machine the slowest preset, `elephants-pride`, takes about 9 s of wall time against about 1.5 s before. `trex-erectus-100` sets `runs: 200` (PRESETS.md) to stay at that level; at 500 runs it would take about 20 s. A Simple batch with counts that are not a preset runs the default 500: the owner's 100 _H. erectus_ v 1 _T. rex_ is the heaviest measured, about 107 core-seconds (about 27 s on 4 cores; phones slower). The work budget counts `maxTime` ticks (`freeWorkEstimate`), so the 3,600 s default lowers the run cap of very large configs to a third (1,000 v 1,000 with the pack buff: 833 → 277 runs; 5,500 agents: 303 → 101 with the buff, 757 → 252 without); those are the batches where a 1,200 s cap would have cut long battles short.
+
+The `realistic` mode costs more per run than in model 2 for the same reason (the routed side must reach the edge, and pursuit continues): 10 _T. rex_ v 100 tigers median 73 s against 27 s (60 runs).
+
 ## Not changed
 
 - No `SharedArrayBuffer`: it needs cross-origin isolation, which conflicts with third-party ad iframes ([research §3](research/PERFORMANCE.md)). Transfers are already zero-copy.
