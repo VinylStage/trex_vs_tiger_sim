@@ -42,7 +42,7 @@ Epic: #20.
 | Any species on either side (role-free matchups)                          | #50   | Done: design and ADR-0007 (#74), trait presets (#75), free config (#77), free engine (#83), UI (#90, v0.2.9), pack buff (#100, v0.2.12), share links (#104, v0.2.13), replay (#110, v0.2.15) |
 | Code audit 2026-10-20: security, accessibility, docs, tests, performance | #82   | In progress (epic open for the #57 owner action): steps 1–6 merged (#85, #88, #91, #92, #95, #99, #102, #106, #109, #112, #114)                                                              |
 | Herd group defense for social herbivores                                 | #72   | Planned                                                                                                                                                                                      |
-| Rout (flee) rate in the results                                          | #42   | Planned                                                                                                                                                                                      |
+| Rout (flee) rate in the results                                          | #42   | Done in review                                                                                                                                                                               |
 | Patch notes board (`/patch-notes/`), one playful entry per release       | —     | Done (#98, v0.2.11)                                                                                                                                                                          |
 
 ## v1.0.0 — streamer-first renewal (accepted 2026-10-26)

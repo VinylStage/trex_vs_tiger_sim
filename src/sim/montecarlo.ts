@@ -108,6 +108,8 @@ export interface AggregateResult {
   heavySurvivors: Distribution & { hist: Histogram };
   packKilled: Distribution;
   packRouted: Distribution;
+  /** Pack animals still fighting at the end (#42); killed + routed + active = packCount per run. */
+  packActive: Distribution;
   /**
    * Pooled ratio: total pack animals killed / total heavy lost across all runs.
    * Infinity when pack animals died but no heavy did; NaN when nobody died.
@@ -203,6 +205,7 @@ export function aggregate(
     },
     packKilled: dist(sorted.map((s) => s.packKilled)),
     packRouted: dist(sorted.map((s) => s.packRouted)),
+    packActive: dist(sorted.map((s) => s.packActive)),
     exchangeRatio:
       totalHeavyLost > 0 ? totalKilled / totalHeavyLost : totalKilled > 0 ? Infinity : NaN,
     sensitivity,
