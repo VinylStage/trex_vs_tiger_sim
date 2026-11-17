@@ -207,8 +207,19 @@ sequenceDiagram
 
 - Master seed `S` (uint32, in the URL).
 - Sampling design (LHS permutation matrix) is generated from `S` and rebuilt identically in every worker; run `i` uses row `i`.
-- Battle `i` uses PRNG seeded with `splitmix32(S ⊕ hash(i))`.
-- Therefore results are identical for a given URL regardless of the number of workers or chunk boundaries. The scheduler also returns the summaries in run order, whatever order the chunks finish in.
+- Every random stream is seeded by `deriveSeed(S, stream, salt) = splitmix32(splitmix32(S ⊕ imul(salt + 1, 0x85ebca6b)) ⊕ stream)` (`src/sim/rng.ts`), where `stream` is usually the run index `i` and each purpose has its own salt:
+
+  | Salt     | Purpose                                                                  | Where                                             |
+  | -------- | ------------------------------------------------------------------------ | ------------------------------------------------- |
+  | 1        | sampling design (`deriveSeed(S, 0, 1)`)                                  | `src/sim/sampling.ts`                             |
+  | 2        | classic battle `i` (`deriveSeed(S, i, 2)`)                               | `src/sim/engine.ts`                               |
+  | 3, 4     | the free engine's two sides, one stream each (`deriveSeed(S, i, 3)`/`4`) | `src/sim/free/engine.ts`                          |
+  | 5        | reserved for randomized card effects (none use it yet)                   |                                                   |
+  | 6 and up | live-chance branches (`BRANCH_SALT_MIN`)                                 | `src/sim/free/engine.ts`, `src/ui/live-chance.ts` |
+
+  Card draws fold their inputs through `deriveSeed` separately: `cardDrawSeed` is `deriveSeed(deriveSeed(seed, matchIndex, pauseIndex), rerollCount)` (`src/sim/free/cards.ts`, [MODEL.md §3.9](docs/MODEL.md#39-variable-cards-free-model)).
+
+- A run's seed depends only on `(S, i)`, not on which worker runs it, which chunk it falls in or what ran before it on that worker, and the design row `i` is rebuilt from `S` in every worker. Therefore, within one JavaScript engine, results are identical for a given URL regardless of the number of workers or chunk boundaries. The scheduler also returns the summaries in run order, whatever order the chunks finish in. Across engines, only model version 2 and later are bit-identical ([#197](https://github.com/VinylStage/trex_vs_tiger_sim/issues/197), [MODEL.md §2.2](docs/MODEL.md#22-random-numbers-and-determinism)).
 - Free-model links also name the model version they run under (`mv`, absent means 1), so a link's results are identical per model version ([ADR-0008](docs/adr/0008-live-interventions-and-model-version.md), [SHARING.md](docs/SHARING.md#model-version-mv)).
 
 ### Workers and scheduling
@@ -253,7 +264,7 @@ The free model's matchup presets (`src/sim/free/presets.ts`) are pure data. A te
 
 **Flight mode (owner decision 2026-11-16).** From model 2 a free config also carries `flight` (`FreeConfig.flight`, `FLIGHT_MODES` in `src/sim/free/config.ts`): `allIn`, the default, or `realistic`. The engine reads the flight traits only when it is `realistic` (and morale is on), so `allIn` is model 2 without flight: deterministic math and the polar bear rows. `sanitizeFreeConfig` accepts the two strings under `mv` 2+ and forces `allIn` under model 1; the v3 payload writes `flight` only for `realistic` (`src/ui/share-free.ts`, [SHARING.md](docs/SHARING.md#flight-mode-flight)), so results, codes, result links and "Run it yourself" carry it through the same encoder. The free form shows it as a select under shared settings (`withFlightMode`, `src/ui/free-form-model.ts`); Simple drops it (`simpleRunConfig`), so every preset and the cold Simple page run `allIn`, and a `realistic` config is a hidden edit that opens in Advanced. The model 2 golden holds cases in both modes.
 
-The free model's variable cards (`src/sim/free/cards.ts`, #173) are pure data too: append-only card ids whose index is the wire code, a catalogue per model version (`CARDS_BY_MV`, ADR-0008) and a seeded draw of 3 eligible cards per pause. `src/sim/free/interventions.ts` (#174) sanitizes an intervention log (`{tick, card, side}`) and compiles it. `simulateFreeBattle(…, { interventions })` applies it at the top of the tick loop: instant ops once, and trait multipliers recomputed from base copies on every start or expiry. An empty log changes nothing ([MODEL.md §3.9](docs/MODEL.md#39-variable-cards-free-model)).
+The free model's variable cards (`src/sim/free/cards.ts`, #173) are pure data too: append-only card ids whose index is the wire code, a catalogue per model version (`CARDS_BY_MV`, ADR-0008) and a seeded draw of 3 eligible cards per pause. `src/sim/free/interventions.ts` (#174) sanitizes an intervention log (`{tick, card, side}`) and compiles it. `simulateFreeBattle(…, { interventions })` applies it at the top of the tick loop: instant ops once, and trait multipliers recomputed from base copies on every start or expiry. An empty log changes nothing ([MODEL.md §3.9](docs/MODEL.md#39-variable-cards-free-model)). A link carries one live battle as `live: {run, iv}` beside the v3 config, never inside `FreeConfig`, and a free result link of that battle is version 3 (#180, [SHARING.md](docs/SHARING.md#live-battle-live)).
 
 ### Pack animal behaviour state machine
 
