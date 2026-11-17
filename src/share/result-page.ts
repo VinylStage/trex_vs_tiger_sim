@@ -348,12 +348,15 @@ export function startResultPage(): void {
     return;
   }
   if (decoded.kind === 'free') {
-    const view = freeResultView(decoded.config, decoded.summary, lang);
+    const view = freeResultView(decoded.config, decoded.summary, lang, decoded.live);
     renderResult({
       view,
       summary: decoded.summary,
       stats: freeStats(view, decoded.summary),
-      runIt: reproduceFreeHash(decoded.config, decoded.summary, { simple: decoded.simple }),
+      runIt: reproduceFreeHash(decoded.config, decoded.summary, {
+        simple: decoded.simple,
+        live: decoded.live,
+      }),
       seed: decoded.config.seed,
     });
     return;
