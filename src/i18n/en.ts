@@ -706,4 +706,7 @@ export const en: Dictionary = {
   'card.pocket.name': 'Pocket size (what-if)',
   'card.pocket.effect':
     'One side: HP and maximum HP ×0.6 on the spot, then for the rest of the battle speed ×1.3.',
+  'live.gate.noWhatIf': 'Effect numbers skipped: the battle is large',
+  'live.gate.preBattle': 'The battle is large, so only pre-battle cards are used',
+  'live.gate.noCards': 'The battle is too large for cards, so this one runs without them',
 };

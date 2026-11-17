@@ -77,7 +77,7 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | Branch hook and live-chance job                         | #179  | Done in review                                                                                         |
 | Same link, same battle in every JS engine (model 2)     | #197  | Done in review: deterministic math under free `mv` 2 and classic model 2, Bun cross-engine check in CI |
 | `live` log in v3 config and free result link v3         | #180  | Done in review                                                                                         |
-| Re-simulation gate, card-pause budget, pre-battle cards | #181  | Open                                                                                                   |
+| Re-simulation gate, card-pause budget, pre-battle cards | #181  | Done in review                                                                                         |
 | What-if shift display                                   | #182  | Open                                                                                                   |
 | Live battle mode                                        | #183  | Open                                                                                                   |
 
