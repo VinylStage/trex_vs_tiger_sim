@@ -108,11 +108,11 @@ function handle(msg: WorkerRequest): void {
     );
     const row = designRow(freeDesignFor(config), run);
     const t0 = performance.now();
-    const { trace } = simulateFreeBattle(config, row, run, true, { interventions });
+    const { trace, summary } = simulateFreeBattle(config, row, run, true, { interventions });
     const liveSimMs = performance.now() - t0;
     if (!trace) throw new Error('engine returned no trace');
     ctx.postMessage(
-      { type: 'replay-free', jobId: msg.jobId, trace, liveSimMs },
+      { type: 'replay-free', jobId: msg.jobId, trace, liveSimMs, summary },
       freeTraceTransferList(trace),
     );
     return;

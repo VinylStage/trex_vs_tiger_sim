@@ -19,6 +19,9 @@ import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import { getLang, speciesCounter, speciesName, t, teamLabel, type MsgKey } from './i18n';
 import { CancelledError, type PoolProgress, type SimPool } from './pool';
 import type { FreeReplayView } from './free-replay';
+import type { LiveMode } from './live';
+import type { FreeLive } from './share-free';
+import type { FreeResultSummary } from '../share/free-result-codec';
 import { createFreeReproduceCheck, createFreeResultShare } from './result-share';
 import { createSimpleView } from './simple-mode';
 import {
@@ -105,6 +108,11 @@ export interface FreeModeOptions {
    * the link's seed instead of a fresh one, until the first edit or view change.
    */
   linkSeed?: boolean;
+  /**
+   * The page opened with a live battle (#180): Live battle mode replays it with its cards and
+   * checks it against the shared snapshot (`check`, from `chk=`).
+   */
+  live?: { live: FreeLive; check: FreeResultSummary | null };
 }
 
 interface FreeResult {
@@ -200,7 +208,24 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     run: () => void run(),
     linkSeed: () => (keepLinkSeed ? cfg.seed : null),
   });
-  const freeTools = h('div', { class: 'free-tools' }, copyBtn);
+  // Live battle mode (#183): a lazy chunk, opened from Advanced only (Simple never plays cards).
+  const liveBtn = h('button', { class: 'btn btn-small', attrs: { type: 'button' } });
+  const liveSlot = h('div', { class: 'live-slot' });
+  let liveMode: LiveMode | null = null;
+  async function ensureLive(): Promise<LiveMode> {
+    if (liveMode) return liveMode;
+    const { createLiveMode } = await import('./live');
+    liveMode ??= createLiveMode({ pool, showToast: opts.showToast });
+    liveSlot.replaceChildren(liveMode.el);
+    return liveMode;
+  }
+  liveBtn.addEventListener('click', () => {
+    void ensureLive().then((l) => {
+      l.start(structuredClone(cfg));
+      l.el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+  });
+  const freeTools = h('div', { class: 'free-tools' }, copyBtn, liveBtn);
   const configTitle = h('h2', { id: nextId('free-config-title') });
   const switchSlot = h('div', { class: 'free-mode-switch' });
   const configPanel = h(
@@ -298,6 +323,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     resultsTitle,
     emptyEl,
     resultsBody,
+    liveSlot,
   );
 
   // ---------- form ----------
@@ -629,6 +655,8 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     simple.form.hidden = !isSimple;
     formEl.hidden = isSimple;
     freeTools.hidden = isSimple;
+    liveSlot.hidden = isSimple;
+    if (isSimple) liveMode?.close();
     resultsPanel.classList.toggle('is-simple', isSimple);
     detailsEl.hidden = !isSimple;
     if (isSimple) detailsEl.append(basisEl, cardsEl);
@@ -967,6 +995,8 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     runBtn.textContent = t('run.start');
     cancelBtn.textContent = t('run.cancel');
     copyBtn.textContent = t('free.copyCode');
+    liveBtn.textContent = t('live.open');
+    liveMode?.relocalize();
     resultsTitle.textContent = t('results.title');
     emptyEl.textContent = t('results.empty');
     staleEl.textContent = t('results.stale');
@@ -988,6 +1018,11 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   }
 
   relocalize();
+  // A shared live battle (#180) opens in Live battle mode, replayed with its cards.
+  const startLive = opts.live;
+  if (startLive && view === 'full') {
+    void ensureLive().then((l) => l.open(structuredClone(cfg), startLive.live, startLive.check));
+  }
 
   return {
     configPanel,

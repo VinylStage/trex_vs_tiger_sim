@@ -55,8 +55,17 @@ export type WorkerResponse =
   | { type: 'progress'; jobId: number; done: number }
   | { type: 'result'; jobId: number; summaries: RunSummary[] | FreeRunSummary[] }
   | { type: 'replay'; jobId: number; trace: BattleTrace }
-  /** `liveSimMs`: wall time of the simulation in the worker, without the message transfer. */
-  | { type: 'replay-free'; jobId: number; trace: FreeTrace; liveSimMs: number }
+  /**
+   * `liveSimMs`: wall time of the simulation in the worker, without the message transfer.
+   * `summary`: the run's summary (Live battle mode shares it, #183).
+   */
+  | {
+      type: 'replay-free';
+      jobId: number;
+      trace: FreeTrace;
+      liveSimMs: number;
+      summary?: FreeRunSummary;
+    }
   /** One `FreeOutcome` code per requested branch, in request order. */
   | { type: 'branch-free'; jobId: number; outcomes: number[] }
   | { type: 'aggregate'; jobId: number; agg: AggregateResult }
