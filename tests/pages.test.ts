@@ -57,6 +57,15 @@ import {
 import { expandPatchNotes } from '../src/pages/patch-notes-page';
 import { expandSpeciesGuide } from '../src/pages/species-page';
 import { freeConfigFromHash, freePayloadFromHash, freePayloadSimple } from '../src/ui/share-free';
+import { FREE_MODEL_VERSION, GLOBALS } from '../src/sim/free/config';
+import { FREE_SPECIES_IDS, freeSpeciesAt } from '../src/sim/free/species';
+import {
+  BUFF_TRAITS,
+  BUFF_TRAIT_BOUNDS,
+  FLIGHT_TRAITS,
+  TRAITS,
+  TRAIT_BOUNDS,
+} from '../src/sim/free/traits';
 import { simpleCanShow } from '../src/ui/simple-model';
 import { findHtmlEntries } from '../vite.pages';
 
@@ -1210,6 +1219,129 @@ describe.each(LANGS)('parameters page (%s)', (lang) => {
       expect(Object.hasOwn(values, name), `unknown constant ${name}`).toBe(true);
       expect(numberFacts(row.inner, ['value'])).toEqual({ value: values[name] });
     }
+  });
+});
+
+// The free-model section of the parameters page (#170): traits, pack buff, globals, flight.
+describe.each(LANGS)('parameters page, free model (%s)', (lang) => {
+  const html = read(sourceOf('parameters', lang));
+  const section = outerElement(html, (t) => t.attrs['id'] === 'free-model').inner;
+  const rows = (attr: string) => elements(section, 'tr').filter((r) => r.attrs[attr] !== undefined);
+  const triangle = (d: { attrs: Record<string, string>; inner: string }): string => {
+    const [min, mode, max] = (d.attrs['value'] ?? '').split(' ').map(Number);
+    expect(textOf(d.inner).split(' · ').map(shownNumber)).toEqual([min, mode, max]);
+    return `${String(min)} ${String(mode)} ${String(max)}`;
+  };
+  const tri = (r: { min: number; mode: number; max: number }): string =>
+    `${String(r.min)} ${String(r.mode)} ${String(r.max)}`;
+
+  it('names the current model version', () => {
+    expect(numberFacts(section, ['free-mv'])).toEqual({ 'free-mv': FREE_MODEL_VERSION });
+  });
+
+  it('lists the individual traits of src/sim/free/traits.ts with unit, bounds and variation', () => {
+    const r = rows('data-trait');
+    expect(r.map((x) => x.attrs['data-trait'])).toEqual(TRAITS.map((t) => t.id));
+    for (const [i, t] of TRAITS.entries()) {
+      const row = r[i] as (typeof r)[number];
+      expect(row.attrs['data-unit']).toBe(t.unit);
+      expect(row.attrs['data-individual']).toBe(String(t.individual));
+      expect(numberFacts(row.inner, ['trait-lo', 'trait-hi'])).toEqual({
+        'trait-lo': TRAIT_BOUNDS[t.id][0],
+        'trait-hi': TRAIT_BOUNDS[t.id][1],
+      });
+    }
+  });
+
+  it('tags every species and trait with its evidence (– for an inactive trait)', () => {
+    const cells = tags(section, 'td').filter((t) => t.attrs['data-k'] === 'free-ev');
+    const documented = cells.map(
+      (c) =>
+        `${c.attrs['data-species'] ?? ''} ${c.attrs['data-trait'] ?? ''} ${c.attrs['data-ev'] ?? ''}`,
+    );
+    const expected = FREE_SPECIES_IDS.flatMap((id) =>
+      TRAITS.map(
+        (t) => `${id} ${t.id} ${freeSpeciesAt(id, FREE_MODEL_VERSION).traits[t.id].evidence ?? ''}`,
+      ),
+    );
+    expect([...documented].sort()).toEqual([...expected].sort());
+  });
+
+  it('lists the pack-buff traits with unit and bounds, and the range of every social species', () => {
+    const r = rows('data-buff');
+    expect(r.map((x) => x.attrs['data-buff'])).toEqual(BUFF_TRAITS.map((t) => t.id));
+    for (const [i, t] of BUFF_TRAITS.entries()) {
+      const row = r[i] as (typeof r)[number];
+      expect(row.attrs['data-unit']).toBe(t.unit);
+      expect(numberFacts(row.inner, ['buff-lo', 'buff-hi'])).toEqual({
+        'buff-lo': BUFF_TRAIT_BOUNDS[t.id][0],
+        'buff-hi': BUFF_TRAIT_BOUNDS[t.id][1],
+      });
+    }
+    const documented = elements(section, 'data')
+      .filter((d) => d.attrs['data-k'] === 'free-buff')
+      .map(
+        (d) =>
+          `${d.attrs['data-species'] ?? ''} ${d.attrs['data-trait'] ?? ''} ${triangle(d)} ${d.attrs['data-ev'] ?? ''}`,
+      );
+    const expected = FREE_SPECIES_IDS.filter(
+      (id) => freeSpeciesAt(id, FREE_MODEL_VERSION).social,
+    ).flatMap((id) =>
+      BUFF_TRAITS.map((t) => {
+        const p = freeSpeciesAt(id, FREE_MODEL_VERSION).buff[t.id];
+        return `${id} ${t.id} ${tri(p.range)} ${p.evidence ?? ''}`;
+      }),
+    );
+    expect([...documented].sort()).toEqual([...expected].sort());
+  });
+
+  it('lists the globals of GLOBALS with symbol, preset range and bounds', () => {
+    const r = rows('data-global');
+    expect(r.map((x) => x.attrs['data-global'])).toEqual(GLOBALS.map((g) => g.id));
+    for (const [i, g] of GLOBALS.entries()) {
+      const row = r[i] as (typeof r)[number];
+      expect(row.attrs['data-unit']).toBe(g.unit);
+      expect(textOf(row.inner)).toContain(g.symbol);
+      const preset = one(
+        elements(row.inner, 'data').filter((d) => d.attrs['data-k'] === 'global-preset'),
+        `${g.id} preset`,
+      );
+      expect(triangle(preset)).toBe(tri(g.preset));
+      expect(numberFacts(row.inner, ['global-lo', 'global-hi'])).toEqual({
+        'global-lo': g.bounds[0],
+        'global-hi': g.bounds[1],
+      });
+    }
+  });
+
+  it('lists the flight traits and every species row of the current model', () => {
+    const r = rows('data-flight');
+    expect(r.map((x) => x.attrs['data-flight'])).toEqual(FLIGHT_TRAITS.map((t) => t.id));
+    for (const [i, t] of FLIGHT_TRAITS.entries()) {
+      expect((r[i] as (typeof r)[number]).attrs['data-unit']).toBe(t.unit);
+    }
+    const documented = elements(section, 'data')
+      .filter((d) => d.attrs['data-k'] === 'free-flight')
+      .map(
+        (d) =>
+          `${d.attrs['data-species'] ?? ''} ${d.attrs['data-trait'] ?? ''} ${triangle(d)} ${d.attrs['data-ev'] ?? ''}`,
+      );
+    const inactive = tags(section, 'td')
+      .filter((t) => t.attrs['data-k'] === 'free-flight-none')
+      .map((t) => `${t.attrs['data-species'] ?? ''} ${t.attrs['data-trait'] ?? ''}`);
+    const expected: string[] = [];
+    const expectedInactive: string[] = [];
+    for (const id of FREE_SPECIES_IDS) {
+      const flight = freeSpeciesAt(id, FREE_MODEL_VERSION).flight;
+      expect(flight, id).not.toBeNull();
+      for (const t of FLIGHT_TRAITS) {
+        const p = flight?.[t.id];
+        if (p?.evidence) expected.push(`${id} ${t.id} ${tri(p.range)} ${p.evidence}`);
+        else expectedInactive.push(`${id} ${t.id}`);
+      }
+    }
+    expect([...documented].sort()).toEqual([...expected].sort());
+    expect([...inactive].sort()).toEqual([...expectedInactive].sort());
   });
 });
 

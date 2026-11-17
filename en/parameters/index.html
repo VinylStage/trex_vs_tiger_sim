@@ -37,7 +37,7 @@
             and where the range comes from.
           </p>
           <p class="page-meta">
-            Last updated <time datetime="2026-10-28">28 October 2026</time> · values are checked
+            Last updated <time datetime="2026-11-17">17 November 2026</time> · values are checked
             against the simulator code automatically
           </p>
         </header>
@@ -51,6 +51,7 @@
             <li><a href="#species">Species presets</a></li>
             <li><a href="#settings">Scenario settings</a></li>
             <li><a href="#constants">Fixed constants</a></li>
+            <li><a href="#free-model">Free-model parameters</a></li>
           </ol>
         </nav>
 
@@ -3063,6 +3064,3690 @@
             </div>
           </section>
 
+          <section id="free-model">
+            <h2>Free-model parameters</h2>
+            <p>
+              Free matchups (Simple mode and the free form in Advanced mode) do not use the
+              <code>heavy.*</code> and <code>pack.*</code> role parameters above. So that any
+              species can stand on either side, every species carries the same trait list: 20
+              individual traits, 6 pack-buff traits for social species, and 5 global constants
+              shared by both sides, each drawn every run from a min, mode and max triangle. From
+              model 2, every species also has 3 flight traits. The classic lab does not use anything
+              in this section.
+            </p>
+            <p>
+              Units, bounds and evidence tags below are those of the current model version (<data
+                data-k="free-mv"
+                value="2"
+                >2</data
+              >) and are checked against the simulator code automatically. The full per-species
+              ranges and sources are in the <a href="/en/species/">species guide</a> and
+              <a
+                href="https://github.com/VinylStage/trex_vs_tiger_sim/blob/main/docs/SPECIES.md#11-free-model-traits-50"
+                >docs/SPECIES.md §11</a
+              >; how to use them on screen is in
+              <a href="/en/guide/#advanced-free">the Advanced-mode guide</a>. The evidence letters
+              mean the same as in <a href="#species">Species presets</a>.
+            </p>
+            <section id="free-traits">
+              <h3>Individual traits (20)</h3>
+              <p>
+                Every species has all 20. For a species that cannot latch, the three latch traits
+                are fixed at neutral values that the engine never reads (– in the evidence table
+                below). All species share the bounds. “Classic counterpart” is the classic parameter
+                the value is read from; its card has the detailed basis.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-traits"
+              >
+                <table>
+                  <caption id="caption-free-traits">
+                    Individual traits of the free model: unit, bounds, individual variation, meaning
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Trait</th>
+                      <th scope="col">Unit</th>
+                      <th scope="col">Allowed bounds</th>
+                      <th scope="col">Individual variation</th>
+                      <th scope="col">Classic counterpart</th>
+                      <th scope="col">Meaning</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-trait="mass" data-unit="kg" data-individual="true">
+                      <th scope="row">Body mass <code>mass</code></th>
+                      <td>kg</td>
+                      <td>
+                        <data data-k="trait-lo" value="5">5</data> –
+                        <data data-k="trait-hi" value="20000">20,000</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-heavy.mass"><code>heavy.mass</code></a
+                        >, <a href="#param-pack.mass"><code>pack.mass</code></a>
+                      </td>
+                      <td>
+                        Becomes maximum health (1 kg = 1 HP). Mass ratios decide who can latch on,
+                        whose hit knocks the other back and, in realistic mode, who is outmatched.
+                        Riders slow an animal by their total mass.
+                      </td>
+                    </tr>
+                    <tr data-trait="bodyRadius" data-unit="m" data-individual="false">
+                      <th scope="row">Body radius <code>bodyRadius</code></th>
+                      <td>m</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.1">0.1</data> –
+                        <data data-k="trait-hi" value="8">8</data>
+                      </td>
+                      <td>No (per run)</td>
+                      <td>
+                        <a href="#param-heavy.bodyRadius"><code>heavy.bodyRadius</code></a> · pack
+                        constant <code>radius</code>
+                      </td>
+                      <td>
+                        Used for contact distance, strike reach (to the edge of the target’s body),
+                        where riders sit and the size of the shape in the replay.
+                      </td>
+                    </tr>
+                    <tr data-trait="turnRate" data-unit="deg/s" data-individual="true">
+                      <th scope="row">Turn rate <code>turnRate</code></th>
+                      <td>deg/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="5">5</data> –
+                        <data data-k="trait-hi" value="360">360</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-heavy.turnRate"><code>heavy.turnRate</code></a>
+                      </td>
+                      <td>
+                        Largest change of heading per second, halved for turns over 60°. Decides who
+                        gets the other into its strike cone first.
+                      </td>
+                    </tr>
+                    <tr data-trait="sprintSpeed" data-unit="m/s" data-individual="true">
+                      <th scope="row">Sprint speed <code>sprintSpeed</code></th>
+                      <td>m/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.5">0.5</data> –
+                        <data data-k="trait-hi" value="35">35</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-heavy.speed"><code>heavy.speed</code></a
+                        >, <a href="#param-pack.sprintSpeed"><code>pack.sprintSpeed</code></a>
+                      </td>
+                      <td>Speed within 60 m of the target. Running at it spends stamina.</td>
+                    </tr>
+                    <tr data-trait="cruiseSpeed" data-unit="m/s" data-individual="true">
+                      <th scope="row">Cruise speed <code>cruiseSpeed</code></th>
+                      <td>m/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.5">0.5</data> –
+                        <data data-k="trait-hi" value="20">20</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-pack.cruiseSpeed"><code>pack.cruiseSpeed</code></a>
+                      </td>
+                      <td>
+                        Speed beyond 60 m of the target and when backing off. Stamina slowly comes
+                        back meanwhile.
+                      </td>
+                    </tr>
+                    <tr data-trait="sprintEndurance" data-unit="s" data-individual="true">
+                      <th scope="row">Sprint endurance <code>sprintEndurance</code></th>
+                      <td>s</td>
+                      <td>
+                        <data data-k="trait-lo" value="1">1</data> –
+                        <data data-k="trait-hi" value="600">600</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-pack.sprintEndurance"><code>pack.sprintEndurance</code></a>
+                      </td>
+                      <td>
+                        How long an animal can sprint before a full stamina bar is empty. Exhausted,
+                        it backs off to recover.
+                      </td>
+                    </tr>
+                    <tr data-trait="recoveryTime" data-unit="s" data-individual="true">
+                      <th scope="row">Recovery time <code>recoveryTime</code></th>
+                      <td>s</td>
+                      <td>
+                        <data data-k="trait-lo" value="1">1</data> –
+                        <data data-k="trait-hi" value="3600">3,600</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-pack.recoveryTime"><code>pack.recoveryTime</code></a>
+                      </td>
+                      <td>Time to refill an empty stamina bar while recovering.</td>
+                    </tr>
+                    <tr data-trait="strikeForce" data-unit="kN" data-individual="true">
+                      <th scope="row">Strike force <code>strikeForce</code></th>
+                      <td>kN</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.1">0.1</data> –
+                        <data data-k="trait-hi" value="150">150</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-heavy.biteForce"><code>heavy.biteForce</code></a>
+                      </td>
+                      <td>
+                        Force of one strike (bite, tusk, horn, paw or hand). Damage per hit = force
+                        × lethality × a random factor of 0.7–1.3.
+                      </td>
+                    </tr>
+                    <tr data-trait="strikeLethality" data-unit="HP/kN" data-individual="false">
+                      <th scope="row">Strike lethality <code>strikeLethality</code></th>
+                      <td>HP/kN</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.1">0.1</data> –
+                        <data data-k="trait-hi" value="100">100</data>
+                      </td>
+                      <td>No (per run)</td>
+                      <td>
+                        <a href="#param-heavy.biteLethality"><code>heavy.biteLethality</code></a>
+                      </td>
+                      <td>Health taken per kN of strike force: turns force into damage.</td>
+                    </tr>
+                    <tr data-trait="strikeInterval" data-unit="s" data-individual="true">
+                      <th scope="row">Strike interval <code>strikeInterval</code></th>
+                      <td>s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.2">0.2</data> –
+                        <data data-k="trait-hi" value="30">30</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-heavy.biteInterval"><code>heavy.biteInterval</code></a>
+                      </td>
+                      <td>Time between two strikes of one animal.</td>
+                    </tr>
+                    <tr data-trait="strikeReach" data-unit="m" data-individual="true">
+                      <th scope="row">Strike reach <code>strikeReach</code></th>
+                      <td>m</td>
+                      <td>
+                        <data data-k="trait-lo" value="0.3">0.3</data> –
+                        <data data-k="trait-hi" value="15">15</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-heavy.biteReach"><code>heavy.biteReach</code></a>
+                      </td>
+                      <td>
+                        How far a strike reaches, measured from the attacker’s centre, plus the
+                        target’s body radius.
+                      </td>
+                    </tr>
+                    <tr data-trait="strikeArc" data-unit="deg" data-individual="true">
+                      <th scope="row">Strike arc (half-angle) <code>strikeArc</code></th>
+                      <td>deg</td>
+                      <td>
+                        <data data-k="trait-lo" value="5">5</data> –
+                        <data data-k="trait-hi" value="180">180</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-heavy.biteArc"><code>heavy.biteArc</code></a>
+                      </td>
+                      <td>Half-angle of the frontal cone a strike can land in.</td>
+                    </tr>
+                    <tr data-trait="strikeAccuracy" data-unit="p" data-individual="true">
+                      <th scope="row">Strike accuracy <code>strikeAccuracy</code></th>
+                      <td>p</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="1">1</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-heavy.biteAccuracy"><code>heavy.biteAccuracy</code></a>
+                      </td>
+                      <td>
+                        Chance that a strike at an opponent in the cone hits; ×1.5 (at most 0.95)
+                        against riders on the animal itself.
+                      </td>
+                    </tr>
+                    <tr data-trait="latchChance" data-unit="p" data-individual="true">
+                      <th scope="row">Latch chance <code>latchChance</code></th>
+                      <td>p</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="1">1</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-pack.latchChance"><code>pack.latchChance</code></a>
+                      </td>
+                      <td>
+                        Chance that a latch attempt succeeds. Tried only on a target at least the
+                        latch mass ratio heavier.
+                      </td>
+                    </tr>
+                    <tr data-trait="latchEndurance" data-unit="s" data-individual="true">
+                      <th scope="row">Latch endurance <code>latchEndurance</code></th>
+                      <td>s</td>
+                      <td>
+                        <data data-k="trait-lo" value="1">1</data> –
+                        <data data-k="trait-hi" value="1200">1,200</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-pack.latchEndurance"><code>pack.latchEndurance</code></a>
+                      </td>
+                      <td>How long a rider can hold on from full stamina before it drops off.</td>
+                    </tr>
+                    <tr data-trait="latchDps" data-unit="HP/s" data-individual="true">
+                      <th scope="row">Latch damage <code>latchDps</code></th>
+                      <td>HP/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="200">200</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-pack.dps"><code>pack.dps</code></a>
+                      </td>
+                      <td>
+                        Damage per second a rider deals to its host, times the host’s
+                        <code>hide</code> multiplier.
+                      </td>
+                    </tr>
+                    <tr data-trait="shakeRate" data-unit="1/s" data-individual="true">
+                      <th scope="row">Shake-off rate <code>shakeRate</code></th>
+                      <td>1/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="10">10</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-heavy.shakeRate"><code>heavy.shakeRate</code></a>
+                      </td>
+                      <td>
+                        Chance per second of throwing off each rider. A thrown rider loses 10 % of
+                        its maximum health.
+                      </td>
+                    </tr>
+                    <tr data-trait="bleed" data-unit="1/s" data-individual="false">
+                      <th scope="row">Bleed rate <code>bleed</code></th>
+                      <td>1/s</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="0.1">0.1</data>
+                      </td>
+                      <td>No (per run)</td>
+                      <td>
+                        <a href="#param-pack.bleed"><code>pack.bleed</code></a>
+                      </td>
+                      <td>
+                        Bleeding caused by the wounds this species inflicts: each second the
+                        opponent loses its accumulated wounds × this rate.
+                      </td>
+                    </tr>
+                    <tr data-trait="morale" data-unit="0-1" data-individual="true">
+                      <th scope="row">Initial morale <code>morale</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="1">1</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-pack.morale"><code>pack.morale</code></a>
+                      </td>
+                      <td>
+                        Starting morale. With morale &amp; routing on, an animal flees below 0.2.
+                        Bigger wounds cost more morale.
+                      </td>
+                    </tr>
+                    <tr data-trait="moraleLoss" data-unit="0-1" data-individual="true">
+                      <th scope="row">Morale loss <code>moraleLoss</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="trait-lo" value="0">0</data> –
+                        <data data-k="trait-hi" value="1">1</data>
+                      </td>
+                      <td>Yes</td>
+                      <td>
+                        <a href="#param-pack.moraleLoss"><code>pack.moraleLoss</code></a>
+                      </td>
+                      <td>
+                        Morale a buffed animal of a social species loses when a nearby ally is
+                        incapacitated (the pack buff’s contagion). Not used by solitary species.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p>
+                The same trait rests on different evidence for different species. Behavioural values
+                (accuracy, morale, latching) are speculative for every species.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-evidence"
+              >
+                <table class="species-table">
+                  <caption id="caption-free-evidence">
+                    Evidence per species (individual traits, model 2)
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Individual traits</th>
+                      <th scope="col"><i>Tyrannosaurus rex</i></th>
+                      <th scope="col">African bush elephant</th>
+                      <th scope="col">African buffalo</th>
+                      <th scope="col">Brown bear</th>
+                      <th scope="col">Woolly mammoth</th>
+                      <th scope="col"><i>Homo erectus</i></th>
+                      <th scope="col">Tiger</th>
+                      <th scope="col">Lion</th>
+                      <th scope="col">Gray wolf</th>
+                      <th scope="col">Spotted hyena</th>
+                      <th scope="col">Polar bear</th>
+                      <th scope="col">Hippopotamus</th>
+                      <th scope="col"><i>Utahraptor</i></th>
+                      <th scope="col">White rhinoceros</th>
+                      <th scope="col"><i>Spinosaurus</i></th>
+                      <th scope="col"><i>Triceratops</i></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row"><code>mass</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="elephant" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="brownBear" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="homoErectus" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="polarBear" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="whiteRhino" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="spinosaurus" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="triceratops" data-trait="mass" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>bodyRadius</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="bodyRadius"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="bodyRadius" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="bodyRadius" data-ev="D">
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="bodyRadius"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>turnRate</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="turnRate" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="turnRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="turnRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>sprintSpeed</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="sprintSpeed" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="sprintSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="sprintSpeed"
+                        data-ev="U"
+                      >
+                        <abbr class="ev ev-U" title="unverified popular figure">U</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="sprintSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="sprintSpeed"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="sprintSpeed" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="sprintSpeed" data-ev="U">
+                        <abbr class="ev ev-U" title="unverified popular figure">U</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="sprintSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="sprintSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="sprintSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>cruiseSpeed</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="cruiseSpeed" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="cruiseSpeed"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="cruiseSpeed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="cruiseSpeed" data-ev="U">
+                        <abbr class="ev ev-U" title="unverified popular figure">U</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="cruiseSpeed"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="cruiseSpeed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>sprintEndurance</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="sprintEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>recoveryTime</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="recoveryTime"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeForce</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="strikeForce" data-ev="L">
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="strikeForce" data-ev="D">
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="strikeForce" data-ev="D">
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeForce"
+                        data-ev="D"
+                      >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeForce"
+                        data-ev="L"
+                      >
+                        <abbr class="ev ev-L" title="literature value">L</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeForce"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeLethality</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeLethality"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeInterval</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeInterval"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeReach</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="strikeReach" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="strikeReach" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="strikeReach" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeReach"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeArc</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="strikeArc" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeArc"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>strikeAccuracy</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="strikeAccuracy"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>latchChance</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="latchChance" data-ev="">
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="latchChance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="latchChance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="latchChance" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="latchChance" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="latchChance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="latchChance" data-ev="">
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="latchChance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="latchChance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>latchEndurance</code></th>
+                      <td
+                        data-k="free-ev"
+                        data-species="trex"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="tiger"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="lion"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="wolf"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hyena"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="hippo"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="latchEndurance"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="latchEndurance"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>latchDps</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="elephant" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="latchDps"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="latchDps" data-ev="">
+                        –
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="latchDps" data-ev="D">
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="latchDps"
+                        data-ev=""
+                      >
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>shakeRate</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="shakeRate" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="shakeRate"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>bleed</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="elephant" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="brownBear" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="bleed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="polarBear" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="whiteRhino" data-trait="bleed" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="bleed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="bleed"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>morale</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="elephant" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="buffalo" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="brownBear" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="mammoth" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="morale"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="polarBear" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="raptor" data-trait="morale" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="morale"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="morale"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="morale"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><code>moraleLoss</code></th>
+                      <td data-k="free-ev" data-species="trex" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="elephant"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="buffalo"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="brownBear"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="mammoth"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="homoErectus"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="tiger" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="lion" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="wolf" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hyena" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="polarBear"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-ev" data-species="hippo" data-trait="moraleLoss" data-ev="S">
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="raptor"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="whiteRhino"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="spinosaurus"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-ev"
+                        data-species="triceratops"
+                        data-trait="moraleLoss"
+                        data-ev="S"
+                      >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section id="free-buff">
+              <h3>Pack-buff traits (6)</h3>
+              <p>
+                Used only by the social species (lion, gray wolf, spotted hyena,
+                <i>Homo erectus</i>, <i>Utahraptor</i>). The buff switches on per animal when its
+                side has at least two and an ally is within the cohesion radius. All are drawn once
+                per run (no individual variation) and all are speculative (S). Solitary species
+                carry 0, which the engine never reads.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-buff-traits"
+              >
+                <table>
+                  <caption id="caption-free-buff-traits">
+                    Pack-buff traits: unit, bounds, meaning
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Trait</th>
+                      <th scope="col">Unit</th>
+                      <th scope="col">Allowed bounds</th>
+                      <th scope="col">Meaning</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-buff="cohesionRadius" data-unit="m">
+                      <th scope="row">Cohesion radius <code>cohesionRadius</code></th>
+                      <td>m</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="500">500</data>
+                      </td>
+                      <td>The buff is on while a non-fleeing ally is within this distance.</td>
+                    </tr>
+                    <tr data-buff="groupLatchGain" data-unit="×/rider">
+                      <th scope="row">Group-latch gain <code>groupLatchGain</code></th>
+                      <td>×/rider</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="1">1</data>
+                      </td>
+                      <td>
+                        Group latching: each buffed ally already riding the target multiplies the
+                        latch chance by 1 + this value (at most twice the base chance).
+                      </td>
+                    </tr>
+                    <tr data-buff="focusBonus" data-unit="m">
+                      <th scope="row">Focus bonus <code>focusBonus</code></th>
+                      <td>m</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="100">100</data>
+                      </td>
+                      <td>
+                        Shared target: an opponent counts as this much closer for every buffed ally
+                        already fighting it.
+                      </td>
+                    </tr>
+                    <tr data-buff="moraleSupport" data-unit="0-1">
+                      <th scope="row">Morale support <code>moraleSupport</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="0.2">0.2</data>
+                      </td>
+                      <td>
+                        Morale support (<code>k_c</code>): multiplies the log of the ally-to-enemy
+                        ratio within 40 m and is added to morale, at most ±0.1.
+                      </td>
+                    </tr>
+                    <tr data-buff="routShock" data-unit="0-1">
+                      <th scope="row">Rout shock <code>routShock</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="0.2">0.2</data>
+                      </td>
+                      <td>
+                        Morale a buffed animal loses when an ally within the cohesion radius flees.
+                      </td>
+                    </tr>
+                    <tr data-buff="reliefStamina" data-unit="0-1">
+                      <th scope="row">Relief stamina <code>reliefStamina</code></th>
+                      <td>0–1</td>
+                      <td>
+                        <data data-k="buff-lo" value="0">0</data> –
+                        <data data-k="buff-hi" value="1">1</data>
+                      </td>
+                      <td>
+                        Relief: when a buffed rider’s stamina falls below this, it hands its
+                        opponent to a fresh ally and backs off.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-buff-species"
+              >
+                <table class="species-table">
+                  <caption id="caption-free-buff-species">
+                    Pack-buff ranges of the social species (min · mode · max)
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Species</th>
+                      <th scope="col"><code>cohesionRadius</code> (m)</th>
+                      <th scope="col"><code>groupLatchGain</code> (×/rider)</th>
+                      <th scope="col"><code>focusBonus</code> (m)</th>
+                      <th scope="col"><code>moraleSupport</code> (0–1)</th>
+                      <th scope="col"><code>routShock</code> (0–1)</th>
+                      <th scope="col"><code>reliefStamina</code> (0–1)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row"><i>Homo erectus</i></th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="15 30 60"
+                          >15 · 30 · 60</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0 0.15 0.3"
+                          >0 · 0.15 · 0.3</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 15 30"
+                          >0 · 15 · 30</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="homoErectus"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Lion</th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="30 60 100"
+                          >30 · 60 · 100</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0.1 0.25 0.4"
+                          >0.1 · 0.25 · 0.4</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 20 40"
+                          >0 · 20 · 40</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="lion"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Gray wolf</th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="30 60 120"
+                          >30 · 60 · 120</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0.1 0.3 0.5"
+                          >0.1 · 0.3 · 0.5</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 20 40"
+                          >0 · 20 · 40</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="wolf"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Spotted hyena</th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="30 60 120"
+                          >30 · 60 · 120</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0.1 0.3 0.5"
+                          >0.1 · 0.3 · 0.5</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 20 40"
+                          >0 · 20 · 40</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.06 0.1"
+                          >0 · 0.06 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.05 0.1"
+                          >0 · 0.05 · 0.1</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="hyena"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><i>Utahraptor</i></th>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="cohesionRadius"
+                          data-ev="S"
+                          value="30 60 100"
+                          >30 · 60 · 100</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="groupLatchGain"
+                          data-ev="S"
+                          value="0 0.12 0.25"
+                          >0 · 0.12 · 0.25</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="focusBonus"
+                          data-ev="S"
+                          value="0 10 20"
+                          >0 · 10 · 20</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="moraleSupport"
+                          data-ev="S"
+                          value="0 0.025 0.05"
+                          >0 · 0.025 · 0.05</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="routShock"
+                          data-ev="S"
+                          value="0 0.025 0.05"
+                          >0 · 0.025 · 0.05</data
+                        >
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-buff"
+                          data-species="raptor"
+                          data-trait="reliefStamina"
+                          data-ev="S"
+                          value="0.2 0.3 0.5"
+                          >0.2 · 0.3 · 0.5</data
+                        >
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section id="free-globals">
+              <h3>Global model constants (5)</h3>
+              <p>
+                Assumptions shared by both sides. Each is drawn from the range below every run (no
+                individual variation), and all are speculative (S). On screen they are fixed at
+                their preset ranges for now; ranges carried by a settings code or link are used as
+                given.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-global-constants"
+              >
+                <table>
+                  <caption id="caption-free-global-constants">
+                    Global model constants: symbol, preset range, bounds, meaning
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Constant</th>
+                      <th scope="col">Symbol</th>
+                      <th scope="col">Preset range (min · mode · max)</th>
+                      <th scope="col">Allowed bounds</th>
+                      <th scope="col">Meaning</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-global="latchRatio" data-unit="×">
+                      <th scope="row">Latch mass ratio <code>latchRatio</code></th>
+                      <td><code>R_latch</code></td>
+                      <td>
+                        <data data-k="global-preset" value="2 3 5">2 · 3 · 5</data> ×
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="1">1</data> –
+                        <data data-k="global-hi" value="20">20</data> ×
+                      </td>
+                      <td>A target must be at least this many times heavier to be latched onto.</td>
+                    </tr>
+                    <tr data-global="knockRatio" data-unit="×">
+                      <th scope="row">Knock-back mass ratio <code>knockRatio</code></th>
+                      <td><code>K_knock</code></td>
+                      <td>
+                        <data data-k="global-preset" value="1.5 2 4">1.5 · 2 · 4</data> ×
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="1">1</data> –
+                        <data data-k="global-hi" value="20">20</data> ×
+                      </td>
+                      <td>
+                        A hit only sends the target reeling back to recover when the striker is at
+                        least this many times heavier.
+                      </td>
+                    </tr>
+                    <tr data-global="woundRef" data-unit="HP/HP">
+                      <th scope="row">Wound reference <code>woundRef</code></th>
+                      <td><code>woundRef</code></td>
+                      <td>
+                        <data data-k="global-preset" value="0.05 0.1 0.2">0.05 · 0.1 · 0.2</data>
+                        HP/HP <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="0.01">0.01</data> –
+                        <data data-k="global-hi" value="1">1</data> HP/HP
+                      </td>
+                      <td>
+                        Losing this share of maximum health in one blow costs the full wound-morale
+                        penalty; smaller wounds cost proportionally less.
+                      </td>
+                    </tr>
+                    <tr data-global="interference" data-unit="1/ally">
+                      <th scope="row">Crowding interference <code>interference</code></th>
+                      <td><code>interference</code></td>
+                      <td>
+                        <data data-k="global-preset" value="0 0.1 0.3">0 · 0.1 · 0.3</data> 1/ally
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="0">0</data> –
+                        <data data-k="global-hi" value="1">1</data> 1/ally
+                      </td>
+                      <td>
+                        How much each extra ally on the same target that is not exempt by
+                        Coordinated approach cuts accuracy and latch chance.
+                      </td>
+                    </tr>
+                    <tr data-global="buffGrace" data-unit="s">
+                      <th scope="row">Buff grace period <code>buffGrace</code></th>
+                      <td><code>T_grace</code></td>
+                      <td>
+                        <data data-k="global-preset" value="0 2 5">0 · 2 · 5</data> s
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data data-k="global-lo" value="0">0</data> –
+                        <data data-k="global-hi" value="30">30</data> s
+                      </td>
+                      <td>How long an animal outside the cohesion radius keeps its buff.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+            <section id="free-flight">
+              <h3>Flight traits (model 2, realistic mode)</h3>
+              <p>
+                From model 2 every species has three flight traits, so that it breaks off from a
+                much heavier opponent the way the species is recorded to. They act only when
+                Advanced mode’s <strong>Flight mode</strong> setting is
+                <strong>Realistic</strong> and morale &amp; routing is on. The default,
+                <strong>Fight to the end</strong>, and every Simple-mode match do not use them.
+              </p>
+              <p>
+                Like <code>hide</code>, they are species constants: not sampled and not carried in
+                links. The engine uses the mode; min and max are the sensitivity range measured in
+                calibration. Social species have no solo shock (–); they take the pack buff’s morale
+                contagion instead.
+              </p>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-flight-traits"
+              >
+                <table>
+                  <caption id="caption-free-flight-traits">
+                    Flight traits: unit and meaning
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Trait</th>
+                      <th scope="col">Unit</th>
+                      <th scope="col">Meaning</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr data-flight="threatRatio" data-unit="×">
+                      <th scope="row">Threat ratio <code>threatRatio</code></th>
+                      <td>×</td>
+                      <td>
+                        An active enemy at least this many times the animal’s own mass outmatches
+                        it.
+                      </td>
+                    </tr>
+                    <tr data-flight="threatTime" data-unit="s">
+                      <th scope="row">Threat time <code>threatTime</code></th>
+                      <td>s</td>
+                      <td>
+                        Within an outmatching enemy’s reach (plus its own body radius and 4 m), or
+                        riding it, an unhurt animal’s morale falls steadily to the rout threshold
+                        over this time, on top of any wound losses.
+                      </td>
+                    </tr>
+                    <tr data-flight="soloShock" data-unit="0-1">
+                      <th scope="row">Solo shock <code>soloShock</code></th>
+                      <td>0–1</td>
+                      <td>
+                        Morale an animal of a solitary species loses for each ally incapacitated
+                        within 40 m, at most 3 at once.
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div
+                class="table-wrap"
+                role="region"
+                tabindex="0"
+                aria-labelledby="caption-free-flight-species"
+              >
+                <table class="species-table">
+                  <caption id="caption-free-flight-species">
+                    Flight traits per species (min · mode · max; the engine uses the mode)
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Species</th>
+                      <th scope="col"><code>threatRatio</code> (×)</th>
+                      <th scope="col"><code>threatTime</code> (s)</th>
+                      <th scope="col"><code>soloShock</code> (0–1)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <th scope="row"><i>Tyrannosaurus rex</i></th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="trex"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 4"
+                          >1.5 · 2 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="trex"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="20 60 180"
+                          >20 · 60 · 180</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="trex"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">African bush elephant</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="elephant"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.2 1.5 3"
+                          >1.2 · 1.5 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="elephant"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="20 60 180"
+                          >20 · 60 · 180</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="elephant"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">African buffalo</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="buffalo"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.2 1.5 3"
+                          >1.2 · 1.5 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="buffalo"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="15 45 120"
+                          >15 · 45 · 120</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="buffalo"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Brown bear</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="brownBear"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 4"
+                          >1.5 · 2 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="brownBear"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="10 30 90"
+                          >10 · 30 · 90</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="brownBear"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Woolly mammoth</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="mammoth"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.2 1.5 3"
+                          >1.2 · 1.5 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="mammoth"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="20 60 180"
+                          >20 · 60 · 180</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="mammoth"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><i>Homo erectus</i></th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="homoErectus"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 4"
+                          >1.5 · 2 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="homoErectus"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 20 60"
+                          >5 · 20 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td
+                        data-k="free-flight-none"
+                        data-species="homoErectus"
+                        data-trait="soloShock"
+                      >
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Tiger</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="tiger"
+                          data-trait="threatRatio"
+                          data-ev="D"
+                          value="1.4 2 10"
+                          >1.4 · 2 · 10</data
+                        >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="tiger"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 15 60"
+                          >5 · 15 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="tiger"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Lion</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="lion"
+                          data-trait="threatRatio"
+                          data-ev="D"
+                          value="3.7 6.7 10"
+                          >3.7 · 6.7 · 10</data
+                        >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="lion"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="10 30 90"
+                          >10 · 30 · 90</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-flight-none" data-species="lion" data-trait="soloShock">
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Gray wolf</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="wolf"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="6 15 25"
+                          >6 · 15 · 25</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="wolf"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 20 60"
+                          >5 · 20 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-flight-none" data-species="wolf" data-trait="soloShock">
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Spotted hyena</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hyena"
+                          data-trait="threatRatio"
+                          data-ev="D"
+                          value="1.9 3.3 10"
+                          >1.9 · 3.3 · 10</data
+                        >
+                        <abbr class="ev ev-D" title="derived from literature">D</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hyena"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 20 60"
+                          >5 · 20 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-flight-none" data-species="hyena" data-trait="soloShock">
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Polar bear</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="polarBear"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 3"
+                          >1.5 · 2 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="polarBear"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 10 30"
+                          >5 · 10 · 30</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="polarBear"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">Hippopotamus</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hippo"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.5 2 4"
+                          >1.5 · 2 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hippo"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="20 60 180"
+                          >20 · 60 · 180</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="hippo"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><i>Utahraptor</i></th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="raptor"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="2 3 4"
+                          >2 · 3 · 4</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="raptor"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="10 30 90"
+                          >10 · 30 · 90</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td data-k="free-flight-none" data-species="raptor" data-trait="soloShock">
+                        –
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row">White rhinoceros</th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="whiteRhino"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1 1.25 2"
+                          >1 · 1.25 · 2</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="whiteRhino"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="5 20 60"
+                          >5 · 20 · 60</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="whiteRhino"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><i>Spinosaurus</i></th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="spinosaurus"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1 1.5 2"
+                          >1 · 1.5 · 2</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="spinosaurus"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="10 30 90"
+                          >10 · 30 · 90</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="spinosaurus"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th scope="row"><i>Triceratops</i></th>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="triceratops"
+                          data-trait="threatRatio"
+                          data-ev="S"
+                          value="1.2 1.5 3"
+                          >1.2 · 1.5 · 3</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="triceratops"
+                          data-trait="threatTime"
+                          data-ev="S"
+                          value="15 45 120"
+                          >15 · 45 · 120</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                      <td>
+                        <data
+                          data-k="free-flight"
+                          data-species="triceratops"
+                          data-trait="soloShock"
+                          data-ev="S"
+                          value="0 0.04 0.08"
+                          >0 · 0.04 · 0.08</data
+                        >
+                        <abbr class="ev ev-S" title="speculative">S</abbr>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </section>
           <aside class="cta">
             <p>
               <strong>Change the ranges yourself.</strong> Every parameter is editable in the
