@@ -709,4 +709,7 @@ export const en: Dictionary = {
   'live.gate.noWhatIf': 'Effect numbers skipped: the battle is large',
   'live.gate.preBattle': 'The battle is large, so only pre-battle cards are used',
   'live.gate.noCards': 'The battle is too large for cards, so this one runs without them',
+  'whatIf.basis': 'Based on {n} battles of this matchup, not on the battle on screen',
+  'whatIf.line': '{side} win share {before} → {after} ({delta} pp)',
+  'whatIf.swing': 'Card swing',
 };

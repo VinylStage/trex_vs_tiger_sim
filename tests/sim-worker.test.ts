@@ -316,3 +316,37 @@ describe('sim.worker branch-free (#179)', () => {
     expect(none[0]?.msg).toEqual({ type: 'branch-free', jobId: 2, outcomes: [] });
   });
 });
+
+describe('sim.worker free run with a card log (#182)', () => {
+  const config = sanitizeFreeConfig({
+    runs: 6,
+    sides: [
+      { species: 'wolf', count: 4 },
+      { species: 'tiger', count: 1 },
+    ],
+  });
+  const design = buildFreeDesign(config);
+
+  it('plays the log in every run of the chunk, and runs the plain batch without one', () => {
+    const iv = [{ tick: 30, card: 0, side: 2 as const }];
+    const out = send({ type: 'run', jobId: 3, config, start: 1, end: 5, interventions: iv });
+    const last = out.at(-1)?.msg;
+    expect(last).toEqual({
+      type: 'result',
+      jobId: 3,
+      summaries: runFreeChunk(config, design, 1, 5, undefined, iv),
+    });
+    const withCard = last?.type === 'result' ? last.summaries : [];
+    expect(withCard).not.toEqual(runFreeChunk(config, design, 1, 5));
+    // An absent, empty or invalid log gives exactly the plain batch.
+    for (const interventions of [undefined, [], [[30, 999, 2]]]) {
+      const msg = { type: 'run', jobId: 4, config, start: 1, end: 5, interventions };
+      const plain = send(msg).at(-1)?.msg;
+      expect(plain).toEqual({
+        type: 'result',
+        jobId: 4,
+        summaries: runFreeChunk(config, design, 1, 5),
+      });
+    }
+  });
+});
