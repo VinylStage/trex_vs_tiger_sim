@@ -1,6 +1,6 @@
 import { DT } from '../engine.ts';
 import { cardDef, type CardDef, type TraitField } from './cards.ts';
-import type { FreeConfig } from './config.ts';
+import { routsOn, type FreeConfig } from './config.ts';
 
 /**
  * Intervention log of the free engine (docs/design/RENEWAL-1.0.md §10.1, Appendix B; ADR-0008
@@ -42,7 +42,8 @@ function entryOf(raw: unknown): [unknown, unknown, unknown] | null {
  * Valid entries of `raw` for a run of `maxSteps` ticks under model version `mv`:
  * - an entry is kept only if its tick is an integer in [0, maxSteps), its card exists in that
  *   `mv`'s catalogue, and its side matches the card's target (`both` → 2, `one` → 0 or 1);
- * - morale cards are dropped when morale is off;
+ * - morale cards are dropped when nobody can rout: morale off or, from `mv` 3, the `allIn`
+ *   flight mode (`routsOn`; an absent `flight` counts as `allIn`);
  * - the kept entries are sorted stably by tick, and only the first `MAX_INTERVENTIONS` remain.
  *
  * Entries are `[tick, card, side]` tuples or `{tick, card, side}` objects; anything else, and a
@@ -52,8 +53,9 @@ export function sanitizeInterventions(
   raw: unknown,
   maxSteps: number,
   mv: number,
-  config: Pick<FreeConfig, 'morale'>,
+  config: Pick<FreeConfig, 'morale'> & Partial<Pick<FreeConfig, 'flight'>>,
 ): Intervention[] {
+  const morale = routsOn({ mv, morale: config.morale, flight: config.flight ?? 'allIn' });
   if (!Array.isArray(raw) || raw.length > MAX_INTERVENTION_INPUT) return [];
   const out: Intervention[] = [];
   for (const r of raw as unknown[]) {
@@ -67,7 +69,7 @@ export function sanitizeInterventions(
     const def = cardDef(mv, card);
     if (def === undefined) continue;
     if (def.target === 'both' ? side !== 2 : side !== 0 && side !== 1) continue;
-    if (def.needs === 'morale' && !config.morale) continue;
+    if (def.needs === 'morale' && !morale) continue;
     out.push({ tick, card, side: side as InterventionSide });
   }
   // Array.prototype.sort is stable (ES2019), so entries of one tick keep their log order.

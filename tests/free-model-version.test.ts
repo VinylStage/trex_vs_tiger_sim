@@ -55,12 +55,24 @@ const json = (payload: string): Record<string, unknown> =>
 const encode = (obj: unknown): string => Buffer.from(JSON.stringify(obj)).toString('base64url');
 
 describe('model version of the free config', () => {
-  it('is 2 in this build for the defaults, and 1 wherever it is absent (#169, #197)', () => {
-    expect(FREE_MODEL_VERSION).toBe(2);
-    expect(defaultFreeConfig().mv).toBe(2);
+  it('is 3 in this build for the defaults, and 1 wherever it is absent (#169, #197, #230)', () => {
+    expect(FREE_MODEL_VERSION).toBe(3);
+    expect(defaultFreeConfig().mv).toBe(3);
     expect(sanitizeFreeConfig({}).mv).toBe(1);
     expect(sanitizeFreeConfig({ mv: 1 }).mv).toBe(1);
     expect(sanitizeFreeConfig({ mv: 2 }).mv).toBe(2);
+    expect(sanitizeFreeConfig({ mv: 3 }).mv).toBe(3);
+  });
+
+  it('defaults the time limit to 3,600 s from model 3 only (#230)', () => {
+    expect(defaultFreeConfig().maxTime).toBe(3600);
+    expect(sanitizeFreeConfig({ mv: 3 }).maxTime).toBe(3600);
+    expect(sanitizeFreeConfig({ mv: 2 }).maxTime).toBe(1200);
+    expect(sanitizeFreeConfig({}).maxTime).toBe(1200);
+    // A link leaves out a default time limit, its own model version's.
+    expect(freeConfigDiff(defaultFreeConfig(2))['maxTime']).toBeUndefined();
+    expect(freeConfigDiff(defaultFreeConfig(3))['maxTime']).toBeUndefined();
+    expect(freeConfigDiff({ ...defaultFreeConfig(3), maxTime: 1200 })['maxTime']).toBe(1200);
   });
 
   it('accepts only integers from 1 to FREE_MODEL_VERSION', () => {
@@ -102,11 +114,11 @@ describe('links made before mv existed', () => {
         globals: { latchRatio: { min: 2.5, mode: 3, max: 4 } },
       }),
     );
-    // The old defaults link is the model 1 defaults; the current defaults name mv 2.
-    const v1Defaults = { ...defaultFreeConfig(), mv: 1 };
+    // The old defaults link is the model 1 defaults; the current defaults name mv 3.
+    const v1Defaults = defaultFreeConfig(1);
     expect(freeConfigFromHash(`#s=${OLD.defaults}`)).toEqual(v1Defaults);
     expect(freeConfigCode(v1Defaults)).toBe(`TVT3-${OLD.defaults}`);
-    expect(freeConfigDiff(defaultFreeConfig())['mv']).toBe(2);
+    expect(freeConfigDiff(defaultFreeConfig())['mv']).toBe(3);
   });
 
   it('keep free result links decoding and re-encoding unchanged', () => {

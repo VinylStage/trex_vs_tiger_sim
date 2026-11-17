@@ -339,8 +339,8 @@ function computingPool(size: number): SimPool {
 
 describe('results do not depend on chunking or worker count', () => {
   const fixture = JSON.parse(
-    // The newest model's fixture: presetConfig runs the newest model (#169, #197).
-    readFileSync(new URL('./fixtures/preset-shares-mv2.json', import.meta.url), 'utf8'),
+    // The newest model's fixture: presetConfig runs the newest model (#169, #197, #230).
+    readFileSync(new URL('./fixtures/preset-shares-mv3.json', import.meta.url), 'utf8'),
   ) as {
     seed: number;
     runs: number;

@@ -111,7 +111,8 @@ export function freeConfigDiff(
   config: FreeConfig,
   opts: FreeLinkOptions = {},
 ): Record<string, unknown> {
-  const d = defaultFreeConfig();
+  // The defaults of the config's own model version: the time limit differs from model 3.
+  const d = defaultFreeConfig(config.mv);
   const out: Record<string, unknown> = { v: FREE_SHARE_VERSION, m: FREE_MODE_MARKER };
   if (config.mv !== 1) out['mv'] = config.mv;
   out['a'] = sideDiff(config.sides[0], config.mv);

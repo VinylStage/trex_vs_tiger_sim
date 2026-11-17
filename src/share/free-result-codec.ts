@@ -1,6 +1,6 @@
 import { LIMITS, type ScenarioConfig } from '../sim/config.ts';
-import type { FreeAggregate } from '../sim/free/aggregate.ts';
-import type { FreeConfig } from '../sim/free/config.ts';
+import type { EndReasonCounts, FreeAggregate } from '../sim/free/aggregate.ts';
+import { BATTLE_END_SINCE_MV, type FreeConfig } from '../sim/free/config.ts';
 import { FREE_SPECIES } from '../sim/free/species.ts';
 import { sideBuffState, type FreeSideIndex } from '../ui/free-form-model.ts';
 import { base64UrlDecode, base64UrlEncode } from '../ui/share.ts';
@@ -44,7 +44,8 @@ type Tuple6 = [number, number, number, number, number, number];
  * incapacitated, `ar`/`br` fled; and, only for a side whose pack buff applies (a social species,
  * two or more animals, any effect on), `ab`/`bb` the buffed share of agent-time and `at`/`bt` the
  * median seconds with at least one buffed member. `ci` holds the 95 % Wilson intervals
- * `[aLo, aHi, bLo, bHi, dLo, dHi]`.
+ * `[aLo, aHi, bLo, bHi, dLo, dHi]`. `e` (model 3 on, #230) counts the runs per end reason
+ * `[wipe-out, rout, time limit, mutual]`, summing to `n`.
  */
 export interface FreeResultSummary {
   n: number;
@@ -63,6 +64,7 @@ export interface FreeResultSummary {
   at?: number;
   bt?: number;
   ci?: Tuple6;
+  e?: EndReasonCounts;
 }
 
 type SideKey = 's' | 'k' | 'r' | 'b' | 't';
@@ -101,6 +103,8 @@ export function summarizeFree(config: FreeConfig, agg: FreeAggregate): FreeResul
   if (iv.every(Number.isFinite)) {
     s.ci = iv.map((x) => round(Math.min(1, Math.max(0, x)), 4)) as Tuple6;
   }
+  // End reasons from model 3 only, so a result link of an older model keeps its format.
+  if (config.mv >= BATTLE_END_SINCE_MV) s.e = [...agg.endReasons];
   return s;
 }
 
@@ -123,7 +127,7 @@ const isCount = (v: unknown, max: number): v is number =>
 const isIn = (v: unknown, lo: number, hi: number): v is number =>
   typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi;
 
-const BASE_KEYS = ['n', 'a', 'b', 'd', 't', 'ci'];
+const BASE_KEYS = ['n', 'a', 'b', 'd', 't', 'ci', 'e'];
 
 /**
  * Strictly validate a free summary against its config: only known keys; integer counts with
@@ -165,6 +169,15 @@ export function validateFreeSummary(raw: unknown, config: FreeConfig): FreeResul
     const v = ci;
     for (let j = 0; j < 6; j += 2) if ((v[j] as number) > (v[j + 1] as number)) return null;
     s.ci = [v[0], v[1], v[2], v[3], v[4], v[5]] as Tuple6;
+  }
+  if ('e' in raw) {
+    const e = raw['e'];
+    if (!Array.isArray(e) || e.length !== 4 || !e.every((x) => isCount(x, n))) return null;
+    const counts: number[] = e;
+    if (counts.reduce((x, y) => x + y, 0) !== n) return null;
+    // A time-limit or mutual end is a draw, so those runs cannot outnumber the draws.
+    if ((counts[2] as number) + (counts[3] as number) > d) return null;
+    s.e = [counts[0], counts[1], counts[2], counts[3]] as EndReasonCounts;
   }
   return s;
 }

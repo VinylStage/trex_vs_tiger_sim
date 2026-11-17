@@ -1,5 +1,5 @@
 import { mean, quantileSorted, wilson, type Interval } from '../stats';
-import type { FreeConfig } from './config';
+import { routsOn, type FreeConfig } from './config';
 import { FreeOutcome, emptyBuffStats, type BuffStats, type FreeRunSummary } from './engine';
 import { FREE_SPECIES } from './species';
 
@@ -43,6 +43,18 @@ export interface FreeAggregate {
   buffB: FreeBuffAggregate;
   /** Run whose outcome is the most common one and whose duration is closest to that outcome's median. */
   representativeRun: number;
+  /** Runs per end reason, indexed by `FreeEndReason` code (wipe-out, rout, time limit, mutual). */
+  endReasons: EndReasonCounts;
+}
+
+/** Runs per end reason, indexed by `EndReason` code (#230). */
+export type EndReasonCounts = [wipeout: number, rout: number, timeLimit: number, mutual: number];
+
+/** Count runs per end reason (`EndReason` code). */
+export function countEndReasons(summaries: readonly { endReason: number }[]): EndReasonCounts {
+  const out: EndReasonCounts = [0, 0, 0, 0];
+  for (const s of summaries) out[s.endReason] = (out[s.endReason] as number) + 1;
+  return out;
 }
 
 /**
@@ -74,7 +86,9 @@ export const ROUT_NOTICE_SHARE = 0.8;
  */
 function sharesMorale(config: FreeConfig, side: 0 | 1): boolean {
   const s = config.sides[side];
-  return s.count >= 2 && FREE_SPECIES[s.species].social && config.morale && config.packBuff.morale;
+  return (
+    s.count >= 2 && FREE_SPECIES[s.species].social && routsOn(config) && config.packBuff.morale
+  );
 }
 
 /**
@@ -165,5 +179,6 @@ export function aggregateFree(
     buffA: buff((s) => s.buffA),
     buffB: buff((s) => s.buffB),
     representativeRun,
+    endReasons: countEndReasons(summaries),
   };
 }

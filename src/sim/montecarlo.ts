@@ -37,6 +37,7 @@ export function runAll(config: ScenarioConfig): { design: Design; summaries: Run
 const SUMMARY_FIELDS = [
   'run',
   'outcome',
+  'endReason',
   'duration',
   'heavyAlive',
   'packKilled',
@@ -72,13 +73,14 @@ export function unpackSummaries(packed: Float64Array): RunSummary[] {
     out[i] = {
       run: at(0),
       outcome: at(1) as RunSummary['outcome'],
-      duration: at(2),
-      heavyAlive: at(3),
-      packKilled: at(4),
-      packRouted: at(5),
-      packActive: at(6),
-      heavyHpFrac: at(7),
-      heavyAdvantage: at(8),
+      endReason: at(2) as RunSummary['endReason'],
+      duration: at(3),
+      heavyAlive: at(4),
+      packKilled: at(5),
+      packRouted: at(6),
+      packActive: at(7),
+      heavyHpFrac: at(8),
+      heavyAdvantage: at(9),
     };
   }
   return out;

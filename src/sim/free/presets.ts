@@ -72,12 +72,6 @@ export const PRESET_LIMITS = {
   socialCount: 100,
 } as const;
 
-const ONE_ON_ONE =
-  'One on one, the loser flees once its morale breaks (FREE-MATCHUPS.md §4.5) and there is no group for a rout to spread through, so nearly every decided run ends in a rout.';
-
-const HELD =
-  'Fails the rout check: the losing group flees in nearly every run. Released by an owner-accepted override, other counts, or a morale retune under a new model version (R4).';
-
 export const FREE_PRESETS: readonly FreePreset[] = [
   {
     id: 'lion-tiger',
@@ -88,11 +82,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     why: {
       ko: '아시아사자와 벵골호랑이는 한때 인도의 일부 지역에서 함께 살았습니다.',
       en: 'Asiatic lions and Bengal tigers once shared parts of India.',
-    },
-    check: {
-      maxRoutShare: 1,
-      minMedianS: 20,
-      reason: `${ONE_ON_ONE} Two big cats of similar size settle it in a few strikes.`,
     },
   },
   {
@@ -105,7 +94,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '사자는 무리를 지어 살고 호랑이는 혼자 삽니다. 무리 버프가 그 차이를 보여 줍니다.',
       en: 'Lions live in prides and tigers alone; the pack buff shows the difference.',
     },
-    hold: HELD,
   },
   {
     id: 'tiger-bear',
@@ -117,7 +105,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '러시아 극동에서는 아무르호랑이와 불곰이 마주친 기록이 남아 있습니다.',
       en: 'Encounters between Amur tigers and brown bears are recorded in the Russian Far East.',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'bear-wolf-pack',
@@ -128,11 +115,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     why: {
       ko: '불곰과 늑대 무리가 먹이를 두고 맞선 기록이 있고, 대부분은 큰 충돌 없이 끝납니다.',
       en: 'Brown bears and wolf packs are recorded facing off over carcasses; most such meetings end without a fight.',
-    },
-    check: {
-      maxRoutShare: 1,
-      reason:
-        'Field records: most meetings of brown bears and wolves over a carcass end with one side withdrawing rather than with injuries (SPECIES.md §5), so a fight that ends in a rout matches them.',
     },
   },
   {
@@ -167,11 +149,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '털매머드와 회색늑대는 빙하기의 같은 초원에 살았습니다. 기록된 싸움이 아니라 사고 실험입니다.',
       en: 'Woolly mammoths and grey wolves lived on the same glacial-period steppe; a thought experiment, not a recorded fight.',
     },
-    check: {
-      maxRoutShare: 1,
-      reason:
-        'At the fixture measure the wolves rout 90.1 % under model 2 (fight to the end), 0.1 pp over the limit (model 1: 89.8 %, the same model before deterministic math reshuffled individual runs). Field records of the living analogue: wolves avoid the risk of injury from large prey, wounding it and waiting rather than pressing an attack, and a large prey animal that stands its ground is often left alone (SPECIES.md §11.6), so a pack that breaks off matches them.',
-    },
   },
   {
     id: 'trex-mirror',
@@ -183,7 +160,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '양쪽이 같은 종이라 대칭에 따라 50 대 50입니다.',
       en: 'The same species on both sides: 50/50 by symmetry.',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'trex-squad-tiger-horde',
@@ -201,24 +177,25 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     name: { ko: '티라노 vs 호모 에렉투스 100', en: 'T. rex vs 100 H. erectus' },
     a: { sp: 'trex', n: 1 },
     b: { sp: 'homoErectus', n: 100 },
-    tags: ['thought-experiment'],
+    // Model 3 runs until one side is out (#230): about 0.16 s per run on one core, so 200 runs
+    // keep the Simple batch near the others' cost (docs/PRESETS.md).
+    runs: 200,
+    tags: ['thought-experiment', 'close'],
     why: {
       ko: '신체 능력만 비교하는 사고 실험입니다. 실제 폭력을 묘사하거나 지지하지 않습니다.',
       en: 'A thought experiment about physical capability only; it does not depict or endorse real violence.',
     },
-    hold: HELD,
   },
   {
     id: 'lions-hyenas',
     name: { ko: '사자 vs 하이에나', en: 'Lions vs hyenas' },
     a: { sp: 'lion', n: 3 },
     b: { sp: 'hyena', n: 10 },
-    tags: ['rivals', 'close'],
+    tags: ['rivals'],
     why: {
       ko: '사자와 점박이하이에나는 사는 곳이 겹치는 지역에서 먹이를 두고 경쟁합니다.',
       en: 'Lions and spotted hyenas compete for food where their ranges meet.',
     },
-    hold: HELD,
   },
   {
     id: 'polar-bear-brown-bear',
@@ -230,7 +207,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '북극에서는 두 곰의 서식지가 맞닿아 있고, 두 종 사이의 잡종 곰도 기록되어 있습니다.',
       en: 'Their ranges meet in the Arctic, where hybrid bears have been recorded.',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'elephant-hippo',
@@ -242,7 +218,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '두 종은 아프리카의 같은 강가와 물웅덩이를 씁니다. 하마도 손꼽히게 무거운 육상동물이지만, 다 자란 코끼리는 하마보다 두 배쯤 무겁습니다.',
       en: 'Both use the same African rivers and waterholes. The hippo is one of the heaviest land animals, yet an adult elephant weighs about twice as much.',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'raptors-trex',
@@ -260,12 +235,11 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     name: { ko: '코끼리 vs 코뿔소', en: 'Elephant vs rhino' },
     a: { sp: 'elephant', n: 1 },
     b: { sp: 'whiteRhino', n: 1 },
-    tags: ['popular', 'documented'],
+    tags: ['popular', 'documented', 'close'],
     why: {
       ko: '남아프리카공화국의 한 보호구역에서 어린 수컷 코끼리들이 흰코뿔소를 여러 차례 공격한 기록이 있습니다. 나이 든 수컷 코끼리를 데려온 뒤로는 줄었습니다(Slotow 외 2000).',
       en: 'In a South African reserve, young bull elephants were recorded attacking white rhinos many times; it stopped once older bulls were brought in (Slotow et al. 2000).',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'hippo-rhino',
@@ -277,7 +251,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '두 종 모두 아프리카 초원에서 풀을 뜯고 물가를 떠나지 못합니다. 하마는 낮에 물속에서 쉬고, 흰코뿔소는 물을 마시고 진흙 목욕을 합니다. 몸무게는 많이 겹치지만, 흰코뿔소가 평균적으로 조금 더 무겁습니다.',
       en: 'Both graze African grasslands and stay close to water: the hippo rests in it by day, the white rhino drinks and wallows. Their weights overlap widely, but the white rhino is a little heavier on average.',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'trex-spinosaurus',
@@ -289,7 +262,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '두 종은 만난 적이 없습니다(약 3천만 년 차이, 북아메리카와 북아프리카). 스피노사우루스는 물가에 살았지만, 두 발로 걷고 얕은 물에 서서 물고기를 잡았다는 연구가 있어 땅 위에서 겨룹니다(Sereno 외 2022). 몸무게는 비슷하지만 무는 힘은 티라노가 몇 배 강합니다(Sakamoto 2022).',
       en: 'Never met (about 30 million years apart, in North America and North Africa). Spinosaurus lived by the water, but it walked on two legs and caught fish while wading (Sereno et al. 2022), so they meet on land. Their weights are similar; the T. rex bite was several times stronger (Sakamoto 2022).',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'trex-triceratops',
@@ -301,7 +273,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '두 종은 약 6,800만~6,600만 년 전 북아메리카 서부에서 함께 살았습니다. 끝이 부러진 트리케라톱스의 눈 위 뿔에 티라노의 이빨 자국이 아문 채 남아 있어, 그 만남 뒤에도 트리케라톱스가 살아남았음을 보여 줍니다(Happ 2008).',
       en: 'They lived together in western North America about 68–66 million years ago. A Triceratops brow horn with a broken tip carries healed T. rex tooth marks: the horned animal survived the encounter (Happ 2008).',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
 ];
 

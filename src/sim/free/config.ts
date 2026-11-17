@@ -1,4 +1,5 @@
 import {
+  LEGACY_DEFAULT_MAX_TIME,
   LIMITS,
   MAX_WORK,
   SAMPLING_METHODS,
@@ -144,6 +145,31 @@ export const FLIGHT_MODE_SINCE_MV = 2;
 /** Whether the config's model version has a flight mode to choose (`mv` 2 or later). */
 export const hasFlightMode = (c: Pick<FreeConfig, 'mv'>): boolean => c.mv >= FLIGHT_MODE_SINCE_MV;
 
+/**
+ * The first model version whose battle ends only when a side has nobody left in play (#230,
+ * docs/MODEL.md §3.8): a routed animal stays in play until it escapes across the arena edge, and
+ * under `allIn` nobody routs at all.
+ */
+export const BATTLE_END_SINCE_MV = 3;
+
+/**
+ * Whether animals can rout under the config: `morale` on and, from `mv` 3, only in the
+ * `realistic` flight mode ("Fight to the end" then means no animal flees). Models 1 and 2 rout
+ * whenever `morale` is on, in both flight modes.
+ */
+export const routsOn = (c: Pick<FreeConfig, 'mv' | 'morale' | 'flight'>): boolean =>
+  c.morale && (c.mv < BATTLE_END_SINCE_MV || c.flight === 'realistic');
+
+/**
+ * Default time limit (s) of model version `mv`. From model 3 (#230) it is only a safety cap,
+ * the top of `LIMITS.maxTime`: battles run until a side is out, and the measured p99.9 of every
+ * preset and the large matchups stays below it (research/CALIBRATION.md §20). A run that reaches
+ * it is a draw with the end reason "time limit". Models 1 and 2 keep the classic default, so
+ * their links (which omit a default `maxTime`) reproduce.
+ */
+export const freeDefaultMaxTime = (mv: number): number =>
+  mv >= BATTLE_END_SINCE_MV ? LIMITS.maxTime[1] : LEGACY_DEFAULT_MAX_TIME;
+
 export interface FreeConfig {
   mode: 'free';
   /** Model version the config runs under (ADR-0008). */
@@ -198,18 +224,25 @@ export const defaultPackBuff = (): PackBuffSwitches =>
 export const globalPresets = (): Record<GlobalId, Triangular> =>
   Object.fromEntries(GLOBALS.map((g) => [g.id, { ...g.preset }])) as Record<GlobalId, Triangular>;
 
-export function defaultFreeConfig(): FreeConfig {
+/**
+ * The default free config of model version `mv` (the newest by default). Versions differ only
+ * where a version changed a default: the time limit from model 3 (`freeDefaultMaxTime`).
+ */
+export function defaultFreeConfig(mv: number = FREE_MODEL_VERSION): FreeConfig {
   const d = defaultConfig();
   return {
     mode: 'free',
-    mv: FREE_MODEL_VERSION,
-    sides: [defaultSide(DEFAULT_FREE_SPECIES[0]), defaultSide(DEFAULT_FREE_SPECIES[1])],
+    mv,
+    sides: [
+      defaultSide(DEFAULT_FREE_SPECIES[0], 1, mv),
+      defaultSide(DEFAULT_FREE_SPECIES[1], 1, mv),
+    ],
     packBuff: defaultPackBuff(),
     globals: globalPresets(),
     runs: d.runs,
     seed: d.seed,
     arenaSize: d.arenaSize,
-    maxTime: d.maxTime,
+    maxTime: freeDefaultMaxTime(mv),
     sampling: d.sampling,
     individualCV: d.individualCV,
     morale: d.morale,
@@ -317,7 +350,8 @@ export function sanitizeFreeConfig(input: unknown): FreeConfig {
     }
   }
 
-  const maxTime = Math.round(num(o['maxTime'], d.maxTime, LIMITS.maxTime, false) / DT) * DT;
+  const maxTime =
+    Math.round(num(o['maxTime'], freeDefaultMaxTime(mv), LIMITS.maxTime, false) / DT) * DT;
   const sides: [SideConfig, SideConfig] = [a, b];
   const runs = Math.min(
     num(o['runs'], d.runs, LIMITS.runs, true),

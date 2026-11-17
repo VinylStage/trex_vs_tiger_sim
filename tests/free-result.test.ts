@@ -81,6 +81,7 @@ function fakeFreeAgg(n: number, a: number, b: number, d: number): FreeAggregate 
     buffA: buff,
     buffB: buff,
     representativeRun: 0,
+    endReasons: [a + b, 0, d, 0],
   };
 }
 

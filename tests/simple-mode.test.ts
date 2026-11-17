@@ -6,7 +6,7 @@ import {
   freeMaxRunsFor,
   sanitizeFreeConfig,
 } from '../src/sim/free/config';
-import { PRESET_LIMITS, presetConfig, readyPresets } from '../src/sim/free/presets';
+import { FREE_PRESETS, PRESET_LIMITS, presetConfig, readyPresets } from '../src/sim/free/presets';
 import { FREE_SPECIES, FREE_SPECIES_IDS } from '../src/sim/free/species';
 import {
   withBuffSwitch,
@@ -109,7 +109,10 @@ describe('presets in Simple mode', () => {
 
   it('never shows a held preset', () => {
     for (const p of readyPresets()) expect(p.hold).toBeUndefined();
-    expect(readyPresets().map((p) => p.id)).not.toContain('pride-five-tigers');
+    // Model 3 released every hold (#230); the rule still holds for any preset put on hold later.
+    expect(readyPresets().map((p) => p.id)).toEqual(
+      FREE_PRESETS.filter((p) => p.hold === undefined).map((p) => p.id),
+    );
   });
 
   it('lands on the lion vs tiger preset', () => {

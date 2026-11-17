@@ -28,12 +28,14 @@ import { bannedIn } from './banned-words';
  * ADR-0008): the presets keep reproducing under every model a link can name, and only the newest
  * model, the one Simple mode runs, must pass the checks. `UPDATE_PRESET_FIXTURE=1` rewrites only
  * the newest model's fixture, together with a change of that model; older ones are never
- * rewritten (`preset-shares.json` is model 1, #169/#197 added `preset-shares-mv2.json`).
+ * rewritten (`preset-shares.json` is model 1, #169/#197 added `preset-shares-mv2.json`, #230
+ * `preset-shares-mv3.json`).
  */
 
 const FIXTURES: Readonly<Record<number, URL>> = {
   1: new URL('./fixtures/preset-shares.json', import.meta.url),
   2: new URL('./fixtures/preset-shares-mv2.json', import.meta.url),
+  3: new URL('./fixtures/preset-shares-mv3.json', import.meta.url),
 };
 const FIXTURE = FIXTURES[FREE_MODEL_VERSION] as URL;
 /** The default seed, and fewer runs than the default 500 so the check stays fast (PRESETS.md). */
@@ -229,7 +231,8 @@ describe(`preset fixture (seed ${String(fixture.seed)}, ${String(fixture.runs)} 
     (_, p) => {
       expect(measure(p)).toEqual(rowOf(p));
     },
-    120_000,
+    // Model 3 battles run until a side is out (#230): the elephants and the pride take ~1 min.
+    300_000,
   );
 
   it('keeps a fixture for every model version a link can name', () => {
@@ -251,7 +254,7 @@ describe(`preset fixture (seed ${String(fixture.seed)}, ${String(fixture.runs)} 
       (_, p) => {
         expect(measure(p, mv)).toEqual(rowOf(p, old));
       },
-      120_000,
+      300_000,
     );
   }
 

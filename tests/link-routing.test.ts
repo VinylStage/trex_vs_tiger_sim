@@ -107,8 +107,8 @@ const V1 = b64({ trexCount: 4, tigerCount: 60, params: { 'tiger.mass': [90, 150,
  * The defaults as the links made before classic model 2 and free `mv` 2 (#197, #169) hold them:
  * model 1. Every old link below is built from them.
  */
-const CLASSIC_V1_DEFAULTS: ScenarioConfig = { ...defaultConfig(), mv: 1 };
-const FREE_V1_DEFAULTS = { ...defaultFreeConfig(), mv: 1 };
+const CLASSIC_V1_DEFAULTS: ScenarioConfig = defaultConfig(1);
+const FREE_V1_DEFAULTS = defaultFreeConfig(1);
 /** A classic v2 settings link as the encoder wrote it before #197. */
 const V2_CONFIG: ScenarioConfig = { ...CLASSIC_V1_DEFAULTS, heavyCount: 3, packCount: 40, seed: 7 };
 const V2_HASH = hashFromConfig(V2_CONFIG);
@@ -625,7 +625,7 @@ describe('the classic address at the defaults (#158 review)', () => {
     // The current defaults name their model version, so their plain hash is never empty.
     const current = classicHashFromConfig(defaultConfig());
     expect(current).toBe(hashFromConfig(defaultConfig()));
-    expect(current).toBe('#s=eyJ2IjoyLCJtdiI6Mn0');
+    expect(current).toBe('#s=eyJ2IjoyLCJtdiI6M30');
     expect(routeLink(current, '')).toEqual({
       mode: 'classic',
       config: defaultConfig(),

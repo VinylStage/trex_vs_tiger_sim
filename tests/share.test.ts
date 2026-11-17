@@ -57,21 +57,21 @@ describe('base64url', () => {
 
 describe('share codec', () => {
   it('encodes the model 1 defaults as an empty payload and a clean URL, as before #197', () => {
-    const v1 = { ...defaultConfig(), mv: 1 };
+    const v1 = defaultConfig(1);
     expect(encodeConfig(v1)).toBe('');
     expect(hashFromConfig(v1)).toBe('');
   });
 
   it('writes the model version whenever it is not 1, right after `v`', () => {
-    expect(configDiff(defaultConfig())).toEqual({ mv: 2 });
+    expect(configDiff(defaultConfig())).toEqual({ mv: 3 });
     expect(JSON.parse(Buffer.from(encodeConfig(defaultConfig()), 'base64url').toString())).toEqual({
       v: 2,
-      mv: 2,
+      mv: 3,
     });
     expect(decodeConfig(encodeConfig(defaultConfig()))).toEqual(defaultConfig());
     // A link without `mv` is model 1; a version this build does not run opens the defaults.
     expect(decodeConfig(encodeRaw({ v: 2, seed: 7 })).mv).toBe(1);
-    for (const mv of [0, 3, 1.5, '2', null]) {
+    for (const mv of [0, 4, 1.5, '2', null]) {
       expect(decodeConfig(encodeRaw({ v: 2, mv, seed: 7 }))).toEqual(defaultConfig());
     }
   });
@@ -88,7 +88,7 @@ describe('share codec', () => {
     c.heavyCount = 1;
     c.params['pack.mass'] = { min: 90, mode: 180, max: 260 };
     expect(configDiff(c)).toEqual({
-      mv: 2,
+      mv: 3,
       heavyCount: 1,
       params: { 'pack.mass': [90, 180, 260] },
     });
@@ -276,7 +276,7 @@ describe('v1 links', () => {
 
   it('ignores v2-only keys in a v1 payload, as v1 did', () => {
     const c = decodeConfig(encodeRaw({ v: 1, heavyCount: 7, params: { 'heavy.mass': [1, 2, 3] } }));
-    expect(c).toEqual({ ...defaultConfig(), mv: 1 });
+    expect(c).toEqual(defaultConfig(1));
   });
 });
 
@@ -309,7 +309,7 @@ describe('species in share links', () => {
     };
     c.params['pack.dps'] = { min: 2, mode: 6, max: 10 };
     expect(configDiff(c)).toEqual({
-      mv: 2,
+      mv: 3,
       heavy: 'elephant',
       pack: 'lion',
       heavyCount: 5,

@@ -19,9 +19,10 @@ export type PackTactic = 'flank' | 'direct';
  * shipped through v0.2.26; version 2 computes the same model with the deterministic math of
  * src/sim/detmath.ts, so a link gives the same battle in every JavaScript engine. Every version
  * from 1 up to it stays runnable. Wherever `mv` is absent (every classic link made before #197)
- * it means 1, like the free engine's `mv` (ADR-0008).
+ * it means 1, like the free engine's `mv` (ADR-0008). Version 3 (#230) ends a battle only when
+ * no pack animal is still in play: a routed animal counts until it escapes across the arena edge.
  */
-export const CLASSIC_MODEL_VERSION = 2;
+export const CLASSIC_MODEL_VERSION = 3;
 
 /** Whether `v` is a classic model version this build runs: an integer from 1 to the newest. */
 export const isClassicModelVersion = (v: unknown): v is number =>
@@ -60,9 +61,21 @@ export const LIMITS = {
 export const SAMPLING_METHODS: readonly SamplingMethod[] = ['lhs', 'random'];
 export const PACK_TACTICS: readonly PackTactic[] = ['flank', 'direct'];
 
-export function defaultConfig(): ScenarioConfig {
+/** Default time limit (s) of both engines up to model 2: links of those versions omit it. */
+export const LEGACY_DEFAULT_MAX_TIME = 1200;
+
+/**
+ * Default time limit (s) of classic model version `mv`. From model 3 (#230) it is only a safety
+ * cap, the top of `LIMITS.maxTime`, so a battle runs until a side is out; a run that reaches it is
+ * a draw with the end reason "time limit".
+ */
+export const classicDefaultMaxTime = (mv: number): number =>
+  mv >= 3 ? LIMITS.maxTime[1] : LEGACY_DEFAULT_MAX_TIME;
+
+/** The default classic config of model version `mv` (the newest by default). */
+export function defaultConfig(mv: number = CLASSIC_MODEL_VERSION): ScenarioConfig {
   return {
-    mv: CLASSIC_MODEL_VERSION,
+    mv,
     heavySpecies: DEFAULT_HEAVY,
     packSpecies: DEFAULT_PACK,
     heavyCount: 10,
@@ -70,7 +83,7 @@ export function defaultConfig(): ScenarioConfig {
     runs: 500,
     seed: 20261019,
     arenaSize: 600,
-    maxTime: 1200,
+    maxTime: classicDefaultMaxTime(mv),
     sampling: 'lhs',
     individualCV: 0.08,
     packTactic: 'flank',
@@ -138,9 +151,12 @@ export function maxRunsFor(
  * Unknown keys are dropped, numbers are clamped, invalid values fall back to defaults.
  */
 export function sanitizeConfig(input: unknown): ScenarioConfig {
-  const d = defaultConfig();
-  if (typeof input !== 'object' || input === null) return d;
+  if (typeof input !== 'object' || input === null) return defaultConfig();
   const o = input as Record<string, unknown>;
+  // Absent means 1, so inputs written before `mv` existed keep running model 1. The version
+  // comes first: it decides the default time limit.
+  const mv = isClassicModelVersion(o['mv']) ? o['mv'] : 1;
+  const d = defaultConfig(mv);
   const rawParams =
     typeof o['params'] === 'object' && o['params'] !== null
       ? (o['params'] as Record<string, unknown>)
@@ -163,8 +179,7 @@ export function sanitizeConfig(input: unknown): ScenarioConfig {
     maxRunsFor({ maxTime, heavyCount, packCount }),
   );
   return {
-    // Absent means 1, so inputs written before `mv` existed keep running model 1.
-    mv: isClassicModelVersion(o['mv']) ? o['mv'] : 1,
+    mv,
     heavySpecies,
     packSpecies,
     heavyCount,
