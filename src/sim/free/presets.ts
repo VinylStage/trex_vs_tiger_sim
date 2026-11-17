@@ -175,7 +175,7 @@ export const FREE_PRESETS: readonly FreePreset[] = [
   },
   {
     id: 'trex-mirror',
-    name: { ko: '티라노 거울전', en: 'T. rex mirror match' },
+    name: { ko: '티라노 미러전', en: 'T. rex mirror match' },
     a: { sp: 'trex', n: 1 },
     b: { sp: 'trex', n: 1 },
     tags: ['mirror', 'close'],
