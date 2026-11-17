@@ -1332,6 +1332,30 @@ input.param-input {
   display: none;
 }
 
+/* How the replayed run ended (#230), over the arena once playback reaches the end. */
+.replay-end {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(100% - 12px);
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--fg);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  pointer-events: none;
+}
+
+.replay-end.is-empty {
+  display: none;
+}
+
 /* Only rendered with ?debug=fps. */
 .replay-debug {
   position: absolute;

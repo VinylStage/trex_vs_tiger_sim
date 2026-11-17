@@ -132,6 +132,9 @@ export class FreeReplayView {
   private readonly timeLabel: HTMLSpanElement;
   private readonly lodHint: HTMLParagraphElement;
   private readonly note: HTMLParagraphElement;
+  /** How the shown run ended, over the arena once playback reaches the end (#230). */
+  private readonly endBanner: HTMLParagraphElement;
+  private endText: (() => string) | null = null;
   private readonly legend: HTMLUListElement;
   private readonly labels: { el: HTMLElement; text: () => string }[] = [];
   private world: FreeWorld | null = null;
@@ -223,6 +226,7 @@ export class FreeReplayView {
     this.timeLabel = h('span', { class: 'replay-time', attrs: { 'aria-hidden': 'true' } });
     this.lodHint = h('p', { class: 'replay-lod is-empty' });
     this.note = h('p', { class: 'replay-note is-empty' });
+    this.endBanner = h('p', { class: 'replay-end is-empty', attrs: { 'aria-live': 'polite' } });
     this.legend = h('ul', { class: 'legend free-replay-legend', id: legendId });
 
     const speedLabel = h('span', {});
@@ -237,7 +241,7 @@ export class FreeReplayView {
     this.el = h(
       'div',
       { class: 'replay free-replay' },
-      h('div', { class: 'replay-stage' }, this.canvas, this.lodHint),
+      h('div', { class: 'replay-stage' }, this.canvas, this.endBanner, this.lodHint),
       h(
         'div',
         { class: 'replay-controls' },
@@ -660,12 +664,29 @@ export class FreeReplayView {
     this.slider.value = String(this.time);
     this.slider.disabled = w === null;
     this.timeLabel.textContent = w ? `${clockText(this.time)} / ${clockText(w.duration)}` : '';
+    this.updateEnd();
     if (w) {
       this.slider.setAttribute(
         'aria-valuetext',
         t('replay.valueText', { cur: clockText(this.time), total: clockText(w.duration) }),
       );
     }
+  }
+
+  /**
+   * How the loaded run ended, shown once playback reaches its last frame (#230); `null` hides it.
+   * A function, so the text follows the language.
+   */
+  setEndText(text: (() => string) | null): void {
+    this.endText = text;
+    this.updateEnd();
+  }
+
+  private updateEnd(): void {
+    const w = this.world;
+    const text = w && this.endText && this.time >= w.duration ? this.endText() : '';
+    if (this.endBanner.textContent !== text) this.endBanner.textContent = text;
+    this.endBanner.classList.toggle('is-empty', text === '');
   }
 
   private updateNote(): void {

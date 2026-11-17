@@ -166,6 +166,12 @@
   gap: 12px;
 }
 
+.simple-end {
+  margin: 10px 0 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
 .simple-breakdown-side {
   border: 1px solid var(--border);
   border-radius: var(--radius-small);

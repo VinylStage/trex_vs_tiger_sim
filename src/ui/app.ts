@@ -25,6 +25,7 @@ import {
   type Message,
 } from './app-model';
 import { clear, h } from './dom';
+import { endReasonLabel } from './end-reason';
 import { costSummary, isCostOk } from './cost';
 import { createConfigForm, matchupBadge, matchupNote, qualifiedParamLabel } from './form';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
@@ -920,7 +921,7 @@ export function startApp(root: HTMLElement): void {
     const info = s
       ? t('replay.runInfo', {
           run: st.run + 1,
-          outcome: t(outcomeKey(s.outcome)),
+          outcome: `${t(outcomeKey(s.outcome))} · ${endReasonLabel(s.endReason)}`,
           duration: formatDuration(s.duration),
         })
       : '';
