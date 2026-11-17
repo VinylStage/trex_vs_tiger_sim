@@ -151,6 +151,11 @@ export class FreeReplayView {
   private lod = false;
   private theme: ReplayTheme | null = null;
   private paints: Paints | null = null;
+  /** Live battle mode (#183): playback stops here (the card pause); null: no stop. */
+  private stopTime: number | null = null;
+  private onStop: (() => void) | null = null;
+  /** Live battle mode (#183): called with the playhead time on every frame, seek and load. */
+  onTime: ((time: number) => void) | null = null;
   private readonly motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
   private readonly schemeQuery = matchMedia('(prefers-color-scheme: dark)');
   private readonly ro: ResizeObserver;
@@ -298,6 +303,30 @@ export class FreeReplayView {
     this.relocalize();
     this.draw();
     this.schedule();
+    this.onTime?.(this.time);
+  }
+
+  /**
+   * Stop playback when the playhead reaches `time`, then call `onStop` (Live battle mode's card
+   * pause, #183). Until it is cleared (null) the playhead cannot be moved past it, by playing or
+   * by seeking, so the battle after the pause stays unseen.
+   */
+  stopAt(time: number | null, onStop: (() => void) | null = null): void {
+    this.stopTime = time !== null && Number.isFinite(time) ? Math.max(0, time) : null;
+    this.onStop = this.stopTime === null ? null : onStop;
+  }
+
+  /** Play or pause (Live battle mode); a no-op without a trace. */
+  setPlayback(on: boolean): void {
+    this.autoPause.release();
+    this.setPlaying(on);
+  }
+
+  /** Playback speed, one of the menu's steps (`SPEEDS`); other values are ignored. */
+  setSpeed(speed: number): void {
+    if (!(SPEEDS as readonly number[]).includes(speed) || speed === this.speed) return;
+    this.speed = speed;
+    this.speedSel.value = String(speed);
   }
 
   /**
@@ -364,10 +393,12 @@ export class FreeReplayView {
     const w = this.world;
     if (!w) return;
     this.autoPause.release();
-    this.time = Math.min(w.duration, Math.max(0, time));
+    const end = this.stopTime === null ? w.duration : Math.min(w.duration, this.stopTime);
+    this.time = Math.min(end, Math.max(0, time));
     w.update(this.time);
     this.snapCamera();
     this.draw();
+    this.onTime?.(this.time);
   }
 
   private setMode(mode: ViewMode): void {
@@ -428,10 +459,19 @@ export class FreeReplayView {
     this.lastTs = ts;
     if (this.playing) {
       this.time = Math.min(w.duration, this.time + dt * this.speed);
+      const stop = this.stopTime;
+      const stopped = stop !== null && this.time >= stop;
+      if (stopped) this.time = Math.min(w.duration, stop);
       w.update(this.time);
-      if (this.time >= w.duration) {
+      if (stopped || this.time >= w.duration) {
         this.playing = false;
         this.updatePlay();
+      }
+      this.onTime?.(this.time);
+      if (stopped) {
+        const cb = this.onStop;
+        this.onStop = null;
+        cb?.();
       }
     }
     this.easeCamera(dt);
