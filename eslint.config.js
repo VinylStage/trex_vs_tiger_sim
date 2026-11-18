@@ -22,7 +22,7 @@ export default tseslint.config(
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
-    files: ['brand/**/*.mjs', 'scripts/**/*.mjs'],
+    files: ['bench/**/*.mjs', 'brand/**/*.mjs', 'scripts/**/*.mjs'],
     languageOptions: {
       globals: { ...globals.node },
     },

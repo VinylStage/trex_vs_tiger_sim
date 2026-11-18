@@ -20,7 +20,9 @@
     "test:watch": "vitest",
     "test:jsc": "bun scripts/cross-engine/check-goldens.mjs",
     "check": "npm run typecheck && npm run lint && npm run format:check && npm run test",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "bench": "node bench/run.mjs",
+    "bench:size": "node bench/bundle-size.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

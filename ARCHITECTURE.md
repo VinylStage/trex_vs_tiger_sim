@@ -320,13 +320,17 @@ flowchart LR
     issue@{ shape: doc, label: "Issue" } --> branch@{ shape: rect, label: "branch<br/>type/N-slug" }
     branch --> pr@{ shape: rect, label: "PR (template)" }
     pr --> ci{"CI<br/>typecheck · lint · format · test · build"}
+    pr -.->|"src/sim, src/ui, vite.*, bench"| perf{"perf gate<br/>base vs head engine · page JS budgets"}
     pr --> preview@{ shape: rect, label: "Pages preview deploy" }
     ci -- green --> merge@{ shape: rect, label: "squash merge → main" }
+    perf -- pass --> merge
     merge p1@--> prod@{ shape: rect, label: "Pages production deploy" }
     merge --> rp@{ shape: rect, label: "release-please PR" }
     rp --> tag@{ shape: flag, label: "tag + GitHub Release + CHANGELOG" }
     p1@{ animate: true }
 ```
+
+The perf gate (#241, `.github/workflows/perf.yml`) runs only on pull requests that touch the engine, the UI, the Vite config or `bench/`. It bundles the base commit's and the head's free engine with the same harness (`bench/harness.mjs`), runs a reduced fixed matrix on both alternately in one job, and fails when a scenario is more than 25% slower or a page's startup JavaScript is over its budget in `bench/budgets.json`; an intended slowdown passes by raising that budget in the same pull request. `npm run bench` runs the full matrix locally. See [PERFORMANCE.md](docs/PERFORMANCE.md#standing-performance-checks-241).
 
 ## 6. Security
 
