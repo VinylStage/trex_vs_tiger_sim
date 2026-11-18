@@ -1,0 +1,378 @@
+{
+  "baseline": "bench/baseline-v0.2.27.json",
+  "engineMargin": 1.3,
+  "pageMargin": 1.1,
+  "scenarios": {
+    "scale-1v1": {
+      "msMedian": 0.55,
+      "msP95": 1.21
+    },
+    "scale-10v100": {
+      "msMedian": 39.39,
+      "msP95": 77.6
+    },
+    "scale-50v1000": {
+      "msMedian": 857.66,
+      "msP95": 1853.26
+    },
+    "scale-500v5000": {
+      "msMedian": 8277.06,
+      "msP95": 8480.98
+    },
+    "preset-lion-tiger-allIn": {
+      "msMedian": 1.1,
+      "msP95": 1.73
+    },
+    "preset-lion-tiger-realistic": {
+      "msMedian": 1.11,
+      "msP95": 1.8
+    },
+    "preset-pride-five-tigers-allIn": {
+      "msMedian": 3.4,
+      "msP95": 7.03
+    },
+    "preset-pride-five-tigers-realistic": {
+      "msMedian": 3.59,
+      "msP95": 6.96
+    },
+    "preset-tiger-bear-allIn": {
+      "msMedian": 1.12,
+      "msP95": 1.54
+    },
+    "preset-tiger-bear-realistic": {
+      "msMedian": 1.3,
+      "msP95": 2.8
+    },
+    "preset-bear-wolf-pack-allIn": {
+      "msMedian": 7.5,
+      "msP95": 19.18
+    },
+    "preset-bear-wolf-pack-realistic": {
+      "msMedian": 7.5,
+      "msP95": 16.31
+    },
+    "preset-buffalo-pride-allIn": {
+      "msMedian": 7.86,
+      "msP95": 16.06
+    },
+    "preset-buffalo-pride-realistic": {
+      "msMedian": 7.99,
+      "msP95": 16.6
+    },
+    "preset-elephants-pride-allIn": {
+      "msMedian": 23.18,
+      "msP95": 36.6
+    },
+    "preset-elephants-pride-realistic": {
+      "msMedian": 19.23,
+      "msP95": 27.7
+    },
+    "preset-mammoth-wolves-allIn": {
+      "msMedian": 9.82,
+      "msP95": 17.59
+    },
+    "preset-mammoth-wolves-realistic": {
+      "msMedian": 7,
+      "msP95": 9.16
+    },
+    "preset-trex-mirror-allIn": {
+      "msMedian": 2.21,
+      "msP95": 3.29
+    },
+    "preset-trex-mirror-realistic": {
+      "msMedian": 2.73,
+      "msP95": 4.48
+    },
+    "preset-trex-squad-tiger-horde-allIn": {
+      "msMedian": 43.41,
+      "msP95": 86.68
+    },
+    "preset-trex-squad-tiger-horde-realistic": {
+      "msMedian": 26.06,
+      "msP95": 32.04
+    },
+    "preset-trex-erectus-100-allIn": {
+      "msMedian": 64.51,
+      "msP95": 84.63
+    },
+    "preset-trex-erectus-100-realistic": {
+      "msMedian": 54.82,
+      "msP95": 66.19
+    },
+    "preset-lions-hyenas-allIn": {
+      "msMedian": 5.96,
+      "msP95": 14.37
+    },
+    "preset-lions-hyenas-realistic": {
+      "msMedian": 6.15,
+      "msP95": 12.44
+    },
+    "preset-polar-bear-brown-bear-allIn": {
+      "msMedian": 1.55,
+      "msP95": 3.41
+    },
+    "preset-polar-bear-brown-bear-realistic": {
+      "msMedian": 1.65,
+      "msP95": 3.35
+    },
+    "preset-elephant-hippo-allIn": {
+      "msMedian": 2.94,
+      "msP95": 6.57
+    },
+    "preset-elephant-hippo-realistic": {
+      "msMedian": 2.86,
+      "msP95": 5.81
+    },
+    "preset-raptors-trex-allIn": {
+      "msMedian": 19.46,
+      "msP95": 30.61
+    },
+    "preset-raptors-trex-realistic": {
+      "msMedian": 12.54,
+      "msP95": 17.25
+    },
+    "preset-elephant-rhino-allIn": {
+      "msMedian": 2.83,
+      "msP95": 5.18
+    },
+    "preset-elephant-rhino-realistic": {
+      "msMedian": 2.09,
+      "msP95": 4.64
+    },
+    "preset-hippo-rhino-allIn": {
+      "msMedian": 2.37,
+      "msP95": 5
+    },
+    "preset-hippo-rhino-realistic": {
+      "msMedian": 2.45,
+      "msP95": 5.46
+    },
+    "preset-trex-spinosaurus-allIn": {
+      "msMedian": 2.65,
+      "msP95": 7.62
+    },
+    "preset-trex-spinosaurus-realistic": {
+      "msMedian": 2.8,
+      "msP95": 6.27
+    },
+    "preset-trex-triceratops-allIn": {
+      "msMedian": 2.27,
+      "msP95": 4.62
+    },
+    "preset-trex-triceratops-realistic": {
+      "msMedian": 2.35,
+      "msP95": 4.92
+    },
+    "species-trex-mirror": {
+      "msMedian": 8.42,
+      "msP95": 14.83
+    },
+    "species-trex-v-tiger": {
+      "msMedian": 1.56,
+      "msP95": 2.67
+    },
+    "species-elephant-mirror": {
+      "msMedian": 13.1,
+      "msP95": 27.54
+    },
+    "species-elephant-v-trex": {
+      "msMedian": 7.69,
+      "msP95": 10.77
+    },
+    "species-buffalo-mirror": {
+      "msMedian": 5.04,
+      "msP95": 6.67
+    },
+    "species-buffalo-v-trex": {
+      "msMedian": 4.23,
+      "msP95": 5.65
+    },
+    "species-brownBear-mirror": {
+      "msMedian": 5.26,
+      "msP95": 8.39
+    },
+    "species-brownBear-v-trex": {
+      "msMedian": 3.46,
+      "msP95": 4.5
+    },
+    "species-mammoth-mirror": {
+      "msMedian": 13.02,
+      "msP95": 24.33
+    },
+    "species-mammoth-v-trex": {
+      "msMedian": 7.97,
+      "msP95": 11.83
+    },
+    "species-homoErectus-mirror": {
+      "msMedian": 16.85,
+      "msP95": 38.72
+    },
+    "species-homoErectus-v-trex": {
+      "msMedian": 5.07,
+      "msP95": 8.07
+    },
+    "species-tiger-mirror": {
+      "msMedian": 2.73,
+      "msP95": 5.02
+    },
+    "species-tiger-v-trex": {
+      "msMedian": 1.54,
+      "msP95": 3.05
+    },
+    "species-lion-mirror": {
+      "msMedian": 3.94,
+      "msP95": 8.1
+    },
+    "species-lion-v-trex": {
+      "msMedian": 2.99,
+      "msP95": 5.06
+    },
+    "species-wolf-mirror": {
+      "msMedian": 2.99,
+      "msP95": 3.82
+    },
+    "species-wolf-v-trex": {
+      "msMedian": 3.45,
+      "msP95": 6.05
+    },
+    "species-hyena-mirror": {
+      "msMedian": 3.06,
+      "msP95": 4.82
+    },
+    "species-hyena-v-trex": {
+      "msMedian": 3.38,
+      "msP95": 4.12
+    },
+    "species-polarBear-mirror": {
+      "msMedian": 8.28,
+      "msP95": 12.5
+    },
+    "species-polarBear-v-trex": {
+      "msMedian": 3.82,
+      "msP95": 8.95
+    },
+    "species-hippo-mirror": {
+      "msMedian": 11.99,
+      "msP95": 17.98
+    },
+    "species-hippo-v-trex": {
+      "msMedian": 8.94,
+      "msP95": 13.63
+    },
+    "species-raptor-mirror": {
+      "msMedian": 8.08,
+      "msP95": 11.67
+    },
+    "species-raptor-v-trex": {
+      "msMedian": 6.71,
+      "msP95": 9.21
+    },
+    "species-whiteRhino-mirror": {
+      "msMedian": 9.81,
+      "msP95": 19.27
+    },
+    "species-whiteRhino-v-trex": {
+      "msMedian": 7.86,
+      "msP95": 12.45
+    },
+    "species-spinosaurus-mirror": {
+      "msMedian": 21.68,
+      "msP95": 36.08
+    },
+    "species-spinosaurus-v-trex": {
+      "msMedian": 10.67,
+      "msP95": 17.27
+    },
+    "species-triceratops-mirror": {
+      "msMedian": 8.28,
+      "msP95": 15.68
+    },
+    "species-triceratops-v-trex": {
+      "msMedian": 8.2,
+      "msP95": 13.28
+    }
+  },
+  "pages": {
+    "404.html": {
+      "gzipBytes": 1692
+    },
+    "about/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/404.html": {
+      "gzipBytes": 1692
+    },
+    "en/about/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/guide/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/learn/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/license/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/model/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/parameters/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/patch-notes/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/play/index.html": {
+      "gzipBytes": 88005
+    },
+    "en/privacy/index.html": {
+      "gzipBytes": 1692
+    },
+    "en/r/index.html": {
+      "gzipBytes": 46623
+    },
+    "en/species/index.html": {
+      "gzipBytes": 1692
+    },
+    "guide/index.html": {
+      "gzipBytes": 1692
+    },
+    "index.html": {
+      "gzipBytes": 1692
+    },
+    "learn/index.html": {
+      "gzipBytes": 1692
+    },
+    "license/index.html": {
+      "gzipBytes": 1692
+    },
+    "model/index.html": {
+      "gzipBytes": 1692
+    },
+    "parameters/index.html": {
+      "gzipBytes": 1692
+    },
+    "patch-notes/index.html": {
+      "gzipBytes": 1692
+    },
+    "play/index.html": {
+      "gzipBytes": 90246
+    },
+    "privacy/index.html": {
+      "gzipBytes": 1692
+    },
+    "r/index.html": {
+      "gzipBytes": 48864
+    },
+    "reset/index.html": {
+      "gzipBytes": 3423
+    },
+    "species/index.html": {
+      "gzipBytes": 1692
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "seed": 20261118,
+  "scale": {
+    "a": "trex",
+    "b": "tiger",
+    "flight": "allIn",
+    "steps": [
+      { "na": 1, "nb": 1, "runs": 200 },
+      { "na": 10, "nb": 100, "runs": 30 },
+      { "na": 50, "nb": 1000, "runs": 8 },
+      { "na": 500, "nb": 5000, "runs": 3 }
+    ]
+  },
+  "presets": {
+    "flights": ["allIn", "realistic"],
+    "runs": 60,
+    "largeAgents": 30,
+    "largeRuns": 20
+  },
+  "species": {
+    "count": 5,
+    "reference": "trex",
+    "alternate": "tiger",
+    "runs": 60
+  },
+  "reduced": {
+    "maxScaleAgents": 1100,
+    "presetFlights": ["allIn"],
+    "species": true,
+    "runScale": 0.5,
+    "minMs": 250,
+    "rounds": 5,
+    "regressionLimit": 1.25
+  }
+}
