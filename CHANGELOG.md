@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.2.28](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.27...trex-vs-tiger-sim-v0.2.28) (2026-11-18)
+
+
+### Features
+
+* **live:** re-simulation gate, card-pause budget, pre-battle cards ([#181](https://github.com/VinylStage/trex_vs_tiger_sim/issues/181)) ([#234](https://github.com/VinylStage/trex_vs_tiger_sim/issues/234)) ([2987a5b](https://github.com/VinylStage/trex_vs_tiger_sim/commit/2987a5b99fd8be4796267d3caaac6d7e488d643f))
+* **results:** show the pack rout rate in the classic results ([#42](https://github.com/VinylStage/trex_vs_tiger_sim/issues/42)) ([#235](https://github.com/VinylStage/trex_vs_tiger_sim/issues/235)) ([1e8d5e3](https://github.com/VinylStage/trex_vs_tiger_sim/commit/1e8d5e30c567dc3cd0ec9f34b71cc652daccd107))
+* **share:** live log in v3 config and free result link v3 ([#180](https://github.com/VinylStage/trex_vs_tiger_sim/issues/180)) ([#231](https://github.com/VinylStage/trex_vs_tiger_sim/issues/231)) ([896682a](https://github.com/VinylStage/trex_vs_tiger_sim/commit/896682a7a5c9ca91b5df842d57cbe36fa2f59132))
+* **ui:** Live battle mode ([#183](https://github.com/VinylStage/trex_vs_tiger_sim/issues/183)) ([#238](https://github.com/VinylStage/trex_vs_tiger_sim/issues/238)) ([783ce4f](https://github.com/VinylStage/trex_vs_tiger_sim/commit/783ce4f719d33d9274f8390610e2b4d5ce00e820))
+* **ui:** what-if shift display ([#182](https://github.com/VinylStage/trex_vs_tiger_sim/issues/182)) ([#236](https://github.com/VinylStage/trex_vs_tiger_sim/issues/236)) ([03c13e6](https://github.com/VinylStage/trex_vs_tiger_sim/commit/03c13e6c3be86a1e732a1d387a683f5dba4bba8d))
+
+
+### Bug Fixes
+
+* **i18n:** call the same-species preset a 미러전 instead of 거울전 ([#227](https://github.com/VinylStage/trex_vs_tiger_sim/issues/227)) ([0c377a2](https://github.com/VinylStage/trex_vs_tiger_sim/commit/0c377a230bbf6d346623f3060776a9c25aa10fad))
+* **sim:** a battle ends only when a side has nobody left in play, as model 3 ([#230](https://github.com/VinylStage/trex_vs_tiger_sim/issues/230)) ([#240](https://github.com/VinylStage/trex_vs_tiger_sim/issues/240)) ([2f07cd9](https://github.com/VinylStage/trex_vs_tiger_sim/commit/2f07cd919f50215c70e212ef46387e0121e39c7e))
+
 ## [0.2.27](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.26...trex-vs-tiger-sim-v0.2.27) (2026-11-16)
 
 
