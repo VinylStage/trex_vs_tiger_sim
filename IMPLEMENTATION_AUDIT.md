@@ -194,6 +194,17 @@ Resolved: #61's coverage question. The owner approved `@vitest/coverage-v8` on 2
 
 The language switch still misses #79's target of under 200 ms at 4x CPU. It measured 184–300 ms on `/` and 355–507 ms on `/en/`, before and after the split; the time goes into relabelling, and in-place label updates are listed as open in [docs/PERFORMANCE.md](docs/PERFORMANCE.md). Two axe findings stay accepted as they are: `p-as-heading` (experimental) and `landmark-complementary-is-top-level` (best practice).
 
+## Dependency audit 2026-11-18 (#246)
+
+`npm audit` on `main` at `838c282` reported 15 findings (8 moderate, 7 high) from two advisories, all in devDependencies. The site has no runtime dependencies, so none of them reach the bundle.
+
+| Advisory                                                                                                  | Package            | Fix                                                                                                                                                          | State         |
+| --------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| [GHSA-g3hv-75wg-m249](https://github.com/advisories/GHSA-g3hv-75wg-m249), DoS via globparts amplification | `minimatch` 10.2.6 | `npm update eslint typescript-eslint` within the current majors: `eslint` 10.15.0 and `typescript-eslint` 8.73.0 pull `minimatch` 11.0.9 (patched in 11.0.1) | Fixed         |
+| [GHSA-fc5q-39xc-vjpf](https://github.com/advisories/GHSA-fc5q-39xc-vjpf), ReDoS in repeated extglobs      | `picomatch` 4.0.7  | None: every published version is in the range (`<=4.0.7`), and `npm audit fix --force` only offers a downgrade to `vite` 6                                   | Accepted risk |
+
+After the change `npm audit` reports 12 high, all from `picomatch` through `vite`, `vitest`, `@vitest/coverage-v8`, `tinyglobby`, `fdir` and `typescript-eslint` (whose 8.73 line reaches `picomatch` through `tinyglobby` only). The risk is accepted because the matched globs come from this repository's own config and tooling, not from visitors, and the code only runs on developer machines and in CI. Dependabot's weekly `dev-tooling` group picks up the patched `picomatch` once it is released. `npm audit fix` itself fails on npm 10.9 (`Cannot read properties of null (reading 'edgesOut')` while it loads `vitest`'s peer set), which is why the update named the two packages.
+
 ## Known gaps
 
 - Free-model calibration ([docs/research/CALIBRATION.md](docs/research/CALIBRATION.md)): solitary animals almost never flee a much larger opponent in the default flight mode (#169: the `realistic` mode adds the researched flight; the default fights to the end by owner decision, 2026-11-16), a lone _H. erectus_ never wins a duel against a carnivore (#167), the wolf-vs-buffalo curve has no plateau at 9–13 (#168). The usability test has not run yet ([docs/research/USABILITY.md](docs/research/USABILITY.md)).

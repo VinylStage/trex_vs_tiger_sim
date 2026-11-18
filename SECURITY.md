@@ -14,3 +14,4 @@ Please use GitHub's private vulnerability reporting ("Security" tab → "Report 
 - Scenario state is encoded in the URL fragment and is parsed with schema validation and value clamping; it is never evaluated as code.
 - A strict Content-Security-Policy with Trusted Types enforcement, and HSTS, are applied via `public/_headers` (see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md#_headers-explained)).
 - GitHub Actions are pinned to full commit SHAs and kept current by Dependabot.
+- The site has no runtime npm dependencies; every package in `package.json` is a devDependency used to build, lint or test, and none of it ships in the bundle. `npm audit` findings are therefore fixed within the current majors when a patched release exists, and recorded as accepted risk when it does not ([IMPLEMENTATION_AUDIT.md](IMPLEMENTATION_AUDIT.md#dependency-audit-2026-11-18-246)).
