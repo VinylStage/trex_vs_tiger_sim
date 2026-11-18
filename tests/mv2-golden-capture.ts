@@ -308,7 +308,8 @@ export function captureAll(capturedFrom: string): Mv2Golden {
 
 /*
  * Model 3 (#230): a side is out only when nobody of it is in play (a routed animal counts until
- * it escapes across the edge), nobody routs under `allIn`, and the default time limit is 3,600 s.
+ * it escapes across the edge, keeping its first flight heading), and the default time limit is
+ * 3,600 s.
  * The model 2 cases again under model 3 (their numbers change where routs ended a battle), plus
  * cases for the new end rules: escape and pursuit in `realistic`, a battle that reaches the time
  * limit, and the classic pack escaping. Fixture tests/fixtures/mv3-golden.json, never regenerated.
@@ -325,9 +326,18 @@ export const FREE_CASES_MV3: typeof FREE_CASES = [
     },
   },
   {
-    name: 'homoErectus 100 v trex 1 (allIn: nobody flees)',
+    name: 'homoErectus 100 v trex 1 (allIn: the group routs and escapes)',
     input: {
       runs: 2,
+      seed: 3842280975,
+      sides: [{ species: 'homoErectus', count: 100 }, { species: 'trex' }],
+    },
+  },
+  {
+    name: 'homoErectus 100 v trex 1 (morale off: nobody flees)',
+    input: {
+      runs: 1,
+      morale: false,
       seed: 3842280975,
       sides: [{ species: 'homoErectus', count: 100 }, { species: 'trex' }],
     },

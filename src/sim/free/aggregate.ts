@@ -1,5 +1,5 @@
 import { mean, quantileSorted, wilson, type Interval } from '../stats';
-import { routsOn, type FreeConfig } from './config';
+import type { FreeConfig } from './config';
 import { FreeOutcome, emptyBuffStats, type BuffStats, type FreeRunSummary } from './engine';
 import { FREE_SPECIES } from './species';
 
@@ -86,9 +86,7 @@ export const ROUT_NOTICE_SHARE = 0.8;
  */
 function sharesMorale(config: FreeConfig, side: 0 | 1): boolean {
   const s = config.sides[side];
-  return (
-    s.count >= 2 && FREE_SPECIES[s.species].social && routsOn(config) && config.packBuff.morale
-  );
+  return s.count >= 2 && FREE_SPECIES[s.species].social && config.morale && config.packBuff.morale;
 }
 
 /**

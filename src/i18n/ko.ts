@@ -252,6 +252,7 @@ export const ko = {
   'end.mutual': '동시 종료 무승부',
   'end.part': '{label} {pct}',
   'end.banner': '끝 · {outcome} · {reason}',
+  'end.fled': '{side} {n}{counter} 도주',
   'stat.share': '{n}번 중 {k}번 · 95% 구간 {lo}–{hi}',
   'stat.duration': '전투 시간 (중앙값)',
   'stat.durationSub': '5–95%: {p5} – {p95}',

@@ -11,7 +11,8 @@ import {
 
 /**
  * Golden fixture of free `mv` 3 and classic model 3 (#230): a battle ends only when one side has
- * nobody left in play, nobody routs under `allIn`, and the default time limit is 3,600 s
+ * nobody left in play (a routed animal counts until it escapes across the edge), and the default
+ * time limit is 3,600 s
  * (docs/MODEL.md §2.4). Like every golden it must never be regenerated; tests/mv2-golden.test.ts
  * keeps pinning model 2. The same fixture is checked under JavaScriptCore by `npm run test:jsc`
  * (scripts/cross-engine/check-goldens.mjs).
@@ -59,9 +60,14 @@ describe(`model 3 reproduces bit-identically (golden from ${golden.capturedFrom}
     const reasons = (name: string): number[] =>
       (byName.get(name)?.summaries ?? []).map((r) => r[r.length - 1] as number);
     expect(reasons('lion 5 v tiger 5, 60 s time limit (draws on the time limit)')).toContain(2);
-    expect(reasons('homoErectus 100 v trex 1 (allIn: nobody flees)').every((r) => r === 0)).toBe(
-      true,
-    );
+    expect(
+      reasons('homoErectus 100 v trex 1 (morale off: nobody flees)').every((r) => r === 0),
+    ).toBe(true);
+    expect(
+      reasons('homoErectus 100 v trex 1 (allIn: the group routs and escapes)').every(
+        (r) => r === 1,
+      ),
+    ).toBe(true);
     expect(
       reasons('homoErectus 100 v trex 1 (realistic: the group flees and escapes)').every(
         (r) => r === 1,

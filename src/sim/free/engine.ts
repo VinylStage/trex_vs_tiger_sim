@@ -4,13 +4,7 @@ import { CONSTANTS, DT, EndReason, type EndReasonCode } from '../engine.ts';
 import { Rng, deriveSeed } from '../rng.ts';
 import { SpatialGrid } from '../spatial.ts';
 import type { TraitField } from './cards.ts';
-import {
-  BATTLE_END_SINCE_MV,
-  FREE_PARAM_INDEX,
-  routsOn,
-  type FreeConfig,
-  type GlobalId,
-} from './config.ts';
+import { BATTLE_END_SINCE_MV, FREE_PARAM_INDEX, type FreeConfig, type GlobalId } from './config.ts';
 import {
   compileInterventions,
   mulProduct,
@@ -438,11 +432,9 @@ export function simulateFreeBattle(
   const flightOn =
     config.morale && config.flight === 'realistic' && (spA.flight !== null || spB.flight !== null);
   // Battle end from model 3 (#230, docs/MODEL.md §2.4): a side is out only when nobody of it is
-  // still in play (a routed animal is, until it escapes across the edge), routed animals can be
-  // chased, and under `allIn` nobody routs (`routsOn`). Models 1 and 2 rout whenever morale is
-  // on and end a side's part on its last rout.
+  // still in play (a routed animal is, until it escapes across the edge), and routed animals can
+  // be chased. Models 1 and 2 end a side's part on its last rout.
   const v3 = config.mv >= BATTLE_END_SINCE_MV;
-  const routs = routsOn(config);
   const threatRatio = [
     spA.flight?.threatRatio.range.mode ?? 0,
     spB.flight?.threatRatio.range.mode ?? 0,
@@ -469,7 +461,7 @@ export function simulateFreeBattle(
   const routShock = [val(0, 'routShock'), val(1, 'routShock')];
   const reliefStamina = [val(0, 'reliefStamina'), val(1, 'reliefStamina')];
   const buffGrace = glob('buffGrace');
-  const moraleBuff = sw.morale && routs;
+  const moraleBuff = sw.morale && config.morale;
   const stats = [emptyBuffStats(), emptyBuffStats()] as const;
   const buffTicks = [0, 0];
   const activeTicks = [0, 0];
@@ -1438,7 +1430,7 @@ export function simulateFreeBattle(
       }
     }
     state.set(nstate);
-    if (routs) {
+    if (config.morale) {
       for (let i = 0; i < n; i++) {
         // E4a: buffed agents rout on morale + support; `support` is 0 for everyone else.
         if (

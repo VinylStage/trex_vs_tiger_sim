@@ -8,7 +8,7 @@ import { freeStats, type ResultView } from '../src/share/result-text';
 import { sanitizeConfig } from '../src/sim/config';
 import { EndReason, PackState, simulateBattle } from '../src/sim/engine';
 import { aggregateFree, countEndReasons } from '../src/sim/free/aggregate';
-import { routsOn, sanitizeFreeConfig, type FreeConfig } from '../src/sim/free/config';
+import { sanitizeFreeConfig, type FreeConfig } from '../src/sim/free/config';
 import { buildFreeDesign } from '../src/sim/free/design';
 import {
   FREE_FRAME_STRIDE,
@@ -25,7 +25,7 @@ import { buildDesign, designRow } from '../src/sim/sampling';
  * Battle end (#230, docs/MODEL.md §2.4). Up to model 2 a side was out as soon as its last member
  * routed, still on the field, so a battle "ended" with the fleeing animals on screen. From model 3
  * a side is out only when nobody of it is in play: incapacitated, or routed and escaped across the
- * arena edge. Under `allIn` nobody routs at all. A run that reaches `maxTime` is a draw with the
+ * arena edge. A run that reaches `maxTime` is a draw with the
  * end reason "time limit", never a win.
  */
 
@@ -67,7 +67,6 @@ describe('model 2 (unchanged): a battle ends on the last rout, with the fleeing 
 describe('model 3: a side is out only when nobody of it is in play', () => {
   it('realistic: the losing group flees and the run ends once every one has escaped or fallen', () => {
     const c = sanitizeFreeConfig({ ...OWNER, mv: 3, flight: 'realistic', runs: 1 });
-    expect(routsOn(c)).toBe(true);
     const { summary, trace } = run(c);
     expect(summary.outcome).toBe(FreeOutcome.B);
     expect(summary.endReason).toBe(FreeEndReason.Rout);
@@ -76,10 +75,20 @@ describe('model 3: a side is out only when nobody of it is in play', () => {
     expect(states.filter((s) => s === FreeState.Left).length).toBeGreaterThan(0);
   });
 
-  it('allIn ("Fight to the end"): nobody routs, so the run ends when one side is incapacitated', () => {
-    const c = sanitizeFreeConfig({ ...OWNER, mv: 3, runs: 2 });
+  it('allIn (the default) keeps morale rout: the fleeing humans run off and the run ends once they are out', () => {
+    const c = sanitizeFreeConfig({ ...OWNER, mv: 3, runs: 1 });
     expect(c.flight).toBe('allIn');
-    expect(routsOn(c)).toBe(false);
+    expect(c.morale).toBe(true);
+    const { summary, trace } = run(c);
+    expect(summary.outcome).toBe(FreeOutcome.B);
+    expect(summary.endReason).toBe(FreeEndReason.Rout);
+    const states = lastStates(trace as FreeTrace, 0);
+    expect(states.every((s) => s === FreeState.Dead || s === FreeState.Left)).toBe(true);
+    expect(states.filter((s) => s === FreeState.Left).length).toBeGreaterThan(50);
+  });
+
+  it('morale off: nobody flees, so the run ends when one side is incapacitated', () => {
+    const c = sanitizeFreeConfig({ ...OWNER, mv: 3, morale: false, runs: 2 });
     const { summaries } = runAllFree(c);
     for (const s of summaries) {
       expect(s.aRouted + s.bRouted).toBe(0);
@@ -87,17 +96,6 @@ describe('model 3: a side is out only when nobody of it is in play', () => {
       const loserAlive = s.outcome === FreeOutcome.A ? s.bAlive : s.aAlive;
       expect(loserAlive).toBe(0);
     }
-  });
-
-  it('allIn under model 2 still routs: the switch belongs to model 3', () => {
-    const c = sanitizeFreeConfig({
-      mv: 2,
-      runs: 20,
-      sides: [{ species: 'lion' }, { species: 'tiger' }],
-    });
-    expect(routsOn(c)).toBe(true);
-    const { summaries } = runAllFree(c);
-    expect(summaries.some((s) => s.endReason === FreeEndReason.Rout)).toBe(true);
   });
 
   it('defaults the time limit to a 3,600 s safety cap, and a run that reaches it is a draw', () => {

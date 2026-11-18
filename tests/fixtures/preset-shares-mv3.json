@@ -5,105 +5,105 @@
     {
       "id": "lion-tiger",
       "matchup": "lion 1 v tiger 1",
-      "wins": [107, 93, 0],
+      "wins": [118, 82, 0],
       "share": {
-        "a": 0.535,
-        "b": 0.465,
+        "a": 0.59,
+        "b": 0.41,
         "draw": 0
       },
-      "medianS": 56.400000000000006,
-      "rout": 0,
+      "medianS": 50.800000000000004,
+      "rout": 1,
       "close": true
     },
     {
       "id": "pride-five-tigers",
       "matchup": "lion 5 v tiger 5",
-      "wins": [121, 79, 0],
+      "wins": [126, 74, 0],
       "share": {
-        "a": 0.605,
-        "b": 0.395,
+        "a": 0.63,
+        "b": 0.37,
         "draw": 0
       },
-      "medianS": 159.25,
-      "rout": 0,
+      "medianS": 62.6,
+      "rout": 1,
       "close": true
     },
     {
       "id": "tiger-bear",
       "matchup": "tiger 1 v brownBear 1",
-      "wins": [54, 146, 0],
+      "wins": [39, 161, 0],
       "share": {
-        "a": 0.27,
-        "b": 0.73,
+        "a": 0.195,
+        "b": 0.805,
         "draw": 0
       },
-      "medianS": 70.9,
-      "rout": 0,
+      "medianS": 62.85000000000001,
+      "rout": 1,
       "close": false
     },
     {
       "id": "bear-wolf-pack",
       "matchup": "brownBear 1 v wolf 8",
-      "wins": [6, 194, 0],
+      "wins": [136, 64, 0],
       "share": {
-        "a": 0.03,
-        "b": 0.97,
+        "a": 0.68,
+        "b": 0.32,
         "draw": 0
       },
-      "medianS": 135.95,
-      "rout": 0,
+      "medianS": 101.55000000000001,
+      "rout": 0.9592013888888888,
       "close": false
     },
     {
       "id": "buffalo-pride",
       "matchup": "buffalo 1 v lion 6",
-      "wins": [5, 195, 0],
+      "wins": [23, 177, 0],
       "share": {
-        "a": 0.025,
-        "b": 0.975,
+        "a": 0.115,
+        "b": 0.885,
         "draw": 0
       },
-      "medianS": 175,
-      "rout": 0,
+      "medianS": 153.55,
+      "rout": 0.6285714285714286,
       "close": false
     },
     {
       "id": "elephants-pride",
       "matchup": "elephant 5 v lion 30",
-      "wins": [194, 6, 0],
+      "wins": [200, 0, 0],
       "share": {
-        "a": 0.97,
-        "b": 0.03,
+        "a": 1,
+        "b": 0,
         "draw": 0
       },
-      "medianS": 645.2,
-      "rout": 0,
+      "medianS": 115.4,
+      "rout": 0.869,
       "close": false
     },
     {
       "id": "mammoth-wolves",
       "matchup": "mammoth 1 v wolf 12",
-      "wins": [197, 3, 0],
+      "wins": [200, 0, 0],
       "share": {
-        "a": 0.985,
-        "b": 0.015,
+        "a": 1,
+        "b": 0,
         "draw": 0
       },
-      "medianS": 476.20000000000005,
-      "rout": 0,
+      "medianS": 118.2,
+      "rout": 0.89875,
       "close": false
     },
     {
       "id": "trex-mirror",
       "matchup": "trex 1 v trex 1",
-      "wins": [101, 99, 0],
+      "wins": [102, 98, 0],
       "share": {
-        "a": 0.505,
-        "b": 0.495,
+        "a": 0.51,
+        "b": 0.49,
         "draw": 0
       },
-      "medianS": 160.35000000000002,
-      "rout": 0,
+      "medianS": 155.10000000000002,
+      "rout": 0.64,
       "close": true
     },
     {
@@ -115,125 +115,125 @@
         "b": 0,
         "draw": 0
       },
-      "medianS": 138.75,
-      "rout": 0,
+      "medianS": 143,
+      "rout": 0.01995,
       "close": false
     },
     {
       "id": "trex-erectus-100",
       "matchup": "trex 1 v homoErectus 100",
-      "wins": [116, 84, 0],
+      "wins": [200, 0, 0],
       "share": {
-        "a": 0.58,
-        "b": 0.42,
+        "a": 1,
+        "b": 0,
         "draw": 0
       },
-      "medianS": 567.7,
-      "rout": 0,
-      "close": true
+      "medianS": 142.8,
+      "rout": 0.94625,
+      "close": false
     },
     {
       "id": "lions-hyenas",
       "matchup": "lion 3 v hyena 10",
-      "wins": [9, 191, 0],
+      "wins": [74, 126, 0],
       "share": {
-        "a": 0.045,
-        "b": 0.955,
+        "a": 0.37,
+        "b": 0.63,
         "draw": 0
       },
-      "medianS": 79.80000000000001,
-      "rout": 0,
-      "close": false
+      "medianS": 67.1,
+      "rout": 0.9704830053667263,
+      "close": true
     },
     {
       "id": "polar-bear-brown-bear",
       "matchup": "polarBear 1 v brownBear 1",
-      "wins": [155, 45, 0],
+      "wins": [144, 56, 0],
       "share": {
-        "a": 0.775,
-        "b": 0.225,
+        "a": 0.72,
+        "b": 0.28,
         "draw": 0
       },
-      "medianS": 118.10000000000001,
-      "rout": 0,
+      "medianS": 103.75,
+      "rout": 0.95,
       "close": false
     },
     {
       "id": "elephant-hippo",
       "matchup": "elephant 1 v hippo 1",
-      "wins": [152, 48, 0],
+      "wins": [163, 37, 0],
       "share": {
-        "a": 0.76,
-        "b": 0.24,
+        "a": 0.815,
+        "b": 0.185,
         "draw": 0
       },
-      "medianS": 295.85,
-      "rout": 0,
+      "medianS": 233.3,
+      "rout": 0.895,
       "close": false
     },
     {
       "id": "raptors-trex",
       "matchup": "raptor 12 v trex 1",
-      "wins": [150, 50, 0],
+      "wins": [26, 174, 0],
       "share": {
-        "a": 0.75,
-        "b": 0.25,
+        "a": 0.13,
+        "b": 0.87,
         "draw": 0
       },
-      "medianS": 370.6,
-      "rout": 0,
+      "medianS": 269.6,
+      "rout": 0.6996215704824976,
       "close": false
     },
     {
       "id": "elephant-rhino",
       "matchup": "elephant 1 v whiteRhino 1",
-      "wins": [128, 72, 0],
+      "wins": [147, 53, 0],
       "share": {
-        "a": 0.64,
-        "b": 0.36,
+        "a": 0.735,
+        "b": 0.265,
         "draw": 0
       },
-      "medianS": 315.45000000000005,
-      "rout": 0,
-      "close": true
+      "medianS": 210.95,
+      "rout": 0.955,
+      "close": false
     },
     {
       "id": "hippo-rhino",
       "matchup": "hippo 1 v whiteRhino 1",
-      "wins": [71, 129, 0],
+      "wins": [83, 117, 0],
       "share": {
-        "a": 0.355,
-        "b": 0.645,
+        "a": 0.415,
+        "b": 0.585,
         "draw": 0
       },
-      "medianS": 204.8,
-      "rout": 0,
+      "medianS": 177.45,
+      "rout": 0.945,
       "close": true
     },
     {
       "id": "trex-spinosaurus",
       "matchup": "trex 1 v spinosaurus 1",
-      "wins": [195, 5, 0],
+      "wins": [193, 7, 0],
       "share": {
-        "a": 0.975,
-        "b": 0.025,
+        "a": 0.965,
+        "b": 0.035,
         "draw": 0
       },
-      "medianS": 205.2,
-      "rout": 0,
+      "medianS": 198.85000000000002,
+      "rout": 0.505,
       "close": false
     },
     {
       "id": "trex-triceratops",
       "matchup": "trex 1 v triceratops 1",
-      "wins": [118, 82, 0],
+      "wins": [124, 76, 0],
       "share": {
-        "a": 0.59,
-        "b": 0.41,
+        "a": 0.62,
+        "b": 0.38,
         "draw": 0
       },
-      "medianS": 164.95000000000002,
-      "rout": 0,
+      "medianS": 157.25,
+      "rout": 0.73,
       "close": true
     }
   ]

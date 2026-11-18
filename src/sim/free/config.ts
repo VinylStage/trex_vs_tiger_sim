@@ -147,18 +147,9 @@ export const hasFlightMode = (c: Pick<FreeConfig, 'mv'>): boolean => c.mv >= FLI
 
 /**
  * The first model version whose battle ends only when a side has nobody left in play (#230,
- * docs/MODEL.md §3.8): a routed animal stays in play until it escapes across the arena edge, and
- * under `allIn` nobody routs at all.
+ * docs/MODEL.md §2.4): a routed animal stays in play until it escapes across the arena edge.
  */
 export const BATTLE_END_SINCE_MV = 3;
-
-/**
- * Whether animals can rout under the config: `morale` on and, from `mv` 3, only in the
- * `realistic` flight mode ("Fight to the end" then means no animal flees). Models 1 and 2 rout
- * whenever `morale` is on, in both flight modes.
- */
-export const routsOn = (c: Pick<FreeConfig, 'mv' | 'morale' | 'flight'>): boolean =>
-  c.morale && (c.mv < BATTLE_END_SINCE_MV || c.flight === 'realistic');
 
 /**
  * Default time limit (s) of model version `mv`. From model 3 (#230) it is only a safety cap,

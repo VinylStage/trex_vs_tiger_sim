@@ -252,6 +252,7 @@ export const en: Dictionary = {
   'end.mutual': 'Draw: both out at once',
   'end.part': '{label} {pct}',
   'end.banner': 'End · {outcome} · {reason}',
+  'end.fled': '{side}: {n}{counter} fled',
   'stat.share': '{k} of {n} · 95% interval {lo}–{hi}',
   'stat.duration': 'Battle duration (median)',
   'stat.durationSub': '5–95%: {p5} – {p95}',

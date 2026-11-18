@@ -140,6 +140,69 @@ describe('free replay camera', () => {
   });
 });
 
+describe('free replay of a rout under model 3 (#230)', () => {
+  // The owner's report: 100 H. erectus v 1 T. rex. Model 3 runs on until every fleeing human is
+  // across the edge, so the replay shows them running off instead of stopping mid-flight.
+  const config = sanitizeFreeConfig({
+    mv: 3,
+    runs: 1,
+    seed: 3842280975,
+    sides: [{ species: 'homoErectus', count: 100 }, { species: 'trex' }],
+  });
+  const out = simulateFreeBattle(config, designRow(buildFreeDesign(config), 0), 0, true);
+  const trace = out.trace as FreeTrace;
+  const w = new FreeWorld(trace);
+  const L = config.arenaSize;
+  const onField = (x: number, y: number): boolean => x > 0 && y > 0 && x < L && y < L;
+
+  it('ends with nobody of the fleeing side left on the field', () => {
+    w.update(w.duration);
+    for (let i = 0; i < w.nA; i++) {
+      expect([FreeState.Dead, FreeState.Left]).toContain(w.state[i]);
+    }
+    expect(w.counts().fled[0]).toBe(out.summary.aRouted);
+  });
+
+  it('takes every departed agent to the edge before it disappears, never mid-arena', () => {
+    const frames = trace.frames;
+    for (let k = 1; k < frames.length; k++) {
+      const a = (frames[k - 1] as (typeof frames)[number]).agents;
+      const b = (frames[k] as (typeof frames)[number]).agents;
+      for (let i = 0; i < w.nA; i++) {
+        const o = i * FREE_FRAME_STRIDE;
+        if (a[o + 4] === FreeState.Routed && b[o + 4] === FreeState.Left) {
+          // Its last position is at or past the edge: interpolation runs it off the field.
+          expect(onField(b[o] as number, b[o + 1] as number)).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('keeps the runners in the auto view once nobody of their side fights', () => {
+    const t = trace.frames.find((f) => {
+      let active = 0;
+      let routed = 0;
+      for (let i = 0; i < w.nA; i++) {
+        const st = f.agents[i * FREE_FRAME_STRIDE + 4] as number;
+        if (st < FreeState.Routed) active++;
+        else if (st === FreeState.Routed) routed++;
+      }
+      return active === 0 && routed > 0;
+    })?.t;
+    if (t === undefined) throw new Error('no frame with only runners');
+    w.update(t);
+    const box = w.fightBox();
+    let inView = 0;
+    let routed = 0;
+    for (let i = 0; i < w.nA; i++) {
+      if (w.state[i] !== FreeState.Routed) continue;
+      routed++;
+      if (Math.abs((w.x[i] as number) - box.cx) <= box.size / 2) inView++;
+    }
+    expect(inView).toBeGreaterThan(routed / 2);
+  });
+});
+
 describe('free replay keys', () => {
   it('toggles play from the physical K key while a Korean IME is on', () => {
     expect(freeKeyAction('KeyK', 'ㅏ', false)).toEqual({ kind: 'toggle' });

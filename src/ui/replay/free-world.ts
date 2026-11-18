@@ -151,7 +151,8 @@ export class FreeWorld {
 
   /**
    * Box around the agents still fighting (each side trimmed of its outer 2 % per axis when it
-   * has many), padded
+   * has many; a side with nobody fighting contributes its fleeing agents still on the field),
+   * padded
    * by 6 m and at least 24 m wide; the whole arena when nobody fights.
    */
   fightBox(): { cx: number; cy: number; size: number } {
@@ -170,6 +171,15 @@ export class FreeWorld {
         if ((this.state[i] as number) >= FreeState.Routed) continue;
         xs.push(this.x[i] as number);
         ys.push(this.y[i] as number);
+      }
+      // A side with nobody fighting but some still fleeing on the field: follow the runners, so
+      // the end of a rout (model 3 runs on until they leave, #230) stays in view.
+      if (xs.length === 0) {
+        for (let i = from; i < to; i++) {
+          if (this.state[i] !== FreeState.Routed) continue;
+          xs.push(this.x[i] as number);
+          ys.push(this.y[i] as number);
+        }
       }
       if (xs.length === 0) continue;
       xs.sort((p, q) => p - q);

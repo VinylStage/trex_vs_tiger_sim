@@ -791,10 +791,22 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       v.setEndText(
         s
           ? () =>
-              t('end.banner', {
-                outcome: runOutcome(res.config, s),
-                reason: endReasonLabel(s.endReason),
-              })
+              [
+                t('end.banner', {
+                  outcome: runOutcome(res.config, s),
+                  reason: endReasonLabel(s.endReason),
+                }),
+                // How many of each side fled the field: the rout the replay has just shown.
+                ...([0, 1] as const)
+                  .filter((i) => (i === 0 ? s.aRouted : s.bRouted) > 0)
+                  .map((i) =>
+                    t('end.fled', {
+                      side: t(sideKey(i)),
+                      n: formatInt(i === 0 ? s.aRouted : s.bRouted),
+                      counter: speciesCounter(res.config.sides[i].species),
+                    }),
+                  ),
+              ].join(' · ')
           : null,
       );
     } catch (err) {
