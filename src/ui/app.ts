@@ -47,7 +47,7 @@ import {
 } from './i18n';
 import { CancelledError, SimPool, type PoolProgress } from './pool';
 import type { ReplayView } from './replay';
-import { routeHashChange, routeLink } from './link-route';
+import { liveLinkHash, routeHashChange, routeLink } from './link-route';
 import {
   armLinkSeed,
   simpleCanShow,
@@ -160,6 +160,9 @@ export function startApp(root: HTMLElement): void {
   let keepNewerLink = startRoute.mode === 'free' && startRoute.newerModel;
   const newerLinkNote = h('p', { class: 'stale-banner free-newer-link', i18n: 'free.newerModel' });
   newerLinkNote.hidden = !keepNewerLink;
+  // A live battle link (#180) keeps its address while that battle is on screen (#239), so a reload
+  // or a copied address reopens it; leaving the battle, an edit or another link lets it go.
+  let liveLink = liveLinkHash(startRoute, startHash);
   let config: ScenarioConfig = startRoute.mode === 'classic' ? startRoute.config : defaultConfig();
   // "Run it yourself" links carry a result snapshot (`&chk=`); read it before the URL is rewritten.
   const repro = createReproduceCheck(location.hash, config);
@@ -600,6 +603,7 @@ export function startApp(root: HTMLElement): void {
     modeSwitch,
     onChange: () => {
       holdNewerLink(false);
+      liveLink = null;
       writeUrl();
     },
     onRun: () => {
@@ -624,6 +628,11 @@ export function startApp(root: HTMLElement): void {
     ...(startRoute.mode === 'free' && startRoute.live
       ? { live: { live: startRoute.live, check: freeCheckFromHash(startHash, startRoute.config) } }
       : {}),
+    onLiveLeave: () => {
+      if (liveLink === null) return;
+      liveLink = null;
+      writeUrl();
+    },
   });
 
   clear(root);
@@ -662,6 +671,7 @@ export function startApp(root: HTMLElement): void {
     if (engine !== mode && (running || free.isRunning())) pool.cancel();
     view = nextView;
     mode = engine;
+    liveLink = null;
     // The classic mode never holds a free link.
     if (engine === 'classic') holdNewerLink(false);
     applyMode();
@@ -690,7 +700,7 @@ export function startApp(root: HTMLElement): void {
   }
 
   function writeUrl(): void {
-    if (keepNewerLink) return;
+    if (keepNewerLink || liveLink !== null) return;
     if (view === 'simple' && simpleKeepsAddress(location.hash, simpleLinked)) return;
     // Simple mode marks its links so they reopen in Simple (#154), but only for a config Simple
     // can show whole: after an Advanced-only edit the link opens the free form instead.
@@ -1149,6 +1159,7 @@ export function startApp(root: HTMLElement): void {
 
   window.addEventListener('hashchange', () => {
     holdNewerLink(freeHashModelNewer(location.hash));
+    liveLink = null;
     if (keepNewerLink) announce(t('free.newerModel'));
     // A link opens as it does on load (routeHashChange): a Simple link in Simple with its seed
     // armed for the next Run (#154), any other free link in the free form, a classic one in classic.

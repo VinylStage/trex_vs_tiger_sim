@@ -20,7 +20,7 @@ import { simulateFreeBattle } from '../src/sim/free/engine';
 import { MAX_INTERVENTIONS, type Intervention } from '../src/sim/free/interventions';
 import type { FreeSpeciesId } from '../src/sim/free/species';
 import { designRow } from '../src/sim/sampling';
-import { routeLink } from '../src/ui/link-route';
+import { liveLinkHash, routeHashChange, routeLink } from '../src/ui/link-route';
 import { MAX_SHARE_LENGTH, base64UrlDecode, base64UrlEncode } from '../src/ui/share';
 import {
   LIVE_KEY,
@@ -289,5 +289,47 @@ describe('free result link v3 (#180)', () => {
     expect(freeResultView(c, snap, 'ko').context).toBe('자유 대결 · 잠정 모델');
     const meta = buildMeta(`?r=${encodeFreeResult(c, snap, { live })}`, 'ko');
     expect(meta?.description).toContain('실시간 대결 1판');
+  });
+});
+
+describe('a live battle link keeps its address on reload (#239)', () => {
+  const c = free('wolf', 6, 'tiger', 1);
+  const live: FreeLive = { run: 3, iv: LOG };
+  const snap = liveSnapshot(c, live);
+  const hash = reproduceFreeHash(c, snap, { live });
+
+  it('holds the link as it came while its battle is on screen', () => {
+    const route = routeLink(hash, '');
+    const held = liveLinkHash(route, hash);
+    expect(held).toBe(hash);
+    if (held === null) throw new Error('no held address');
+    // A reload of the held address opens the same live battle, checked against the same snapshot.
+    const again = routeLink(held, '');
+    expect(again.mode).toBe('free');
+    if (again.mode !== 'free') return;
+    expect(again.live).toEqual(live);
+    expect(freeConfigDiff(again.config)).toEqual(freeConfigDiff(c));
+    expect(freeCheckFromHash(held, again.config)).toEqual(snap);
+    // Also with the Simple marker, which a live battle overrides.
+    const simple = reproduceFreeHash(c, snap, { live, simple: true });
+    expect(liveLinkHash(routeLink(simple, ''), simple)).toBe(simple);
+  });
+
+  it('holds nothing for a link without a live battle', () => {
+    const plain = reproduceFreeHash(c, snap);
+    expect(liveLinkHash(routeLink(plain, ''), plain)).toBeNull();
+    const classic = '#s=';
+    expect(liveLinkHash(routeLink(classic, ''), classic)).toBeNull();
+    expect(liveLinkHash(routeLink('', ''), '')).toBeNull();
+  });
+
+  it('drops the live battle once the address is written from the config again', () => {
+    // What the app writes after the viewer leaves Live battle mode or edits the config.
+    const route = routeLink(hash, '');
+    const written = hashFromFreeConfig(route.config as FreeConfig);
+    const after = routeLink(written, '');
+    expect(after.mode === 'free' && 'live' in after).toBe(false);
+    expect(freeLiveFromObject(payloadOf(written), route.config as FreeConfig)).toBeNull();
+    expect(routeHashChange(written, '')).toEqual({ mode: 'free', config: route.config });
   });
 });

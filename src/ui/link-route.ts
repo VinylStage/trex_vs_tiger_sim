@@ -87,6 +87,18 @@ export function routeLink(hash: string, search: string): LinkRoute {
 }
 
 /**
+ * The address the play page holds while the live battle its link opened is on screen (#239): the
+ * link as it came, with its `live` log and its `chk=` snapshot, so a reload or a copied address
+ * reopens the same battle under the same check. Null for a link that opened no live battle. The
+ * app lets it go once the viewer leaves that battle (Close, a new live battle, Simple mode, the
+ * classic engine), edits the config or opens another link; from then on it writes the config as
+ * before, without `live`.
+ */
+export function liveLinkHash(route: LinkRoute, hash: string): string | null {
+  return route.mode === 'free' && route.live !== undefined ? hash : null;
+}
+
+/**
  * The classic config of a fragment without a settings payload. A bare `#chk=` is a "Run it
  * yourself" link of the defaults made before classic model 2 (#197), when the defaults encoded as
  * no `s=` at all, so it keeps model 1; every other such fragment opens the current defaults.
