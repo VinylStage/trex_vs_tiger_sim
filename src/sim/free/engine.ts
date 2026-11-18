@@ -1,10 +1,10 @@
 import { individualFactor } from '../distributions.ts';
 import { DET_MATH, NATIVE_MATH } from '../detmath.ts';
-import { CONSTANTS, DT } from '../engine.ts';
+import { CONSTANTS, DT, EndReason, type EndReasonCode } from '../engine.ts';
 import { Rng, deriveSeed } from '../rng.ts';
 import { SpatialGrid } from '../spatial.ts';
 import type { TraitField } from './cards.ts';
-import { FREE_PARAM_INDEX, type FreeConfig, type GlobalId } from './config.ts';
+import { BATTLE_END_SINCE_MV, FREE_PARAM_INDEX, type FreeConfig, type GlobalId } from './config.ts';
 import {
   compileInterventions,
   mulProduct,
@@ -50,6 +50,10 @@ export const FreeState = {
 
 export const FreeOutcome = { A: 0, B: 1, Draw: 2 } as const;
 export type FreeOutcomeCode = (typeof FreeOutcome)[keyof typeof FreeOutcome];
+
+/** How a run ended (#230): the classic engine's `EndReason`, shared by both engines. */
+export const FreeEndReason = EndReason;
+export type FreeEndReasonCode = EndReasonCode;
 
 /** Free-model constants not sampled per run (the sampled ones are `GLOBALS` in config.ts). */
 export const FREE_CONSTANTS = {
@@ -126,6 +130,8 @@ export const emptyBuffStats = (): BuffStats => ({
 export interface FreeRunSummary {
   run: number;
   outcome: FreeOutcomeCode;
+  /** How the run ended (`FreeEndReason`). */
+  endReason: FreeEndReasonCode;
   duration: number;
   aAlive: number;
   aKilled: number;
@@ -425,6 +431,10 @@ export function simulateFreeBattle(
   // `flightOn` false, and nothing below reads them.
   const flightOn =
     config.morale && config.flight === 'realistic' && (spA.flight !== null || spB.flight !== null);
+  // Battle end from model 3 (#230, docs/MODEL.md §2.4): a side is out only when nobody of it is
+  // still in play (a routed animal is, until it escapes across the edge), and routed animals can
+  // be chased. Models 1 and 2 end a side's part on its last rout.
+  const v3 = config.mv >= BATTLE_END_SINCE_MV;
   const threatRatio = [
     spA.flight?.threatRatio.range.mode ?? 0,
     spB.flight?.threatRatio.range.mode ?? 0,
@@ -521,6 +531,8 @@ export function simulateFreeBattle(
   const reliefTarget = new Int32Array(n).fill(-1);
   const wasBuffed = new Uint8Array(n);
   const routedNow = new Uint8Array(n);
+  // Model 3: escape heading of a routed agent, fixed on its first flight tick (NaN until then).
+  const escapeH = new Float64Array(n).fill(NaN);
   const engagedBySide = [0, 0];
 
   // --- spawn ---
@@ -587,15 +599,28 @@ export function simulateFreeBattle(
     (k: number): boolean => (state[k] as number) < FreeState.Routed,
     (k: number): boolean => (state[nA + k] as number) < FreeState.Routed,
   ];
+  // Agents of each side still fighting (state below Routed) at the end of the previous tick.
+  const activeOf = [nA, nB];
   const nearestEnemy = (i: number): number => {
     const e = 1 - (side[i] as number);
-    const k = (grids[e] as SpatialGrid).nearest(
+    const grid = grids[e] as SpatialGrid;
+    let k = grid.nearest(
       x[i] as number,
       y[i] as number,
       xs[e] as Float64Array,
       ys[e] as Float64Array,
       active[e] as (k: number) => boolean,
     );
+    // Model 3: with no enemy left fighting, chase the nearest routed one still on the field.
+    if (k < 0 && v3) {
+      k = grid.nearest(
+        x[i] as number,
+        y[i] as number,
+        xs[e] as Float64Array,
+        ys[e] as Float64Array,
+        present[e] as (k: number) => boolean,
+      );
+    }
     return k < 0 ? -1 : offOf(e) + k;
   };
 
@@ -918,6 +943,7 @@ export function simulateFreeBattle(
 
   const killed = [0, 0];
   let outcome: FreeOutcomeCode = FreeOutcome.Draw;
+  let ended = false;
   let step = 0;
   if (trace) record(0);
 
@@ -1065,7 +1091,14 @@ export function simulateFreeBattle(
         retarget[i] = (retarget[i] as number) - DT;
         latchCd[i] = (latchCd[i] as number) - DT;
         let t = target[i] as number;
-        if ((retarget[i] as number) <= 0 || t < 0 || (state[t] as number) >= FreeState.Routed) {
+        if (
+          (retarget[i] as number) <= 0 ||
+          t < 0 ||
+          (v3
+            ? (state[t] as number) >= FreeState.Dead ||
+              ((state[t] as number) === FreeState.Routed && (activeOf[1 - s] as number) > 0)
+            : (state[t] as number) >= FreeState.Routed)
+        ) {
           t = target[i] = buffed[i] && sw.focus ? focusTarget(i) : nearestEnemy(i);
           retarget[i] = F.retarget;
         }
@@ -1146,12 +1179,19 @@ export function simulateFreeBattle(
           target[i] = -1;
         }
       } else {
-        // Routed: flee from the nearest active enemy, sprinting while stamina lasts.
-        const e = nearestEnemy(i);
-        const away =
-          e >= 0
-            ? atan2((y[i] as number) - (y[e] as number), (x[i] as number) - (x[e] as number))
-            : atan2((y[i] as number) - L / 2, (x[i] as number) - L / 2);
+        // Routed: flee from the nearest active enemy, sprinting while stamina lasts. From model 3
+        // the heading of the first flight tick is kept until the agent is across the edge
+        // (#230): re-aiming every tick let an agent ringed by enemies, or overtaken by a pursuer,
+        // turn back and forth on the spot and never escape.
+        let away = v3 ? (escapeH[i] as number) : NaN;
+        if (Number.isNaN(away)) {
+          const e = nearestEnemy(i);
+          away =
+            e >= 0
+              ? atan2((y[i] as number) - (y[e] as number), (x[i] as number) - (x[e] as number))
+              : atan2((y[i] as number) - L / 2, (x[i] as number) - L / 2);
+          if (v3) escapeH[i] = away;
+        }
         let speed = cruise[i] as number;
         if ((stamina[i] as number) > 0) {
           speed = sprint[i] as number;
@@ -1438,12 +1478,25 @@ export function simulateFreeBattle(
 
     let activeA = 0;
     let activeB = 0;
+    let inPlayA = 0;
+    let inPlayB = 0;
     for (let i = 0; i < n; i++) {
-      if ((state[i] as number) < FreeState.Routed) {
+      const st = state[i] as number;
+      if (st < FreeState.Routed) {
         if (side[i] === 0) activeA++;
         else activeB++;
       }
+      if (st < FreeState.Dead) {
+        if (side[i] === 0) inPlayA++;
+        else inPlayB++;
+      }
     }
+    activeOf[0] = activeA;
+    activeOf[1] = activeB;
+    // Up to model 2 a side whose members all routed is out at once; from model 3 only once
+    // nobody of it is in play (every routed member escaped or fell).
+    const outA = v3 ? inPlayA === 0 : activeA === 0;
+    const outB = v3 ? inPlayB === 0 : activeB === 0;
     if (trace && (step + 1) % traceEvery === 0) {
       record((step + 1) * DT);
       if (frames.length > maxFrames) {
@@ -1451,9 +1504,9 @@ export function simulateFreeBattle(
         traceEvery *= 2;
       }
     }
-    if (activeA === 0 || activeB === 0) {
-      outcome =
-        activeA === activeB ? FreeOutcome.Draw : activeA === 0 ? FreeOutcome.B : FreeOutcome.A;
+    if (outA || outB) {
+      outcome = outA && outB ? FreeOutcome.Draw : outA ? FreeOutcome.B : FreeOutcome.A;
+      ended = true;
       step++;
       break;
     }
@@ -1486,9 +1539,18 @@ export function simulateFreeBattle(
     }
   }
   const frac = (a: number, b: number): number => (b > 0 ? a / b : 0);
+  const loserFled = outcome === FreeOutcome.A ? routed[1] : routed[0];
+  const endReason: FreeEndReasonCode = !ended
+    ? FreeEndReason.TimeLimit
+    : outcome === FreeOutcome.Draw
+      ? FreeEndReason.Mutual
+      : (loserFled as number) > 0
+        ? FreeEndReason.Rout
+        : FreeEndReason.Wipeout;
   const summary: FreeRunSummary = {
     run,
     outcome,
+    endReason,
     duration: step * DT,
     aAlive: alive[0] as number,
     aKilled: killed[0] as number,

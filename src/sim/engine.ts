@@ -66,9 +66,30 @@ export const PackState = {
 export const Outcome = { Heavy: 0, Pack: 1, Draw: 2 } as const;
 export type OutcomeCode = (typeof Outcome)[keyof typeof Outcome];
 
+/**
+ * How a run ended (#230, docs/MODEL.md §2.4), shared by both engines and derived from the final
+ * state for every model version:
+ *
+ * - `Wipeout`: the losing side has nobody left and none of it fled (all incapacitated).
+ * - `Rout`: the losing side has nobody left and at least one of it fled.
+ * - `TimeLimit`: `maxTime` was reached with both sides still in play; always a draw.
+ * - `Mutual`: both sides ran out in the same tick; a draw (free engine only: in the classic
+ *   engine the pack wins when the last heavy falls, whatever the pack's state).
+ */
+export const EndReason = { Wipeout: 0, Rout: 1, TimeLimit: 2, Mutual: 3 } as const;
+export type EndReasonCode = (typeof EndReason)[keyof typeof EndReason];
+
+/**
+ * The first classic model version whose battle ends only when no pack animal is still in play
+ * (#230): a routed animal is out once it has escaped across the arena edge, not when it routs.
+ */
+export const CLASSIC_BATTLE_END_SINCE_MV = 3;
+
 export interface RunSummary {
   run: number;
   outcome: OutcomeCode;
+  /** How the run ended (`EndReason`). */
+  endReason: EndReasonCode;
   duration: number;
   heavyAlive: number;
   packKilled: number;
@@ -178,6 +199,7 @@ export function simulateBattle(
   // Model version 2 uses the deterministic math of src/sim/detmath.ts (#197); version 1 keeps
   // the engine's own `Math`, so links made before it reproduce as they did.
   const det = config.mv >= 2;
+  const v3 = config.mv >= CLASSIC_BATTLE_END_SINCE_MV;
   const { sin, cos, atan2 } = det ? DET_MATH : NATIVE_MATH;
   const rng = new Rng(deriveSeed(config.seed, run, BATTLE_SALT), det);
   const N = config.heavyCount;
@@ -273,6 +295,8 @@ export function simulateBattle(
   const tTimer = new Float64Array(M);
   const tSide = new Int8Array(M);
   const tRecoverTimer = new Float64Array(M);
+  // Model 3: escape heading of a routed animal, fixed on its first flight tick (NaN until then).
+  const tEscape = new Float64Array(M).fill(NaN);
 
   const discR = Math.min(0.2 * L, 3 * Math.sqrt(M));
   for (let j = 0; j < M; j++) {
@@ -432,6 +456,7 @@ export function simulateBattle(
   };
 
   let outcome: OutcomeCode = Outcome.Draw;
+  let ended = false;
   let step = 0;
   if (trace) record(0);
 
@@ -656,14 +681,21 @@ export function simulateBattle(
           break;
         }
         case PackState.Routed: {
-          const r = nearestHeavy(j);
-          let away: number;
-          if (r >= 0)
-            away = atan2(
-              (ty[j] as number) - (ry[r] as number),
-              (tx[j] as number) - (rx[r] as number),
-            );
-          else away = atan2((ty[j] as number) - L / 2, (tx[j] as number) - L / 2);
+          let away = v3 ? (tEscape[j] as number) : NaN;
+          if (Number.isNaN(away)) {
+            const r = nearestHeavy(j);
+            if (r >= 0)
+              away = atan2(
+                (ty[j] as number) - (ry[r] as number),
+                (tx[j] as number) - (rx[r] as number),
+              );
+            else away = atan2((ty[j] as number) - L / 2, (tx[j] as number) - L / 2);
+            // Model 3 (#230): the heading of the first flight tick is kept until the animal is
+            // across the edge. Re-aiming away from the nearest heavy every tick let an animal
+            // ringed by heavies, or overtaken by the one chasing it, turn back and forth on the
+            // spot, so it never escaped and the run reached the time limit.
+            if (v3) tEscape[j] = away;
+          }
           let speed = tCruise[j] as number;
           if ((tStamina[j] as number) > 0) {
             speed = tSprint[j] as number;
@@ -696,8 +728,12 @@ export function simulateBattle(
       }
       if (rAlive[i]) heavyAlive++;
     }
+    // Up to model 2 the pack is out once none of it is active (Approach, Latched, Recover);
+    // from model 3 (#230) only once none of it is in play: a routed animal still on the field
+    // counts until it escapes across the edge or falls.
+    const outBelow = v3 ? PackState.Dead : PackState.Routed;
     let active = 0;
-    for (let j = 0; j < M; j++) if ((tState[j] as number) < PackState.Routed) active++;
+    for (let j = 0; j < M; j++) if ((tState[j] as number) < outBelow) active++;
 
     if (trace && (step + 1) % traceEvery === 0) {
       record((step + 1) * DT);
@@ -708,11 +744,13 @@ export function simulateBattle(
     }
     if (heavyAlive === 0) {
       outcome = Outcome.Pack;
+      ended = true;
       step++;
       break;
     }
     if (active === 0) {
       outcome = Outcome.Heavy;
+      ended = true;
       step++;
       break;
     }
@@ -740,9 +778,15 @@ export function simulateBattle(
     else if (s < PackState.Routed) active++;
   }
   const heavyHpFrac = maxHpSum > 0 ? hpSum / maxHpSum : 0;
+  const endReason: EndReasonCode = !ended
+    ? EndReason.TimeLimit
+    : outcome === Outcome.Heavy && routed > 0
+      ? EndReason.Rout
+      : EndReason.Wipeout;
   const summary: RunSummary = {
     run,
     outcome,
+    endReason,
     duration: step * DT,
     heavyAlive,
     packKilled: killed,

@@ -282,7 +282,7 @@ describe('reproduction check links', () => {
   });
 
   it('works for the defaults of classic model 1 (no s=, as before #197)', () => {
-    const c = { ...defaultConfig(), mv: 1 };
+    const c = defaultConfig(1);
     const s = summarize(fakeAgg(500, 500, 0, 0));
     const hash = reproduceHash(c, s);
     expect(hash.startsWith('#chk=')).toBe(true);
@@ -325,7 +325,7 @@ describe('config code', () => {
   });
 
   it('treats an empty code as the defaults of classic model 1 (the code they had before #197)', () => {
-    const v1Defaults = { ...defaultConfig(), mv: 1 };
+    const v1Defaults = defaultConfig(1);
     expect(configCode(v1Defaults)).toBe(CODE_PREFIX);
     expect(parseConfigInput(CODE_PREFIX)).toEqual({ ok: true, config: v1Defaults });
     // The current defaults name their model version.

@@ -256,6 +256,25 @@ Per call the functions cost about twice V8's built-ins (2 million calls: `dsin` 
 
 **Flight mode (owner decision 2026-11-16).** In `allIn`, the default, the engine skips the flight pass entirely (`flightOn` is false), so its cost is model 2's math alone. Measured 2026-11-16 the same way (vitest, Node 22, 4-core container, 30 runs × 300 s, median of 5 alternating rounds, wall time per simulated agent-step, morale on): 10 _T. rex_ v 100 tigers 165.8 ns in `allIn` against 362.8 ns in `realistic`, where most tigers flee and a fleeing agent searches for its nearest enemy every tick (its battles end in about a fifth of the time, so a `realistic` batch is still cheaper); 10 lions v 1 elephant 365.0 against 369.1 ns (+1 %, the flight pass itself). Simple and every preset run `allIn`.
 
+## Battle end and model 3 (#230)
+
+Model 3 runs a battle until one side is out (MODEL.md §2.4): a routed agent stays in the battle until it has run off the field or been caught. The per-tick cost barely changes (one more count per tick; an agent with no enemy left fighting searches for the nearest routed one, a second grid query only then); the cost per run grows with the time the losing side needs to leave. Measured 2026-11-18 in vitest (Node 22, V8) on the 4-core container, one batch per row (20 runs for the 30+ agent presets, 60 for the others, seed 20261019), wall time per run on one core, model 2 against model 3, both `allIn` (the mode Simple runs). Two calibration runs shared the machine, so treat the figures as ±20 %.
+
+| Preset (Simple runs 500)                  | Model 2 (ms/run) | Model 3 (ms/run) | Model 3, one Simple batch (core-s) |
+| ----------------------------------------- | ---------------: | ---------------: | ---------------------------------: |
+| `lion-tiger`                              |              2.6 |              3.4 |                                1.7 |
+| `pride-five-tigers`                       |              8.5 |              3.0 |                                1.5 |
+| `bear-wolf-pack`                          |             11.8 |              5.5 |                                2.8 |
+| `elephants-pride`                         |             12.3 |             17.6 |                                8.8 |
+| `mammoth-wolves`                          |              6.5 |              7.7 |                                3.9 |
+| `trex-squad-tiger-horde`                  |             35.2 |             34.6 |                               17.3 |
+| `trex-erectus-100`                        |             25.0 |             44.3 |                               22.1 |
+| `raptors-trex`                            |             13.6 |             14.9 |                                7.5 |
+| other duels                               |          0.7–4.0 |          1.0–5.9 |                            0.5–2.9 |
+| 100 _H. erectus_ v 1 _T. rex_ (#230 link) |             28.1 |             42.9 |                               21.5 |
+
+The heaviest Simple batches stay at about 20 core-seconds, about 5 s of wall time on a 4-core machine (phones slower); no preset needs a run-count change. The work budget counts `maxTime` ticks (`freeWorkEstimate`), so the 3,600 s default lowers the run cap of very large configs to a third (1,000 v 1,000 with the pack buff: 833 → 277 runs; 5,500 agents: 303 → 101 with the buff, 757 → 252 without); those are the batches where a 1,200 s cap could cut long battles short. With morale off (no fleeing) battles run until one side is incapacitated and cost much more: in a first version of model 3 that had no rout in `allIn`, `elephants-pride` took 71 ms per run and the 100 _H. erectus_ link 213 ms.
+
 ## Not changed
 
 - No `SharedArrayBuffer`: it needs cross-origin isolation, which conflicts with third-party ad iframes ([research §3](research/PERFORMANCE.md)). Transfers are already zero-copy.

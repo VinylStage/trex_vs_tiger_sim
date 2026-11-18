@@ -13,6 +13,7 @@ import { emptyBuffStats, simulateFreeBattle, type BuffStats, type FreeRunSummary
 export const FREE_SUMMARY_FIELDS = [
   'run',
   'outcome',
+  'endReason',
   'duration',
   'aAlive',
   'aKilled',

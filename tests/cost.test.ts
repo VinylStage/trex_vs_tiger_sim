@@ -21,7 +21,7 @@ describe('costSummary', () => {
   });
 
   it('flags long runs that fit the budget', () => {
-    const c = { ...defaultConfig(), heavyCount: 10, packCount: 400, runs: 5000 };
+    const c = { ...defaultConfig(), heavyCount: 10, packCount: 400, runs: 3000 };
     const s = costSummary(c, 1);
     expect(s.cap).toBeNull();
     expect(s.level).not.toBe('ok');

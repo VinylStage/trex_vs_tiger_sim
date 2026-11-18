@@ -211,9 +211,10 @@ export function captureFree(
   name: string,
   input: Record<string, unknown>,
   opts?: FreeBattleOptions,
+  mv = 2,
 ): CapturedCase {
-  const config = sanitizeFreeConfig({ ...input, mv: 2 });
-  if (config.mv !== 2) throw new Error('model 2 is not runnable');
+  const config = sanitizeFreeConfig({ ...input, mv });
+  if (config.mv !== mv) throw new Error(`model ${String(mv)} is not runnable`);
   if (config.flight !== (input['flight'] ?? 'allIn')) throw new Error('flight mode not accepted');
   const design = buildFreeDesign(config);
   const summaries = opts
@@ -233,18 +234,20 @@ export function captureFree(
     name,
     input,
     designHash: hashOf(design.values),
+    // From model 3 the row ends with the end reason (#230); model 2 rows stay as captured.
     summaries: summaries.map((s) => [
       ...freeRow(s),
       ...(Object.values(s.buffA) as number[]),
       ...(Object.values(s.buffB) as number[]),
+      ...(mv >= 3 ? [s.endReason] : []),
     ]),
     traceHash: hex(fh),
   };
 }
 
-export function captureClassic(name: string, input: Record<string, unknown>): CapturedCase {
-  const config = sanitizeConfig({ ...input, mv: 2 });
-  if (config.mv !== 2) throw new Error('classic model 2 is not runnable');
+export function captureClassic(name: string, input: Record<string, unknown>, mv = 2): CapturedCase {
+  const config = sanitizeConfig({ ...input, mv });
+  if (config.mv !== mv) throw new Error(`classic model ${String(mv)} is not runnable`);
   const { design, summaries } = runAll(config);
   const { trace } = simulateBattle(config, designRow(design, 0), 0, true);
   if (!trace) throw new Error('no trace');
@@ -261,7 +264,7 @@ export function captureClassic(name: string, input: Record<string, unknown>): Ca
     name,
     input,
     designHash: hashOf(design.values),
-    summaries: summaries.map(classicRow),
+    summaries: summaries.map((s) => [...classicRow(s), ...(mv >= 3 ? [s.endReason] : [])]),
     traceHash: hex(fh),
   };
 }
@@ -286,6 +289,7 @@ export function captureMath(): Record<string, string> {
   };
 }
 
+/** A golden of free and classic model `mv` (2 or later): `Mv2Golden` is model 2's. */
 export interface Mv2Golden {
   capturedFrom: string;
   math: Record<string, string>;
@@ -299,6 +303,72 @@ export function captureAll(capturedFrom: string): Mv2Golden {
     math: captureMath(),
     free: FREE_CASES.map((c) => captureFree(c.name, c.input, c.opts)),
     classic: CLASSIC_CASES.map((c) => captureClassic(c.name, c.input)),
+  };
+}
+
+/*
+ * Model 3 (#230): a side is out only when nobody of it is in play (a routed animal counts until
+ * it escapes across the edge, keeping its first flight heading), and the default time limit is
+ * 3,600 s.
+ * The model 2 cases again under model 3 (their numbers change where routs ended a battle), plus
+ * cases for the new end rules: escape and pursuit in `realistic`, a battle that reaches the time
+ * limit, and the classic pack escaping. Fixture tests/fixtures/mv3-golden.json, never regenerated.
+ */
+export const FREE_CASES_MV3: typeof FREE_CASES = [
+  ...FREE_CASES,
+  {
+    name: 'homoErectus 100 v trex 1 (realistic: the group flees and escapes)',
+    input: {
+      runs: 4,
+      flight: 'realistic',
+      seed: 3842280975,
+      sides: [{ species: 'homoErectus', count: 100 }, { species: 'trex' }],
+    },
+  },
+  {
+    name: 'homoErectus 100 v trex 1 (allIn: the group routs and escapes)',
+    input: {
+      runs: 2,
+      seed: 3842280975,
+      sides: [{ species: 'homoErectus', count: 100 }, { species: 'trex' }],
+    },
+  },
+  {
+    name: 'homoErectus 100 v trex 1 (morale off: nobody flees)',
+    input: {
+      runs: 1,
+      morale: false,
+      seed: 3842280975,
+      sides: [{ species: 'homoErectus', count: 100 }, { species: 'trex' }],
+    },
+  },
+  {
+    name: 'lion 5 v tiger 5, 60 s time limit (draws on the time limit)',
+    input: {
+      runs: 10,
+      maxTime: 60,
+      sides: [
+        { species: 'lion', count: 5 },
+        { species: 'tiger', count: 5 },
+      ],
+    },
+  },
+];
+
+export const CLASSIC_CASES_MV3: typeof CLASSIC_CASES = [
+  ...CLASSIC_CASES,
+  {
+    name: 'trex 10 v tiger 100, defaults (the pack escapes before the battle ends)',
+    input: { runs: 10 },
+  },
+];
+
+export function captureAllMv3(capturedFrom: string): Mv2Golden {
+  return {
+    capturedFrom,
+    math: captureMath(),
+    free: FREE_CASES_MV3.map((c) => captureFree(c.name, c.input, c.opts, 3)),
+    classic: CLASSIC_CASES_MV3.map((c) => captureClassic(c.name, c.input, 3)),
   };
 }
 

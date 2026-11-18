@@ -2838,7 +2838,7 @@
               <dl class="facts">
                 <div>
                   <dt>Default</dt>
-                  <dd><data data-k="default" value="1200">1,200</data> s</dd>
+                  <dd><data data-k="default" value="3600">3,600</data> s</dd>
                 </div>
                 <div>
                   <dt>Allowed range</dt>
@@ -2849,9 +2849,11 @@
                 </div>
               </dl>
               <p>
-                If neither side has won by then, the battle is a draw. The value is snapped to 0.1
-                s. Big fights without morale can last several minutes, so a short limit produces
-                more draws.
+                A safety cap. If neither side has won by then, the battle is a draw on the time
+                limit, never a win. The value is snapped to 0.1 s. From model 3 a battle runs until
+                one side is incapacitated or has escaped across the arena edge, so the default is
+                3,600 s and every measured battle ended before it. Model 1 and 2 links keep the old
+                default of 1,200 s.
               </p>
             </section>
             <section class="setting" id="setting-individualCV" data-setting="individualCV">
@@ -3078,8 +3080,8 @@
             <p>
               Units, bounds and evidence tags below are those of the current model version (<data
                 data-k="free-mv"
-                value="2"
-                >2</data
+                value="3"
+                >3</data
               >) and are checked against the simulator code automatically. The full per-species
               ranges and sources are in the <a href="/en/species/">species guide</a> and
               <a
@@ -6131,6 +6133,8 @@
                 Advanced mode’s <strong>Flight mode</strong> setting is
                 <strong>Realistic</strong> and morale &amp; routing is on. The default,
                 <strong>Fight to the end</strong>, and every Simple-mode match do not use them.
+                Morale rout still happens in both modes; from model 3 a battle goes on until every
+                fleeing animal has left the arena (#230).
               </p>
               <p>
                 Like <code>hide</code>, they are species constants: not sampled and not carried in

@@ -6,10 +6,13 @@
  * - 1: the free engine as it shipped through v0.2.26.
  * - 2: deterministic math (#197) and per-species flight traits (#169), with researched polar bear
  *   behaviour values (docs/SPECIES.md §11.6).
+ * - 3: battle end (#230). A side is out only when every member is incapacitated or has escaped
+ *   across the arena edge; a routed animal still on the field stays in play, can be chased and
+ *   keeps its first flight heading until it is out (docs/MODEL.md §2.4).
  *
  * Kept in its own module so the species registry can read it without importing the config.
  */
-export const FREE_MODEL_VERSION = 2;
+export const FREE_MODEL_VERSION = 3;
 
 /** Whether `v` is a model version this build runs: an integer from 1 to FREE_MODEL_VERSION. */
 export const isFreeModelVersion = (v: unknown): v is number =>

@@ -3,6 +3,7 @@ import { FREE_LIMITS, hasFlightMode, type FreeConfig } from '../sim/free/config'
 import { readyPresets } from '../sim/free/presets';
 import { FREE_SPECIES, FREE_SPECIES_IDS } from '../sim/free/species';
 import { h } from './dom';
+import { endReasonBreakdown } from './end-reason';
 import { formatInt, formatNum, formatPct } from './format';
 import { getLang, speciesCounter, speciesName, t, teamLabel, type MsgKey } from './i18n';
 import { withSideCount, withSideSpecies, type FreeSideIndex } from './free-form-model';
@@ -345,6 +346,11 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
     breakdown.replaceChildren(
       h('p', { class: 'simple-breakdown-title', text: t('simple.breakdown') }),
       h('div', { class: 'simple-breakdown-sides' }, ...SIDES.map(rows)),
+      // How the runs ended (#230): a time limit is a draw, never a win.
+      h('p', {
+        class: 'simple-end',
+        text: `${t('end.title')}: ${endReasonBreakdown(agg.endReasons)}`,
+      }),
       h('div', { class: 'simple-again' }, againBtn),
     );
   }

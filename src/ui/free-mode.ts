@@ -18,6 +18,7 @@ import { h } from './dom';
 import { formatDuration, formatInt, formatNum, formatPct } from './format';
 import { getLang, speciesCounter, speciesName, t, teamLabel, type MsgKey } from './i18n';
 import { CancelledError, type PoolProgress, type SimPool } from './pool';
+import { commonEndReason, endReasonBreakdown, endReasonLabel } from './end-reason';
 import type { FreeReplayView } from './free-replay';
 import type { LiveMode } from './live';
 import type { FreeLive } from './share-free';
@@ -785,6 +786,29 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       replayState = { kind, run, loading: false };
       renderReplayInfo();
       v.load(trace, [team(res.config, 0), team(res.config, 1)]);
+      // How this run ended, over the arena once playback reaches the end (#230).
+      const s = res.summaries.find((x) => x.run === run);
+      v.setEndText(
+        s
+          ? () =>
+              [
+                t('end.banner', {
+                  outcome: runOutcome(res.config, s),
+                  reason: endReasonLabel(s.endReason),
+                }),
+                // How many of each side fled the field: the rout the replay has just shown.
+                ...([0, 1] as const)
+                  .filter((i) => (i === 0 ? s.aRouted : s.bRouted) > 0)
+                  .map((i) =>
+                    t('end.fled', {
+                      side: t(sideKey(i)),
+                      n: formatInt(i === 0 ? s.aRouted : s.bRouted),
+                      counter: speciesCounter(res.config.sides[i].species),
+                    }),
+                  ),
+              ].join(' · ')
+          : null,
+      );
     } catch (err) {
       if (err instanceof CancelledError || token !== replayToken) return;
       replayState = {
@@ -815,11 +839,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     const c = result.config;
     const s = result.summaries.find((x) => x.run === st.run);
     const note = t(st.kind === 'representative' ? 'free.replay.repNote' : 'replay.randomNote');
-    const outcome = !s
-      ? ''
-      : s.outcome === FreeOutcome.Draw
-        ? t('outcome.draw')
-        : t('free.win', { side: team(c, s.outcome === FreeOutcome.A ? 0 : 1) });
+    const outcome = s ? `${runOutcome(c, s)} · ${endReasonLabel(s.endReason)}` : '';
     const info = s
       ? t('replay.runInfo', { run: st.run + 1, outcome, duration: formatDuration(s.duration) })
       : '';
@@ -840,6 +860,12 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   function updateStale(): void {
     staleEl.hidden = !result || JSON.stringify(result.config) === JSON.stringify(cfg);
   }
+
+  /** Winner (or draw) of one run. */
+  const runOutcome = (c: FreeConfig, s: FreeRunSummary): string =>
+    s.outcome === FreeOutcome.Draw
+      ? t('outcome.draw')
+      : t('free.win', { side: team(c, s.outcome === FreeOutcome.A ? 0 : 1) });
 
   const team = (c: FreeConfig, i: SideIndex): string =>
     t('free.sideTeam', {
@@ -983,6 +1009,12 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
           p5: formatDuration(agg.duration.p5, 0),
           p95: formatDuration(agg.duration.p95, 0),
         }),
+      ),
+      // How the runs ended (#230): a time limit is a draw, never a win.
+      card(
+        t('end.title'),
+        endReasonLabel(commonEndReason(agg.endReasons)),
+        endReasonBreakdown(agg.endReasons),
       ),
       ...sideCards(0),
       ...sideCards(1),

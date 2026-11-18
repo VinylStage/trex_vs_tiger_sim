@@ -75,8 +75,9 @@ export const PRESET_LIMITS = {
 const ONE_ON_ONE =
   'One on one, the loser flees once its morale breaks (FREE-MATCHUPS.md §4.5) and there is no group for a rout to spread through, so nearly every decided run ends in a rout.';
 
-const HELD =
-  'Fails the rout check: the losing group flees in nearly every run. Released by an owner-accepted override, other counts, or a morale retune under a new model version (R4).';
+/** Released from hold by owner decision (2026-11-18, #230). */
+const RELEASED =
+  'Owner-accepted override (2026-11-18, #230): the losing side flees in nearly every decided run. From model 3 a battle ends only once the fleeing animals have run off the field, so the replay shows a rout rather than a sudden stop.';
 
 export const FREE_PRESETS: readonly FreePreset[] = [
   {
@@ -91,7 +92,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     },
     check: {
       maxRoutShare: 1,
-      minMedianS: 20,
       reason: `${ONE_ON_ONE} Two big cats of similar size settle it in a few strikes.`,
     },
   },
@@ -105,7 +105,7 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '사자는 무리를 지어 살고 호랑이는 혼자 삽니다. 무리 버프가 그 차이를 보여 줍니다.',
       en: 'Lions live in prides and tigers alone; the pack buff shows the difference.',
     },
-    hold: HELD,
+    check: { maxRoutShare: 1, reason: RELEASED },
   },
   {
     id: 'tiger-bear',
@@ -167,11 +167,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '털매머드와 회색늑대는 빙하기의 같은 초원에 살았습니다. 기록된 싸움이 아니라 사고 실험입니다.',
       en: 'Woolly mammoths and grey wolves lived on the same glacial-period steppe; a thought experiment, not a recorded fight.',
     },
-    check: {
-      maxRoutShare: 1,
-      reason:
-        'At the fixture measure the wolves rout 90.1 % under model 2 (fight to the end), 0.1 pp over the limit (model 1: 89.8 %, the same model before deterministic math reshuffled individual runs). Field records of the living analogue: wolves avoid the risk of injury from large prey, wounding it and waiting rather than pressing an attack, and a large prey animal that stands its ground is often left alone (SPECIES.md §11.6), so a pack that breaks off matches them.',
-    },
   },
   {
     id: 'trex-mirror',
@@ -183,7 +178,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '양쪽이 같은 종이라 대칭에 따라 50 대 50입니다.',
       en: 'The same species on both sides: 50/50 by symmetry.',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'trex-squad-tiger-horde',
@@ -206,7 +200,7 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '신체 능력만 비교하는 사고 실험입니다. 실제 폭력을 묘사하거나 지지하지 않습니다.',
       en: 'A thought experiment about physical capability only; it does not depict or endorse real violence.',
     },
-    hold: HELD,
+    check: { maxRoutShare: 1, reason: RELEASED },
   },
   {
     id: 'lions-hyenas',
@@ -218,7 +212,7 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '사자와 점박이하이에나는 사는 곳이 겹치는 지역에서 먹이를 두고 경쟁합니다.',
       en: 'Lions and spotted hyenas compete for food where their ranges meet.',
     },
-    hold: HELD,
+    check: { maxRoutShare: 1, reason: RELEASED },
   },
   {
     id: 'polar-bear-brown-bear',
@@ -242,7 +236,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '두 종은 아프리카의 같은 강가와 물웅덩이를 씁니다. 하마도 손꼽히게 무거운 육상동물이지만, 다 자란 코끼리는 하마보다 두 배쯤 무겁습니다.',
       en: 'Both use the same African rivers and waterholes. The hippo is one of the heaviest land animals, yet an adult elephant weighs about twice as much.',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'raptors-trex',
@@ -289,7 +282,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '두 종은 만난 적이 없습니다(약 3천만 년 차이, 북아메리카와 북아프리카). 스피노사우루스는 물가에 살았지만, 두 발로 걷고 얕은 물에 서서 물고기를 잡았다는 연구가 있어 땅 위에서 겨룹니다(Sereno 외 2022). 몸무게는 비슷하지만 무는 힘은 티라노가 몇 배 강합니다(Sakamoto 2022).',
       en: 'Never met (about 30 million years apart, in North America and North Africa). Spinosaurus lived by the water, but it walked on two legs and caught fish while wading (Sereno et al. 2022), so they meet on land. Their weights are similar; the T. rex bite was several times stronger (Sakamoto 2022).',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
   {
     id: 'trex-triceratops',
@@ -301,7 +293,6 @@ export const FREE_PRESETS: readonly FreePreset[] = [
       ko: '두 종은 약 6,800만~6,600만 년 전 북아메리카 서부에서 함께 살았습니다. 끝이 부러진 트리케라톱스의 눈 위 뿔에 티라노의 이빨 자국이 아문 채 남아 있어, 그 만남 뒤에도 트리케라톱스가 살아남았음을 보여 줍니다(Happ 2008).',
       en: 'They lived together in western North America about 68–66 million years ago. A Triceratops brow horn with a broken tip carries healed T. rex tooth marks: the horned animal survived the encounter (Happ 2008).',
     },
-    check: { maxRoutShare: 1, reason: ONE_ON_ONE },
   },
 ];
 

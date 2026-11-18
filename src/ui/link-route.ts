@@ -92,9 +92,8 @@ export function routeLink(hash: string, search: string): LinkRoute {
  * no `s=` at all, so it keeps model 1; every other such fragment opens the current defaults.
  */
 function fragmentDefaults(hash: string): ScenarioConfig {
-  const d = defaultConfig();
   const h = hash.startsWith('#') ? hash.slice(1) : hash;
-  return h.split('&').some((part) => part.startsWith('chk=')) ? { ...d, mv: 1 } : d;
+  return h.split('&').some((part) => part.startsWith('chk=')) ? defaultConfig(1) : defaultConfig();
 }
 
 /** What a fragment pasted into an open play page (`hashchange`) opens, if anything. */

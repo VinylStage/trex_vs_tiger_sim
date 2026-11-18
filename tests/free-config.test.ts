@@ -52,17 +52,12 @@ describe('free config defaults', () => {
     expect(Object.values(c.packBuff).every(Boolean)).toBe(true);
     expect(Object.keys(c.packBuff)).toEqual([...PACK_BUFF_EFFECTS]);
     expect(Object.keys(c.globals)).toEqual([...GLOBAL_IDS]);
-    for (const k of [
-      'runs',
-      'seed',
-      'arenaSize',
-      'maxTime',
-      'sampling',
-      'individualCV',
-      'morale',
-    ] as const) {
+    for (const k of ['runs', 'seed', 'arenaSize', 'sampling', 'individualCV', 'morale'] as const) {
       expect(c[k], k).toBe(d[k]);
     }
+    // From model 3 the time limit is only a safety cap, the top of its range (#230).
+    expect(c.maxTime).toBe(3600);
+    expect(defaultFreeConfig(2).maxTime).toBe(defaultConfig(2).maxTime);
   });
 
   it('is a fixed point of the sanitizer', () => {
@@ -91,7 +86,7 @@ describe('sanitizeFreeConfig', () => {
   it('returns the defaults for garbage', () => {
     for (const bad of [null, 1, 'x', [], { sides: 'no' }, { sides: [1, 2] }]) {
       // No `mv` means model 1 (ADR-0008); the default T. rex sides are the same in every model.
-      expect(sanitizeFreeConfig(bad)).toEqual({ ...defaultFreeConfig(), mv: 1 });
+      expect(sanitizeFreeConfig(bad)).toEqual(defaultFreeConfig(1));
     }
   });
 

@@ -265,7 +265,7 @@ describe('share link v3', () => {
     expect(legacy).not.toHaveProperty('mode');
     expect([legacy.heavySpecies, legacy.packSpecies]).toEqual(['trex', 'tiger']);
     // The classic model 1 defaults still encode as nothing; model 2 names its version (#197).
-    expect(encodeConfig({ ...defaultConfig(), mv: 1 })).toBe('');
+    expect(encodeConfig(defaultConfig(1))).toBe('');
   });
 
   it('requires the mode marker', () => {

@@ -43,6 +43,18 @@ export interface FreeAggregate {
   buffB: FreeBuffAggregate;
   /** Run whose outcome is the most common one and whose duration is closest to that outcome's median. */
   representativeRun: number;
+  /** Runs per end reason, indexed by `FreeEndReason` code (wipe-out, rout, time limit, mutual). */
+  endReasons: EndReasonCounts;
+}
+
+/** Runs per end reason, indexed by `EndReason` code (#230). */
+export type EndReasonCounts = [wipeout: number, rout: number, timeLimit: number, mutual: number];
+
+/** Count runs per end reason (`EndReason` code). */
+export function countEndReasons(summaries: readonly { endReason: number }[]): EndReasonCounts {
+  const out: EndReasonCounts = [0, 0, 0, 0];
+  for (const s of summaries) out[s.endReason] = (out[s.endReason] as number) + 1;
+  return out;
 }
 
 /**
@@ -165,5 +177,6 @@ export function aggregateFree(
     buffA: buff((s) => s.buffA),
     buffB: buff((s) => s.buffB),
     representativeRun,
+    endReasons: countEndReasons(summaries),
   };
 }

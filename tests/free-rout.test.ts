@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { ROUT_NOTICE_SHARE, aggregateFree, routNotice, routShare } from '../src/sim/free/aggregate';
 import { PACK_BUFF_EFFECTS, defaultSide, sanitizeFreeConfig } from '../src/sim/free/config';
-import { FreeOutcome, emptyBuffStats, type FreeRunSummary } from '../src/sim/free/engine';
+import {
+  FreeEndReason,
+  FreeOutcome,
+  emptyBuffStats,
+  type FreeRunSummary,
+} from '../src/sim/free/engine';
 import { runAllFree } from '../src/sim/free/montecarlo';
 import { FREE_SPECIES, type FreeSpeciesId } from '../src/sim/free/species';
 
@@ -15,6 +20,7 @@ function run(
   return {
     run: 0,
     outcome: outcome as FreeRunSummary['outcome'],
+    endReason: outcome === FreeOutcome.Draw ? FreeEndReason.TimeLimit : FreeEndReason.Wipeout,
     duration: 10,
     aAlive: a[1] + a[2],
     aKilled: a[0],

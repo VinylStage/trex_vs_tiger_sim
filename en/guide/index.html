@@ -565,10 +565,14 @@
                   </tr>
                   <tr>
                     <th scope="row">Time limit</th>
-                    <td>30–3,600 s (1,200 s)</td>
+                    <td>30–3,600 s (3,600 s)</td>
                     <td>
-                      A side wins the moment the other has no fighter left. If that has not happened
-                      by the time limit, or both sides run out at the same moment, it is a draw.
+                      A side wins the moment the other has nobody left in the battle: every animal
+                      incapacitated or escaped across the arena edge (a fleeing animal still in the
+                      arena stays in). If that has not happened by the time limit it is a draw on
+                      the time limit, never a win; if both sides run out at the same moment it is
+                      also a draw. The limit is a safety cap; model 1 and 2 links keep their 1,200
+                      s.
                     </td>
                   </tr>
                   <tr>
@@ -610,8 +614,8 @@
               and the runs field shows the lowered value.
             </p>
             <p>
-              Take 1,000 wolves against 1,000 tigers at the default 1,200 s limit: one run is 12,000
-              steps × 2,000 animals × 2.5 = 60 million, so at most 833 runs fit. A shorter limit or
+              Take 1,000 wolves against 1,000 tigers at the default 3,600 s limit: one run is 36,000
+              steps × 2,000 animals × 2.5 = 180 million, so at most 277 runs fit. A shorter limit or
               smaller counts leave room for more. In Simple mode, shrinking the counts again gives
               you the full run count back.
             </p>
@@ -1049,8 +1053,8 @@
               <div>
                 <dt>Time limit (s)</dt>
                 <dd>
-                  If neither side has won by then, the battle counts as a draw. Default: 1,200 s (20
-                  min).
+                  A safety cap: if neither side has won by then, the battle is a draw on the time
+                  limit, never a win. Default: 3,600 s (1 h) from model 3, 1,200 s before.
                 </dd>
               </div>
               <div>
@@ -1446,9 +1450,10 @@
             </p>
             <h3>When does a draw happen?</h3>
             <p>
-              A battle is a draw when the time limit passes while at least one T-Rex is alive and at
-              least one tiger is still fighting. It mostly happens with morale off and very many
-              tigers, or with a short time limit.
+              A battle is a draw when the time limit passes while both sides still have an animal in
+              the battle; results show it as “Draw: time limit”. From model 3 the default limit is
+              3,600 s, so it is rare: mostly a short limit you set yourself, or two tired animals
+              that keep backing off from each other.
             </p>
             <h3>Are my settings or results stored anywhere?</h3>
             <p>

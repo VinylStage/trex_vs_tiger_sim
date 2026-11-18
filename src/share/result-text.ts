@@ -6,7 +6,7 @@ import { dictionary } from '../i18n/registry.ts';
 import { DEFAULT_BASELINE } from './baseline.ts';
 import { buffApplies, decodeAnyResultQuery, type FreeResultSummary } from './free-result-codec.ts';
 import type { FreeLive } from '../ui/share-free.ts';
-import { sm } from './messages.ts';
+import { sm, type ShareMsgKey } from './messages.ts';
 import type { ResultSummary } from './result-codec.ts';
 
 /*
@@ -355,6 +355,16 @@ export function freeStats(v: ResultView, s: FreeResultSummary): [string, string]
         sm(lang, 'free.buffValue', { pct: pct(x.b), t: time }),
       ]);
     }
+  }
+  // How the runs ended (`e`, model 3 on, #230): every reason that occurred, most common first.
+  if (s.e !== undefined) {
+    const n = s.e.reduce((a, b) => a + b, 0);
+    const parts = s.e
+      .map((k, code): [number, number] => [code, k])
+      .filter(([, k]) => k > 0)
+      .sort((x, y) => y[1] - x[1] || x[0] - y[0])
+      .map(([code, k]) => `${sm(lang, `free.end.${code}` as ShareMsgKey)} ${pct(k / n)}`);
+    items.push([sm(lang, 'free.end'), parts.join(' · ')]);
   }
   return items;
 }

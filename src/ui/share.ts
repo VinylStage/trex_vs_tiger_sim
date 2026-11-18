@@ -58,7 +58,8 @@ export function base64UrlDecode(encoded: string): string {
  * selected species' preset, so a link to an unedited matchup stays short.
  */
 export function configDiff(config: ScenarioConfig): Record<string, unknown> {
-  const d = defaultConfig();
+  // The defaults of the config's own model version: the time limit differs from model 3.
+  const d = defaultConfig(config.mv);
   const out: Record<string, unknown> = {};
   if (config.mv !== 1) out['mv'] = config.mv;
   if (config.heavySpecies !== d.heavySpecies) out['heavy'] = config.heavySpecies;

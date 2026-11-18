@@ -21,7 +21,8 @@ const GOLDEN: {
   name: string;
   config: Partial<ScenarioConfig>;
   run: number;
-  summary: RunSummary;
+  /** The pinned summary, as captured before `endReason` existed (#230). */
+  summary: Omit<RunSummary, 'endReason'>;
   frames: number;
   hash: string;
 }[] = [
@@ -111,18 +112,27 @@ const CHURN_GOLDEN = {
     packActive: 3000,
     heavyHpFrac: 1,
     heavyAdvantage: 0,
-  } satisfies RunSummary,
+  } satisfies Omit<RunSummary, 'endReason'>,
   frames: 341,
   hash: '7541d880',
 };
 
+/** A summary without the derived `endReason` (#230), which the pinned literals predate. */
+const pinned = (s: RunSummary): Omit<RunSummary, 'endReason'> => {
+  const rest: Partial<RunSummary> = { ...s };
+  delete rest.endReason;
+  return rest as Omit<RunSummary, 'endReason'>;
+};
+
 describe('event log determinism against main (C1 golden)', () => {
   it.each(GOLDEN)('$name: summary and frames unchanged', (g) => {
-    const c = scenario(g.config);
+    // Pinned under model 2, the last classic model these literals describe (#230 changed the
+    // battle end in model 3).
+    const c = scenario({ mv: 2, ...g.config });
     const row = designRow(buildDesign(c), g.run);
-    expect(simulateBattle(c, row, g.run).summary).toEqual(g.summary);
+    expect(pinned(simulateBattle(c, row, g.run).summary)).toEqual(g.summary);
     const out = simulateBattle(c, row, g.run, true);
-    expect(out.summary).toEqual(g.summary);
+    expect(pinned(out.summary)).toEqual(g.summary);
     const trace = out.trace;
     if (!trace) throw new Error('no trace');
     expect(trace.frames.length).toBe(g.frames);
@@ -136,7 +146,7 @@ describe('event log determinism against main (C1 golden)', () => {
     const out = simulateBattle(CHURN, designRow(buildDesign(CHURN), 0), 0, true);
     const trace = out.trace;
     if (!trace) throw new Error('no trace');
-    expect(out.summary).toEqual(CHURN_GOLDEN.summary);
+    expect(pinned(out.summary)).toEqual(CHURN_GOLDEN.summary);
     expect(trace.frames.length).toBe(CHURN_GOLDEN.frames);
     expect(framesHash(trace.frames)).toBe(CHURN_GOLDEN.hash);
     expect((trace.frames[2]?.t ?? 0) - (trace.frames[1]?.t ?? 0)).toBeCloseTo(1, 9);

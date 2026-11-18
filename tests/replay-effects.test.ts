@@ -127,7 +127,9 @@ function playFlash(trace: BattleTrace, speed: number, fixedScale?: number): Flas
 
 describe('flash budget accounting (V3, Node)', () => {
   const t10 = traceOf({ runs: 20 }, 7).trace;
-  const t50 = traceOf({ heavyCount: 50, packCount: 1000, runs: 2, maxTime: 60 }, 0).trace;
+  // The 50 v 1,000 trace is the stress case for many simultaneous fills: pinned to classic model
+  // 2, whose battle it was chosen from (model 3 changes how the pack's flight plays out, #230).
+  const t50 = traceOf({ mv: 2, heavyCount: 50, packCount: 1000, runs: 2, maxTime: 60 }, 0).trace;
 
   it.each([0.25, 1, 2, 4])('10v100 close view (12 px/m) at %s×: ≤ 3 fills/s per T-Rex', (speed) => {
     const r = playFlash(t10, speed, 12);
