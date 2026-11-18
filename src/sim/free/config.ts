@@ -161,6 +161,14 @@ export const BATTLE_END_SINCE_MV = 3;
 export const freeDefaultMaxTime = (mv: number): number =>
   mv >= BATTLE_END_SINCE_MV ? LIMITS.maxTime[1] : LEGACY_DEFAULT_MAX_TIME;
 
+/**
+ * The first model version in which an agent that wants to latch closes the step its target takes
+ * while backing off in Recover (#237, docs/MODEL.md §3.4). Before it the approach stopped one
+ * target step short of contact every tick, so a pursuer could hover beside a retreating target
+ * until it was exhausted and never latch.
+ */
+export const RETREAT_STEP_SINCE_MV = 4;
+
 export interface FreeConfig {
   mode: 'free';
   /** Model version the config runs under (ADR-0008). */

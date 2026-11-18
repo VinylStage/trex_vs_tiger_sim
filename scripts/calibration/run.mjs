@@ -11,7 +11,8 @@
 // alone writes docs/research/calibration-<section>.json instead, so one section never replaces
 // the whole committed file; `--quick` cuts every run count to a tenth for a smoke test and writes
 // nothing unless --out is given. `--mv <n>` runs free model version n and classic model
-// version n (default 1, the model every committed file without a suffix was measured with) and
+// version n, or the newest classic model when n is past it (free model 4 has no classic model 4,
+// #237), (default 1, the model every committed file without a suffix was measured with) and
 // adds `-mv<n>` to the default file names, so a new model never overwrites an older report.
 // `--flight` picks the free engine's flight mode from model 2 on (docs/MODEL.md §3.8): `allIn`, the
 // default and the mode every Simple preset runs, or `realistic`, which adds `-realistic` to the
@@ -97,6 +98,8 @@ const formMod = await load('/src/ui/form.ts');
 const stats = await load('/src/sim/stats.ts');
 
 const { Outcome } = classicEngine;
+// Free model 4 (#237) changed only the free engine: classic runs its newest model from there on.
+const CLASSIC_MV = Math.min(MV, classicConfig.CLASSIC_MODEL_VERSION);
 const { FreeOutcome } = freeEngine;
 
 // --- statistics ---
@@ -198,7 +201,7 @@ function record(engine, n, runs, counts) {
 
 function runClassic({ a, b, na, nb, runs, morale = true }, tactic = 'flank') {
   const c = classicConfig.sanitizeConfig({
-    mv: MV,
+    mv: CLASSIC_MV,
     heavySpecies: a,
     packSpecies: b,
     heavyCount: na,
@@ -209,6 +212,7 @@ function runClassic({ a, b, na, nb, runs, morale = true }, tactic = 'flank') {
     packTactic: tactic,
   });
   if (c.packTactic !== tactic) throw new Error(`tactic ${tactic} not accepted`);
+  if (c.mv !== CLASSIC_MV) throw new Error(`classic model ${String(CLASSIC_MV)} not accepted`);
   const { summaries } = classicMc.runAll(c);
   const rows = summaries.map((s) => ({
     outcome: s.outcome === Outcome.Heavy ? 'a' : s.outcome === Outcome.Pack ? 'b' : 'draw',
@@ -238,6 +242,7 @@ function runFree({ a, b, na, nb, runs, morale = true, globals, seed = SEED, para
     morale,
     ...(globals === undefined ? {} : { globals }),
   });
+  if (c.mv !== MV) throw new Error(`free model ${String(MV)} not accepted`);
   const { summaries } = freeMc.runAllFree(c);
   const rows = summaries.map((s) => ({
     outcome: s.outcome === FreeOutcome.A ? 'a' : s.outcome === FreeOutcome.B ? 'b' : 'draw',
@@ -1044,6 +1049,7 @@ const result = {
   node: version,
   seed: SEED,
   mv: MV,
+  classicMv: CLASSIC_MV,
   flight: MV >= 2 ? FLIGHT : undefined,
   quick: QUICK,
   // The default time limit is per model version: 3,600 s from model 3 (#230), 1,200 s before.

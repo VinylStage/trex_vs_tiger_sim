@@ -9,10 +9,13 @@
  * - 3: battle end (#230). A side is out only when every member is incapacitated or has escaped
  *   across the arena edge; a routed animal still on the field stays in play, can be chased and
  *   keeps its first flight heading until it is out (docs/MODEL.md §2.4).
+ * - 4: retreat step (#237). An agent that wants to latch onto a target backing off in Recover
+ *   closes the target's step of the same tick, so it can reach contact instead of hovering one
+ *   step short until it is exhausted (docs/MODEL.md §3.4).
  *
  * Kept in its own module so the species registry can read it without importing the config.
  */
-export const FREE_MODEL_VERSION = 3;
+export const FREE_MODEL_VERSION = 4;
 
 /** Whether `v` is a model version this build runs: an integer from 1 to FREE_MODEL_VERSION. */
 export const isFreeModelVersion = (v: unknown): v is number =>

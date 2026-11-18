@@ -145,6 +145,7 @@ export const CARDS_BY_MV: Readonly<Record<number, CardCatalogue>> = {
   1: CARDS_MV1,
   2: CARDS_MV1,
   3: CARDS_MV1,
+  4: CARDS_MV1,
 };
 
 /** The catalogue of model version `mv`; only an integer key is looked up, never a prototype one. */

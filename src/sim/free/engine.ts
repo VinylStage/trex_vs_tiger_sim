@@ -4,7 +4,13 @@ import { CONSTANTS, DT, EndReason, type EndReasonCode } from '../engine.ts';
 import { Rng, deriveSeed } from '../rng.ts';
 import { SpatialGrid } from '../spatial.ts';
 import type { TraitField } from './cards.ts';
-import { BATTLE_END_SINCE_MV, FREE_PARAM_INDEX, type FreeConfig, type GlobalId } from './config.ts';
+import {
+  BATTLE_END_SINCE_MV,
+  FREE_PARAM_INDEX,
+  RETREAT_STEP_SINCE_MV,
+  type FreeConfig,
+  type GlobalId,
+} from './config.ts';
 import {
   compileInterventions,
   mulProduct,
@@ -435,6 +441,9 @@ export function simulateFreeBattle(
   // still in play (a routed animal is, until it escapes across the edge), and routed animals can
   // be chased. Models 1 and 2 end a side's part on its last rout.
   const v3 = config.mv >= BATTLE_END_SINCE_MV;
+  // Model 4 (#237): a latcher closing on a target that backs off in Recover adds the target's
+  // step of this tick to its own, since both move from the same snapshot.
+  const v4 = config.mv >= RETREAT_STEP_SINCE_MV;
   const threatRatio = [
     spA.flight?.threatRatio.range.mode ?? 0,
     spB.flight?.threatRatio.range.mode ?? 0,
@@ -1118,6 +1127,7 @@ export function simulateFreeBattle(
         // E1 coordinated approach: a slot around the target's rear, sidestepping its strike cone.
         let heading = atan2(dy, dx);
         let gap = dist - stop;
+        if (v4 && wantsLatch && state[t] === FreeState.Recover) gap += (cruise[t] as number) * DT;
         if (slotTarget[i] === t && buffed[i]) {
           const m = slotN[t] as number;
           const spread = Math.min(TAU / m, C.flankOffset);
