@@ -59,6 +59,47 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.28',
+    date: '2026-11-18',
+    title: {
+      ko: '도망친 동물은 끝까지 도망가요, 그리고 실시간 대결 모드 🏃',
+      en: 'Runners now run all the way out, plus a live battle mode 🏃',
+    },
+    prs: [240, 238, 236, 234, 231, 235, 232],
+    items: [
+      {
+        cat: 'fixed',
+        refs: [230, 240],
+        ko: '도망치기 시작한 동물이 아직 경기장 안에 있는데 전투가 끝나 버리던 문제를 고쳤어요. 이제는 모두 쓰러지거나 경기장 밖으로 빠져나가야 끝나고, 리플레이에서도 도망친 동물이 가장자리로 달려 나가는 모습이 보여요. 예전 링크는 예전 결과 그대로예요.',
+        en: 'Battles no longer end while fleeing animals are still on the field. A side is out only once everyone is down or has run past the edge, and the replay shows the runners heading off. Old links keep their old results.',
+      },
+      {
+        cat: 'new',
+        refs: [230, 240],
+        ko: '결과 화면, 결과 페이지, 리플레이에 전투가 어떻게 끝났는지(모두 전투 불능, 도주, 시간 제한) 표시돼요. 리플레이 마지막에는 몇 마리가 도망쳤는지도 알려 줘요.',
+        en: 'Results, the result page and the replay now say how each battle ended: everyone down, flight, or time limit. The replay end banner also counts how many fled.',
+      },
+      {
+        cat: 'new',
+        refs: [183, 238, 181, 234, 182, 236],
+        ko: '실시간 대결 모드가 생겼어요. 전투 도중 변수 카드를 내면 예상 승률이 바로 바뀌고, 카드 하나가 승률을 얼마나 움직였는지 보여 줘요.',
+        en: 'Live battle mode is here. Play variable cards mid-fight and watch the win chance move, with how much each card shifted it.',
+      },
+      {
+        cat: 'improved',
+        refs: [180, 231],
+        ko: '실시간 대결에서 낸 카드 기록이 공유 링크에 함께 담겨요.',
+        en: 'Share links now carry the cards played in a live battle.',
+      },
+      {
+        cat: 'improved',
+        refs: [42, 235, 170, 232],
+        ko: '클래식 결과에 무리가 흩어진 비율이 보이고, 파라미터 페이지에 자유 대결의 특성과 도주 방식 설명이 추가됐어요.',
+        en: 'Classic results show how often the pack scattered, and the parameters page now explains free-match traits and flight modes.',
+      },
+    ],
+  },
+  {
     version: '0.2.27',
     date: '2026-11-16',
     title: {
