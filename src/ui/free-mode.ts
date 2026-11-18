@@ -114,6 +114,8 @@ export interface FreeModeOptions {
    * checks it against the shared snapshot (`check`, from `chk=`).
    */
   live?: { live: FreeLive; check: FreeResultSummary | null };
+  /** Called when the viewer leaves the live battle on screen (Close or a new battle, #239). */
+  onLiveLeave?: () => void;
 }
 
 interface FreeResult {
@@ -216,7 +218,11 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   async function ensureLive(): Promise<LiveMode> {
     if (liveMode) return liveMode;
     const { createLiveMode } = await import('./live');
-    liveMode ??= createLiveMode({ pool, showToast: opts.showToast });
+    liveMode ??= createLiveMode({
+      pool,
+      showToast: opts.showToast,
+      ...(opts.onLiveLeave ? { onLeave: opts.onLiveLeave } : {}),
+    });
     liveSlot.replaceChildren(liveMode.el);
     return liveMode;
   }

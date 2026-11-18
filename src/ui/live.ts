@@ -81,6 +81,8 @@ const GLYPH_SCALE: Readonly<Record<number, number>> = {
 export interface LiveModeOptions {
   pool: SimPool;
   showToast: (text: string) => void;
+  /** Called when the viewer leaves the battle on screen: Close, or a new battle started (#239). */
+  onLeave?: () => void;
 }
 
 export interface LiveMode {
@@ -701,6 +703,7 @@ export function createLiveMode(opts: LiveModeOptions): LiveMode {
     },
     start(config, run = 0) {
       void prepare(config, run, null, null);
+      opts.onLeave?.();
     },
     open(config, live, check) {
       void prepare(config, live.run, live.iv, check);
@@ -712,6 +715,7 @@ export function createLiveMode(opts: LiveModeOptions): LiveMode {
       setStatus(null);
       el.hidden = true;
       render();
+      opts.onLeave?.();
     },
     relocalize,
   };
