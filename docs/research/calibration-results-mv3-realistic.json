@@ -1,6 +1,6 @@
 {
   "generatedBy": "scripts/calibration/run.mjs",
-  "commit": "711e1d626791141c239bc60743d729bf9f4d1e39",
+  "commit": "a23de43e2fcb20088297f64d4d732595ebfc8683",
   "node": "v22.22.0",
   "seed": 20261019,
   "mv": 3,
@@ -3376,7 +3376,7 @@
       {
         "id": "trex-erectus-100",
         "hold": false,
-        "tags": ["thought-experiment", "close"],
+        "tags": ["thought-experiment"],
         "match": {
           "a": "trex",
           "b": "homoErectus",
@@ -3424,7 +3424,7 @@
       {
         "id": "lions-hyenas",
         "hold": false,
-        "tags": ["rivals"],
+        "tags": ["rivals", "close"],
         "match": {
           "a": "lion",
           "b": "hyena",
@@ -3616,7 +3616,7 @@
       {
         "id": "elephant-rhino",
         "hold": false,
-        "tags": ["popular", "documented", "close"],
+        "tags": ["popular", "documented"],
         "match": {
           "a": "elephant",
           "b": "whiteRhino",

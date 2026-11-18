@@ -1648,9 +1648,9 @@ Each species as side A in a match-up where its flight acts; each flight trait pi
 
 ## 20. Battle end and model 3 (#230)
 
-Model 3 changes how a battle ends, on both engines ([MODEL.md §2.4](../MODEL.md#24-outcomes)): a side is out only when nobody of it is in play (incapacitated, or routed and escaped across the arena edge), a routed animal keeps its first flight heading and can be chased, the free `allIn` mode has no rout at all, and the default time limit is a 3,600 s safety cap whose runs are draws with the end reason "time limit". It followed an owner report: a shared result of 100 _H. erectus_ against one _T. rex_ under model 2 "ended" after about 47 s with 97 % of the humans fled but still on screen, because the run stopped on the last rout.
+Model 3 changes when a battle ends, on both engines ([MODEL.md §2.4](../MODEL.md#24-outcomes)): a side is out only when nobody of it is in play (incapacitated, or routed and escaped across the arena edge), a routed animal keeps its first flight heading and can be chased, and the default time limit is a 3,600 s safety cap whose runs are draws with the end reason "time limit". Fleeing itself is unchanged: morale rout acts in both flight modes, and switching morale off is the way to a battle without fleeing (owner decision 2026-11-18). It followed an owner report: a shared result of 100 _H. erectus_ against one _T. rex_ under model 2 "ended" after about 47 s with 97 % of the humans fled but still on screen, because the run stopped on the last rout.
 
-Measured 2026-11-17 at 711e1d6 with `--mv 3` (`allIn`, raw data `calibration-results-mv3.json`) and `--mv 3 --flight realistic` (`calibration-results-mv3-realistic.json`), Node v22.22.0, seed 20261019, every other input at its preset (method §2). Each batch now also records its runs per end reason (`endReasons`: wipe-out, rout, time limit, mutual) and its longest run. "Model 2" is §19 (`allIn` unless marked). The classic engine has no flight mode, so its columns are identical in both files.
+Measured 2026-11-18 at a23de43 with `--mv 3` (`allIn`, raw data `calibration-results-mv3.json`) and `--mv 3 --flight realistic` (`calibration-results-mv3-realistic.json`), Node v22.22.0, seed 20261019, every other input at its preset (method §2). Each batch now also records its runs per end reason (`endReasons`: wipe-out, rout, time limit, mutual) and its longest run. "Model 2" is §19 (`allIn` unless marked). The classic engine has no flight mode, so its columns are identical in both files.
 
 ### 20.1 _T. rex_ vs tiger
 
@@ -1658,51 +1658,51 @@ Measured 2026-11-17 at 711e1d6 with `--mv 3` (`allIn`, raw data `calibration-res
 | ----------------- | ------------------------------------------------------------: | -------------: | ----------------------------------------------------------------: | ------------------------------------------------------------: |
 | 1 v 1             |                                               0.0 → 0.0 (0.0) |   26 → 26 (26) |                                             1.0 / 0.0 (0.9 / 0.1) |                               0.0 → 0.0; 143 → 167; 1.4 → 0.5 |
 | 1 v 2             |                                               0.0 → 0.0 (0.0) |   31 → 31 (31) |                                             2.0 / 0.0 (1.6 / 0.4) |                               0.0 → 0.0; 215 → 240; 1.1 → 0.2 |
-| 1 v 3             |                                               0.0 → 0.0 (0.0) |   36 → 36 (55) |                                             3.0 / 0.0 (2.2 / 0.8) |                               0.1 → 0.1; 260 → 286; 1.5 → 0.4 |
-| 1 v 5             |                                               0.0 → 0.0 (0.0) |   52 → 54 (79) |                                             5.0 / 0.0 (3.0 / 2.0) |                               0.4 → 1.0; 309 → 347; 2.0 → 0.2 |
-| 1 v 10            |                                               0.0 → 0.3 (0.0) | 118 → 122 (87) |                                            10.0 / 0.0 (3.6 / 6.4) |                             10.6 → 12.6; 371 → 404; 1.6 → 0.0 |
-| 1 v 20            |                                               1.5 → 2.7 (0.0) | 189 → 205 (91) |                                           19.9 / 0.0 (4.1 / 15.9) |                             46.2 → 50.6; 314 → 334; 0.2 → 0.0 |
-| 1 v 30            |                                             11.8 → 14.8 (0.0) | 232 → 256 (92) |                                           29.3 / 0.0 (4.4 / 25.6) |                             72.9 → 74.8; 227 → 233; 0.1 → 0.0 |
-| 1 v 50            |                                             61.1 → 64.3 (0.0) | 224 → 240 (95) |                                           38.8 / 0.0 (4.9 / 45.1) |                             92.0 → 92.9; 126 → 126; 0.1 → 0.0 |
-| 3 v 30            |                                               0.0 → 0.0 (0.0) | 117 → 119 (82) |                                           30.0 / 0.0 (7.5 / 22.5) |                                0.0 → 0.0; 55 → 101; 0.0 → 0.0 |
-| 10 v 100          |                                               0.0 → 0.0 (0.0) | 134 → 134 (75) |                                         100.0 / 0.0 (15.6 / 84.4) |                                 0.0 → 0.0; 26 → 78; 0.0 → 0.0 |
-| 10 v 300          |                                               1.4 → 2.6 (0.0) | 258 → 268 (79) |                                        298.5 / 0.0 (26.6 / 273.4) |                                 0.0 → 0.2; 36 → 91; 0.0 → 0.0 |
+| 1 v 3             |                                               0.0 → 0.0 (0.0) |   36 → 36 (55) |                                             2.9 / 0.1 (2.2 / 0.8) |                               0.1 → 0.1; 260 → 286; 1.5 → 0.4 |
+| 1 v 5             |                                               0.0 → 0.0 (0.0) |   52 → 56 (79) |                                             4.8 / 0.2 (3.0 / 2.0) |                               0.4 → 1.0; 309 → 347; 2.0 → 0.2 |
+| 1 v 10            |                                               0.0 → 0.3 (0.0) | 118 → 122 (87) |                                             9.6 / 0.4 (3.6 / 6.4) |                             10.6 → 12.6; 371 → 404; 1.6 → 0.0 |
+| 1 v 20            |                                               1.5 → 1.8 (0.0) | 189 → 195 (91) |                                           18.6 / 1.3 (4.1 / 15.9) |                             46.2 → 50.6; 314 → 334; 0.2 → 0.0 |
+| 1 v 30            |                                             11.8 → 12.2 (0.0) | 232 → 243 (92) |                                           26.8 / 2.6 (4.4 / 25.6) |                             72.9 → 74.8; 227 → 233; 0.1 → 0.0 |
+| 1 v 50            |                                             61.1 → 62.1 (0.0) | 224 → 239 (95) |                                           34.7 / 4.3 (4.9 / 45.1) |                             92.0 → 92.9; 126 → 126; 0.1 → 0.0 |
+| 3 v 30            |                                               0.0 → 0.0 (0.0) | 117 → 119 (82) |                                           29.0 / 1.0 (7.5 / 22.5) |                                0.0 → 0.0; 55 → 101; 0.0 → 0.0 |
+| 10 v 100          |                                               0.0 → 0.0 (0.0) | 134 → 138 (75) |                                          97.3 / 2.7 (15.6 / 84.4) |                                 0.0 → 0.0; 26 → 78; 0.0 → 0.0 |
+| 10 v 300          |                                               1.4 → 1.2 (0.0) | 258 → 265 (79) |                                       283.0 / 16.2 (26.6 / 273.4) |                                 0.0 → 0.2; 36 → 91; 0.0 → 0.0 |
 
-`allIn` now ends with every tiger incapacitated (fled 0); the win shares move by at most 3 pp against model 2, because model 2's `allIn` already routed few tigers. In `realistic` no tiger count beats one _T. rex_, as in model 2's `realistic` (§19.8), but the battle lasts until the fleeing tigers are out of the arena or caught: 10 _T. rex_ v 100 tigers ends in a median of 75 s (model 2 `realistic` 27 s) with 15.6 tigers incapacitated, most of them caught while fleeing. Classic model 3 keeps its win shares within 5 pp; its medians grow by the time the routed pack needs to leave (10 v 100: 26 → 78 s), and its draws drop as the cap rises.
+The free win shares stay within 1 pp of model 2 in `allIn`. The battles last a little longer, because the last fleeing tigers must leave the arena or be caught: the tigers that model 2 counted as fled while still on the field are partly incapacitated now (10 v 100: 97.1 / 2.9 → 97.3 / 2.7; 1 v 50: 34.5 / 4.4 → 34.7 / 4.3). In `realistic` no tiger count beats one _T. rex_, as in model 2's `realistic` (§19.8); 10 _T. rex_ v 100 tigers ends in a median of 75 s (model 2 `realistic` 27 s), 15.6 tigers caught while fleeing. Classic model 3 keeps its win shares within 5 pp; its medians grow by the time the routed pack needs to leave (10 v 100: 26 → 78 s), and its draws drop as the cap rises.
 
 ### 20.2 The other calibration match-ups (§4, §5)
 
 | Match-up (side B wins)           | Model 2 `allIn` | Model 3 `allIn` | Model 3 `realistic` | Median s, model 3 `allIn` (`realistic`) | Classic `flank` model 2 → 3 (draws %) |
 | -------------------------------- | --------------: | --------------: | ------------------: | --------------------------------------: | ------------------------------------: |
-| _T. rex_ 10 v tiger 100          |             0.0 |             0.0 |                 0.0 |                                134 (75) |                 0.0 → 0.0 (0.0 → 0.0) |
+| _T. rex_ 10 v tiger 100          |             0.0 |             0.0 |                 0.0 |                                138 (75) |                 0.0 → 0.0 (0.0 → 0.0) |
 | _T. rex_ 1 v tiger 10            |             0.0 |             0.3 |                 0.0 |                                122 (87) |               10.6 → 12.6 (1.6 → 0.0) |
-| elephant 5 v lion 30             |             0.0 |             1.4 |                 0.0 |                               705 (107) |                 0.0 → 0.0 (1.4 → 0.0) |
-| buffalo 1 v lion 6               |            83.9 |            96.7 |                85.0 |                               178 (159) |               58.3 → 60.4 (0.5 → 0.0) |
-| buffalo 1 v spotted hyena 15     |            74.2 |           100.0 |                25.7 |                                 56 (71) |               95.5 → 96.8 (0.0 → 0.0) |
-| brown bear 1 v wolf 8            |            29.5 |            96.3 |                32.1 |                               136 (100) |               42.7 → 45.2 (0.6 → 0.0) |
-| brown bear 1 v tiger 1           |            21.5 |            25.2 |                20.7 |                                 74 (63) |                 0.0 → 0.0 (8.3 → 6.9) |
-| mammoth 1 v wolf 12              |             0.0 |             1.0 |                 0.0 |                                492 (78) |                 0.0 → 0.3 (7.2 → 3.3) |
-| _T. rex_ 1 v _H. erectus_ 100    |             0.0 |            44.0 |                 0.0 |                               558 (135) |                 5.2 → 6.4 (2.2 → 1.4) |
-| elephant 1 v lion 27             |             5.4 |            93.2 |                 0.0 |                               375 (135) |               31.2 → 36.2 (7.6 → 0.0) |
-| buffalo 10 v lion 12             |             0.4 |             0.2 |                 0.6 |                                325 (99) |                 0.0 → 0.0 (0.0 → 0.0) |
-| _T. rex_ 1 v lion 30             |            20.2 |            99.4 |                 0.0 |                               192 (116) |               86.6 → 89.0 (0.2 → 0.0) |
-| _T. rex_ 1 v wolf 50             |             0.2 |            94.0 |                 0.0 |                                226 (70) |               52.8 → 55.4 (0.0 → 0.0) |
-| mammoth 1 v wolf 30              |             0.0 |            25.2 |                 0.0 |                                487 (78) |                 2.0 → 5.0 (9.0 → 0.6) |
-| mammoth 1 v spotted hyena 15     |             0.0 |            16.0 |                 0.0 |                                380 (76) |                2.2 → 7.0 (11.8 → 0.8) |
-| mammoth 1 v lion 20              |             2.0 |            74.4 |                 0.0 |                               590 (132) |               9.0 → 12.2 (13.6 → 0.2) |
-| _T. rex_ 1 v _H. erectus_ 30     |             0.0 |             1.2 |                 0.0 |                               587 (131) |                 0.0 → 0.0 (3.2 → 3.2) |
-| _T. rex_ 1 v _H. erectus_ 300    |             0.0 |            99.0 |                 0.0 |                               164 (133) |               60.6 → 64.4 (0.4 → 0.0) |
-| elephant 1 v _H. erectus_ 30     |             0.0 |             0.0 |                 0.0 |                               578 (142) |                 0.0 → 0.0 (2.6 → 1.0) |
-| buffalo 1 v _H. erectus_ 20      |             1.0 |            72.6 |                 0.0 |                               330 (140) |                 7.2 → 9.4 (1.6 → 1.0) |
-| _H. erectus_ 1 v wolf 1          |           100.0 |            98.2 |               100.0 |                                 69 (71) |               41.6 → 42.0 (3.4 → 0.0) |
-| _H. erectus_ 1 v wolf 3          |           100.0 |           100.0 |               100.0 |                                 38 (64) |             100.0 → 100.0 (0.0 → 0.0) |
-| _H. erectus_ 1 v spotted hyena 1 |           100.0 |           100.0 |               100.0 |                                 50 (67) |               63.8 → 65.4 (5.8 → 0.2) |
-| _H. erectus_ 1 v tiger 1         |           100.0 |            99.8 |               100.0 |                                 50 (65) |              76.6 → 83.4 (11.2 → 0.6) |
-| _H. erectus_ 1 v lion 1          |           100.0 |           100.0 |               100.0 |                                 51 (67) |               78.2 → 80.4 (4.4 → 0.0) |
+| elephant 5 v lion 30             |             0.0 |             0.0 |                 0.0 |                               118 (107) |                 0.0 → 0.0 (1.4 → 0.0) |
+| buffalo 1 v lion 6               |            83.9 |            86.0 |                85.0 |                               159 (159) |               58.3 → 60.4 (0.5 → 0.0) |
+| buffalo 1 v spotted hyena 15     |            74.2 |            79.7 |                25.7 |                                 59 (71) |               95.5 → 96.8 (0.0 → 0.0) |
+| brown bear 1 v wolf 8            |            29.5 |            32.1 |                32.1 |                               100 (100) |               42.7 → 45.2 (0.6 → 0.0) |
+| brown bear 1 v tiger 1           |            21.5 |            21.9 |                20.7 |                                 64 (63) |                 0.0 → 0.0 (8.3 → 6.9) |
+| mammoth 1 v wolf 12              |             0.0 |             0.0 |                 0.0 |                                115 (78) |                 0.0 → 0.3 (7.2 → 3.3) |
+| _T. rex_ 1 v _H. erectus_ 100    |             0.0 |             0.0 |                 0.0 |                               143 (135) |                 5.2 → 6.4 (2.2 → 1.4) |
+| elephant 1 v lion 27             |             5.4 |             7.0 |                 0.0 |                               200 (135) |               31.2 → 36.2 (7.6 → 0.0) |
+| buffalo 10 v lion 12             |             0.4 |             0.6 |                 0.6 |                                 99 (99) |                 0.0 → 0.0 (0.0 → 0.0) |
+| _T. rex_ 1 v lion 30             |            20.2 |            25.8 |                 0.0 |                               159 (116) |               86.6 → 89.0 (0.2 → 0.0) |
+| _T. rex_ 1 v wolf 50             |             0.2 |             0.2 |                 0.0 |                                 82 (70) |               52.8 → 55.4 (0.0 → 0.0) |
+| mammoth 1 v wolf 30              |             0.0 |             0.0 |                 0.0 |                                101 (78) |                 2.0 → 5.0 (9.0 → 0.6) |
+| mammoth 1 v spotted hyena 15     |             0.0 |             0.0 |                 0.0 |                                 99 (76) |                2.2 → 7.0 (11.8 → 0.8) |
+| mammoth 1 v lion 20              |             2.0 |             2.0 |                 0.0 |                               210 (132) |               9.0 → 12.2 (13.6 → 0.2) |
+| _T. rex_ 1 v _H. erectus_ 30     |             0.0 |             0.0 |                 0.0 |                               144 (131) |                 0.0 → 0.0 (3.2 → 3.2) |
+| _T. rex_ 1 v _H. erectus_ 300    |             0.0 |             0.0 |                 0.0 |                               143 (133) |               60.6 → 64.4 (0.4 → 0.0) |
+| elephant 1 v _H. erectus_ 30     |             0.0 |             0.0 |                 0.0 |                               160 (142) |                 0.0 → 0.0 (2.6 → 1.0) |
+| buffalo 1 v _H. erectus_ 20      |             1.0 |             1.4 |                 0.0 |                               171 (140) |                 7.2 → 9.4 (1.6 → 1.0) |
+| _H. erectus_ 1 v wolf 1          |           100.0 |           100.0 |               100.0 |                                 71 (71) |               41.6 → 42.0 (3.4 → 0.0) |
+| _H. erectus_ 1 v wolf 3          |           100.0 |           100.0 |               100.0 |                                 64 (64) |             100.0 → 100.0 (0.0 → 0.0) |
+| _H. erectus_ 1 v spotted hyena 1 |           100.0 |           100.0 |               100.0 |                                 67 (67) |               63.8 → 65.4 (5.8 → 0.2) |
+| _H. erectus_ 1 v tiger 1         |           100.0 |           100.0 |               100.0 |                                 68 (65) |              76.6 → 83.4 (11.2 → 0.6) |
+| _H. erectus_ 1 v lion 1          |           100.0 |           100.0 |               100.0 |                                 70 (67) |               78.2 → 80.4 (4.4 → 0.0) |
 | _H. erectus_ 1 v _H. erectus_ 1  |            49.8 |            49.8 |                49.8 |                               229 (229) |               18.8 → 19.0 (2.8 → 0.0) |
-| _H. erectus_ 1 v _H. erectus_ 2  |            92.0 |            92.6 |                92.2 |                               187 (187) |               92.8 → 92.8 (0.2 → 0.0) |
+| _H. erectus_ 1 v _H. erectus_ 2  |            92.0 |            92.2 |                92.2 |                               187 (187) |               92.8 → 92.8 (0.2 → 0.0) |
 
-Where model 2's `allIn` ended a group's attack on a much larger animal by rout, model 3's `allIn` lets the group fight on, and the group now usually wins: lions beat one _T. rex_ (30: 20.2 → 99.4 %) and one elephant (27: 5.4 → 93.2 %), wolves a brown bear (8: 29.5 → 96.3 %) and a _T. rex_ (50: 0.2 → 94.0 %), 300 _H. erectus_ a _T. rex_ (0 → 99.0 %). That is the literal answer to "fight to the end": nothing in the model stops a group that does not break off from wearing a large animal down. `realistic` keeps model 2's `realistic` picture (groups break off; 0 % in every such row).
+Every free share in `allIn` stays within 6 pp of model 2 (largest: _T. rex_ 1 v 30 lions, 20.2 → 25.8 %; buffalo v 15 hyenas, 74.2 → 79.7 %): pursuit and the run to the edge let a winner catch a few more of the fleeing, but the winner is the same. `realistic` keeps model 2's `realistic` picture.
 
 ### 20.3 Simple presets
 
@@ -1710,53 +1710,52 @@ The fixture and checks are in [PRESETS.md](../PRESETS.md#model-3-the-checked-fix
 
 | Preset                   | Sides                         | A wins %, model 2 `allIn` → model 3 `allIn` (`realistic`) |  Median s | Rout, model 3 `allIn` (`realistic`) | Longest run s, `allIn` (`realistic`) |
 | ------------------------ | ----------------------------- | --------------------------------------------------------: | --------: | ----------------------------------: | -----------------------------------: |
-| `lion-tiger`             | lion 1 v tiger 1              |                                        56.0 → 50.0 (57.0) |   57 (50) |                         0.0 (100.0) |                            662 (509) |
-| `pride-five-tigers`      | lion 5 v tiger 5              |                                        57.8 → 61.0 (57.6) |  188 (64) |                         0.0 (100.0) |                          3600 (1188) |
-| `tiger-bear`             | tiger 1 v brown bear 1        |                                        23.6 → 25.8 (22.4) |   73 (62) |                          0.0 (99.8) |                            439 (197) |
-| `bear-wolf-pack`         | brown bear 1 v wolf 8         |                                         68.6 → 3.8 (67.8) | 136 (100) |                          0.0 (95.8) |                           1137 (588) |
-| `buffalo-pride`          | buffalo 1 v lion 6            |                                         17.8 → 2.8 (16.8) | 194 (168) |                          0.0 (69.8) |                            894 (866) |
-| `elephants-pride`        | elephant 5 v lion 30          |                                       99.8 → 98.6 (100.0) | 705 (107) |                          0.0 (92.1) |                           3590 (296) |
-| `mammoth-wolves`         | mammoth 1 v wolf 12           |                                      100.0 → 97.4 (100.0) |  492 (79) |                          0.0 (93.6) |                           1644 (154) |
-| `trex-mirror`            | _T. rex_ 1 v _T. rex_ 1       |                                        49.0 → 47.8 (49.0) | 164 (158) |                          0.0 (65.6) |                            471 (381) |
-| `trex-squad-tiger-horde` | _T. rex_ 10 v tiger 100       |                                     100.0 → 100.0 (100.0) |  134 (75) |                          0.0 (84.4) |                           1222 (135) |
-| `trex-erectus-100`       | _T. rex_ 1 v _H. erectus_ 100 |                                      100.0 → 56.0 (100.0) | 558 (135) |                          0.0 (95.6) |                           1652 (207) |
-| `lions-hyenas`           | lion 3 v spotted hyena 10     |                                         40.2 → 3.0 (48.2) |   75 (61) |                          0.0 (98.2) |                            870 (368) |
-| `polar-bear-brown-bear`  | polar bear 1 v brown bear 1   |                                        72.0 → 79.2 (76.6) | 123 (100) |                          0.0 (97.0) |                            814 (323) |
-| `elephant-hippo`         | elephant 1 v hippo 1          |                                        81.0 → 76.0 (87.2) | 300 (207) |                          0.0 (91.8) |                           2468 (986) |
-| `raptors-trex`           | raptor 12 v _T. rex_ 1        |                                          7.2 → 77.2 (0.0) | 377 (195) |                          0.0 (78.6) |                           1215 (401) |
-| `elephant-rhino`         | elephant 1 v white rhino 1    |                                        70.8 → 62.6 (94.0) | 303 (144) |                          0.0 (98.4) |                           1683 (787) |
-| `hippo-rhino`            | hippo 1 v white rhino 1       |                                        38.2 → 33.2 (42.8) | 205 (172) |                          0.0 (96.2) |                            938 (727) |
-| `trex-spinosaurus`       | _T. rex_ 1 v _Spinosaurus_ 1  |                                        96.2 → 97.2 (96.0) | 202 (198) |                          0.0 (44.8) |                            986 (986) |
-| `trex-triceratops`       | _T. rex_ 1 v _Triceratops_ 1  |                                        59.8 → 60.4 (60.2) | 169 (156) |                          0.0 (73.6) |                            705 (705) |
+| `lion-tiger`             | lion 1 v tiger 1              |                                        56.0 → 57.0 (57.0) |   50 (50) |                       100.0 (100.0) |                            509 (509) |
+| `pride-five-tigers`      | lion 5 v tiger 5              |                                        57.8 → 57.6 (57.6) |   64 (64) |                       100.0 (100.0) |                          1188 (1188) |
+| `tiger-bear`             | tiger 1 v brown bear 1        |                                        23.6 → 24.0 (22.4) |   63 (62) |                         99.8 (99.8) |                            560 (197) |
+| `bear-wolf-pack`         | brown bear 1 v wolf 8         |                                        68.6 → 67.8 (67.8) | 100 (100) |                         95.8 (95.8) |                            588 (588) |
+| `buffalo-pride`          | buffalo 1 v lion 6            |                                        17.8 → 15.6 (16.8) | 170 (168) |                         67.5 (69.8) |                            660 (866) |
+| `elephants-pride`        | elephant 5 v lion 30          |                                      99.8 → 100.0 (100.0) | 118 (107) |                         87.5 (92.1) |                           1461 (296) |
+| `mammoth-wolves`         | mammoth 1 v wolf 12           |                                     100.0 → 100.0 (100.0) |  118 (79) |                         88.8 (93.6) |                            775 (154) |
+| `trex-mirror`            | _T. rex_ 1 v _T. rex_ 1       |                                        49.0 → 49.0 (49.0) | 158 (158) |                         65.6 (65.6) |                            381 (381) |
+| `trex-squad-tiger-horde` | _T. rex_ 10 v tiger 100       |                                     100.0 → 100.0 (100.0) |  138 (75) |                          2.7 (84.4) |                            923 (135) |
+| `trex-erectus-100`       | _T. rex_ 1 v _H. erectus_ 100 |                                     100.0 → 100.0 (100.0) | 143 (135) |                         94.6 (95.6) |                            247 (207) |
+| `lions-hyenas`           | lion 3 v spotted hyena 10     |                                        40.2 → 39.4 (48.2) |   65 (61) |                         96.2 (98.2) |                            761 (368) |
+| `polar-bear-brown-bear`  | polar bear 1 v brown bear 1   |                                        72.0 → 72.2 (76.6) | 104 (100) |                         96.2 (97.0) |                            432 (323) |
+| `elephant-hippo`         | elephant 1 v hippo 1          |                                        81.0 → 81.2 (87.2) | 222 (207) |                         89.6 (91.8) |                           2468 (986) |
+| `raptors-trex`           | raptor 12 v _T. rex_ 1        |                                          7.2 → 12.2 (0.0) | 265 (195) |                         70.7 (78.6) |                            899 (401) |
+| `elephant-rhino`         | elephant 1 v white rhino 1    |                                        70.8 → 70.8 (94.0) | 206 (144) |                         96.0 (98.4) |                           1122 (787) |
+| `hippo-rhino`            | hippo 1 v white rhino 1       |                                        38.2 → 38.2 (42.8) | 178 (172) |                         95.6 (96.2) |                            727 (727) |
+| `trex-spinosaurus`       | _T. rex_ 1 v _Spinosaurus_ 1  |                                        96.2 → 96.0 (96.0) | 198 (198) |                         44.8 (44.8) |                            986 (986) |
+| `trex-triceratops`       | _T. rex_ 1 v _Triceratops_ 1  |                                        59.8 → 60.0 (60.2) | 156 (156) |                         73.4 (73.6) |                            705 (705) |
 
-Every preset passes the rout and median checks unaided under `allIn` (rout 0, shortest median 57 s), so model 3 has no overrides or holds. The longest `allIn` preset run is `pride-five-tigers` at the 3,600 s cap (1 run of 500, the stalemate of #237).
+No preset changes its winner (largest move: `raptors-trex`, 7.2 → 12.2 %). Medians grow to 50–265 s; rout shares fall where the winner catches fleeing animals (duels 100 % → 45–100 %). At the fixture's 200 runs nine presets exceed the 90 % rout limit and carry an override; the three former holds are among them, released by the owner (PRESETS.md).
 
 ### 20.4 Durations and the time limit
 
-- **How runs end.** Free `allIn`: 594,300 runs, 594,113 wipe-outs, 170 mutual, **17 time limits** (at most 2 in any batch, all in small mixed groups such as 5 lions v 5 tigers or a heavy animal against 3–6 lions: two tired agents taking turns to back off, #237). Free `realistic`: 645,300 runs, 546,018 routs, 99,274 wipe-outs, 8 mutual, **0 time limits**; longest run 2,570 s.
+- **How runs end.** Free `allIn`: 594,300 runs, 461,394 routs, 132,883 wipe-outs, 12 mutual, **11 time limits** (at most 1 in any batch, all in small mixed groups such as a heavy animal against 2–8 predators: two tired agents taking turns to back off, #237). Free `realistic`: 645,300 runs, 546,018 routs, 99,274 wipe-outs, 8 mutual, **0 time limits**; longest run 2,570 s.
 - **Classic model 3** (both files): `direct` 0 time limits in 33,500 runs; `flank` 250 in 33,500, almost all where the flanking pack and the heavy never damage each other: brown bear v tiger 138 of 2,000 (6.9 %, model 2 at 1,200 s 8.3 %), mammoth v 12 wolves 33 of 1,000 (3.3 %, was 7.2 %), _T. rex_ v 30 _H. erectus_ 16 of 500. The cap ends them as draws; #237 tracks the stalemate.
-- **Why 3,600 s.** The slowest preset, 5 elephants v 30 lions in `allIn`, has p99.9 ≈ 2,800 s and a longest run of 2,816 s over 1,000 runs; no preset or large match-up of the PR's survey reached the cap except the stalemates above. 3,600 s is the top of `LIMITS.maxTime`, so no link bound changes.
+- **Why 3,600 s.** The longest preset run is 2,468 s (`elephant-hippo`, `allIn`); with morale off, where nobody flees, 5 elephants v 30 lions reached p99.9 ≈ 2,800 s in a 1,000-run check. 3,600 s is the top of `LIMITS.maxTime`, so no link bound changes.
 
 ### 20.5 Structural checks
 
 - **Mirror matches:** 17 of 17 keep 0 inside the interval of the win-share difference in both modes.
-- **Side swaps:** symmetric in both modes (`allIn`: tiger 5 v lion 5 −1.4 pp, −5.7 to 2.9; brown bear 1 v wolf 10 −0.7, −1.7 to 0.2; _T. rex_ 1 v tiger 10 −0.1, −0.7 to 0.5).
-- **Monotonicity:** every count curve is non-decreasing in both modes. In `allIn` the curves are much steeper: wolves v one brown bear 0.0, 12.2, 62.0, 89.4, 96.2 … 100 %; wolves v one buffalo reaches 99.8 % at 20 wolves (§19 51.8 % at 25); lions v one elephant 10.0 % at 5 lions and 96.3 % at 30. The wolf-vs-buffalo curve (#168) has no plateau in either mode.
+- **Side swaps:** symmetric in both modes (`allIn`: tiger 5 v lion 5 −2.7 pp, −7.0 to 1.6; brown bear 1 v wolf 10 +1.1, −3.2 to 5.4; _T. rex_ 1 v tiger 10 −0.2, −0.8 to 0.3).
+- **Monotonicity:** every count curve is non-decreasing in both modes and close to model 2's (wolves v one brown bear 0.2 … 70.2 %, §19 67.4 % at 20; lions v one elephant 1.7 … 34.7 %, §19 26.7 % at 60). The wolf-vs-buffalo curve (#168) still has no plateau.
 
 ### 20.6 Headline numbers
 
-| Question                                                           |         Model 2 `allIn` |         Model 3 `allIn` |   Model 3 `realistic` |
-| ------------------------------------------------------------------ | ----------------------: | ----------------------: | --------------------: |
-| Tigers beat one _T. rex_: 10 / 20 / 30 / 50 tigers (%)             | 0.0 / 1.5 / 11.8 / 61.1 | 0.3 / 2.7 / 14.8 / 64.3 | 0.0 / 0.0 / 0.0 / 0.0 |
-| 10 _T. rex_ v 100 tigers: tigers incapacitated / fled; median      |       97.1 / 2.9; 134 s |          100 / 0; 134 s |     15.6 / 84.4; 75 s |
-| Lions 27 v one elephant: lions win (%)                             |                     5.4 |                    93.2 |                   0.0 |
-| Lions 30 v one _T. rex_: lions win (%)                             |                    20.2 |                    99.4 |                   0.0 |
-| 100 _H. erectus_ v one _T. rex_ (preset, 500 runs): humans win (%) |                     0.0 |                    44.0 |                   0.0 |
-| Polar bear 1 v brown bear 1, 1,000 runs (%)                        |                    71.6 |                    80.3 |                  76.4 |
+| Question                                                         |         Model 2 `allIn` |         Model 3 `allIn` |   Model 3 `realistic` |
+| ---------------------------------------------------------------- | ----------------------: | ----------------------: | --------------------: |
+| Tigers beat one _T. rex_: 10 / 20 / 30 / 50 tigers (%)           | 0.0 / 1.5 / 11.8 / 61.1 | 0.3 / 1.8 / 12.2 / 62.1 | 0.0 / 0.0 / 0.0 / 0.0 |
+| 10 _T. rex_ v 100 tigers: tigers incapacitated / fled; median    |       97.1 / 2.9; 134 s |       97.3 / 2.7; 138 s |     15.6 / 84.4; 75 s |
+| Lions 27 v one elephant: lions win (%)                           |                     5.4 |                     7.0 |                   0.0 |
+| Lions 30 v one _T. rex_: lions win (%)                           |                    20.2 |                    25.8 |                   0.0 |
+| 100 _H. erectus_ v one _T. rex_ (preset): humans win (%); median |               0.0; 45 s |              0.0; 143 s |            0.0; 135 s |
+| Polar bear 1 v brown bear 1, 1,000 runs (%)                      |                    71.6 |                    71.7 |                  76.4 |
 
 ### 20.7 Verdicts
 
-- **The bug is fixed on both engines.** No run ends while a routed animal of the losing side is still in the arena; a time limit is always a draw, labelled as such.
-- **`allIn` now answers "who wins if nobody backs off" literally**, and for groups against one large animal the answer flips towards the group. Whether that is the intended default for the site is an owner question (#230 PR).
-- **`realistic`** keeps model 2's `realistic` winners; battles last longer because the fleeing side must get away.
-- **Open:** #237 (stalemate dance, the remaining time-limit draws), #167, #168.
+- **The bug is fixed on both engines.** No run ends while a fleeing animal of the losing side is still in the arena; the replay shows it run off (REPLAY.md §14), and a time limit is always a draw, labelled as such.
+- **Results barely move.** Winners and close tags are model 2's; durations grow by the flight, and rout shares fall a little where fleeing animals are caught.
+- **Open:** #237 (stalemates, the remaining time-limit draws), #167, #168.

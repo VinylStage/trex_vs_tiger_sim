@@ -5,7 +5,7 @@
 > - 쉬운 모드에서 고를 대진 프리셋을 `src/sim/free/presets.ts`에 모았습니다. 설계 문서 [RENEWAL-1.0.md §6](design/RENEWAL-1.0.md#6-simple-mode-preset-list)의 목록 가운데 두 종이 모두 지금 있는 18개만 넣었고(북극곰 vs 불곰은 #184, 코끼리 vs 하마는 #186, 랩터 무리 vs 티라노는 #188, 코끼리 vs 코뿔소와 하마 vs 코뿔소는 #187, 티라노 vs 스피노(육상 대결)는 #185, 티라노 vs 트리케라톱스는 #189에서 추가), 나머지 5개는 종이 추가될 때 들어옵니다(아래 [대기 중인 프리셋](#presets-waiting-for-a-species)).
 > - 프리셋마다 자유 대결 엔진으로 같은 시드(20261019)와 같은 실행 수(200회)로 승률, 전투 시간 중앙값, 진 쪽의 이탈 비율을 재서 `tests/fixtures/preset-shares.json`에 기록합니다. 테스트가 매번 다시 계산해 기록과 비트 단위로 같은지 확인하므로, 모델이 바뀌면 이 파일의 차이로 드러납니다.
 > - 이탈 점검: 전투 시간 중앙값이 30초 미만이거나 진 쪽의 이탈 비율이 90%를 넘으면 실패입니다(모두 **S**). 문서로 남긴 예외(override)가 있으면 통과합니다. 예외도 받지 못한 프리셋은 보류(hold)되어 쉬운 모드에 나오지 않습니다.
-> - 모델 2까지는 1:1 대결의 진 쪽이 거의 항상 이탈로 끝나 예외 열 개와 보류 세 개가 있었습니다. 모델 3(#230)부터 쉬운 모드가 쓰는 “끝까지 싸우기”에서는 아무도 도주하지 않으므로 모든 프리셋이 예외 없이 통과하고, 보류였던 사자 무리 vs 호랑이 다섯, 티라노 vs 호모 에렉투스 100, 사자 vs 하이에나도 쉬운 모드에 나옵니다(`tests/fixtures/preset-shares-mv3.json`). 티라노 vs 호모 에렉투스 100은 전투가 길어 실행 횟수를 200회로 둡니다.
+> - 모델 3(#230)에서는 도주한 쪽이 경기장 밖으로 빠져나갈 때까지 전투가 이어집니다. 승률은 모델 2와 거의 같고, 1:1 대결 다섯과 불곰 vs 늑대 무리, 그리고 보류였던 세 프리셋(사자 무리 vs 호랑이 다섯, 티라노 vs 호모 에렉투스 100, 사자 vs 하이에나)이 이탈 예외로 쉬운 모드에 나옵니다. 보류 해제는 소유자가 정했습니다(2026-11-18). 기준 파일은 `tests/fixtures/preset-shares-mv3.json`입니다.
 > - 프리셋 이름, "왜?" 문구, 예외와 보류 사유는 금지어 테스트를 거칩니다. 잔혹하거나 죽음을 뜻하는 말, 베팅 용어, 작품·상표·방송 플랫폼 이름, 조회수를 쓰지 않습니다.
 
 Source of truth: `src/sim/free/presets.ts`, `tests/presets.test.ts` and `tests/fixtures/preset-shares.json`. The design is [RENEWAL-1.0.md §3.2 and §6](design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode), with owner decision R4 (b): keep the model for 1.0 and contain the mass-rout cascade.
@@ -25,16 +25,16 @@ Source of truth: `src/sim/free/presets.ts`, `tests/presets.test.ts` and `tests/f
 
 `FREE_PRESETS` lists every preset of design §6 whose two species exist in `FREE_SPECIES_IDS`. Each entry has:
 
-| Field   | Meaning                                                                                                                           |
-| ------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `id`    | Stable and append-only: links and share images may name it.                                                                       |
-| `name`  | ko and en, common nouns only (design §1.2).                                                                                       |
-| `a`/`b` | Species and head count per side.                                                                                                  |
-| `runs`  | Optional run count. Only `trex-erectus-100` sets one (200, model 3 cost); the others run the default 500, within the work budget. |
-| `tags`  | `popular`, `documented`, `close`, `mirror`, `army`, `absurd`, `thought-experiment`, and the §6 tags `ice-age` and `rivals`.       |
-| `why`   | The "왜? / Why?" text: the literature or a described source, never a title or a view count.                                       |
-| `check` | Optional documented override of the check limits, with a reason.                                                                  |
-| `hold`  | Optional reason the preset stays out of Simple mode.                                                                              |
+| Field   | Meaning                                                                                                                     |
+| ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `id`    | Stable and append-only: links and share images may name it.                                                                 |
+| `name`  | ko and en, common nouns only (design §1.2).                                                                                 |
+| `a`/`b` | Species and head count per side.                                                                                            |
+| `runs`  | Optional run count. No preset sets one, so Simple mode runs the default 500, which every preset fits in the work budget.    |
+| `tags`  | `popular`, `documented`, `close`, `mirror`, `army`, `absurd`, `thought-experiment`, and the §6 tags `ice-age` and `rivals`. |
+| `why`   | The "왜? / Why?" text: the literature or a described source, never a title or a view count.                                 |
+| `check` | Optional documented override of the check limits, with a reason.                                                            |
+| `hold`  | Optional reason the preset stays out of Simple mode.                                                                        |
 
 `presetConfig(preset, seed?)` builds the `FreeConfig` through `sanitizeFreeConfig`; `readyPresets()` returns the presets that are not on hold. Nothing in the registry runs the engine.
 
@@ -69,35 +69,35 @@ There is one fixture per free model version (`mv`, ADR-0008): `tests/fixtures/pr
 
 ### Model 3 (the checked fixture)
 
-Measured on `fix/230-battle-end` (model 3, #230) in the default flight mode `allIn`, which every preset and every Simple run use: no animal routs, and a battle runs until one side is incapacitated ([MODEL.md §2.4](MODEL.md#24-outcomes)). `tests/fixtures/preset-shares-mv3.json` is authoritative.
+Measured on `fix/230-battle-end` (model 3, #230) in the default flight mode `allIn`, which every preset and every Simple run use. Morale rout works as in model 2; what changed is that a battle ends only once the fleeing side has run off the field or been caught ([MODEL.md §2.4](MODEL.md#24-outcomes)). `tests/fixtures/preset-shares-mv3.json` is authoritative.
 
-| Preset (`id`)            | Sides                         | A wins | B wins | Draws |  Median | Rout share | Close | Status |
-| ------------------------ | ----------------------------- | -----: | -----: | ----: | ------: | ---------: | ----- | ------ |
-| `lion-tiger`             | lion 1 v tiger 1              | 53.5 % | 46.5 % |   0 % |  56.4 s |        0 % | yes   | passes |
-| `pride-five-tigers`      | lion 5 v tiger 5              | 60.5 % | 39.5 % |   0 % | 159.2 s |        0 % | yes   | passes |
-| `tiger-bear`             | tiger 1 v brown bear 1        | 27.0 % | 73.0 % |   0 % |  70.9 s |        0 % | no    | passes |
-| `bear-wolf-pack`         | brown bear 1 v wolf 8         |  3.0 % | 97.0 % |   0 % | 135.9 s |        0 % | no    | passes |
-| `buffalo-pride`          | buffalo 1 v lion 6            |  2.5 % | 97.5 % |   0 % | 175.0 s |        0 % | no    | passes |
-| `elephants-pride`        | elephant 5 v lion 30          | 97.0 % |  3.0 % |   0 % | 645.2 s |        0 % | no    | passes |
-| `mammoth-wolves`         | mammoth 1 v wolf 12           | 98.5 % |  1.5 % |   0 % | 476.2 s |        0 % | no    | passes |
-| `trex-mirror`            | _T. rex_ 1 v _T. rex_ 1       | 50.5 % | 49.5 % |   0 % | 160.4 s |        0 % | yes   | passes |
-| `trex-squad-tiger-horde` | _T. rex_ 10 v tiger 100       |  100 % |    0 % |   0 % | 138.8 s |        0 % | no    | passes |
-| `trex-erectus-100`       | _T. rex_ 1 v _H. erectus_ 100 | 58.0 % | 42.0 % |   0 % | 567.7 s |        0 % | yes   | passes |
-| `lions-hyenas`           | lion 3 v spotted hyena 10     |  4.5 % | 95.5 % |   0 % |  79.8 s |        0 % | no    | passes |
-| `polar-bear-brown-bear`  | polar bear 1 v brown bear 1   | 77.5 % | 22.5 % |   0 % | 118.1 s |        0 % | no    | passes |
-| `elephant-hippo`         | elephant 1 v hippo 1          | 76.0 % | 24.0 % |   0 % | 295.9 s |        0 % | no    | passes |
-| `raptors-trex`           | _Utahraptor_ 12 v _T. rex_ 1  | 75.0 % | 25.0 % |   0 % | 370.6 s |        0 % | no    | passes |
-| `elephant-rhino`         | elephant 1 v white rhino 1    | 64.0 % | 36.0 % |   0 % | 315.5 s |        0 % | yes   | passes |
-| `hippo-rhino`            | hippo 1 v white rhino 1       | 35.5 % | 64.5 % |   0 % | 204.8 s |        0 % | yes   | passes |
-| `trex-spinosaurus`       | _T. rex_ 1 v _Spinosaurus_ 1  | 97.5 % |  2.5 % |   0 % | 205.2 s |        0 % | no    | passes |
-| `trex-triceratops`       | _T. rex_ 1 v _Triceratops_ 1  | 59.0 % | 41.0 % |   0 % | 165.0 s |        0 % | yes   | passes |
+| Preset (`id`)            | Sides                         | A wins | B wins | Draws |  Median | Rout share | Close | Status                   |
+| ------------------------ | ----------------------------- | -----: | -----: | ----: | ------: | ---------: | ----- | ------------------------ |
+| `lion-tiger`             | lion 1 v tiger 1              | 59.0 % | 41.0 % |   0 % |  50.8 s |      100 % | yes   | override                 |
+| `pride-five-tigers`      | lion 5 v tiger 5              | 63.0 % | 37.0 % |   0 % |  62.6 s |      100 % | yes   | override (released hold) |
+| `tiger-bear`             | tiger 1 v brown bear 1        | 19.5 % | 80.5 % |   0 % |  62.9 s |      100 % | no    | override                 |
+| `bear-wolf-pack`         | brown bear 1 v wolf 8         | 68.0 % | 32.0 % |   0 % | 101.6 s |     95.9 % | no    | override                 |
+| `buffalo-pride`          | buffalo 1 v lion 6            | 11.5 % | 88.5 % |   0 % | 153.6 s |     62.9 % | no    | passes                   |
+| `elephants-pride`        | elephant 5 v lion 30          |  100 % |    0 % |   0 % | 115.4 s |     86.9 % | no    | passes                   |
+| `mammoth-wolves`         | mammoth 1 v wolf 12           |  100 % |    0 % |   0 % | 118.2 s |     89.9 % | no    | passes                   |
+| `trex-mirror`            | _T. rex_ 1 v _T. rex_ 1       | 51.0 % | 49.0 % |   0 % | 155.1 s |     64.0 % | yes   | passes                   |
+| `trex-squad-tiger-horde` | _T. rex_ 10 v tiger 100       |  100 % |    0 % |   0 % | 143.0 s |      2.0 % | no    | passes                   |
+| `trex-erectus-100`       | _T. rex_ 1 v _H. erectus_ 100 |  100 % |    0 % |   0 % | 142.8 s |     94.6 % | no    | override (released hold) |
+| `lions-hyenas`           | lion 3 v spotted hyena 10     | 37.0 % | 63.0 % |   0 % |  67.1 s |     97.0 % | yes   | override (released hold) |
+| `polar-bear-brown-bear`  | polar bear 1 v brown bear 1   | 72.0 % | 28.0 % |   0 % | 103.8 s |     95.0 % | no    | override                 |
+| `elephant-hippo`         | elephant 1 v hippo 1          | 81.5 % | 18.5 % |   0 % | 233.3 s |     89.5 % | no    | passes                   |
+| `raptors-trex`           | _Utahraptor_ 12 v _T. rex_ 1  | 13.0 % | 87.0 % |   0 % | 269.6 s |     70.0 % | no    | passes                   |
+| `elephant-rhino`         | elephant 1 v white rhino 1    | 73.5 % | 26.5 % |   0 % | 210.9 s |     95.5 % | no    | override                 |
+| `hippo-rhino`            | hippo 1 v white rhino 1       | 41.5 % | 58.5 % |   0 % | 177.4 s |     94.5 % | yes   | override                 |
+| `trex-spinosaurus`       | _T. rex_ 1 v _Spinosaurus_ 1  | 96.5 % |  3.5 % |   0 % | 198.9 s |     50.5 % | no    | passes                   |
+| `trex-triceratops`       | _T. rex_ 1 v _Triceratops_ 1  | 62.0 % | 38.0 % |   0 % | 157.2 s |     73.0 % | yes   | passes                   |
 
 What changed against model 2 (below):
 
-- **No rout, so every preset passes the rout check unaided.** The rout share is 0 everywhere, and every median is above the 30 s limit (the shortest, `lion-tiger`, is 56.4 s). The ten overrides and the three holds are gone (see [Overrides and holds](#overrides-and-holds)); `pride-five-tigers`, `trex-erectus-100` and `lions-hyenas` are in Simple mode for the first time, so _H. erectus_ and the spotted hyena now have a ready preset.
-- **Battles that used to end in a rout now run to the end, and some winners change.** Groups that broke off now keep fighting: the wolves beat the brown bear (97.0 %, was 32.0 %) and the lions the buffalo (97.5 %, was 84.5 %); the raptors beat _T. rex_ (75.0 %, was 7.0 %); the hyenas beat the three lions (95.5 %, was 63.5 %); 100 _H. erectus_ beat one _T. rex_ in 42.0 % of runs (was 0 %). Duels move by a few points (the polar bear 77.5 %, was 71.0 %).
-- **Close tags follow the fixture.** `elephant-rhino` (64.0 / 36.0) and `trex-erectus-100` (58.0 / 42.0) are now close; `lions-hyenas` (4.5 / 95.5) no longer is.
-- **Longer batches.** Medians grow from tens of seconds to minutes (`elephants-pride` 645 s, `trex-erectus-100` 568 s). `trex-erectus-100` carries `runs: 200`, the first preset to set a run count, so its Simple batch costs about as much as the others (docs/PERFORMANCE.md, model 3).
+- **Winners and close tags are model 2's** within run-level noise (largest move: `raptors-trex`, raptors 7.0 → 13.0 %); every close tag holds.
+- **Medians grow** by the time the losing side needs to leave the arena, so no preset is short any more (shortest `lion-tiger`, 50.8 s); `lion-tiger` drops its median override.
+- **Rout shares fall** where the winner catches fleeing animals before they escape: the duels from 100 % to 50–96 %. Five overrides are no longer needed (`mammoth-wolves` 89.9 %, `trex-mirror` 64.0 %, `elephant-hippo` 89.5 %, `trex-spinosaurus` 50.5 %, `trex-triceratops` 73.0 %) and were dropped.
+- **Nine presets carry a rout override** (`maxRoutShare` 1): the six that still exceed 90 % and the three former holds, released by the owner (2026-11-18). See [Overrides and holds](#overrides-and-holds).
 
 ### Model 2
 
@@ -197,7 +197,7 @@ What the numbers show:
 
 ## Overrides and holds
 
-**Model 3 (#230): none.** Under model 3's `allIn` no animal routs, so every preset passes the rout and median checks on its own; the overrides and holds below were removed from `src/sim/free/presets.ts`, and the test that a held preset still fails its check now has nothing to hold. The table is the record of model 2, when they applied.
+**Model 3 (#230).** Every preset is in Simple mode. The three holds below were released by owner decision 2026-11-18 ("프리셋은 상관없어 그렇게 해줘") with a rout override (`RELEASED` in `src/sim/free/presets.ts`): from model 3 a battle ends only once the fleeing animals have run off the field, so the replay shows the rout. Rout overrides under model 3: `lion-tiger`, `pride-five-tigers`, `tiger-bear`, `bear-wolf-pack`, `trex-erectus-100`, `lions-hyenas`, `polar-bear-brown-bear`, `elephant-rhino`, `hippo-rhino`; `lion-tiger`'s median override and the overrides of `mammoth-wolves`, `trex-mirror`, `elephant-hippo`, `trex-spinosaurus` and `trex-triceratops` were dropped. The table is the record of model 2.
 
 | Preset                  | Kind     | Allowed                   | Reason                                                                                                                                                                                                                                                                                      |
 | ----------------------- | -------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
