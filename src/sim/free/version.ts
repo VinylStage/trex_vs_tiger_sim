@@ -11,7 +11,7 @@
  *   keeps its first flight heading until it is out (docs/MODEL.md §2.4).
  * - 4: retreat step (#237). An agent that wants to latch onto a target backing off in Recover
  *   closes the target's step of the same tick, so it can reach contact instead of hovering one
- *   step short until it is exhausted (docs/MODEL.md §3.4).
+ *   step short until it is exhausted (docs/MODEL.md §3.10).
  *
  * Kept in its own module so the species registry can read it without importing the config.
  */

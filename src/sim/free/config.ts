@@ -163,7 +163,7 @@ export const freeDefaultMaxTime = (mv: number): number =>
 
 /**
  * The first model version in which an agent that wants to latch closes the step its target takes
- * while backing off in Recover (#237, docs/MODEL.md §3.4). Before it the approach stopped one
+ * while backing off in Recover (#237, docs/MODEL.md §3.10). Before it the approach stopped one
  * target step short of contact every tick, so a pursuer could hover beside a retreating target
  * until it was exhausted and never latch.
  */

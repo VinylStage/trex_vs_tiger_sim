@@ -1759,3 +1759,56 @@ No preset changes its winner (largest move: `raptors-trex`, 7.2 → 12.2 %). Med
 - **The bug is fixed on both engines.** No run ends while a fleeing animal of the losing side is still in the arena; the replay shows it run off (REPLAY.md §14), and a time limit is always a draw, labelled as such.
 - **Results barely move.** Winners and close tags are model 2's; durations grow by the flight, and rout shares fall a little where fleeing animals are caught.
 - **Open:** #237 (stalemates, the remaining time-limit draws), #167, #168.
+
+## 21. Retreat step and free model 4 (#237)
+
+Free model 4 changes one rule of the free engine ([MODEL.md §3.10](../MODEL.md#310-retreat-step-free-model-4)): an agent that wants to latch, closing on a target that backs off in Recover, adds the target's cruise step of the tick to its own. Up to model 3 it stopped one target step outside contact on every tick and hovered there until it was exhausted. That hover, with the roles then swapped, caused the free time-limit draws of §20.4. There is no classic model 4. The classic stalemates come from a different mechanism (the `flank` sidestep in the heavy's front cone), and the owner kept them as time-limit draws (2026-11-18, "둘다 권장으로 해줘": option A for the free engine, not option B for classic; analysis on #237).
+
+Measured 2026-11-18 at 8f0c6c8 with `--mv 4` (`allIn`, raw data `calibration-results-mv4.json`) and `--mv 4 --flight realistic` (`calibration-results-mv4-realistic.json`), Node v22.22.0, seed 20261019, every other input at its preset (method §2). From model 4 the script runs the newest classic model, 3, when `--mv` is past it (`classicMv` in the files). Model 3 is §20.
+
+### 21.1 How runs end
+
+| Engine, mode     |    Runs | Time limits, model 3 → 4 | Wipe-outs, model 3 → 4 | Routs, model 3 → 4 | Mutual, model 3 → 4 | Longest run below the cap, s |
+| ---------------- | ------: | -----------------------: | ---------------------: | -----------------: | ------------------: | ---------------------------: |
+| Free `allIn`     | 594,300 |               **11 → 1** |      132,883 → 131,334 |  461,394 → 462,954 |             12 → 11 |                 3,416 (both) |
+| Free `realistic` | 645,300 |                    0 → 0 |        99,274 → 99,162 |  546,018 → 546,130 |               8 → 8 |                2,570 → 2,242 |
+| Classic `flank`  |  33,500 |         250 → 250 (same) |              unchanged |          unchanged |                   – |                            – |
+| Classic `direct` |  33,500 |                    0 → 0 |              unchanged |          unchanged |                   – |                            – |
+
+- **Ten of the eleven free time limits are gone:** _T. rex_ 1 v tiger 5, polar bear 1 v tigers 2 and 3, hippo 1 v lions 6 and hyenas 4, white rhino 1 v lions 3, 4 and 6, _Triceratops_ 1 v lions 3 and raptors 8. Each was one run of its batch.
+- **The remaining one is another mechanism.** _Spinosaurus_ 1 v elephant 1 with `sprintEndurance` pinned at 20 (sensitivity low end) has no latcher: two heavies that strike and take turns to recover.
+- **Classic is byte-identical** in both files, with 250 `flank` time limits (brown bear v tiger 138 of 2,000) kept as draws.
+
+### 21.2 Headline numbers
+
+| Question                                                      |         Model 3 `allIn` |         Model 4 `allIn` |  Model 3 → 4 `realistic` |
+| ------------------------------------------------------------- | ----------------------: | ----------------------: | -----------------------: |
+| Tigers beat one _T. rex_: 10 / 20 / 30 / 50 tigers (%)        | 0.3 / 1.8 / 12.2 / 62.1 | 0.0 / 1.2 / 10.1 / 61.3 |     0 / 0 / 0 / 0 (same) |
+| 10 _T. rex_ v 100 tigers: tigers incapacitated / fled; median |       97.3 / 2.7; 138 s |       97.0 / 3.0; 138 s | 15.6 / 84.4; 75 s (same) |
+| Lions 27 v one elephant: lions win (%)                        |                     7.0 |                     7.0 |               0.0 (same) |
+| Lions 30 v one _T. rex_: lions win (%)                        |                    25.8 |                    26.0 |               0.0 (same) |
+| Lions 6 v one buffalo: lions win (%)                          |                    86.0 |                    85.9 |              85.0 → 84.9 |
+| Brown bear 1 v tiger 1: tigers win (%)                        |                    21.9 |                    21.9 |              20.7 (same) |
+
+- **Where it moves:** a heavy against a small group of latchers, where the last one or two pursuers used to hover beside a recovering heavy. In `allIn` 10 of 712 free batches move more than 2 pp and 37 more than 1 pp. The largest moves:
+  - white rhino 1 v lions 3: lions 13.2 → 9.6 %; v 4: 16.6 → 13.8 %; v 6: 23.6 → 20.8 %;
+  - hippo 1 v lions 2: 9.0 → 6.0 %; v 3: 17.0 → 14.2 %;
+  - _T. rex_ 1 v tigers 30: 12.2 → 10.1 %.
+- **Why the pursuers win less, not more.** A latch on a recovering heavy now succeeds, but a latched rider is shaken off, takes damage and loses morale. Before, it hovered unhurt. The battle ends sooner: white rhino v 3 lions, median 426 → 386 s.
+- **`realistic`:** no batch moves more than 2 pp and 4 of 814 more than 1 pp (largest: polar bear 1 v wolves 6, wolves 12.6 → 10.8 %). In that mode most groups break off a much larger animal before they latch.
+
+### 21.3 Presets and structural checks
+
+- **Presets:** the fixture is `tests/fixtures/preset-shares-mv4.json` ([PRESETS.md](../PRESETS.md#model-4-the-checked-fixture)). At 200 runs, seven rows differ from model 3 by at most two runs, and every check, override and close tag is unchanged.
+  - At 500 runs `allIn`, no preset moves more than 0.4 pp (`bear-wolf-pack` 67.8 → 68.2 %). Rout shares move by at most 0.3 pp.
+  - The longest preset runs shorten: `elephants-pride` 1,461 → 872 s, `trex-squad-tiger-horde` 923 → 682 s, `lions-hyenas` 761 → 442 s. `elephant-hippo` (2,468 s, no latcher) is unchanged.
+- **Mirror matches:** all 14 keep 0 inside the interval of the win-share difference in both modes.
+- **Side swaps:** symmetric in both modes (`allIn`: tiger 5 v lion 5 −2.7 pp, −7.0 to 1.6; brown bear 1 v wolf 10 +1.2, −3.1 to 5.5; _T. rex_ 1 v tiger 10 +0.1, −0.3 to 0.6).
+- **Monotonicity:** every count curve is non-decreasing in both modes (wolves v one brown bear 0.2 … 70.0 %; lions v one elephant 1.0 … 34.7 % `allIn`).
+
+### 21.4 Verdicts
+
+- **The free stalemate is fixed.** Free time limits fall from 11 to 1 in 594,300 `allIn` runs and stay at 0 in `realistic`. The one left is a different, non-latching pair.
+- **Results barely move.** The headline shares stay within 2.1 pp of model 3 (tigers v one _T. rex_ at 30). The largest move is 3.8 pp, white rhino v 3 lions. No preset changes its winner, close tag or override.
+- **Classic keeps its stalemates as draws** by owner decision. The mechanism and a measured fix, not taken, are recorded on #237 and in [MODEL.md §3.10](../MODEL.md#310-retreat-step-free-model-4).
+- **Open:** #167, #168.

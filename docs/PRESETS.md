@@ -5,7 +5,8 @@
 > - 쉬운 모드에서 고를 대진 프리셋을 `src/sim/free/presets.ts`에 모았습니다. 설계 문서 [RENEWAL-1.0.md §6](design/RENEWAL-1.0.md#6-simple-mode-preset-list)의 목록 가운데 두 종이 모두 지금 있는 18개만 넣었고(북극곰 vs 불곰은 #184, 코끼리 vs 하마는 #186, 랩터 무리 vs 티라노는 #188, 코끼리 vs 코뿔소와 하마 vs 코뿔소는 #187, 티라노 vs 스피노(육상 대결)는 #185, 티라노 vs 트리케라톱스는 #189에서 추가), 나머지 5개는 종이 추가될 때 들어옵니다(아래 [대기 중인 프리셋](#presets-waiting-for-a-species)).
 > - 프리셋마다 자유 대결 엔진으로 같은 시드(20261019)와 같은 실행 수(200회)로 승률, 전투 시간 중앙값, 진 쪽의 이탈 비율을 재서 `tests/fixtures/preset-shares.json`에 기록합니다. 테스트가 매번 다시 계산해 기록과 비트 단위로 같은지 확인하므로, 모델이 바뀌면 이 파일의 차이로 드러납니다.
 > - 이탈 점검: 전투 시간 중앙값이 30초 미만이거나 진 쪽의 이탈 비율이 90%를 넘으면 실패입니다(모두 **S**). 문서로 남긴 예외(override)가 있으면 통과합니다. 예외도 받지 못한 프리셋은 보류(hold)되어 쉬운 모드에 나오지 않습니다.
-> - 모델 3(#230)에서는 도주한 쪽이 경기장 밖으로 빠져나갈 때까지 전투가 이어집니다. 승률은 모델 2와 거의 같고, 1:1 대결 다섯과 불곰 vs 늑대 무리, 그리고 보류였던 세 프리셋(사자 무리 vs 호랑이 다섯, 티라노 vs 호모 에렉투스 100, 사자 vs 하이에나)이 이탈 예외로 쉬운 모드에 나옵니다. 보류 해제는 소유자가 정했습니다(2026-11-18). 기준 파일은 `tests/fixtures/preset-shares-mv3.json`입니다.
+> - 모델 3(#230)에서는 도주한 쪽이 경기장 밖으로 빠져나갈 때까지 전투가 이어집니다. 승률은 모델 2와 거의 같고, 1:1 대결 다섯과 불곰 vs 늑대 무리, 그리고 보류였던 세 프리셋(사자 무리 vs 호랑이 다섯, 티라노 vs 호모 에렉투스 100, 사자 vs 하이에나)이 이탈 예외로 쉬운 모드에 나옵니다. 보류 해제는 소유자가 정했습니다(2026-11-18). 모델 3의 기준 파일은 `tests/fixtures/preset-shares-mv3.json`입니다.
+> - 모델 4(#237)는 물러나는 상대에게 매달리려는 동물이 그 한 걸음을 따라잡게 합니다. 프리셋 승률은 200회 기준 최대 2회 차이로 그대로이고, 예외와 보류도 바뀌지 않았습니다. 지금 점검하는 기준 파일은 `tests/fixtures/preset-shares-mv4.json`입니다.
 > - 프리셋 이름, "왜?" 문구, 예외와 보류 사유는 금지어 테스트를 거칩니다. 잔혹하거나 죽음을 뜻하는 말, 베팅 용어, 작품·상표·방송 플랫폼 이름, 조회수를 쓰지 않습니다.
 
 Source of truth: `src/sim/free/presets.ts`, `tests/presets.test.ts` and `tests/fixtures/preset-shares.json`. The design is [RENEWAL-1.0.md §3.2 and §6](design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode), with owner decision R4 (b): keep the model for 1.0 and contain the mass-rout cascade.
@@ -65,11 +66,38 @@ The `close` tag is never chosen by hand: for every preset, held or not, the test
 
 ## Fixture
 
-There is one fixture per free model version (`mv`, ADR-0008): `tests/fixtures/preset-shares.json` for model 1, `tests/fixtures/preset-shares-mv2.json` for model 2 (#169, #197) and `tests/fixtures/preset-shares-mv3.json` for model 3 (#230). Every preset must reproduce the row of every model a link can name; only the newest model, which Simple mode runs, must pass the checks above. An older model's fixture is never rewritten.
+There is one fixture per free model version (`mv`, ADR-0008): `tests/fixtures/preset-shares.json` for model 1, `tests/fixtures/preset-shares-mv2.json` for model 2 (#169, #197) `tests/fixtures/preset-shares-mv3.json` for model 3 (#230) and `tests/fixtures/preset-shares-mv4.json` for model 4 (#237). Every preset must reproduce the row of every model a link can name; only the newest model, which Simple mode runs, must pass the checks above. An older model's fixture is never rewritten.
 
-### Model 3 (the checked fixture)
+### Model 4 (the checked fixture)
 
-Measured on `fix/230-battle-end` (model 3, #230) in the default flight mode `allIn`, which every preset and every Simple run use. Morale rout works as in model 2; what changed is that a battle ends only once the fleeing side has run off the field or been caught ([MODEL.md §2.4](MODEL.md#24-outcomes)). `tests/fixtures/preset-shares-mv3.json` is authoritative.
+Measured on `fix/237-free-retreat-step` (free model 4, #237) in the default flight mode `allIn`. The only change from model 3 is the retreat step: an animal that wants to latch now closes the step its target takes while backing off in Recover ([MODEL.md §3.10](MODEL.md#310-retreat-step-free-model-4)). `tests/fixtures/preset-shares-mv4.json` is authoritative.
+
+| Preset (`id`)            | Sides                         | A wins | B wins | Draws |  Median | Rout share | Close | Status                   |
+| ------------------------ | ----------------------------- | -----: | -----: | ----: | ------: | ---------: | ----- | ------------------------ |
+| `lion-tiger`             | lion 1 v tiger 1              | 59.0 % | 41.0 % |   0 % |  50.8 s |      100 % | yes   | override                 |
+| `pride-five-tigers`      | lion 5 v tiger 5              | 63.0 % | 37.0 % |   0 % |  62.6 s |      100 % | yes   | override (released hold) |
+| `tiger-bear`             | tiger 1 v brown bear 1        | 19.5 % | 80.5 % |   0 % |  62.9 s |      100 % | no    | override                 |
+| `bear-wolf-pack`         | brown bear 1 v wolf 8         | 69.0 % | 31.0 % |   0 % | 101.6 s |     96.1 % | no    | override                 |
+| `buffalo-pride`          | buffalo 1 v lion 6            | 12.0 % | 88.0 % |   0 % | 153.6 s |     63.7 % | no    | passes                   |
+| `elephants-pride`        | elephant 5 v lion 30          |  100 % |    0 % |   0 % | 115.4 s |     87.0 % | no    | passes                   |
+| `mammoth-wolves`         | mammoth 1 v wolf 12           |  100 % |    0 % |   0 % | 118.2 s |     89.8 % | no    | passes                   |
+| `trex-mirror`            | _T. rex_ 1 v _T. rex_ 1       | 51.0 % | 49.0 % |   0 % | 155.1 s |     64.0 % | yes   | passes                   |
+| `trex-squad-tiger-horde` | _T. rex_ 10 v tiger 100       |  100 % |    0 % |   0 % | 143.0 s |      2.2 % | no    | passes                   |
+| `trex-erectus-100`       | _T. rex_ 1 v _H. erectus_ 100 |  100 % |    0 % |   0 % | 142.8 s |     94.6 % | no    | override (released hold) |
+| `lions-hyenas`           | lion 3 v spotted hyena 10     | 38.0 % | 62.0 % |   0 % |  67.1 s |     97.5 % | yes   | override (released hold) |
+| `polar-bear-brown-bear`  | polar bear 1 v brown bear 1   | 72.0 % | 28.0 % |   0 % | 103.8 s |     95.0 % | no    | override                 |
+| `elephant-hippo`         | elephant 1 v hippo 1          | 81.5 % | 18.5 % |   0 % | 233.3 s |     89.5 % | no    | passes                   |
+| `raptors-trex`           | _Utahraptor_ 12 v _T. rex_ 1  | 13.0 % | 87.0 % |   0 % | 269.3 s |     70.1 % | no    | passes                   |
+| `elephant-rhino`         | elephant 1 v white rhino 1    | 73.5 % | 26.5 % |   0 % | 210.9 s |     95.5 % | no    | override                 |
+| `hippo-rhino`            | hippo 1 v white rhino 1       | 41.5 % | 58.5 % |   0 % | 177.4 s |     94.5 % | yes   | override                 |
+| `trex-spinosaurus`       | _T. rex_ 1 v _Spinosaurus_ 1  | 96.5 % |  3.5 % |   0 % | 198.9 s |     50.5 % | no    | passes                   |
+| `trex-triceratops`       | _T. rex_ 1 v _Triceratops_ 1  | 62.0 % | 38.0 % |   0 % | 157.2 s |     73.0 % | yes   | passes                   |
+
+What changed against model 3 (below): seven presets differ by at most two of 200 runs (`bear-wolf-pack` 136 → 138 bear wins, `buffalo-pride` 23 → 24 buffalo wins, `lions-hyenas` 74 → 76 lion wins; the other four only in rout share or median), rout shares by at most 0.9 pp, and the other eleven rows are identical. Every check, override and close tag is unchanged.
+
+### Model 3
+
+Measured on `fix/230-battle-end` (model 3, #230) in the default flight mode `allIn`, which every preset and every Simple run used until model 4. Morale rout works as in model 2; what changed is that a battle ends only once the fleeing side has run off the field or been caught ([MODEL.md §2.4](MODEL.md#24-outcomes)). `tests/fixtures/preset-shares-mv3.json` is authoritative.
 
 | Preset (`id`)            | Sides                         | A wins | B wins | Draws |  Median | Rout share | Close | Status                   |
 | ------------------------ | ----------------------------- | -----: | -----: | ----: | ------: | ---------: | ----- | ------------------------ |
