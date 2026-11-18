@@ -10,6 +10,7 @@
 > - 우선순위 스케줄러(#175)로 워커를 미리 데워 둔 채 재사용합니다. 작업을 취소하거나 새 작업으로 바꿔도 워커를 끄지 않으며, 한 덩어리는 최대 25회입니다. 배치 실행 시간은 측정 오차 범위 안에서 그대로입니다.
 > - 그 뒤 본문 최대 폭을 `ch`(숫자 0의 폭) 단위로 정하면서 글꼴이 바뀌는 순간 폭이 넓어져 이동이 다시 생겼습니다(#138). 폭을 `em`으로 바꿔서 12개 페이지·화면 조합의 합계가 0.0524에서 0.0034로 줄었습니다.
 > - 실시간 변수 카드의 두 관문(#181)은 측정값만으로 판단합니다. 재시뮬레이션 시간 × 1.5가 500 ms 이하일 때만 대결 중 카드를 쓰고, 카드 쉬는 시간의 계산량이 80%를 넘으면 효과 계산 횟수와 승률 체크포인트를 차례로 줄입니다. Node에서 잰 프리셋은 모두 첫 관문을 넉넉히 통과합니다.
+> - 상시 성능 점검(#241): `npm run bench`가 고정 시나리오(규모 4단계, 모든 프리셋 × 두 도주 모드, 모든 종의 미러전과 기준 상대전)를 재고 결과를 JSON으로 남깁니다. 기준값은 `bench/baseline-v0.2.27.json`, 예산은 기준값 × 1.3(엔진)과 현재 gzip 크기 + 10%(페이지 JS)입니다. 엔진·UI·Vite 설정·`bench/`를 건드리는 PR은 CI `perf` 작업이 기준 커밋과 PR을 번갈아 재서, 어떤 시나리오든 25% 넘게 느려지거나 페이지 JS가 예산을 넘으면 실패합니다. 의도한 저하는 같은 PR에서 `bench/budgets.json`을 올리고 이 문서에 이유를 적으면 통과합니다.
 
 This page records what issue #24 changed for speed and responsiveness and the before/after numbers. The investigation, the original baselines and the full list of candidate changes are in [research/PERFORMANCE.md](research/PERFORMANCE.md).
 
@@ -274,6 +275,109 @@ Model 3 runs a battle until one side is out (MODEL.md §2.4): a routed agent sta
 | 100 _H. erectus_ v 1 _T. rex_ (#230 link) |             28.1 |             42.9 |                               21.5 |
 
 The heaviest Simple batches stay at about 20 core-seconds, about 5 s of wall time on a 4-core machine (phones slower); no preset needs a run-count change. The work budget counts `maxTime` ticks (`freeWorkEstimate`), so the 3,600 s default lowers the run cap of very large configs to a third (1,000 v 1,000 with the pack buff: 833 → 277 runs; 5,500 agents: 303 → 101 with the buff, 757 → 252 without); those are the batches where a 1,200 s cap could cut long battles short. With morale off (no fleeing) battles run until one side is incapacitated and cost much more: in a first version of model 3 that had no rout in `allIn`, `elephants-pride` took 71 ms per run and the 100 _H. erectus_ link 213 ms.
+
+## Standing performance checks (#241)
+
+> **한국어 요약**
+>
+> - 기능을 하나씩 잴 때만 성능을 기록하던 방식을 바꿔, 같은 시나리오를 계속 다시 재는 장치를 만들었습니다. 계획 전체(6단계)는 [#241](https://github.com/VinylStage/trex_vs_tiger_sim/issues/241)에 있고, 이번에 1–3단계(벤치 스크립트, 예산, PR 관문)가 들어갔습니다.
+> - 실행: `npm run bench`(전체 행렬, 이 컨테이너에서 약 50초), `npm run build && npm run bench:size`(페이지별 시작 JS). 시나리오는 `bench/scenarios.json`에 고정되어 있고, 종 목록은 코드의 종 레지스트리에서 만들어지므로 새 종을 넣으면 행이 저절로 늘어납니다.
+> - 예산(`bench/budgets.json`): 시나리오마다 기준값 × 1.3, 페이지마다 현재 gzip 크기 × 1.1입니다. 숫자는 추측이 아니라 `bench/baseline-v0.2.27.json`에서 나왔습니다.
+> - PR 관문: `src/sim/**`, `src/ui/**`, `vite.*`, `bench/**`를 건드리는 PR에서 CI `perf` 작업이 기준 커밋과 PR의 엔진을 같은 작업 안에서 번갈아 5번 재고, 어느 시나리오든 1.25배를 넘게 느려지거나 페이지 JS가 예산을 넘으면 실패합니다. 결과 표는 작업 요약에 나옵니다.
+> - 의도한 저하(#230 같은 경우)는 같은 PR에서 해당 시나리오의 예산을 올리고, 이 문서의 History 표 아래에 이유를 적으면 통과합니다. 예산을 올린 비율만큼 허용치도 커집니다.
+> - 4단계(릴리스마다 전체 측정 + Chromium 측정), 5단계(실기기, #191), 6단계(대응 규칙)는 아직 계획입니다.
+
+Until #241, performance was measured once per feature (the sections above) and never again, so a regression was noticed only when someone felt it. #230 alone made some presets several times slower per run. These checks re-measure a fixed matrix so the trend is visible and a pull request that slows the engine down fails before it merges.
+
+### What runs
+
+| Piece                                          | What it does                                                                                                                                                                        |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bench/scenarios.json`                         | The fixed matrix: seed, scale ladder, preset and species settings, run counts, and the reduced matrix and limits of the CI job.                                                     |
+| `bench/harness.mjs`                            | The entry that is bundled: the free engine, its design and summary packing, the preset list and the species registry. `@sim/` resolves to the `src/sim/` of the tree being bundled. |
+| `bench/lib.mjs`                                | Bundles a tree's engine with Vite's SSR build (Vite is already a dev dependency), expands the matrix, times runs, hashes results, measures page JavaScript.                         |
+| `bench/run.mjs` (`npm run bench`)              | Runs the matrix on this checkout, prints the table and writes JSON (`bench/last-run.json`, ignored by git, or `--out`).                                                             |
+| `bench/bundle-size.mjs` (`npm run bench:size`) | Startup JavaScript of every page in `dist/` against its budget.                                                                                                                     |
+| `bench/budgets.mjs`                            | Writes ceilings into `bench/budgets.json` from a run file (`--from`) and page budgets from a build (`--dist`).                                                                      |
+| `bench/compare.mjs`                            | The CI comparison: base and head in one process, alternating.                                                                                                                       |
+| `.github/workflows/perf.yml`                   | The `perf` job.                                                                                                                                                                     |
+
+Node built-ins only (`node:crypto`, `node:zlib`, `node:perf_hooks`) plus Vite for bundling; no runtime or dev dependency was added.
+
+### The matrix
+
+All scenarios run the free engine at its newest model (`mv`, passed explicitly: a config without it is read as model 1), seed 20261118, one core, default ranges.
+
+| Group   | Scenarios                                                                                                                                   | Runs (full matrix)                          |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Scale   | _T. rex_ v tigers, `allIn`: 1v1, 10v100, 50v1000, 500v5000                                                                                  | 200, 30, 8, 3                               |
+| Presets | every preset in `src/sim/free/presets.ts` (held ones included) in `allIn` and `realistic`                                                   | 60; 20 for presets with more than 30 agents |
+| Species | every id in `FREE_SPECIES_IDS`, 5 v 5, `allIn`: once as a mirror, once against the reference (_T. rex_; the _T. rex_ itself against tigers) | 60                                          |
+
+The run counts are cut far below what Simple runs (500) so the full matrix takes about 50 s on the 4-vCPU container; they measure cost, not win shares. Because the species rows come from the registry, a new species adds two rows (and a new preset two) without anyone editing `scenarios.json`; `tests/bench.test.ts` checks that, and that `bench/budgets.json` has a ceiling for every scenario, so adding a species or preset also means adding its ceilings (`--only` below).
+
+**Metrics per scenario.** Every run is timed on its own (`performance.now()` around `simulateFreeBattle`). ms/run is the median and p95 over the runs; agent-steps/s is Σ(ticks the battle lasted × agents) ÷ timed seconds, the unit of the work budget (unweighted). The hash is a SHA-256 of the packed run summaries (`packFreeSummaries`), cut to 16 hex digits; the matrix hash hashes them all in order. The same engine gives the same hashes on every rerun, so a changed hash means the results changed. Battles differ in length, so ms/run varies a lot between runs of one scenario; the comparison is always on the same seeded runs.
+
+**Noise.** One pass of the full matrix moved the cheapest scenarios (1–3 ms/run) by up to 1.8× between two passes on the same machine (JIT state, a shared VM). `--repeat N` runs the whole matrix N times and keeps each scenario's median over the passes; the baseline uses 3.
+
+### Budgets
+
+`bench/budgets.json` holds:
+
+| Key              | Meaning                                                                                                                     |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `baseline`       | The run file the ceilings were last set from as a whole.                                                                    |
+| `engineMargin`   | 1.3: a scenario's ceiling is its baseline median and p95 times this (container noise is about 10%, the cheapest rows more). |
+| `pageMargin`     | 1.1: a page's budget is its startup JavaScript times this.                                                                  |
+| `scenarios.<id>` | `msMedian` and `msP95` ceilings, ms/run on the machine of the baseline.                                                     |
+| `pages.<page>`   | `gzipBytes`: the page's startup JavaScript budget.                                                                          |
+
+Startup JavaScript is what the [#82 table](#startup-javascript-per-page-82) counts: the module scripts in the built HTML plus every chunk it preloads (Vite emits a modulepreload link for each static import), `import()` chunks and inline scripts excluded, here gzip level 9 from `node:zlib`.
+
+The ceilings are absolute times on the machine that measured the baseline, so they are checked only on demand: `npm run bench -- --check` exits 1 when a scenario is over its ceiling. The CI runner is a different machine; there the ceilings matter only as ratios (next section).
+
+### PR gate
+
+The `perf` job runs on pull requests that touch `src/sim/**`, `src/ui/**`, `vite.*`, `bench/**` or the workflow itself. It builds the head (`npm run build`), checks the base commit out into a worktree, and runs `node bench/compare.mjs --base <base> --dist dist`:
+
+1. Both trees' engines are bundled with the head's harness, so base and head run the same measuring code. If the base cannot be bundled with it (an export the harness needs is missing there), the engine comparison is skipped with a note and the page budgets are still checked.
+2. The reduced matrix (`reduced` in `scenarios.json`): the scale ladder up to 1,100 agents (500v5000 is left out: one run takes about 6 s), every preset in `allIn`, every species row, at half the run counts. Each batch repeats until at least 250 ms is timed, so cheap scenarios are not measured from a few milliseconds.
+3. Five rounds; in each, base and head run every scenario back to back, base first in even rounds and head first in odd ones, so a slow moment of the runner hits both. The ratio per round is head ÷ base mean ms/run; the gate takes the median over rounds.
+4. A scenario fails when that ratio is above 1.25 × (head ceiling ÷ base ceiling, at least 1), or when one tree gives different hashes in different rounds (nondeterminism). Results that differ between base and head are reported, not failed: a model change is expected to change them.
+5. A page fails when its gzip size is over its budget. A built page with no budget, and a budgeted page that was not built, are reported as notes.
+6. The markdown summary goes to `$GITHUB_STEP_SUMMARY`: failures and notes first, then the table sorted by ratio.
+
+Scenarios that exist only on the head (a new species or preset) have no base and are listed as new. Permissions are `contents: read`; the actions are the SHA-pinned ones of `ci.yml` (`tests/workflows.test.ts`).
+
+**Calibration of the gate.** With base = head (this branch against `main`, identical engines) on the 4-vCPU container, two runs of the gate gave ratios between 0.94 and 1.11 over all 53 scenarios, against the 1.25 limit; with three rounds and 150 ms the spread reached 1.22, which is why the job uses five rounds and 250 ms. A deliberate 1 ms busy-wait per battle failed the 15 cheapest scenarios (1.3–2.2×), and raising one scenario's ceiling sixfold in the same tree let that scenario pass (limit 7.5×). The whole comparison takes about 3.5 minutes on the container.
+
+### Updating budgets
+
+- **Intended slowdown.** Measure the affected scenarios on the head and raise their ceilings in the same pull request, then add a row to the History table below with the reason:
+
+  ```bash
+  npm run bench -- --only preset-elephants-pride --repeat 3 --out /tmp/run.json
+  node bench/budgets.mjs --from /tmp/run.json
+  ```
+
+  `--from` rewrites only the scenarios in the file, at their measured value × `engineMargin`. The gate then allows the scenario 1.25 × (new ceiling ÷ old ceiling), so the allowance grows by exactly the raise. Measure on the machine the baseline came from, or rescale by hand: what counts is the ratio of the new ceiling to the old.
+
+- **Bigger page on purpose.** `npm run build && node bench/budgets.mjs --dist dist` resets every page budget to its current size + 10%; edit a single `pages.<page>` entry by hand to raise one.
+- **New baseline.** Each release gets a new file, never overwriting an older one (`--baseline` refuses): `npm run bench -- --baseline --repeat 3` writes `bench/baseline-v<package version>.json`, then `node bench/budgets.mjs --from bench/baseline-v<version>.json --dist dist` resets everything. Releases doing this routinely is phase 4.
+
+### History
+
+| Version | Commit    | Date       | Model | Matrix hash        | 1v1 / 10v100 / 50v1000 / 500v5000 (ms/run, median) | Slowest preset (ms/run, median)  | `/play/` JS (gzip) | Note                                        |
+| ------- | --------- | ---------- | ----: | ------------------ | -------------------------------------------------- | -------------------------------- | -----------------: | ------------------------------------------- |
+| 0.2.27  | `2b3398c` | 2026-11-18 |     3 | `86bd8311e849d871` | 0.42 / 30.3 / 660 / 6,367                          | `trex-erectus-100` `allIn`, 49.6 |            80.1 KB | First baseline; `main` after #240 (model 3) |
+
+Measured on a 4 vCPU Intel Xeon @ 2.10 GHz container, Node v22.22.0, three passes. The baseline is named after the package version at the time (0.2.27); the commit already holds model 3 (#230), which ships as 0.2.28. Other slow rows: `trex-squad-tiger-horde` `allIn` 33.4, `elephants-pride` `allIn` 17.8; slowest species row the _Spinosaurus_ mirror at 16.7 ms/run. Page JS: `/en/play/` 78.1 KB, `/r/` 43.4 KB, `/en/r/` 41.4 KB, `/reset/` 3.0 KB, every content page 1.5 KB.
+
+### Planned (phases 4–6 of #241)
+
+- **Release check (phase 4).** Before each release-please merge, the full matrix plus the Chromium checks (long tasks from Run to verdict, CLS on font swap and first result, startup long tasks, replay frame time) in a manual or scheduled workflow, with a dated row per version in the History table.
+- **Real devices (phase 5).** The `/bench/` page of #191 runs the same matrix on the owner's PC and a mid-range phone, once per minor version and whenever the gate flags a slowdown.
+- **Response rules (phase 6).** Over budget means fix or justify in the pull request, no silent budget bumps; a preset whose Simple batch exceeds 10 s on the reference 4-core machine gets fewer runs or an optimisation before release.
 
 ## Not changed
 

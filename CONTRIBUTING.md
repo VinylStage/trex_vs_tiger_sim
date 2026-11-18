@@ -31,6 +31,8 @@ npm run dev       # Vite dev server
 npm run check     # typecheck + lint + format check + unit tests
 npm run build     # production build into dist/
 npm run test:coverage  # unit tests with a v8 coverage report in coverage/
+npm run bench     # engine benchmark over the fixed matrix (about 1 min)
+npm run bench:size  # startup JS per page against bench/budgets.json (after a build)
 ```
 
 `npm run test:coverage` prints a text summary and writes an HTML report (`coverage/index.html`) and `coverage/lcov.info`. It covers `src/**/*.ts` and has no thresholds; the baseline is recorded in `IMPLEMENTATION_AUDIT.md`. It is not part of `npm run check` or CI because instrumentation makes the suite several times slower.
@@ -43,6 +45,7 @@ Node version: see `.node-version`.
 - Declarative config (JSON, YAML, `_headers`, `_routes.json`, `tsconfig.json`, `vite.config.ts`, `eslint.config.js`) carries no comments; document it in `docs/CONFIGURATION.md`. The only exception is the `# vX.Y.Z` after a SHA-pinned action, which Dependabot maintains. Build code such as the Vite plugins (`vite.pages.ts`, `vite.seo.ts`) is code and is documented in place, like `src/`.
 - Model or parameter changes must cite sources in `docs/MODEL.md`.
 - Keep diffs minimal; no drive-by refactors.
+- A pull request touching `src/sim/**`, `src/ui/**`, `vite.*` or `bench/**` also runs the `perf` job: it fails when the engine is more than 25% slower than the base on any benchmark scenario or a page's startup JavaScript is over budget. An intended slowdown raises the affected budgets in `bench/budgets.json` in the same PR and says why in `docs/PERFORMANCE.md` ([how](docs/PERFORMANCE.md#updating-budgets)).
 - Documentation (`ARCHITECTURE.md`, `ROADMAP.md`, `IMPLEMENTATION_AUDIT.md`) is updated in the same PR as the code.
 
 ## Content framing rules
