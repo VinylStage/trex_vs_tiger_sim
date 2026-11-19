@@ -59,6 +59,41 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.29',
+    date: '2026-11-19',
+    title: {
+      ko: '도망치는 상대도 끝까지 따라잡아요 🐾',
+      en: 'Chasers now catch a retreating rival 🐾',
+    },
+    prs: [248, 243, 245, 247],
+    items: [
+      {
+        cat: 'fixed',
+        refs: [237, 248],
+        ko: '숨 고르며 물러나는 상대를 쫓던 동물이 한 걸음 차이로 계속 못 붙잡던 문제를 고쳤어요(모델 4). 그래서 시간 제한까지 가던 대결이 거의 사라졌어요. 예전에 공유한 링크는 예전 결과 그대로예요.',
+        en: 'An animal chasing a rival that was backing off to recover kept falling one step short of it. That is fixed in model 4, and battles that ran to the time limit are nearly gone. Links shared before keep their old results.',
+      },
+      {
+        cat: 'fixed',
+        refs: [239, 243],
+        ko: '공유받은 실시간 대결 링크를 열고 새로고침해도 같은 대결이 다시 열려요.',
+        en: 'Reloading a shared live battle link now reopens the same battle.',
+      },
+      {
+        cat: 'improved',
+        refs: [241, 245],
+        ko: '종과 기능이 늘어도 느려지지 않도록, 바뀐 코드마다 계산 속도와 페이지 크기를 자동으로 재요.',
+        en: 'Every code change now has its speed and page size measured automatically, so the site stays quick as animals and features are added.',
+      },
+      {
+        cat: 'security',
+        refs: [246, 247],
+        ko: '사이트를 만드는 개발 도구의 알려진 취약점을 업데이트로 정리했어요. 방문자가 받는 페이지와는 관계없어요.',
+        en: 'Known issues in the tools used to build the site are patched. Nothing visitors download was affected.',
+      },
+    ],
+  },
+  {
     version: '0.2.28',
     date: '2026-11-18',
     title: {
