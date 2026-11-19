@@ -384,7 +384,7 @@ gh run watch "$(gh run list --workflow release-perf.yml --limit 1 --json databas
 
 or Actions → Release perf → Run workflow, with that branch selected. The workflow also listens for `pull_request` events from a `release-please--` branch (only pull requests that change `.release-please-manifest.json` start it at all), but that path cannot be relied on: release-please opens and updates its pull request with `GITHUB_TOKEN`, and on this repository none of those runs has ever started a job: all 68 `pull_request` runs of the CI workflow on the release branch (2026-10-19 to 2026-11-19, the 0.2.27 and 0.2.28 release pull requests among them) ended as `action_required` or `failure` with zero jobs. It would start on its own only if release-please were given a token of its own (a GitHub App or a PAT), which this repository does not do. `workflow_dispatch` is the supported path; `CONTRIBUTING.md` lists it as a release step.
 
-**What runs** (one job, about @@CI_MIN@@ minutes on `ubuntu-latest`):
+**What runs** (one job, about 5 minutes on `ubuntu-latest`: 2 min for the matrix, 30 s to install Playwright and Chromium, 2 min for the Chromium checks):
 
 1. `npm ci`, `npm run build`.
 2. The commit to record: the checked-out head, or its parent when the head is release-please's `chore(main): release …` commit, so the row names the `main` commit the release was cut from (the release commit itself is replaced when the pull request is squash-merged).

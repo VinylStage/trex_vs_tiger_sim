@@ -10,7 +10,6 @@ on:
   pull_request:
     paths:
       - '.release-please-manifest.json'
-      - '.github/workflows/release-perf.yml'
 
 permissions:
   contents: read
@@ -21,7 +20,7 @@ concurrency:
 
 jobs:
   release-perf:
-    if: github.event_name == 'workflow_dispatch' || (startsWith(github.head_ref, 'release-please--') || github.head_ref == 'feat/241-release-perf-check')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'release-please--')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
