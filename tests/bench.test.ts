@@ -3,6 +3,17 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { gzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
+import {
+  browserRow,
+  engineRow,
+  fmtHistMs,
+  machineOf,
+  releaseSummary,
+  slowestPreset,
+  type BenchRun,
+  type BrowserRun,
+  type SizeRun,
+} from '../bench/history.mjs';
 import { checkPages, expandMatrix, median, pageSizes } from '../bench/lib.mjs';
 import { FREE_PRESETS } from '../src/sim/free/presets';
 import { FREE_SPECIES_IDS } from '../src/sim/free/species';
@@ -119,5 +130,95 @@ describe('bench helpers', () => {
     const rows = checkPages(sizes, { pages: { 'index.html': { gzipBytes: gz(a) } } });
     expect(rows.find((r) => r.page === 'index.html')?.status).toBe('over');
     expect(rows.find((r) => r.page === 'en/index.html')?.status).toBe('unlisted');
+  });
+});
+
+describe('release check History rows', () => {
+  const base = JSON.parse(readFileSync('bench/baseline-v0.2.27.json', 'utf8')) as BenchRun;
+  const size: SizeRun = {
+    pages: [
+      { page: 'play/index.html', gzipBytes: 82_022, budget: 90_000, status: 'ok' },
+      { page: 'r/index.html', gzipBytes: 50_000, budget: 45_000, status: 'over' },
+    ],
+  };
+  const browser: BrowserRun = {
+    version: '0.2.27',
+    date: '2026-11-19T01:02:03.000Z',
+    browser: 'Chromium 1.0',
+    samples: 3,
+    run: {
+      preset: 'elephants-pride',
+      verdictMs: 5219.4,
+      longTaskCount: 1,
+      longTaskTotalMs: 61.2,
+      longestTaskMs: 61.2,
+    },
+    cls: { desktop: 0.14347, mobile: 0.4 },
+    startup: { page: '/play/', longTaskCount: 4, longTaskTotalMs: 474, longestTaskMs: 228 },
+    replay: {
+      preset: 'trex-squad-tiger-horde',
+      x1P95Ms: 16.8,
+      x16P95Ms: 16.7,
+      x1MaxMs: 17,
+      x16MaxMs: 33.4,
+    },
+  };
+
+  it('formats ms the way the History table does', () => {
+    expect([0.42495, 30.297, 659.7, 6367.2, NaN].map(fmtHistMs)).toEqual([
+      '0.42',
+      '30.3',
+      '660',
+      '6,367',
+      '–',
+    ]);
+  });
+
+  it('shortens the machine', () => {
+    expect(machineOf('4 x Intel(R) Xeon(R) Processor @ 2.10GHz', 'v22.22.0')).toBe(
+      '4 × Intel Xeon @ 2.10GHz, Node 22.22.0',
+    );
+  });
+
+  it('reproduces the 0.2.27 numbers from the committed baseline', () => {
+    expect(slowestPreset(base.results)).toBe('`trex-erectus-100` `allIn`, 49.6');
+    expect(engineRow(base, size, { note: 'n' })).toBe(
+      '| 0.2.27 | `2b3398c` | 2026-11-18 | 3 | `86bd8311e849d871` | 0.42 / 30.3 / 660 / 6,367 | ' +
+        '`trex-erectus-100` `allIn`, 49.6 | 80.1 KB | 4 × Intel Xeon @ 2.10GHz, Node 22.22.0 | n |',
+    );
+  });
+
+  it('names the commit it is given, and refuses a partial matrix', () => {
+    expect(engineRow(base, size, { commit: 'abcdef0123' })).toContain('| `abcdef0` |');
+    expect(() => engineRow({ ...base, matrix: 'reduced' }, size)).toThrow(/full-matrix/);
+    expect(() => engineRow({ ...base, only: 'scale' }, size)).toThrow(/full-matrix/);
+  });
+
+  it('writes the browser row', () => {
+    expect(browserRow(browser, { version: '0.2.28', note: 'a | b' })).toBe(
+      '| 0.2.28 | 2026-11-19 | 5,219 | 1 / 61 | 0.1435 / 0.4000 | 4 / 474 / 228 | 16.8 / 16.7 | ' +
+        'Chromium 1.0 | a \\| b |',
+    );
+  });
+
+  it('puts both rows and the pages over budget in the summary', () => {
+    const md = releaseSummary({ bench: base, size, browser });
+    expect(md).toContain(engineRow(base, size));
+    expect(md).toContain(browserRow(browser, { version: '0.2.27' }));
+    expect(md).toContain('**over**: `r/index.html`');
+    expect(releaseSummary({ bench: base, size, browser: null })).not.toContain('Chromium');
+  });
+
+  it('keeps Playwright out of the dependencies and pins it in the release workflow', () => {
+    const pkg = JSON.parse(readFileSync('package.json', 'utf8')) as Record<
+      string,
+      Record<string, string> | undefined
+    >;
+    for (const key of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+      expect(Object.keys(pkg[key] ?? {})).not.toContain('playwright');
+    }
+    const wf = readFileSync('.github/workflows/release-perf.yml', 'utf8');
+    expect(wf).toMatch(/^\s+PLAYWRIGHT_VERSION: \d+\.\d+\.\d+$/m);
+    expect(wf).toContain('workflow_dispatch');
   });
 });

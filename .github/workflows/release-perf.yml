@@ -1,0 +1,85 @@
+name: Release perf
+
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: Note for the History rows
+        required: false
+        default: ''
+  pull_request:
+    paths:
+      - '.release-please-manifest.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-perf-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-perf:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.head_ref, 'release-please--')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PLAYWRIGHT_VERSION: 1.64.1
+      NOTE: ${{ inputs.note }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Version and commit
+        id: meta
+        run: |
+          echo "OUT=$RUNNER_TEMP/perf-out" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/perf-out"
+          version=$(node -p "require('./package.json').version")
+          commit=$(git rev-parse HEAD)
+          if git log -1 --format=%s | grep -Eq '^chore(\([^)]*\))?: release '; then
+            commit=$(git rev-parse HEAD^)
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "COMMIT=$commit" >> "$GITHUB_ENV"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+      - name: Engine matrix
+        run: npm run bench -- --repeat 3 --out "$OUT/baseline-v$VERSION.json"
+      - name: Page JavaScript
+        run: npm run bench:size -- --json "$OUT/size.json"
+      - name: Install Playwright outside the project
+        if: ${{ !cancelled() }}
+        run: |
+          npm install --prefix "$RUNNER_TEMP/playwright" --no-save --no-package-lock --no-audit --no-fund "playwright@$PLAYWRIGHT_VERSION"
+          "$RUNNER_TEMP/playwright/node_modules/.bin/playwright" install --with-deps --only-shell chromium
+      - name: Chromium checks
+        if: ${{ !cancelled() }}
+        env:
+          PLAYWRIGHT_DIR: ${{ runner.temp }}/playwright
+        run: |
+          npx vite preview --port 4173 --strictPort > "$RUNNER_TEMP/preview.log" 2>&1 &
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:4173/play/ && break; sleep 1; done
+          node bench/browser.mjs --url http://localhost:4173 --samples 3 --out "$OUT/browser.json"
+      - name: Summary and History rows
+        if: ${{ !cancelled() }}
+        run: |
+          browser=()
+          if [ -f "$OUT/browser.json" ]; then browser=(--browser "$OUT/browser.json"); fi
+          node bench/release-report.mjs --bench "$OUT/baseline-v$VERSION.json" \
+            --size "$OUT/size.json" "${browser[@]}" --commit "$COMMIT" \
+            --note "$NOTE" > "$OUT/summary.md"
+          cat "$OUT/summary.md" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: release-perf-${{ steps.meta.outputs.version }}
+          path: ${{ runner.temp }}/perf-out
+          if-no-files-found: error

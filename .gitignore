@@ -10,3 +10,4 @@ coverage/
 brand/.cache/
 scripts/demand/.cache/
 bench/last-run.json
+bench/last-browser.json
