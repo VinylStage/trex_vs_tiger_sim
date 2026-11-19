@@ -195,6 +195,9 @@ export const FREE_PRESETS: readonly FreePreset[] = [
     name: { ko: '티라노 vs 호모 에렉투스 100', en: 'T. rex vs 100 H. erectus' },
     a: { sp: 'trex', n: 1 },
     b: { sp: 'homoErectus', n: 100 },
+    // 500 runs took 10.7 s to the verdict on the reference machine, over the 10 s response rule
+    // (PERFORMANCE.md); the result is 100 % T. rex either way (#254).
+    runs: 300,
     tags: ['thought-experiment'],
     why: {
       ko: '신체 능력만 비교하는 사고 실험입니다. 실제 폭력을 묘사하거나 지지하지 않습니다.',

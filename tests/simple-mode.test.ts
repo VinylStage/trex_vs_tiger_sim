@@ -131,6 +131,20 @@ describe('hidden edits', () => {
       true,
     );
   });
+
+  it('run a preset at its own run count; a link at the earlier 500 opens the free form (#254)', () => {
+    const p = FREE_PRESETS.find((q) => q.id === 'trex-erectus-100');
+    expect(p?.runs).toBe(300);
+    const c = presetConfig(p as (typeof FREE_PRESETS)[number]);
+    expect(simpleRuns(c)).toBe(300);
+    expect(simpleRunConfig(c, 7).runs).toBe(300);
+    expect(simpleCanShow(c)).toBe(true);
+    // A Simple link written before #254 carries 500 runs: it reproduces in the free form.
+    const old = sanitizeFreeConfig({ ...c, runs: 500 });
+    expect(old.runs).toBe(500);
+    expect(simpleCanShow(old)).toBe(false);
+    expect(freeConfigFromHash(hashFromFreeConfig(old))).toEqual(old);
+  });
 });
 
 describe('fresh seed', () => {
