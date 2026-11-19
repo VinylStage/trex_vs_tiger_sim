@@ -10,7 +10,7 @@
 > - 우선순위 스케줄러(#175)로 워커를 미리 데워 둔 채 재사용합니다. 작업을 취소하거나 새 작업으로 바꿔도 워커를 끄지 않으며, 한 덩어리는 최대 25회입니다. 배치 실행 시간은 측정 오차 범위 안에서 그대로입니다.
 > - 그 뒤 본문 최대 폭을 `ch`(숫자 0의 폭) 단위로 정하면서 글꼴이 바뀌는 순간 폭이 넓어져 이동이 다시 생겼습니다(#138). 폭을 `em`으로 바꿔서 12개 페이지·화면 조합의 합계가 0.0524에서 0.0034로 줄었습니다.
 > - 실시간 변수 카드의 두 관문(#181)은 측정값만으로 판단합니다. 재시뮬레이션 시간 × 1.5가 500 ms 이하일 때만 대결 중 카드를 쓰고, 카드 쉬는 시간의 계산량이 80%를 넘으면 효과 계산 횟수와 승률 체크포인트를 차례로 줄입니다. Node에서 잰 프리셋은 모두 첫 관문을 넉넉히 통과합니다.
-> - 상시 성능 점검(#241): `npm run bench`가 고정 시나리오(규모 4단계, 모든 프리셋 × 두 도주 모드, 모든 종의 미러전과 기준 상대전)를 재고 결과를 JSON으로 남깁니다. 기준값은 `bench/baseline-v0.2.27.json`, 예산은 기준값 × 1.3(엔진)과 현재 gzip 크기 + 10%(페이지 JS)입니다. 엔진·UI·Vite 설정·`bench/`를 건드리는 PR은 CI `perf` 작업이 기준 커밋과 PR을 번갈아 재서, 어떤 시나리오든 25% 넘게 느려지거나 페이지 JS가 예산을 넘으면 실패합니다. 의도한 저하는 같은 PR에서 `bench/budgets.json`을 올리고 이 문서에 이유를 적으면 통과합니다.
+> - 상시 성능 점검(#241): `npm run bench`가 고정 시나리오(규모 4단계, 모든 프리셋 × 두 도주 모드, 모든 종의 미러전과 기준 상대전)를 재고 결과를 JSON으로 남깁니다. 기준값은 `bench/baseline-v0.2.27.json`, 예산은 기준값 × 1.3(엔진)과 현재 gzip 크기 + 10%(페이지 JS)입니다. 엔진·UI·Vite 설정·`bench/`를 건드리는 PR은 CI `perf` 작업이 기준 커밋과 PR을 번갈아 재서, 어떤 시나리오든 25% 넘게 느려지거나 페이지 JS가 예산을 넘으면 실패합니다. 의도한 저하는 같은 PR에서 `bench/budgets.json`을 올리고 이 문서에 이유를 적으면 통과합니다. 릴리스 PR을 머지하기 전에는 `Release perf` 워크플로가 전체 행렬과 Chromium 측정(실행 중 긴 작업, 첫 결과 CLS, 4배 감속 시작, 재생 프레임)을 돌리고, 버전마다 History 표에 한 줄을 남깁니다.
 
 This page records what issue #24 changed for speed and responsiveness and the before/after numbers. The investigation, the original baselines and the full list of candidate changes are in [research/PERFORMANCE.md](research/PERFORMANCE.md).
 
@@ -280,29 +280,35 @@ The heaviest Simple batches stay at about 20 core-seconds, about 5 s of wall tim
 
 > **한국어 요약**
 >
-> - 기능을 하나씩 잴 때만 성능을 기록하던 방식을 바꿔, 같은 시나리오를 계속 다시 재는 장치를 만들었습니다. 계획 전체(6단계)는 [#241](https://github.com/VinylStage/trex_vs_tiger_sim/issues/241)에 있고, 이번에 1–3단계(벤치 스크립트, 예산, PR 관문)가 들어갔습니다.
+> - 기능을 하나씩 잴 때만 성능을 기록하던 방식을 바꿔, 같은 시나리오를 계속 다시 재는 장치를 만들었습니다. 계획 전체(6단계)는 [#241](https://github.com/VinylStage/trex_vs_tiger_sim/issues/241)에 있고, 1–3단계(벤치 스크립트, 예산, PR 관문)에 이어 4단계(릴리스 점검)가 들어갔습니다.
 > - 실행: `npm run bench`(전체 행렬, 이 컨테이너에서 약 50초), `npm run build && npm run bench:size`(페이지별 시작 JS). 시나리오는 `bench/scenarios.json`에 고정되어 있고, 종 목록은 코드의 종 레지스트리에서 만들어지므로 새 종을 넣으면 행이 저절로 늘어납니다.
-> - 예산(`bench/budgets.json`): 시나리오마다 기준값 × 1.3, 페이지마다 현재 gzip 크기 × 1.1입니다. 숫자는 추측이 아니라 `bench/baseline-v0.2.27.json`에서 나왔습니다.
+> - 예산(`bench/budgets.json`): 시나리오마다 기준값 × 1.3, 페이지마다 현재 gzip 크기 × 1.1입니다. 숫자는 추측이 아니라 `bench/baseline-v0.2.27.json`에서 나왔습니다. 이 파일은 측정 당시 `package.json` 버전을 따라 0.2.27로 이름이 붙었지만, 실제로는 0.2.28로 출시된 엔진(모델 3)을 잰 것입니다. 파일 이름은 바꾸지 않습니다.
 > - PR 관문: `src/sim/**`, `src/ui/**`, `vite.*`, `bench/**`를 건드리는 PR에서 CI `perf` 작업이 기준 커밋과 PR의 엔진을 같은 작업 안에서 번갈아 5번 재고, 어느 시나리오든 1.25배를 넘게 느려지거나 페이지 JS가 예산을 넘으면 실패합니다. 결과 표는 작업 요약에 나옵니다.
 > - 의도한 저하(#230 같은 경우)는 같은 PR에서 해당 시나리오의 예산을 올리고, 이 문서의 History 표 아래에 이유를 적으면 통과합니다. 예산을 올린 비율만큼 허용치도 커집니다.
-> - 4단계(릴리스마다 전체 측정 + Chromium 측정), 5단계(실기기, #191), 6단계(대응 규칙)는 아직 계획입니다.
+> - 릴리스 점검(4단계): release-please PR을 머지하기 전에 Actions의 `Release perf` 워크플로를 그 PR 브랜치에서 직접 실행합니다(`gh workflow run release-perf.yml --ref <release-please 브랜치>`). release-please PR은 `GITHUB_TOKEN`으로 열리기 때문에 `pull_request` 트리거가 실제로는 돌지 않습니다(승인 대기 상태로만 남음). 전체 행렬(3회 반복), 페이지별 JS, Chromium 측정을 한 작업에서 재고, 작업 요약에 History 표 두 줄(엔진, 브라우저)을 붙여 줍니다. 그 두 줄과 결과 파일 `baseline-v<버전>.json`을 작은 PR로 `main`에 올리면 끝입니다.
+> - History 표에는 0.2.28(이 저장소 컨테이너에서 직접 실행)과 0.2.29(모델 4, 출시 뒤 실행) 줄이 들어가 있습니다. Chromium 측정에서 Simple 모드 결과가 처음 그려질 때 CLS가 0.14(1366×900) / 0.40(390×800)으로 나왔는데, 결과 패널이 최종 높이를 미리 잡아 두지 않아 하단 푸터가 밀려나는 한 번의 이동입니다.
+> - Playwright는 이 프로젝트의 의존성이 아닙니다. 워크플로가 고정 버전을 저장소 밖 임시 폴더에 설치해서 씁니다.
+> - 5단계(실기기, #191)와 6단계(대응 규칙)는 아직 계획입니다.
 
 Until #241, performance was measured once per feature (the sections above) and never again, so a regression was noticed only when someone felt it. #230 alone made some presets several times slower per run. These checks re-measure a fixed matrix so the trend is visible and a pull request that slows the engine down fails before it merges.
 
 ### What runs
 
-| Piece                                          | What it does                                                                                                                                                                        |
-| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bench/scenarios.json`                         | The fixed matrix: seed, scale ladder, preset and species settings, run counts, and the reduced matrix and limits of the CI job.                                                     |
-| `bench/harness.mjs`                            | The entry that is bundled: the free engine, its design and summary packing, the preset list and the species registry. `@sim/` resolves to the `src/sim/` of the tree being bundled. |
-| `bench/lib.mjs`                                | Bundles a tree's engine with Vite's SSR build (Vite is already a dev dependency), expands the matrix, times runs, hashes results, measures page JavaScript.                         |
-| `bench/run.mjs` (`npm run bench`)              | Runs the matrix on this checkout, prints the table and writes JSON (`bench/last-run.json`, ignored by git, or `--out`).                                                             |
-| `bench/bundle-size.mjs` (`npm run bench:size`) | Startup JavaScript of every page in `dist/` against its budget.                                                                                                                     |
-| `bench/budgets.mjs`                            | Writes ceilings into `bench/budgets.json` from a run file (`--from`) and page budgets from a build (`--dist`).                                                                      |
-| `bench/compare.mjs`                            | The CI comparison: base and head in one process, alternating.                                                                                                                       |
-| `.github/workflows/perf.yml`                   | The `perf` job.                                                                                                                                                                     |
+| Piece                                           | What it does                                                                                                                                                                        |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bench/scenarios.json`                          | The fixed matrix: seed, scale ladder, preset and species settings, run counts, and the reduced matrix and limits of the CI job.                                                     |
+| `bench/harness.mjs`                             | The entry that is bundled: the free engine, its design and summary packing, the preset list and the species registry. `@sim/` resolves to the `src/sim/` of the tree being bundled. |
+| `bench/lib.mjs`                                 | Bundles a tree's engine with Vite's SSR build (Vite is already a dev dependency), expands the matrix, times runs, hashes results, measures page JavaScript.                         |
+| `bench/run.mjs` (`npm run bench`)               | Runs the matrix on this checkout, prints the table and writes JSON (`bench/last-run.json`, ignored by git, or `--out`).                                                             |
+| `bench/bundle-size.mjs` (`npm run bench:size`)  | Startup JavaScript of every page in `dist/` against its budget.                                                                                                                     |
+| `bench/budgets.mjs`                             | Writes ceilings into `bench/budgets.json` from a run file (`--from`) and page budgets from a build (`--dist`).                                                                      |
+| `bench/compare.mjs`                             | The CI comparison: base and head in one process, alternating.                                                                                                                       |
+| `.github/workflows/perf.yml`                    | The `perf` job.                                                                                                                                                                     |
+| `bench/browser.mjs`                             | The Chromium checks of the release check, against `vite preview`; Playwright is loaded from outside the project (`PLAYWRIGHT_DIR`).                                                 |
+| `bench/history.mjs`, `bench/release-report.mjs` | Turn a full-matrix run, the page sizes and the Chromium checks into the two History rows and the release summary.                                                                   |
+| `.github/workflows/release-perf.yml`            | The release check (`Release perf`).                                                                                                                                                 |
 
-Node built-ins only (`node:crypto`, `node:zlib`, `node:perf_hooks`) plus Vite for bundling; no runtime or dev dependency was added.
+Node built-ins only (`node:crypto`, `node:zlib`, `node:perf_hooks`) plus Vite for bundling; no runtime or dev dependency was added. The release check also needs Playwright, which stays out of `package.json`: the workflow installs a pinned version into a directory outside the checkout (next sections).
 
 ### The matrix
 
@@ -363,19 +369,92 @@ Scenarios that exist only on the head (a new species or preset) have no base and
   `--from` rewrites only the scenarios in the file, at their measured value × `engineMargin`. The gate then allows the scenario 1.25 × (new ceiling ÷ old ceiling), so the allowance grows by exactly the raise. Measure on the machine the baseline came from, or rescale by hand: what counts is the ratio of the new ceiling to the old.
 
 - **Bigger page on purpose.** `npm run build && node bench/budgets.mjs --dist dist` resets every page budget to its current size + 10%; edit a single `pages.<page>` entry by hand to raise one.
-- **New baseline.** Each release gets a new file, never overwriting an older one (`--baseline` refuses): `npm run bench -- --baseline --repeat 3` writes `bench/baseline-v<package version>.json`, then `node bench/budgets.mjs --from bench/baseline-v<version>.json --dist dist` resets everything. Releases doing this routinely is phase 4.
+- **New baseline.** Each release gets a new file, never overwriting an older one (`--baseline` refuses): `npm run bench -- --baseline --repeat 3` writes `bench/baseline-v<package version>.json`, then `node bench/budgets.mjs --from bench/baseline-v<version>.json --dist dist` resets everything. The release check writes that file for every release (next section); resetting the budgets from it stays a deliberate step, because its numbers come from a CI runner, not the machine the current ceilings were measured on.
+
+### Release check
+
+Before each release-please pull request is merged, the `Release perf` workflow (`.github/workflows/release-perf.yml`) measures the release candidate once in full: the engine matrix, the startup JavaScript of every page and four Chromium checks. Its job summary ends with two History rows ready to paste, and the artifact `release-perf-<version>` holds the JSON.
+
+**How it is triggered.** Run it by hand on the release-please branch:
+
+```bash
+gh workflow run release-perf.yml --ref release-please--branches--main--components--trex-vs-tiger-sim
+gh run watch "$(gh run list --workflow release-perf.yml --limit 1 --json databaseId -q '.[0].databaseId')"
+```
+
+or Actions → Release perf → Run workflow, with that branch selected. The workflow also listens for `pull_request` events from a `release-please--` branch (only pull requests that change `.release-please-manifest.json` start it at all), but that path cannot be relied on: release-please opens and updates its pull request with `GITHUB_TOKEN`, and on this repository none of those runs has ever started a job: all 68 `pull_request` runs of the CI workflow on the release branch (2026-10-19 to 2026-11-19, the 0.2.27 and 0.2.28 release pull requests among them) ended as `action_required` or `failure` with zero jobs. It would start on its own only if release-please were given a token of its own (a GitHub App or a PAT), which this repository does not do. `workflow_dispatch` is the supported path; `CONTRIBUTING.md` lists it as a release step.
+
+**What runs** (one job, about 5 minutes on `ubuntu-latest`: 2 min for the matrix, 30 s to install Playwright and Chromium, 2 min for the Chromium checks):
+
+1. `npm ci`, `npm run build`.
+2. The commit to record: the checked-out head, or its parent when the head is release-please's `chore(main): release …` commit, so the row names the `main` commit the release was cut from (the release commit itself is replaced when the pull request is squash-merged).
+3. `npm run bench -- --repeat 3 --out <dir>/baseline-v<version>.json`: the full matrix, three passes, as for the first baseline. On the release branch `package.json` already holds the new version, so the file has the right name.
+4. `npm run bench:size -- --json <dir>/size.json`: page JavaScript against `bench/budgets.json`. A page over budget fails the job (after the remaining steps have run). Engine ceilings are not checked here: they are absolute times on the machine of the baseline, and the runner is a different machine.
+5. Playwright, outside the project: `npm install --prefix "$RUNNER_TEMP/playwright" --no-save playwright@<PLAYWRIGHT_VERSION>` and `playwright install --with-deps --only-shell chromium`. The version is pinned in the workflow (`PLAYWRIGHT_VERSION`, 1.64.1). `npx playwright@<version>` alone is not enough, because the measuring script has to import the library, not only run its CLI; `bench/browser.mjs` loads it with `createRequire` from `PLAYWRIGHT_DIR`. `tests/bench.test.ts` fails if Playwright appears in `package.json`.
+6. `vite preview` on port 4173 and `node bench/browser.mjs --samples 3`.
+7. `node bench/release-report.mjs` writes the summary (`$GITHUB_STEP_SUMMARY` and `summary.md` in the artifact).
+
+Permissions are `contents: read`, the checkout keeps no credentials, and the actions are SHA-pinned (`tests/workflows.test.ts`). A trial run on GitHub's runner from #250 (4 × Intel Xeon Platinum 8573C, Node 24) took 4 min 50 s and gave the same matrix hash for 0.2.29 as the container (`c3d307b09caa2695`): the results do not depend on the machine or the Node version, only the times do.
+
+**Chromium checks** (`bench/browser.mjs`). Headless Chromium from the pinned Playwright, the production build served by `vite preview` (without the `_headers` CSP), every sample in a fresh browser context, median of 3 samples:
+
+| Check                          | Method                                                                                                                                                                                                                                                                                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Run to verdict                 | `/play/` (Simple mode), preset `elephants-pride` (5 v 30, the mid-size preset; Simple runs 500), 1366×900, no throttling. Time from the click on Run until the result bar is shown.                                                                                                                                                                                |
+| Long tasks from Run            | `PerformanceObserver` (`longtask`, registered before the page's scripts) from the click on Run until 1 s after the verdict, as in [Environment and method](#environment-and-method): count and longest.                                                                                                                                                            |
+| CLS on the first result render | Layout-shift entries without recent input in the same window, at 1366×900 and 390×800.                                                                                                                                                                                                                                                                             |
+| Startup long tasks             | `/play/`, 412×915, 4x CPU (`Emulation.setCPUThrottlingRate`), long tasks in the first 4 s after navigation: count, total and longest.                                                                                                                                                                                                                              |
+| Replay frame time              | Preset `trex-squad-tiger-horde` (110 agents, the largest), 1366×900, no throttling: after the verdict the replay is scrolled into view, rewound (`Home`) and played at 1x and then 16x for 4 s each. p95 of the `requestAnimationFrame` interval while it plays (and the longest). Headless Chromium paces frames at 60 Hz, so 16.7 ms means no frame was dropped. |
+
+Locally, with any Playwright version in a directory of its own:
+
+```bash
+npm install --prefix /tmp/pw --no-save playwright@1.64.1 && /tmp/pw/node_modules/.bin/playwright install --only-shell chromium
+npm run build && npx vite preview --port 4173 --strictPort &
+PLAYWRIGHT_DIR=/tmp/pw node bench/browser.mjs --out /tmp/browser.json
+npm run bench -- --repeat 3 --out /tmp/run.json && npm run bench:size -- --json /tmp/size.json
+node bench/release-report.mjs --bench /tmp/run.json --size /tmp/size.json --browser /tmp/browser.json
+```
+
+`--rows` prints only the two rows. `--commit <sha>` names another commit and `--note <text>` fills the Note column (the workflow's `note` input).
+
+**After the run.** Paste the two rows into the tables below (newest last) and commit them with the run file as `bench/baseline-v<version>.json` in a small `docs(perf)` pull request; it can land before or after the release pull request. A finding (a new long task, a CLS jump, dropped frames, a page over budget) gets its own issue rather than blocking the release, except a page over budget, which fails the job and is handled like a failing `perf` gate: fix it, or raise that page's budget with a reason ([Updating budgets](#updating-budgets)).
 
 ### History
 
-| Version | Commit    | Date       | Model | Matrix hash        | 1v1 / 10v100 / 50v1000 / 500v5000 (ms/run, median) | Slowest preset (ms/run, median)  | `/play/` JS (gzip) | Note                                        |
-| ------- | --------- | ---------- | ----: | ------------------ | -------------------------------------------------- | -------------------------------- | -----------------: | ------------------------------------------- |
-| 0.2.27  | `2b3398c` | 2026-11-18 |     3 | `86bd8311e849d871` | 0.42 / 30.3 / 660 / 6,367                          | `trex-erectus-100` `allIn`, 49.6 |            80.1 KB | First baseline; `main` after #240 (model 3) |
+One pair of rows per release, from the [release check](#release-check); the oldest first. Absolute times are only comparable on the same machine (the Machine column); the matrix hash changes exactly when the engine's results change.
 
-Measured on a 4 vCPU Intel Xeon @ 2.10 GHz container, Node v22.22.0, three passes. The baseline is named after the package version at the time (0.2.27); the commit already holds model 3 (#230), which ships as 0.2.28. Other slow rows: `trex-squad-tiger-horde` `allIn` 33.4, `elephants-pride` `allIn` 17.8; slowest species row the _Spinosaurus_ mirror at 16.7 ms/run. Page JS: `/en/play/` 78.1 KB, `/r/` 43.4 KB, `/en/r/` 41.4 KB, `/reset/` 3.0 KB, every content page 1.5 KB.
+Engine and page JavaScript (`npm run bench -- --repeat 3`, `npm run bench:size`):
 
-### Planned (phases 4–6 of #241)
+| Version | Commit    | Date       | Model | Matrix hash        | 1v1 / 10v100 / 50v1000 / 500v5000 (ms/run, median) | Slowest preset (ms/run, median)  | `/play/` JS (gzip) | Machine                                | Note                                                                                                  |
+| ------- | --------- | ---------- | ----: | ------------------ | -------------------------------------------------- | -------------------------------- | -----------------: | -------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| 0.2.28  | `2b3398c` | 2026-11-18 |     3 | `86bd8311e849d871` | 0.42 / 30.3 / 660 / 6,367                          | `trex-erectus-100` `allIn`, 49.6 |            80.1 KB | 4 × Intel Xeon @ 2.10GHz, Node 22.22.0 | First baseline, file `bench/baseline-v0.2.27.json` (below); `main` after #240, before the 0.2.28 tag  |
+| 0.2.28  | `dae2970` | 2026-11-19 |     3 | `86bd8311e849d871` | 0.39 / 29.4 / 634 / 5,986                          | `trex-erectus-100` `allIn`, 44.8 |            80.2 KB | 4 × Intel Xeon @ 2.10GHz, Node 22.23.5 | First release check, run locally: 0.2.28 plus #243 (UI) and #247 (dev dependencies), engine unchanged |
+| 0.2.29  | `8ea4b10` | 2026-11-19 |     4 | `c3d307b09caa2695` | 0.40 / 30.5 / 660 / 6,047                          | `trex-erectus-100` `allIn`, 44.8 |            80.2 KB | 4 × Intel Xeon @ 2.10GHz, Node 22.23.5 | Run locally after the release (the check was not merged yet); model 4 (#237)                          |
 
-- **Release check (phase 4).** Before each release-please merge, the full matrix plus the Chromium checks (long tasks from Run to verdict, CLS on font swap and first result, startup long tasks, replay frame time) in a manual or scheduled workflow, with a dated row per version in the History table.
+Chromium (`bench/browser.mjs`, median of 3; long tasks as count / longest, startup as count / total / longest):
+
+| Version | Date       | Run to verdict, `elephants-pride` (ms) | Long tasks from Run | Result CLS, 1366×900 / 390×800 | Startup long tasks, 4x CPU (ms) | Replay frame p95, 1x / 16x (ms) | Browser               | Note                                     |
+| ------- | ---------- | -------------------------------------: | ------------------- | ------------------------------ | ------------------------------- | ------------------------------- | --------------------- | ---------------------------------------- |
+| 0.2.28  | 2026-11-19 |                                  4,824 | 1 / 139             | 0.1435 / 0.4000                | 3 / 423 / 246                   | 16.7 / 16.7                     | Chromium 156.0.8078.4 | Same run as the `dae2970` row; CLS below |
+| 0.2.29  | 2026-11-19 |                                  5,230 | 1 / 128             | 0.1435 / 0.4000                | 3 / 432 / 274                   | 16.7 / 16.7                     | Chromium 156.0.8078.4 | Same run as the 0.2.29 engine row        |
+
+**The first baseline's name.** `bench/baseline-v0.2.27.json` is named after `package.json` at the time it was measured (`--baseline` uses the package version), and an earlier version of this table listed it as 0.2.27. Its commit `2b3398c` is the `main` that release 0.2.28 was cut from: it already holds model 3 (#230), and nothing under `src/sim/` changed between it and the `trex-vs-tiger-sim-v0.2.28` tag. So it measures 0.2.28's engine, which the identical matrix hash of the `dae2970` run confirms. The file keeps its name (baselines are never renamed or overwritten). The release check runs on the release-please branch, where `package.json` already holds the new version, so its files carry the version they measure.
+
+First baseline: measured on a 4 vCPU Intel Xeon @ 2.10 GHz container, Node v22.22.0, three passes. Other slow rows: `trex-squad-tiger-horde` `allIn` 33.4, `elephants-pride` `allIn` 17.8; slowest species row the _Spinosaurus_ mirror at 16.7 ms/run. Page JS: `/en/play/` 78.1 KB, `/r/` 43.4 KB, `/en/r/` 41.4 KB, `/reset/` 3.0 KB, every content page 1.5 KB.
+
+First release check (`dae2970`): the same container and engine a day later, other sessions idle; the median ratio to the first baseline over the 72 scenarios is 0.95 (67 faster, 5 slower; range 0.80 for `trex-mirror` `realistic` to 1.09 for `lions-hyenas` `allIn`). Same results, so this is the spread to expect between two full runs on this machine, not a change. `/play/` JS grew by 0.1 KB with #243.
+
+0.2.29 (model 4, #237): the results changed in 14 of the 72 scenarios (a new matrix hash), the cost did not: the median ratio to the 0.2.28 run is 1.00 (0.89 for `lions-hyenas` `allIn` to 1.10 for `mammoth-wolves` `realistic`), within the spread above. The run files of both checks are `bench/baseline-v0.2.28.json` and `bench/baseline-v0.2.29.json`; `bench/budgets.json` still holds the first baseline's ceilings.
+
+**Chromium findings of the first release check.**
+
+- _Result CLS 0.14 / 0.40._ Both are one shift of the site footer: the Simple results panel does not reserve its final height, so when the verdict renders the panel grows by about 1,660 px (390×800) and pushes the footer, which was in view, off the screen. #24 measured 0 / 0.0002 for the classic results panel, which reserves its size on the first Run; Simple mode (#146) came later. Every sample gave the same value. Not fixed here (#241 only measures).
+- _Long tasks from Run._ 0–2 per sample (longest 139–251 ms), after the batch, while the result and the replay chunk render.
+- _Replay._ The replay of `trex-squad-tiger-horde` holds 60 frames per second at 1x and 16x (p95 16.7 ms, longest 16.8 ms), and also at 4x CPU throttling (one frame of 33 ms in two samples). The metric does see slow frames: at 20x throttling the p95 was 50 ms at 1x and 83 ms at 16x.
+
+### Planned (phases 5–6 of #241)
+
 - **Real devices (phase 5).** The `/bench/` page of #191 runs the same matrix on the owner's PC and a mid-range phone, once per minor version and whenever the gate flags a slowdown.
 - **Response rules (phase 6).** Over budget means fix or justify in the pull request, no silent budget bumps; a preset whose Simple batch exceeds 10 s on the reference 4-core machine gets fewer runs or an optimisation before release.
 
