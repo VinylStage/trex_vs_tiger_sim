@@ -542,6 +542,14 @@ export function simulateFreeBattle(
   const routedNow = new Uint8Array(n);
   // Model 3: escape heading of a routed agent, fixed on its first flight tick (NaN until then).
   const escapeH = new Float64Array(n).fill(NaN);
+  // `cos`/`sin` of the heading `steer` last moved agent i along (#256). A routed agent keeps one
+  // escape heading from model 3, so its new heading repeats bit for bit tick after tick and the
+  // two values can be reused. The cache is keyed on the exact heading: any other heading (a turn,
+  // a throw, another state) misses and refills it, and NaN never matches, so a reused value is
+  // always the one `cos`/`sin` would return.
+  const stepH = new Float64Array(n).fill(NaN);
+  const stepCos = new Float64Array(n);
+  const stepSin = new Float64Array(n);
   const engagedBySide = [0, 0];
 
   // --- spawn ---
@@ -896,8 +904,15 @@ export function simulateFreeBattle(
     nh[i] = head;
     if (step <= 0) return;
     const v = step * (Math.abs(dh) > Math.PI / 3 ? 0.5 : 1);
-    nx[i] = (x[i] as number) + cos(head) * v;
-    ny[i] = (y[i] as number) + sin(head) * v;
+    // A zero heading is never served from the cache: `===` does not tell 0 from −0, whose sines
+    // differ in sign.
+    if (head !== stepH[i] || head === 0) {
+      stepH[i] = head;
+      stepCos[i] = cos(head);
+      stepSin[i] = sin(head);
+    }
+    nx[i] = (x[i] as number) + (stepCos[i] as number) * v;
+    ny[i] = (y[i] as number) + (stepSin[i] as number) * v;
   };
 
   // --- trace ---

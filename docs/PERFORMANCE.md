@@ -14,6 +14,7 @@
 > - 대응 규칙(#241 6단계)이 시행 중입니다. 예산을 넘으면 같은 PR에서 고치거나 이유를 적고, 이유 없이 예산만 올리지 않습니다. 기준 4코어 머신에서 Simple 실행 한 번이 10초를 넘는 프리셋은 릴리스 전에 실행 횟수를 줄이거나 최적화합니다.
 > - 대응 규칙의 첫 적용(#254): `trex-erectus-100`(티라노 1 vs 호모 에렉투스 100)의 Simple 실행이 500회로 10.7–11.5초 걸려 10초 규칙을 넘었으므로 이 프리셋만 300회로 줄였습니다. 같은 측정으로 7.4초입니다. 엔진과 결과는 바뀌지 않았습니다.
 > - Simple 모드 결과가 처음 그려질 때의 레이아웃 이동(#251)은 결과 골격으로 0.1399 / 0.4000에서 0 / 0(1366×900 / 390×800)이 되었습니다. 첫 실행을 누르는 순간 막대, 판정 문장, 끝난 방식, 공유 버튼 자리를 최종 크기로 잡아 둡니다.
+> - 도주 방향 삼각함수 캐시(#256): 모델 3부터 패주한 동물은 첫 도주 방향을 끝까지 유지하는데, `steer`가 그 방향의 `cos`/`sin`을 매 틱 다시 계산하고 있었습니다. 동물마다 마지막 방향과 그 `cos`/`sin`을 저장해 두고, 방향이 비트 단위로 같을 때만 다시 씁니다. 결과는 모든 모델 버전에서 비트 단위로 같고(골든, JavaScriptCore 골든, 행렬 해시 `c3d307b09caa2695` 그대로), 도주가 많은 프리셋이 3–6% 빨라졌습니다(`trex-erectus-100` 0.94배).
 
 This page records what issue #24 changed for speed and responsiveness and the before/after numbers. The investigation, the original baselines and the full list of candidate changes are in [research/PERFORMANCE.md](research/PERFORMANCE.md).
 
@@ -453,6 +454,8 @@ First release check (`dae2970`): the same container and engine a day later, othe
 
 **#254 (after 0.2.29).** `trex-erectus-100` runs 300 times in Simple mode instead of 500, under the [response rules](#response-rules-phase-6). The engine is unchanged, so the matrix hash and `bench/budgets.json` are unchanged too (the matrix runs its own counts, 20 runs for this preset). The next release's Chromium row still times `elephants-pride`; [Fewer Simple runs for `trex-erectus-100`](#fewer-simple-runs-for-trex-erectus-100-254) has this preset's numbers.
 
+**#256 (after 0.2.29).** `steer` reuses `cos`/`sin` of an unchanged heading ([Escape heading trig cache](#escape-heading-trig-cache-256)). The results are bit-identical, so the matrix hash stays `c3d307b09caa2695`. `bench/budgets.json` is unchanged: the gain (2–6 % on most scenarios, at most about 13 %) is far inside the 1.3 margin, and the ceilings are reset from a release baseline, not from a single change ([Updating budgets](#updating-budgets)).
+
 **Chromium findings of the first release check.**
 
 - _Result CLS 0.14 / 0.40._ Both are one shift of the site footer: the Simple results panel does not reserve its final height, so when the verdict renders the panel grows by about 1,660 px (390×800) and pushes the footer, which was in view, off the screen. #24 measured 0 / 0.0002 for the classic results panel, which reserves its size on the first Run; Simple mode (#146) came later. Every sample gave the same value. Fixed in #251: 0 / 0 ([Layout shift when Simple results render](#layout-shift-when-simple-results-render-251)).
@@ -532,7 +535,51 @@ The [response rules](#response-rules-phase-6) found one preset over 10 s: `trex-
 
 **A Simple link written before #254.** A link records its run count, so a Simple link of this preset at 500 runs now has a hidden edit and opens the free form of Advanced mode, where it reproduces its 500-run result ([SHARING.md](SHARING.md), `simpleCanShow`). Tested in `tests/simple-mode.test.ts`.
 
-**Profile** (Node 22 `--cpu-prof`, 60 runs at seed 20261019, about 1,440 ticks and 45 µs per tick per run; the bundle of `bench/lib.mjs`). The cost is spread out: the inlined tick loop of `simulateFreeBattle` 34 % self; the deterministic trigonometry of #197 (`dsin`, `dcos`, `datan2` and their kernels) about 20 %; `steer` 13 % including its trigonometry; the two spatial grid rebuilds per tick 7 %; garbage collection 5 %; morale contagion, cohesion and nearest-enemy queries 2–3 % each. One cheap candidate, not made here: from model 3 a routed agent keeps one escape heading until it leaves (#230), so `steer` recomputes `cos` and `sin` of the same heading every tick. Caching them per agent while the heading is unchanged gave 4–11 % less time per run on this preset in a trial, with the same packed run summaries for every preset in that trial (10 runs each, 60 for this one; the same inputs give the same deterministic outputs); it is not enough on its own to bring 500 runs under 10 s.
+**Profile** (Node 22 `--cpu-prof`, 60 runs at seed 20261019, about 1,440 ticks and 45 µs per tick per run; the bundle of `bench/lib.mjs`). The cost is spread out: the inlined tick loop of `simulateFreeBattle` 34 % self; the deterministic trigonometry of #197 (`dsin`, `dcos`, `datan2` and their kernels) about 20 %; `steer` 13 % including its trigonometry; the two spatial grid rebuilds per tick 7 %; garbage collection 5 %; morale contagion, cohesion and nearest-enemy queries 2–3 % each. One cheap candidate, not made here: from model 3 a routed agent keeps one escape heading until it leaves (#230), so `steer` recomputes `cos` and `sin` of the same heading every tick. Caching them per agent while the heading is unchanged gave 4–11 % less time per run on this preset in a trial, with the same packed run summaries for every preset in that trial (10 runs each, 60 for this one; the same inputs give the same deterministic outputs); it is not enough on its own to bring 500 runs under 10 s. Made in #256 ([Escape heading trig cache](#escape-heading-trig-cache-256)).
+
+## Escape heading trig cache (#256)
+
+The [#254 profile](#fewer-simple-runs-for-trex-erectus-100-254) of `trex-erectus-100` put the deterministic trigonometry of #197 at about 20 % of the time and `steer` at 13 %. From model 3 a routed agent keeps the heading of its first flight tick until it is across the edge (`escapeH`, #230), yet `steer` computed `cos` and `sin` of its new heading on every tick.
+
+**Change.** `simulateFreeBattle` keeps three more per-agent arrays next to `escapeH`: `stepH`, the heading `steer` last moved the agent along (NaN at spawn), and `stepCos` / `stepSin`, its cosine and sine. `steer` computes `head` as before; when `head` is bit for bit the cached heading it reuses the two values, otherwise it computes them with the same `cos` / `sin` as before (the deterministic ones of `detmath.ts` from model 2, `Math` for model 1) and stores them. The cache is keyed on the heading value itself rather than on the state, so it is invalidated by anything that changes the heading: a turn, a throw, a latch, an intervention, another state. NaN never compares equal, so a fresh agent always misses. A zero heading is never served from the cache, because `===` does not tell `0` from `−0` and their sines differ in sign. `cos` and `sin` are pure functions of their argument, so a reused value is exactly the one a recomputation would return: this is not a model change and needs no new model version. The classic engine is untouched.
+
+In the matrix, the routed agents' calls are 2–59 % of `steer`'s moving calls per preset (58–59 % for `trex-erectus-100`), and 19–59 % of all moving calls hit the cache: an agent that is not routed also hits it when its heading did not move (a turn-limited agent already aligned, a straight approach).
+
+**Bit-identity.** On the head:
+
+- `npm run check`: every golden fixture matches (free models 1–4 including the social and intervention goldens, classic models 1–3 and the v1/v2 link goldens, the preset shares); no fixture was touched.
+- `npm run test:jsc` (Bun 1.4.4, JavaScriptCore): model 2, model 3 and free model 4 goldens match.
+- `npm run bench`, full matrix: results hash `c3d307b09caa2695` on `main` (`be0198c`) and on the head, every one of the 72 scenario hashes equal; the same hash as the 0.2.29 History row.
+- `bench/compare.mjs`: `same` results for all 53 scenarios of the reduced matrix, twice.
+
+**Measured** on the 4 vCPU container of [Environment and method](#environment-and-method) (Node 22.23.5), `main` (`be0198c`) against the head.
+
+The CI gate, `node bench/compare.mjs --base <main worktree> --dist dist`, twice (reduced matrix, `allIn`, five alternating rounds; ratio is head ÷ base, median over rounds):
+
+| Scenario                        | Run 1 | Run 2 |
+| ------------------------------- | ----: | ----: |
+| `preset-trex-erectus-100-allIn` | 0.91x | 0.96x |
+| `preset-elephants-pride-allIn`  | 0.93x | 0.96x |
+| `preset-raptors-trex-allIn`     | 0.97x | 0.98x |
+| `species-raptor-mirror`         | 0.84x | 0.95x |
+| Median over 53 scenarios        | 0.98x | 0.98x |
+| Highest                         | 1.04x | 1.06x |
+
+The highest ratios (`scale-50v1000` 1.04x, `preset-bear-wolf-pack-allIn` 1.06x) are each 1.00 or below in the other run: the spread of [the gate's calibration](#pr-gate) (0.94–1.11 with identical engines). Page JavaScript is unchanged (`/play/` 80.4 KB, `/en/play/` 78.4 KB).
+
+Every preset in both flight modes, base and head bundled into one process with the harness of `bench/lib.mjs` and alternated as in the gate, seven rounds, each batch repeated to at least 400 ms (the matrix's run counts: 20 runs for the presets above 30 agents, 60 for the others). The flight-heavy presets, where routed agents make 45 % or more of `steer`'s moving calls:
+
+| Preset, flight                       | Routed share | `main` (ms/run) | Head (ms/run) | Head / `main` |
+| ------------------------------------ | -----------: | --------------: | ------------: | ------------: |
+| `trex-erectus-100` `allIn`           |         58 % |           45.72 |         42.78 |         0.944 |
+| `trex-erectus-100` `realistic`       |         59 % |           41.20 |         39.72 |         0.943 |
+| `raptors-trex` `realistic`           |         54 % |            9.68 |          9.18 |         0.940 |
+| `trex-squad-tiger-horde` `realistic` |         53 % |           19.19 |         18.67 |         0.972 |
+| `elephants-pride` `realistic`        |         45 % |           13.89 |         13.55 |         0.973 |
+| `pride-five-tigers` `realistic`      |         45 % |            3.17 |          2.97 |         0.946 |
+| `pride-five-tigers` `allIn`          |         45 % |            3.06 |          3.00 |         0.978 |
+
+Over all 36 preset rows the median is 0.98; 33 are at or below 1.00, and the three above (`lion-tiger` `allIn` 1.006, `trex-mirror` `allIn` 1.008, `tiger-bear` `allIn` 1.054) are sub-2 ms duels, inside the 1.8x noise of the cheapest rows ([The matrix](#the-matrix)). The largest gain, `bear-wolf-pack` `realistic` 0.875, is a 6 ms preset with 22 % routed calls, so part of it is noise too. The trial in #254 had 4–11 % on `trex-erectus-100`; here it is 6 % in this measurement and 4–9 % in the gate. With 300 Simple runs (#254) that preset's screen goes from 4.5 s to about 4.3 s.
 
 ## Not changed
 
