@@ -334,6 +334,8 @@ flowchart LR
 
 The perf gate (#241, `.github/workflows/perf.yml`) runs only on pull requests that touch the engine, the UI, the Vite config or `bench/`. It bundles the base commit's and the head's free engine with the same harness (`bench/harness.mjs`), runs a reduced fixed matrix on both alternately in one job, and fails when a scenario is more than 25% slower or a page's startup JavaScript is over its budget in `bench/budgets.json`; an intended slowdown passes by raising that budget in the same pull request. `npm run bench` runs the full matrix locally. See [PERFORMANCE.md](docs/PERFORMANCE.md#standing-performance-checks-241).
 
+The release check (#241, `.github/workflows/release-perf.yml`) is run by hand on the release-please branch before the release pull request is merged (that pull request is opened with `GITHUB_TOKEN`, so no `pull_request` workflow starts for it on its own). It runs the full matrix, the page budgets and Chromium checks against `vite preview` (`bench/browser.mjs`, Playwright installed outside the project), and its job summary carries the version's History rows for [PERFORMANCE.md](docs/PERFORMANCE.md#release-check).
+
 ## 6. Security
 
 - Static site; no secrets, no cookies of its own and no third-party requests. `localStorage` holds only the tour-seen flag (language comes from the URL); the version check fetches the same-origin `/version.json`.

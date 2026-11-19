@@ -97,14 +97,14 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 
 ### Standing performance checks (#241)
 
-| Phase                                                                                  | Issue | Status                                                                                                               |
-| -------------------------------------------------------------------------------------- | ----- | -------------------------------------------------------------------------------------------------------------------- |
-| 1. Bench script: `npm run bench`, fixed matrix `bench/scenarios.json`, first baseline  | #241  | Done in review: [PERFORMANCE.md](docs/PERFORMANCE.md#standing-performance-checks-241), `bench/baseline-v0.2.27.json` |
-| 2. Budgets: per-scenario ceilings (baseline × 1.3), per-page JS (gzip + 10%)           | #241  | Done in review: `bench/budgets.json`, `npm run bench:size`                                                           |
-| 3. PR gate: `perf` job, base vs head alternating, fails at > 25% slower or over budget | #241  | Done in review: `.github/workflows/perf.yml`                                                                         |
-| 4. Release check: full matrix and Chromium checks before each release, History row     | #241  | Planned                                                                                                              |
-| 5. Real devices: `/bench/` page on the owner's PC and a mid-range phone                | #191  | Planned (folded into #191)                                                                                           |
-| 6. Response rules: no silent budget bumps; a Simple batch over 10 s gets fewer runs    | #241  | Planned                                                                                                              |
+| Phase                                                                                  | Issue | Status                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Bench script: `npm run bench`, fixed matrix `bench/scenarios.json`, first baseline  | #241  | Done in review: [PERFORMANCE.md](docs/PERFORMANCE.md#standing-performance-checks-241), `bench/baseline-v0.2.27.json`                                                                                         |
+| 2. Budgets: per-scenario ceilings (baseline × 1.3), per-page JS (gzip + 10%)           | #241  | Done in review: `bench/budgets.json`, `npm run bench:size`                                                                                                                                                   |
+| 3. PR gate: `perf` job, base vs head alternating, fails at > 25% slower or over budget | #241  | Done in review: `.github/workflows/perf.yml`                                                                                                                                                                 |
+| 4. Release check: full matrix and Chromium checks before each release, History row     | #241  | Done in review: `.github/workflows/release-perf.yml` (`workflow_dispatch` on the release-please branch), `bench/browser.mjs`, History rows from 0.2.28 ([PERFORMANCE.md](docs/PERFORMANCE.md#release-check)) |
+| 5. Real devices: `/bench/` page on the owner's PC and a mid-range phone                | #191  | Planned (folded into #191)                                                                                                                                                                                   |
+| 6. Response rules: no silent budget bumps; a Simple batch over 10 s gets fewer runs    | #241  | Planned                                                                                                                                                                                                      |
 
 ## Later (candidates, not committed)
 
