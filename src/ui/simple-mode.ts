@@ -30,6 +30,11 @@ export interface SimpleView {
   render(c: FreeConfig, focusKey?: string): void;
   /** Fill the bar and the breakdown from a finished run (empty them for null). */
   renderResult(res: { config: FreeConfig; agg: FreeAggregate } | null): void;
+  /**
+   * Skeleton of a running first run (#251): the bar and the breakdown of `c` at their final size,
+   * values held by same-length placeholders that `.is-pending` keeps invisible.
+   */
+  renderPending(c: FreeConfig): void;
 }
 
 export interface SimpleViewOptions {
@@ -254,20 +259,29 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
   againBtn.addEventListener('click', () => opts.run());
 
   function renderResult(res: { config: FreeConfig; agg: FreeAggregate } | null): void {
-    bar.hidden = res === null;
-    breakdown.hidden = res === null;
     if (!res) {
+      bar.hidden = true;
+      breakdown.hidden = true;
       bar.replaceChildren();
       breakdown.replaceChildren();
       return;
     }
-    const { config: c, agg } = res;
+    draw(res.config, res.agg);
+  }
+
+  /** The bar and the breakdown of `c`; same-length placeholders while `agg` is null (#251). */
+  function draw(c: FreeConfig, agg: FreeAggregate | null): void {
+    bar.hidden = false;
+    breakdown.hidden = false;
     const team = (i: FreeSideIndex): string =>
       t('free.sideTeam', {
         side: t(sideKey(i)),
         team: teamLabel(c.sides[i].species, c.sides[i].count),
       });
-    const share = [formatShare(agg.aWins, agg.n), formatShare(agg.bWins, agg.n)] as const;
+    const blank = '00%';
+    const share = agg
+      ? ([formatShare(agg.aWins, agg.n), formatShare(agg.bWins, agg.n)] as const)
+      : ([blank, blank] as const);
     const segment = (cls: string, k: number): HTMLElement => {
       const el = h('span', { class: `simple-bar-seg ${cls}` });
       el.style.flexGrow = String(k);
@@ -278,45 +292,57 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
       h(
         'p',
         { class: 'simple-bar-labels' },
-        h('span', { class: 'simple-bar-a', text: `${team(0)} ${share[0]}` }),
-        h('span', { class: 'simple-bar-b', text: `${share[1]} ${team(1)}` }),
+        h(
+          'span',
+          { class: 'simple-bar-a' },
+          `${team(0)} `,
+          h('span', { class: 'simple-value', text: share[0] }),
+        ),
+        h(
+          'span',
+          { class: 'simple-bar-b' },
+          h('span', { class: 'simple-value', text: share[1] }),
+          ` ${team(1)}`,
+        ),
       ),
-      h(
-        'div',
-        {
-          class: 'simple-bar-track',
-          attrs: {
-            role: 'img',
-            'aria-label': t('simple.barLabel', {
-              a: team(0),
-              pa: share[0],
-              b: team(1),
-              pb: share[1],
-              pd: formatShare(agg.draws, agg.n),
-            }),
-          },
-        },
-        segment('mk-heavy', agg.aWins),
-        segment('mk-draw', agg.draws),
-        segment('mk-pack', agg.bWins),
-      ),
+      agg
+        ? h(
+            'div',
+            {
+              class: 'simple-bar-track',
+              attrs: {
+                role: 'img',
+                'aria-label': t('simple.barLabel', {
+                  a: team(0),
+                  pa: share[0],
+                  b: team(1),
+                  pb: share[1],
+                  pd: formatShare(agg.draws, agg.n),
+                }),
+              },
+            },
+            segment('mk-heavy', agg.aWins),
+            segment('mk-draw', agg.draws),
+            segment('mk-pack', agg.bWins),
+          )
+        : h('div', { class: 'simple-bar-track' }),
     );
     // Still standing / fled / incapacitated per side (#42): the three add up to the side's count.
     const rows = (i: FreeSideIndex): HTMLElement => {
-      const s = i === 0 ? agg.a : agg.b;
+      const s = agg ? (i === 0 ? agg.a : agg.b) : null;
       const n = c.sides[i].count;
-      const row = (key: MsgKey, mean: number): HTMLElement =>
+      const row = (key: MsgKey, mean: number | null): HTMLElement =>
         h(
           'li',
           {},
           h('span', { class: 'simple-part-label', text: t(key) }),
           h('span', {
-            class: 'simple-part-value',
+            class: 'simple-part-value simple-value',
             text: t('simple.part', {
-              mean: formatNum(mean, 1),
+              mean: formatNum(mean ?? n, 1),
               n: formatInt(n),
               counter: speciesCounter(c.sides[i].species),
-              pct: formatPct(n > 0 ? mean / n : 0, 0),
+              pct: mean === null ? blank : formatPct(n > 0 ? mean / n : 0, 0),
             }),
           }),
         );
@@ -336,24 +362,39 @@ export function createSimpleView(opts: SimpleViewOptions): SimpleView {
         h(
           'ul',
           {},
-          row('simple.standing', s.active),
-          row('simple.fled', s.routed),
-          row('simple.out', s.killed),
+          row('simple.standing', s ? s.active : null),
+          row('simple.fled', s ? s.routed : null),
+          row('simple.out', s ? s.killed : null),
         ),
       );
     };
     againBtn.textContent = t('simple.again');
+    againBtn.disabled = agg === null;
     breakdown.replaceChildren(
       h('p', { class: 'simple-breakdown-title', text: t('simple.breakdown') }),
       h('div', { class: 'simple-breakdown-sides' }, ...SIDES.map(rows)),
       // How the runs ended (#230): a time limit is a draw, never a win.
-      h('p', {
-        class: 'simple-end',
-        text: `${t('end.title')}: ${endReasonBreakdown(agg.endReasons)}`,
-      }),
-      h('div', { class: 'simple-again' }, againBtn),
+      h(
+        'p',
+        { class: 'simple-end' },
+        `${t('end.title')}: `,
+        h('span', {
+          class: 'simple-value',
+          text: agg
+            ? endReasonBreakdown(agg.endReasons)
+            : t('end.part', { label: t('end.wipeout'), pct: blank }),
+        }),
+      ),
+      h('div', { class: 'simple-again simple-value' }, againBtn),
     );
   }
 
-  return { form, bar, breakdown, render, renderResult };
+  return {
+    form,
+    bar,
+    breakdown,
+    render,
+    renderResult,
+    renderPending: (c) => draw(c, null),
+  };
 }

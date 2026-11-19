@@ -61,7 +61,7 @@ const { chromium } = playwright;
 const log = (line) => stdout.write(`${line}\n`);
 
 // Runs before any page script: collects long tasks and layout shifts from navigation on, and
-// stamps the moment the Simple result bar is first shown (the verdict).
+// stamps the moment the Simple result bar is first shown with values (the verdict).
 const INIT = () => {
   const perf = { lt: [], ls: [], verdictAt: null };
   window.__perf = perf;
@@ -112,7 +112,8 @@ async function runPreset(page, preset) {
   await page.waitForFunction(
     () => {
       const bar = document.querySelector('.simple-bar');
-      if (!bar || bar.hidden) return false;
+      // The results skeleton (#251) shows the bar before the verdict; it sits in `.is-pending`.
+      if (!bar || bar.hidden || bar.closest('.is-pending')) return false;
       window.__perf.verdictAt ??= performance.now();
       return true;
     },

@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ROUT_NOTICE_SHARE, aggregateFree, routNotice, routShare } from '../src/sim/free/aggregate';
+import {
+  ROUT_NOTICE_SHARE,
+  aggregateFree,
+  routNotice,
+  routNoticePossible,
+  routShare,
+} from '../src/sim/free/aggregate';
 import { PACK_BUFF_EFFECTS, defaultSide, sanitizeFreeConfig } from '../src/sim/free/config';
 import {
   FreeEndReason,
@@ -185,5 +191,47 @@ describe('routNotice', () => {
     expect(soloAgg.aWins).toBeLessThan(soloAgg.bWins);
     expect(routShare(solo, 0)).toBeGreaterThanOrEqual(ROUT_NOTICE_SHARE);
     expect(routNotice(cfg, soloAgg, solo)).toBeNull();
+  });
+});
+
+describe('routNoticePossible', () => {
+  const sides = (a: FreeSpeciesId, na: number, b: FreeSpeciesId, nb: number) => {
+    const c = sanitizeFreeConfig({});
+    c.sides = [defaultSide(a, na), defaultSide(b, nb)];
+    return sanitizeFreeConfig(c);
+  };
+  const lostBoth = (na: number, nb: number): FreeRunSummary[] => [
+    run(FreeOutcome.B, [0, na, 0], [0, 0, nb]),
+    run(FreeOutcome.A, [0, 0, na], [0, nb, 0]),
+  ];
+
+  // The results skeleton (#251) holds the notice's line exactly when this is true, so it must be
+  // true for every config whose results can show the notice.
+  it('is true whenever some result of the config shows a rout notice', () => {
+    const cases: [FreeSpeciesId, number, FreeSpeciesId, number][] = [
+      ['lion', 30, 'elephant', 5],
+      ['lion', 5, 'tiger', 5],
+      ['tiger', 5, 'hyena', 10],
+      ['tiger', 1, 'tiger', 1],
+      ['lion', 1, 'tiger', 1],
+    ];
+    for (const [a, na, b, nb] of cases) {
+      const c = sides(a, na, b, nb);
+      const runs = lostBoth(na, nb);
+      const shown =
+        routNotice(c, { aWins: 0, bWins: 1 }, runs) !== null ||
+        routNotice(c, { aWins: 1, bWins: 0 }, runs) !== null;
+      expect(routNoticePossible(c) || !shown, `${a} ${na} vs ${b} ${nb}`).toBe(true);
+    }
+  });
+
+  it('is false without a group that shares morale, true with one', () => {
+    expect(routNoticePossible(sides('tiger', 5, 'tiger', 5))).toBe(false);
+    expect(routNoticePossible(sides('lion', 1, 'tiger', 1))).toBe(false);
+    expect(routNoticePossible(sides('lion', 5, 'tiger', 5))).toBe(true);
+    expect(routNoticePossible(sides('tiger', 1, 'hyena', 10))).toBe(true);
+    const noMorale = sides('lion', 30, 'elephant', 5);
+    noMorale.packBuff.morale = false;
+    expect(routNoticePossible(noMorale)).toBe(false);
   });
 });
