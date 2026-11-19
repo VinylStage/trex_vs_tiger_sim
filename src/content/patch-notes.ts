@@ -59,6 +59,35 @@ export interface PatchNote {
 /** Every release, newest first. */
 export const PATCH_NOTES: readonly PatchNote[] = [
   {
+    version: '0.2.30',
+    date: '2026-11-19',
+    title: {
+      ko: '결과 화면이 덜컹거리지 않아요 📐',
+      en: 'Results no longer jump around 📐',
+    },
+    prs: [253, 255, 257, 250],
+    items: [
+      {
+        cat: 'fixed',
+        refs: [251, 253],
+        ko: '간단 모드에서 처음 시뮬레이션을 돌릴 때 결과가 뜨면서 화면이 아래로 확 밀리던 문제를 고쳤어요. 결과 자리를 미리 잡아 두어서 휴대폰에서도 화면이 흔들리지 않아요.',
+        en: 'The first Simple run no longer shoves the page down when the result appears. The result area is reserved up front, so the page stays put on phones too.',
+      },
+      {
+        cat: 'improved',
+        refs: [254, 255],
+        ko: '"티라노 vs 호모 에렉투스 100" 대결이 결과까지 10초 넘게 걸리던 것을 7초 남짓으로 줄였어요. 실행 횟수를 300번으로 맞췄고, 승부 결과는 그대로예요.',
+        en: '"T. rex vs 100 Homo erectus" took over 10 seconds to finish; it now takes about 7. It runs 300 battles instead of 500, and the outcome is unchanged.',
+      },
+      {
+        cat: 'improved',
+        refs: [256, 257, 241, 250],
+        ko: '도망치는 동물이 많은 대결의 계산이 조금 더 빨라졌어요. 결과는 한 자리도 바뀌지 않아요. 릴리스마다 속도와 화면 안정성을 재는 점검도 생겼어요.',
+        en: 'Battles with lots of fleeing animals compute a little faster, with identical results. Each release now also gets a speed and layout-stability check.',
+      },
+    ],
+  },
+  {
     version: '0.2.29',
     date: '2026-11-19',
     title: {
