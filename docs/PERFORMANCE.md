@@ -485,7 +485,7 @@ First application (2026-11-19, 0.2.29 matrix, then the browser on the reference 
 >
 > - Simple 모드에서 첫 실행 결과가 그려질 때 결과 패널이 약 1,660 px 늘어나며 보이던 푸터를 화면 밖으로 밀어내, CLS가 0.1399(1366×900) / 0.4000(390×800)이었습니다.
 > - #24의 고전 결과 골격과 같은 방식으로, 첫 실행을 누르는 순간 Simple 결과 골격을 보여 줍니다. 막대 라벨의 팀 이름, 각 진영 카드의 항목 이름, 판정 자리의 "계산하는 중" 문장은 그대로 보이고, 숫자 자리는 같은 길이의 자리표시 문자열을 `visibility: hidden`으로 숨깁니다. 끝나면 실제 값으로 바뀌므로 아래 내용이 움직이지 않습니다.
-> - 결과: 0 / 0. 패주 안내 줄은 결과가 나와야 알 수 있어서, 무리가 사기를 공유하는 진영이 있을 때만 그 자리를 잡아 둡니다. 그래서 그런 진영이 있는데 안내가 나오지 않는 프리셋(`pride-five-tigers`)에는 작은 이동이 남습니다(0.011 / 0.043, 고치기 전 0.135 / 0.401).
+> - 결과: 0 / 0. 패주 안내 줄은 결과가 나와야 알 수 있어서, 무리가 사기를 공유하는 진영이 있을 때만 그 자리를 잡아 둡니다. 그래서 그런 진영이 있는데 안내가 나오지 않는 프리셋(`pride-five-tigers`, `buffalo-pride`, `raptors-trex`)에는 작은 이동이 남습니다(약 0.011 / 0.043, `pride-five-tigers`는 고치기 전 0.135 / 0.401).
 
 The release check of #241 found that the first Simple result moved the page: CLS 0.1435 / 0.4000 on 0.2.28 and 0.2.29. The Simple results panel showed only its one-line empty note until the verdict, then grew by about 1,660 px at once, and the site footer, which was in view, was pushed off the screen. The classic panel has reserved its final size on the first Run since #24 (results skeleton, [Summary](#summary)); Simple mode (#146) came later without one.
 
@@ -508,7 +508,7 @@ Placeholder values and the reserved rout notice and share buttons have `visibili
 
 Every sample gave the same value on each side. The release rows above (0.1435 on 0.2.28 and 0.2.29) came from Chromium 156; 0.1399 is the same single footer shift measured with Chromium 157. The rest of that run was unchanged: Run to verdict 4,959 ms (5,217 before), startup long tasks 2 / 374 / 229 ms (3 / 372 / 243), replay p95 16.8 / 16.7 ms (16.7 / 16.7).
 
-Other presets, one sample each with the same probe (`/play/`, Korean): `lion-tiger`, `trex-squad-tiger-horde` and `lions-hyenas` 0 / 0. `pride-five-tigers` 0.0110 / 0.0428 (before: 0.1348 / 0.4012): the lions share morale, so the skeleton holds the rout notice's line, but the tigers lose and they share none, so no notice appears and the line closes. `/en/play/` with `elephants-pride`: 0.0023 / 0: the English replay run line wraps to a second line on desktop after the replay loads, below a `.replay-info` that reserves one line there.
+Other presets, one sample each with the same probe (`/play/`, Korean): `lion-tiger`, `trex-squad-tiger-horde` and `lions-hyenas` 0 / 0. `pride-five-tigers` 0.0110 / 0.0428 (before: 0.1348 / 0.4012): the lions share morale, so the skeleton holds the rout notice's line, but the tigers lose and they share none, so no notice appears and the line closes. `buffalo-pride` (0.0110 / 0.0428) and `raptors-trex` (0.0110 / 0.0429) do the same: a group on one side, no notice in the result. A 3-seed survey of all 18 presets found these three as the only ones where the reserved line closes. `/en/play/` with `elephants-pride`: 0.0023 / 0: the English replay run line wraps to a second line on desktop after the replay loads, below a `.replay-info` that reserves one line there.
 
 ## Not changed
 
