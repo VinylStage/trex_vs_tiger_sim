@@ -104,7 +104,7 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | 3. PR gate: `perf` job, base vs head alternating, fails at > 25% slower or over budget | #241  | Done in review: `.github/workflows/perf.yml`                                                                                                                                                                 |
 | 4. Release check: full matrix and Chromium checks before each release, History row     | #241  | Done in review: `.github/workflows/release-perf.yml` (`workflow_dispatch` on the release-please branch), `bench/browser.mjs`, History rows from 0.2.28 ([PERFORMANCE.md](docs/PERFORMANCE.md#release-check)) |
 | 5. Real devices: `/bench/` page on the owner's PC and a mid-range phone                | #191  | Planned (folded into #191)                                                                                                                                                                                   |
-| 6. Response rules: no silent budget bumps; a Simple batch over 10 s gets fewer runs    | #241  | Planned                                                                                                                                                                                                      |
+| 6. Response rules: no silent budget bumps; a Simple batch over 10 s gets fewer runs    | #241  | In force since #251: [PERFORMANCE.md](docs/PERFORMANCE.md#response-rules-phase-6); first application found `trex-erectus-100` at 10.7 s                                                                      |
 
 ## Later (candidates, not committed)
 

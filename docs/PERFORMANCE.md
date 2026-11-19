@@ -11,6 +11,8 @@
 > - 그 뒤 본문 최대 폭을 `ch`(숫자 0의 폭) 단위로 정하면서 글꼴이 바뀌는 순간 폭이 넓어져 이동이 다시 생겼습니다(#138). 폭을 `em`으로 바꿔서 12개 페이지·화면 조합의 합계가 0.0524에서 0.0034로 줄었습니다.
 > - 실시간 변수 카드의 두 관문(#181)은 측정값만으로 판단합니다. 재시뮬레이션 시간 × 1.5가 500 ms 이하일 때만 대결 중 카드를 쓰고, 카드 쉬는 시간의 계산량이 80%를 넘으면 효과 계산 횟수와 승률 체크포인트를 차례로 줄입니다. Node에서 잰 프리셋은 모두 첫 관문을 넉넉히 통과합니다.
 > - 상시 성능 점검(#241): `npm run bench`가 고정 시나리오(규모 4단계, 모든 프리셋 × 두 도주 모드, 모든 종의 미러전과 기준 상대전)를 재고 결과를 JSON으로 남깁니다. 기준값은 `bench/baseline-v0.2.27.json`, 예산은 기준값 × 1.3(엔진)과 현재 gzip 크기 + 10%(페이지 JS)입니다. 엔진·UI·Vite 설정·`bench/`를 건드리는 PR은 CI `perf` 작업이 기준 커밋과 PR을 번갈아 재서, 어떤 시나리오든 25% 넘게 느려지거나 페이지 JS가 예산을 넘으면 실패합니다. 의도한 저하는 같은 PR에서 `bench/budgets.json`을 올리고 이 문서에 이유를 적으면 통과합니다. 릴리스 PR을 머지하기 전에는 `Release perf` 워크플로가 전체 행렬과 Chromium 측정(실행 중 긴 작업, 첫 결과 CLS, 4배 감속 시작, 재생 프레임)을 돌리고, 버전마다 History 표에 한 줄을 남깁니다.
+> - 대응 규칙(#241 6단계)이 시행 중입니다. 예산을 넘으면 같은 PR에서 고치거나 이유를 적고, 이유 없이 예산만 올리지 않습니다. 기준 4코어 머신에서 Simple 실행 한 번이 10초를 넘는 프리셋은 릴리스 전에 실행 횟수를 줄이거나 최적화합니다.
+> - Simple 모드 결과가 처음 그려질 때의 레이아웃 이동(#251)은 결과 골격으로 0.1399 / 0.4000에서 0 / 0(1366×900 / 390×800)이 되었습니다. 첫 실행을 누르는 순간 막대, 판정 문장, 끝난 방식, 공유 버튼 자리를 최종 크기로 잡아 둡니다.
 
 This page records what issue #24 changed for speed and responsiveness and the before/after numbers. The investigation, the original baselines and the full list of candidate changes are in [research/PERFORMANCE.md](research/PERFORMANCE.md).
 
@@ -288,7 +290,8 @@ The heaviest Simple batches stay at about 20 core-seconds, about 5 s of wall tim
 > - 릴리스 점검(4단계): release-please PR을 머지하기 전에 Actions의 `Release perf` 워크플로를 그 PR 브랜치에서 직접 실행합니다(`gh workflow run release-perf.yml --ref <release-please 브랜치>`). release-please PR은 `GITHUB_TOKEN`으로 열리기 때문에 `pull_request` 트리거가 실제로는 돌지 않습니다(승인 대기 상태로만 남음). 전체 행렬(3회 반복), 페이지별 JS, Chromium 측정을 한 작업에서 재고, 작업 요약에 History 표 두 줄(엔진, 브라우저)을 붙여 줍니다. 그 두 줄과 결과 파일 `baseline-v<버전>.json`을 작은 PR로 `main`에 올리면 끝입니다.
 > - History 표에는 0.2.28(이 저장소 컨테이너에서 직접 실행)과 0.2.29(모델 4, 출시 뒤 실행) 줄이 들어가 있습니다. Chromium 측정에서 Simple 모드 결과가 처음 그려질 때 CLS가 0.14(1366×900) / 0.40(390×800)으로 나왔는데, 결과 패널이 최종 높이를 미리 잡아 두지 않아 하단 푸터가 밀려나는 한 번의 이동입니다.
 > - Playwright는 이 프로젝트의 의존성이 아닙니다. 워크플로가 고정 버전을 저장소 밖 임시 폴더에 설치해서 씁니다.
-> - 5단계(실기기, #191)와 6단계(대응 규칙)는 아직 계획입니다.
+> - 첫 결과 CLS는 #251에서 고쳤습니다(0 / 0, [아래](#layout-shift-when-simple-results-render-251)).
+> - 6단계(대응 규칙)는 시행 중입니다([Response rules](#response-rules-phase-6)). 5단계(실기기, #191)는 아직 계획입니다.
 
 Until #241, performance was measured once per feature (the sections above) and never again, so a regression was noticed only when someone felt it. #230 alone made some presets several times slower per run. These checks re-measure a fixed matrix so the trend is visible and a pull request that slows the engine down fails before it merges.
 
@@ -400,7 +403,7 @@ Permissions are `contents: read`, the checkout keeps no credentials, and the act
 
 | Check                          | Method                                                                                                                                                                                                                                                                                                                                                             |
 | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Run to verdict                 | `/play/` (Simple mode), preset `elephants-pride` (5 v 30, the mid-size preset; Simple runs 500), 1366×900, no throttling. Time from the click on Run until the result bar is shown.                                                                                                                                                                                |
+| Run to verdict                 | `/play/` (Simple mode), preset `elephants-pride` (5 v 30, the mid-size preset; Simple runs 500), 1366×900, no throttling. Time from the click on Run until the result bar is shown with its values (the results skeleton of #251 shows the bar earlier, inside `.is-pending`, and does not count).                                                                 |
 | Long tasks from Run            | `PerformanceObserver` (`longtask`, registered before the page's scripts) from the click on Run until 1 s after the verdict, as in [Environment and method](#environment-and-method): count and longest.                                                                                                                                                            |
 | CLS on the first result render | Layout-shift entries without recent input in the same window, at 1366×900 and 390×800.                                                                                                                                                                                                                                                                             |
 | Startup long tasks             | `/play/`, 412×915, 4x CPU (`Emulation.setCPUThrottlingRate`), long tasks in the first 4 s after navigation: count, total and longest.                                                                                                                                                                                                                              |
@@ -418,7 +421,7 @@ node bench/release-report.mjs --bench /tmp/run.json --size /tmp/size.json --brow
 
 `--rows` prints only the two rows. `--commit <sha>` names another commit and `--note <text>` fills the Note column (the workflow's `note` input).
 
-**After the run.** Paste the two rows into the tables below (newest last) and commit them with the run file as `bench/baseline-v<version>.json` in a small `docs(perf)` pull request; it can land before or after the release pull request. A finding (a new long task, a CLS jump, dropped frames, a page over budget) gets its own issue rather than blocking the release, except a page over budget, which fails the job and is handled like a failing `perf` gate: fix it, or raise that page's budget with a reason ([Updating budgets](#updating-budgets)).
+**After the run.** Paste the two rows into the tables below (newest last) and commit them with the run file as `bench/baseline-v<version>.json` in a small `docs(perf)` pull request; it can land before or after the release pull request. A finding (a new long task, a CLS jump, dropped frames, a page over budget) gets its own issue rather than blocking the release, with two exceptions from the [response rules](#response-rules-phase-6): a page over budget, which fails the job and is handled like a failing `perf` gate (fix it, or raise that page's budget with a reason, [Updating budgets](#updating-budgets)), and a preset whose Simple batch takes more than 10 s, which is fixed before the release.
 
 ### History
 
@@ -449,14 +452,63 @@ First release check (`dae2970`): the same container and engine a day later, othe
 
 **Chromium findings of the first release check.**
 
-- _Result CLS 0.14 / 0.40._ Both are one shift of the site footer: the Simple results panel does not reserve its final height, so when the verdict renders the panel grows by about 1,660 px (390×800) and pushes the footer, which was in view, off the screen. #24 measured 0 / 0.0002 for the classic results panel, which reserves its size on the first Run; Simple mode (#146) came later. Every sample gave the same value. Not fixed here (#241 only measures).
+- _Result CLS 0.14 / 0.40._ Both are one shift of the site footer: the Simple results panel does not reserve its final height, so when the verdict renders the panel grows by about 1,660 px (390×800) and pushes the footer, which was in view, off the screen. #24 measured 0 / 0.0002 for the classic results panel, which reserves its size on the first Run; Simple mode (#146) came later. Every sample gave the same value. Fixed in #251: 0 / 0 ([Layout shift when Simple results render](#layout-shift-when-simple-results-render-251)).
 - _Long tasks from Run._ 0–2 per sample (longest 139–251 ms), after the batch, while the result and the replay chunk render.
 - _Replay._ The replay of `trex-squad-tiger-horde` holds 60 frames per second at 1x and 16x (p95 16.7 ms, longest 16.8 ms), and also at 4x CPU throttling (one frame of 33 ms in two samples). The metric does see slow frames: at 20x throttling the p95 was 50 ms at 1x and 83 ms at 16x.
 
-### Planned (phases 5–6 of #241)
+### Response rules (phase 6)
+
+In force since #251. The checks above only help if a red result leads somewhere, so:
+
+- **Over budget: fix or justify in the pull request.** A failing `perf` job (a scenario more than 25% slower, a page over its JavaScript budget) is fixed in the same pull request, or the pull request raises the affected budgets in `bench/budgets.json` ([Updating budgets](#updating-budgets)) and its description and the History notes say why. No silent budget bumps: a change to `bench/budgets.json` without that reason is not merged.
+- **A Simple batch over 10 s is fixed before release.** A preset whose Simple batch (click on Run to the verdict in Simple mode, the preset's Simple run count) takes more than 10 s on the reference machine, the 4 vCPU container of [Environment and method](#environment-and-method), gets a lower run count or an optimisation before the next release. The release check times `elephants-pride` in the browser. For the other presets the matrix gives a quick screen: the `allIn` row's ms/run × the Simple run count ÷ 3 workers. The browser takes about 1.8 times that screen (`elephants-pride`: 2.8 s screened, 5.0 s measured), so a preset screened above 5 s is timed in the browser before the release, Run to verdict as in the table above.
+
+First application (2026-11-19, 0.2.29 matrix, then the browser on the reference machine, median of 3, 1366×900): every preset runs 500 in Simple mode.
+
+| Preset                   |  Screen (s) | Run to verdict in the browser (s) | Rule            |
+| ------------------------ | ----------: | --------------------------------: | --------------- |
+| `trex-erectus-100`       |         7.5 |                              10.7 | **over 10 s**   |
+| `trex-squad-tiger-horde` |         5.0 |                               7.4 | within          |
+| `elephants-pride`        |         2.8 |                               5.0 | within          |
+| `raptors-trex`           |         2.4 |                               4.6 | within          |
+| The other 14 presets     | 1.2 or less |                         not timed | within (screen) |
+
+`trex-erectus-100` (1 _T. rex_ v 100 _H. erectus_, 44.8 ms/run) is over the limit, so under this rule it needs fewer Simple runs or a faster engine before the next release. That change touches the preset registry and its documented shares (`docs/PRESETS.md`), so it is tracked as its own issue rather than made here.
+
+### Planned (phase 5 of #241)
 
 - **Real devices (phase 5).** The `/bench/` page of #191 runs the same matrix on the owner's PC and a mid-range phone, once per minor version and whenever the gate flags a slowdown.
-- **Response rules (phase 6).** Over budget means fix or justify in the pull request, no silent budget bumps; a preset whose Simple batch exceeds 10 s on the reference 4-core machine gets fewer runs or an optimisation before release.
+
+## Layout shift when Simple results render (#251)
+
+> **한국어 요약**
+>
+> - Simple 모드에서 첫 실행 결과가 그려질 때 결과 패널이 약 1,660 px 늘어나며 보이던 푸터를 화면 밖으로 밀어내, CLS가 0.1399(1366×900) / 0.4000(390×800)이었습니다.
+> - #24의 고전 결과 골격과 같은 방식으로, 첫 실행을 누르는 순간 Simple 결과 골격을 보여 줍니다. 막대 라벨의 팀 이름, 각 진영 카드의 항목 이름, 판정 자리의 "계산하는 중" 문장은 그대로 보이고, 숫자 자리는 같은 길이의 자리표시 문자열을 `visibility: hidden`으로 숨깁니다. 끝나면 실제 값으로 바뀌므로 아래 내용이 움직이지 않습니다.
+> - 결과: 0 / 0. 패주 안내 줄은 결과가 나와야 알 수 있어서, 무리가 사기를 공유하는 진영이 있을 때만 그 자리를 잡아 둡니다. 그래서 그런 진영이 있는데 안내가 나오지 않는 프리셋(`pride-five-tigers`)에는 작은 이동이 남습니다(0.011 / 0.043, 고치기 전 0.135 / 0.401).
+
+The release check of #241 found that the first Simple result moved the page: CLS 0.1435 / 0.4000 on 0.2.28 and 0.2.29. The Simple results panel showed only its one-line empty note until the verdict, then grew by about 1,660 px at once, and the site footer, which was in view, was pushed off the screen. The classic panel has reserved its final size on the first Run since #24 (results skeleton, [Summary](#summary)); Simple mode (#146) came later without one.
+
+**Change.** On the first Simple Run, `free-mode.ts` sets `pending` to the run's config and shows the results body with the class `is-pending`, within the click's input window, so the skeleton's own appearance is not counted as a shift. The skeleton has the final blocks:
+
+- the win share bar (`SimpleView.renderPending` in `simple-mode.ts`): the two team labels as they will read, the shares as `00%`, an empty track;
+- the verdict line `Computing. The results will appear here.` and the precision line with `00%` bounds (as in the classic skeleton, `.verdict` already reserves two lines, three on phones);
+- the rout notice, when a side shares morale (`routNoticePossible` in `src/sim/free/aggregate.ts`, the precondition of `routNotice`): the notice for side B with `00%`;
+- the per-side breakdown with the real headings and labels, each value as the side's count and `00%`, the end-reason line with one reason at `00%`, the "Run again" button (disabled);
+- the share buttons.
+
+Placeholder values and the reserved rout notice and share buttons have `visibility: hidden` (`.is-pending .simple-value`, `.is-pending .free-rout-notice`, `.is-pending .result-share` in `simple-mode.css`): they keep their box, are not read out and cannot be focused. Everything with real content (team names, labels, headings, the "Computing" line, the caveat) stays visible and in the accessibility tree. On phones the bar labels reserve two lines (`min-height` in `@media (max-width: 560px)`), because the shares of a finished run (`> 99%`) are wider than the placeholder and wrap the labels there. A cancelled or failed first run goes back to the empty state. No inline styles: the classes come from the stylesheet, so the `style-src 'self'` CSP and Trusted Types are untouched. `bench/browser.mjs` now waits for the bar outside `.is-pending`, so Run to verdict still means the values.
+
+**Measured** with `bench/browser.mjs` (median of 3, Chromium 157.0.8103.78, Playwright 1.63.0, production build on `vite preview`, the 4 vCPU container), preset `elephants-pride`:
+
+| Viewport | Before (`17c781c`) |  After |
+| -------- | -----------------: | -----: |
+| 1366×900 |             0.1399 | 0.0000 |
+| 390×800  |             0.4000 | 0.0000 |
+
+Every sample gave the same value on each side. The release rows above (0.1435 on 0.2.28 and 0.2.29) came from Chromium 156; 0.1399 is the same single footer shift measured with Chromium 157. The rest of that run was unchanged: Run to verdict 4,959 ms (5,217 before), startup long tasks 2 / 374 / 229 ms (3 / 372 / 243), replay p95 16.8 / 16.7 ms (16.7 / 16.7).
+
+Other presets, one sample each with the same probe (`/play/`, Korean): `lion-tiger`, `trex-squad-tiger-horde` and `lions-hyenas` 0 / 0. `pride-five-tigers` 0.0110 / 0.0428 (before: 0.1348 / 0.4012): the lions share morale, so the skeleton holds the rout notice's line, but the tigers lose and they share none, so no notice appears and the line closes. `/en/play/` with `elephants-pride`: 0.0023 / 0: the English replay run line wraps to a second line on desktop after the replay loads, below a `.replay-info` that reserves one line there.
 
 ## Not changed
 
