@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.29](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.28...trex-vs-tiger-sim-v0.2.29) (2026-11-19)
+
+
+### Features
+
+* **perf:** standing performance checks, phases 1-3 ([#241](https://github.com/VinylStage/trex_vs_tiger_sim/issues/241)) ([#245](https://github.com/VinylStage/trex_vs_tiger_sim/issues/245)) ([838c282](https://github.com/VinylStage/trex_vs_tiger_sim/commit/838c2827633cab4118081759a9d33ac9d5a29299))
+
+
+### Bug Fixes
+
+* **sim:** a latcher closes the step of a retreating target, as free model 4 ([#237](https://github.com/VinylStage/trex_vs_tiger_sim/issues/237)) ([#248](https://github.com/VinylStage/trex_vs_tiger_sim/issues/248)) ([1a7f26f](https://github.com/VinylStage/trex_vs_tiger_sim/commit/1a7f26fea9ed571242bc13aeef6cf2e795be5253))
+* **ui:** keep a live battle link in the address on reload ([#239](https://github.com/VinylStage/trex_vs_tiger_sim/issues/239)) ([#243](https://github.com/VinylStage/trex_vs_tiger_sim/issues/243)) ([882ee07](https://github.com/VinylStage/trex_vs_tiger_sim/commit/882ee077f2390796040d5564d4056c45a18b755f))
+
 ## [0.2.28](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.27...trex-vs-tiger-sim-v0.2.28) (2026-11-18)
 
 
