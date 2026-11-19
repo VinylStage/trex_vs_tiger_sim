@@ -90,6 +90,13 @@ function sharesMorale(config: FreeConfig, side: 0 | 1): boolean {
 }
 
 /**
+ * Whether a result of `config` can show a rout notice at all: a side shares morale (#251). The
+ * results skeleton reserves the notice's line when it can.
+ */
+export const routNoticePossible = (config: FreeConfig): boolean =>
+  sharesMorale(config, 0) || sharesMorale(config, 1);
+
+/**
  * The rout a free result points out (design §3.2, #42): the side that won fewer runs, when its
  * members share morale and at least `ROUT_NOTICE_SHARE` of them fled in the runs it lost. Only
  * then can a group's morale break at once. A lone animal that withdraws is no group rout, and

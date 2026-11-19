@@ -1,5 +1,5 @@
 import { LIMITS, SAMPLING_METHODS } from '../sim/config';
-import { routNotice, type FreeAggregate } from '../sim/free/aggregate';
+import { routNotice, routNoticePossible, type FreeAggregate } from '../sim/free/aggregate';
 import { FreeOutcome, type FreeRunSummary } from '../sim/free/engine';
 import {
   FLIGHT_MODES,
@@ -147,6 +147,8 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
   let keepLinkSeed = view === 'simple' && opts.linkSeed === true;
   let result: FreeResult | null = null;
   let running = false;
+  /** The config of a running first Simple run, shown as the results skeleton (#251). */
+  let pending: FreeConfig | null = null;
   let statusKey: { key: MsgKey; vars?: Record<string, string | number>; error?: boolean } | null =
     null;
   let lastProgress: PoolProgress | null = null;
@@ -715,6 +717,11 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     }
     opts.onRun?.(structuredClone(runCfg));
     running = true;
+    if (!result && isSimple) {
+      // First Simple run: show the results skeleton now, within the click's input window (#251).
+      pending = runCfg;
+      renderResults();
+    }
     // Fetch the replay chunk while the batch runs (Run is a user input, so mounting is no shift).
     void ensureReplay().catch(() => undefined);
     progress.hidden = false;
@@ -741,6 +748,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
         elapsedMs: performance.now() - t0,
       };
       repro.afterRun(runCfg, agg);
+      pending = null;
       setStatus(null);
       renderResults();
       void loadReplay(agg.representativeRun, 'representative');
@@ -759,6 +767,11 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       }
     } finally {
       running = false;
+      if (pending) {
+        // Cancelled or failed before any result: back to the empty state.
+        pending = null;
+        renderResults();
+      }
       runBtn.disabled = false;
       cancelBtn.disabled = true;
       opts.onRunEnd?.();
@@ -902,13 +915,48 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
       hi: formatBound(iv.hi, n),
     });
 
+  /** The rout notice of `side` (design §3.2, #42): text and the "why" link. */
+  function rout(c: FreeConfig, side: SideIndex, pct: string): DocumentFragment {
+    const out = document.createDocumentFragment();
+    out.append(
+      h('span', {
+        text: t('free.rout.notice', {
+          side: t(sideKey(side)),
+          team: teamLabel(c.sides[side].species, c.sides[side].count),
+          pct,
+        }),
+      }),
+      ' ',
+      h('a', {
+        attrs: { href: `${pagePath('model', getLang())}#morale` },
+        text: t('free.rout.why'),
+      }),
+    );
+    return out;
+  }
+
   function renderResults(): void {
-    emptyEl.hidden = result !== null;
-    resultsBody.hidden = result === null;
+    // The skeleton of a running first Simple run (#251): final block sizes, no values yet.
+    const skeleton = result === null && pending !== null && view === 'simple' ? pending : null;
+    emptyEl.hidden = result !== null || skeleton !== null;
+    resultsBody.hidden = result === null && skeleton === null;
+    resultsBody.classList.toggle('is-pending', skeleton !== null);
     updateStale();
     resultShare.update(
       result ? { config: result.config, agg: result.agg, simple: result.simple } : null,
     );
+    if (skeleton) {
+      simple.renderPending(skeleton);
+      verdictEl.textContent = t('results.pending');
+      // Same text length as the final line, kept invisible: it holds the line's height.
+      precisionEl.textContent = t('verdict.precision', { lo: '00%', hi: '00%' });
+      // The rout notice is only known with the results; its line is held where one can appear.
+      routEl.hidden = !routNoticePossible(skeleton);
+      routEl.replaceChildren(rout(skeleton, 1, '00%'));
+      // The share buttons keep their place too, invisible until there is a result to share.
+      resultShare.el.hidden = false;
+      return;
+    }
     simple.renderResult(view === 'simple' ? result : null);
     if (!result) return;
     const { agg, config: c } = result;
@@ -943,23 +991,7 @@ export function createFreeMode(opts: FreeModeOptions): FreeMode {
     });
     const notice = routNotice(c, agg, result.summaries);
     routEl.hidden = notice === null;
-    if (notice) {
-      const whyLink = h('a', {
-        attrs: { href: `${pagePath('model', getLang())}#morale` },
-        text: t('free.rout.why'),
-      });
-      routEl.replaceChildren(
-        h('span', {
-          text: t('free.rout.notice', {
-            side: t(sideKey(notice.side)),
-            team: teamLabel(c.sides[notice.side].species, c.sides[notice.side].count),
-            pct: formatPct(notice.share, 0),
-          }),
-        }),
-        ' ',
-        whyLink,
-      );
-    }
+    if (notice) routEl.replaceChildren(rout(c, notice.side, formatPct(notice.share, 0)));
     // Still standing / fled / incapacitated per side (#42): the three add up to the side's count.
     const part = (i: SideIndex, mean: number): string =>
       t('free.stat.part', {

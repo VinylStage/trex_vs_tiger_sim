@@ -131,6 +131,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Two lines reserved on phones, where the labels usually wrap, so the shares of a finished run
+   (wider than the skeleton's) do not grow the bar (#251). */
+@media (max-width: 560px) {
+  .simple-bar-labels {
+    line-height: 1.45;
+    min-height: calc(2.9em + 4px);
+  }
+}
+
 .simple-bar-b {
   margin-left: auto;
   text-align: right;
@@ -215,6 +224,14 @@
 
 .simple-again {
   margin-top: 10px;
+}
+
+/* Results skeleton of a running first Simple run (free-mode.ts `pending`, #251): same-length
+   placeholders hold the final sizes and stay invisible until the values replace them. */
+.is-pending .simple-value,
+.is-pending .free-rout-notice,
+.is-pending .result-share {
+  visibility: hidden;
 }
 
 .simple-details {
