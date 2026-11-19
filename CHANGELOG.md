@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.30](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.29...trex-vs-tiger-sim-v0.2.30) (2026-11-19)
+
+
+### Features
+
+* **perf:** release performance check and History rows ([#241](https://github.com/VinylStage/trex_vs_tiger_sim/issues/241)) ([#250](https://github.com/VinylStage/trex_vs_tiger_sim/issues/250)) ([17c781c](https://github.com/VinylStage/trex_vs_tiger_sim/commit/17c781cd3776a9f3d26bdb8d1d2769a28bb258f4))
+
+
+### Bug Fixes
+
+* **ui:** reserve the Simple results panel's size on the first Run ([#251](https://github.com/VinylStage/trex_vs_tiger_sim/issues/251)) ([#253](https://github.com/VinylStage/trex_vs_tiger_sim/issues/253)) ([47e8a81](https://github.com/VinylStage/trex_vs_tiger_sim/commit/47e8a81e3d3a7af0395ff85741fb0ea3091278aa))
+
+
+### Performance Improvements
+
+* **presets:** run trex-erectus-100 300 times in Simple ([#254](https://github.com/VinylStage/trex_vs_tiger_sim/issues/254)) ([#255](https://github.com/VinylStage/trex_vs_tiger_sim/issues/255)) ([be0198c](https://github.com/VinylStage/trex_vs_tiger_sim/commit/be0198c46a4b489e15764650f6ee4afd155960b9))
+* **sim:** cache cos/sin of an unchanged heading in steer ([#256](https://github.com/VinylStage/trex_vs_tiger_sim/issues/256)) ([#257](https://github.com/VinylStage/trex_vs_tiger_sim/issues/257)) ([1220232](https://github.com/VinylStage/trex_vs_tiger_sim/commit/12202329b751023b8bc9be474e7576ca61828417))
+
 ## [0.2.29](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.28...trex-vs-tiger-sim-v0.2.29) (2026-11-19)
 
 
