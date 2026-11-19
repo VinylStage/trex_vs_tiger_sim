@@ -55,13 +55,15 @@ const json = (payload: string): Record<string, unknown> =>
 const encode = (obj: unknown): string => Buffer.from(JSON.stringify(obj)).toString('base64url');
 
 describe('model version of the free config', () => {
-  it('is 3 in this build for the defaults, and 1 wherever it is absent (#169, #197, #230)', () => {
-    expect(FREE_MODEL_VERSION).toBe(3);
-    expect(defaultFreeConfig().mv).toBe(3);
+  it('is 4 in this build for the defaults, and 1 wherever it is absent (#169, #197, #230, #237)', () => {
+    expect(FREE_MODEL_VERSION).toBe(4);
+    expect(defaultFreeConfig().mv).toBe(4);
     expect(sanitizeFreeConfig({}).mv).toBe(1);
     expect(sanitizeFreeConfig({ mv: 1 }).mv).toBe(1);
     expect(sanitizeFreeConfig({ mv: 2 }).mv).toBe(2);
     expect(sanitizeFreeConfig({ mv: 3 }).mv).toBe(3);
+    expect(sanitizeFreeConfig({ mv: 4 }).mv).toBe(4);
+    expect(sanitizeFreeConfig({ mv: 5 }).mv).toBe(1);
   });
 
   it('defaults the time limit to 3,600 s from model 3 only (#230)', () => {
@@ -72,6 +74,8 @@ describe('model version of the free config', () => {
     // A link leaves out a default time limit, its own model version's.
     expect(freeConfigDiff(defaultFreeConfig(2))['maxTime']).toBeUndefined();
     expect(freeConfigDiff(defaultFreeConfig(3))['maxTime']).toBeUndefined();
+    expect(freeConfigDiff(defaultFreeConfig(4))['maxTime']).toBeUndefined();
+    expect(sanitizeFreeConfig({ mv: 4 }).maxTime).toBe(3600);
     expect(freeConfigDiff({ ...defaultFreeConfig(3), maxTime: 1200 })['maxTime']).toBe(1200);
   });
 
@@ -118,7 +122,7 @@ describe('links made before mv existed', () => {
     const v1Defaults = defaultFreeConfig(1);
     expect(freeConfigFromHash(`#s=${OLD.defaults}`)).toEqual(v1Defaults);
     expect(freeConfigCode(v1Defaults)).toBe(`TVT3-${OLD.defaults}`);
-    expect(freeConfigDiff(defaultFreeConfig())['mv']).toBe(3);
+    expect(freeConfigDiff(defaultFreeConfig())['mv']).toBe(4);
   });
 
   it('keep free result links decoding and re-encoding unchanged', () => {

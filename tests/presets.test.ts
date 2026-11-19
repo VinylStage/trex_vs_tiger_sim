@@ -29,13 +29,14 @@ import { bannedIn } from './banned-words';
  * model, the one Simple mode runs, must pass the checks. `UPDATE_PRESET_FIXTURE=1` rewrites only
  * the newest model's fixture, together with a change of that model; older ones are never
  * rewritten (`preset-shares.json` is model 1, #169/#197 added `preset-shares-mv2.json`, #230
- * `preset-shares-mv3.json`).
+ * `preset-shares-mv3.json`, #237 `preset-shares-mv4.json`).
  */
 
 const FIXTURES: Readonly<Record<number, URL>> = {
   1: new URL('./fixtures/preset-shares.json', import.meta.url),
   2: new URL('./fixtures/preset-shares-mv2.json', import.meta.url),
   3: new URL('./fixtures/preset-shares-mv3.json', import.meta.url),
+  4: new URL('./fixtures/preset-shares-mv4.json', import.meta.url),
 };
 const FIXTURE = FIXTURES[FREE_MODEL_VERSION] as URL;
 /** The default seed, and fewer runs than the default 500 so the check stays fast (PRESETS.md). */

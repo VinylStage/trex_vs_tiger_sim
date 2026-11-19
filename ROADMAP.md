@@ -64,6 +64,7 @@ Design for owner review: [docs/design/RENEWAL-1.0.md](docs/design/RENEWAL-1.0.md
 | Usability test (5–8 people, 18–35) and anonymous survey | #166      | Kit ready in [docs/research/USABILITY.md](docs/research/USABILITY.md); the owner runs it, results not in yet                                                                                                                                                      |
 | Free-model calibration follow-ups                       | #167–#169 | #169 done in review with #197 (model 2: deterministic math; per-species flight traits in the opt-in `realistic` flight mode, `allIn` "Fight to the end" the default by owner decision 2026-11-16); #167, #168 open                                                |
 | Battle ends only when a side is out (model 3)           | #230      | Done in review: free `mv` 3 and classic model 3; routed animals stay in the battle until they escape (fleeing unchanged; owner decision 2026-11-18), time limit is a 3,600 s cap reported as a draw; end reason shown everywhere. Follow-up: stalemate dance #237 |
+| Free stalemates: retreat step (free model 4)            | #237      | Done in review: a latcher closes the step of a retreating target; free time limits 11 → 1 in 594,300 runs; classic keeps its stalemates as draws (owner decision 2026-11-18)                                                                                      |
 
 ### M3 — live variable cards (epic #126)
 

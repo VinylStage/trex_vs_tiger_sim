@@ -387,3 +387,31 @@ export function compareGolden(expected: Mv2Golden, actual: Mv2Golden): string[] 
   }
   return out;
 }
+
+/*
+ * Free model 4 (#237): an agent that wants to latch closes the step its target takes while
+ * backing off in Recover. The model 3 cases again under free model 4, plus a heavy against a small
+ * pride, where pursuers keep catching a recovering heavy. Classic stays at model 3, so this golden
+ * has no classic cases (tests/fixtures/mv3-golden.json keeps pinning classic model 3). Fixture
+ * tests/fixtures/mv4-golden.json, never regenerated.
+ */
+export const FREE_CASES_MV4: typeof FREE_CASES = [
+  ...FREE_CASES_MV3,
+  {
+    name: 'whiteRhino 1 v lion 3 (latching onto a recovering heavy)',
+    input: {
+      runs: 20,
+      maxTime: 600,
+      sides: [{ species: 'whiteRhino' }, { species: 'lion', count: 3 }],
+    },
+  },
+];
+
+export function captureAllMv4(capturedFrom: string): Mv2Golden {
+  return {
+    capturedFrom,
+    math: captureMath(),
+    free: FREE_CASES_MV4.map((c) => captureFree(c.name, c.input, c.opts, 4)),
+    classic: [],
+  };
+}
