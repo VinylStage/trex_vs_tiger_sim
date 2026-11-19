@@ -12,6 +12,7 @@
 > - 실시간 변수 카드의 두 관문(#181)은 측정값만으로 판단합니다. 재시뮬레이션 시간 × 1.5가 500 ms 이하일 때만 대결 중 카드를 쓰고, 카드 쉬는 시간의 계산량이 80%를 넘으면 효과 계산 횟수와 승률 체크포인트를 차례로 줄입니다. Node에서 잰 프리셋은 모두 첫 관문을 넉넉히 통과합니다.
 > - 상시 성능 점검(#241): `npm run bench`가 고정 시나리오(규모 4단계, 모든 프리셋 × 두 도주 모드, 모든 종의 미러전과 기준 상대전)를 재고 결과를 JSON으로 남깁니다. 기준값은 `bench/baseline-v0.2.27.json`, 예산은 기준값 × 1.3(엔진)과 현재 gzip 크기 + 10%(페이지 JS)입니다. 엔진·UI·Vite 설정·`bench/`를 건드리는 PR은 CI `perf` 작업이 기준 커밋과 PR을 번갈아 재서, 어떤 시나리오든 25% 넘게 느려지거나 페이지 JS가 예산을 넘으면 실패합니다. 의도한 저하는 같은 PR에서 `bench/budgets.json`을 올리고 이 문서에 이유를 적으면 통과합니다. 릴리스 PR을 머지하기 전에는 `Release perf` 워크플로가 전체 행렬과 Chromium 측정(실행 중 긴 작업, 첫 결과 CLS, 4배 감속 시작, 재생 프레임)을 돌리고, 버전마다 History 표에 한 줄을 남깁니다.
 > - 대응 규칙(#241 6단계)이 시행 중입니다. 예산을 넘으면 같은 PR에서 고치거나 이유를 적고, 이유 없이 예산만 올리지 않습니다. 기준 4코어 머신에서 Simple 실행 한 번이 10초를 넘는 프리셋은 릴리스 전에 실행 횟수를 줄이거나 최적화합니다.
+> - 대응 규칙의 첫 적용(#254): `trex-erectus-100`(티라노 1 vs 호모 에렉투스 100)의 Simple 실행이 500회로 10.7–11.5초 걸려 10초 규칙을 넘었으므로 이 프리셋만 300회로 줄였습니다. 같은 측정으로 7.4초입니다. 엔진과 결과는 바뀌지 않았습니다.
 > - Simple 모드 결과가 처음 그려질 때의 레이아웃 이동(#251)은 결과 골격으로 0.1399 / 0.4000에서 0 / 0(1366×900 / 390×800)이 되었습니다. 첫 실행을 누르는 순간 막대, 판정 문장, 끝난 방식, 공유 버튼 자리를 최종 크기로 잡아 둡니다.
 
 This page records what issue #24 changed for speed and responsiveness and the before/after numbers. The investigation, the original baselines and the full list of candidate changes are in [research/PERFORMANCE.md](research/PERFORMANCE.md).
@@ -450,6 +451,8 @@ First release check (`dae2970`): the same container and engine a day later, othe
 
 0.2.29 (model 4, #237): the results changed in 14 of the 72 scenarios (a new matrix hash), the cost did not: the median ratio to the 0.2.28 run is 1.00 (0.89 for `lions-hyenas` `allIn` to 1.10 for `mammoth-wolves` `realistic`), within the spread above. The run files of both checks are `bench/baseline-v0.2.28.json` and `bench/baseline-v0.2.29.json`; `bench/budgets.json` still holds the first baseline's ceilings.
 
+**#254 (after 0.2.29).** `trex-erectus-100` runs 300 times in Simple mode instead of 500, under the [response rules](#response-rules-phase-6). The engine is unchanged, so the matrix hash and `bench/budgets.json` are unchanged too (the matrix runs its own counts, 20 runs for this preset). The next release's Chromium row still times `elephants-pride`; [Fewer Simple runs for `trex-erectus-100`](#fewer-simple-runs-for-trex-erectus-100-254) has this preset's numbers.
+
 **Chromium findings of the first release check.**
 
 - _Result CLS 0.14 / 0.40._ Both are one shift of the site footer: the Simple results panel does not reserve its final height, so when the verdict renders the panel grows by about 1,660 px (390×800) and pushes the footer, which was in view, off the screen. #24 measured 0 / 0.0002 for the classic results panel, which reserves its size on the first Run; Simple mode (#146) came later. Every sample gave the same value. Fixed in #251: 0 / 0 ([Layout shift when Simple results render](#layout-shift-when-simple-results-render-251)).
@@ -473,7 +476,9 @@ First application (2026-11-19, 0.2.29 matrix, then the browser on the reference 
 | `raptors-trex`           |         2.4 |                               4.6 | within          |
 | The other 14 presets     | 1.2 or less |                         not timed | within (screen) |
 
-`trex-erectus-100` (1 _T. rex_ v 100 _H. erectus_, 44.8 ms/run) is over the limit, so under this rule it needs fewer Simple runs or a faster engine before the next release. That change touches the preset registry and its documented shares (`docs/PRESETS.md`), so it is tracked as its own issue rather than made here.
+`trex-erectus-100` (1 _T. rex_ v 100 _H. erectus_, 44.8 ms/run) is over the limit, so under this rule it needs fewer Simple runs or a faster engine before the next release. That change touches the preset registry and its documented shares (`docs/PRESETS.md`), so it was tracked as its own issue rather than made here: #254 lowered its Simple run count to 300, 7.4 s to the verdict ([Fewer Simple runs for `trex-erectus-100`](#fewer-simple-runs-for-trex-erectus-100-254)). Screen at 300 runs: 4.5 s.
+
+To time a preset other than `elephants-pride` in the browser, pass `--run-preset <id>` to `bench/browser.mjs` (the other checks run as usual; the report's `run` and `cls` blocks then name that preset).
 
 ### Planned (phase 5 of #241)
 
@@ -509,6 +514,25 @@ Placeholder values and the reserved rout notice and share buttons have `visibili
 Every sample gave the same value on each side. The release rows above (0.1435 on 0.2.28 and 0.2.29) came from Chromium 156; 0.1399 is the same single footer shift measured with Chromium 157. The rest of that run was unchanged: Run to verdict 4,959 ms (5,217 before), startup long tasks 2 / 374 / 229 ms (3 / 372 / 243), replay p95 16.8 / 16.7 ms (16.7 / 16.7).
 
 Other presets, one sample each with the same probe (`/play/`, Korean): `lion-tiger`, `trex-squad-tiger-horde` and `lions-hyenas` 0 / 0. `pride-five-tigers` 0.0110 / 0.0428 (before: 0.1348 / 0.4012): the lions share morale, so the skeleton holds the rout notice's line, but the tigers lose and they share none, so no notice appears and the line closes. `buffalo-pride` (0.0110 / 0.0428) and `raptors-trex` (0.0110 / 0.0429) do the same: a group on one side, no notice in the result. A survey of all 18 presets (two seeds each, Node) found these three as the only ones where the reserved line closes. `/en/play/` with `elephants-pride`: 0.0023 / 0: the English replay run line wraps to a second line on desktop after the replay loads, below a `.replay-info` that reserves one line there.
+
+## Fewer Simple runs for `trex-erectus-100` (#254)
+
+The [response rules](#response-rules-phase-6) found one preset over 10 s: `trex-erectus-100`, 1 _T. rex_ v 100 _H. erectus_. Since model 3 (#230) a battle lasts until the routed humans have run off the field, so a run costs about 45 ms on one core (44.8 ms/run in the 0.2.29 matrix) and the 500-run Simple batch about 22 core-seconds.
+
+**Change.** The preset sets `runs: 300` in `src/sim/free/presets.ts`, the optional per-preset run count the registry has had from the start (`FreePreset.runs`, read by `simpleRuns` in `src/ui/simple-model.ts`); no other preset sets one, and #240 recorded that none needed one under model 3. 300 is the count the issue proposed: the batch scales with the run count, so 300 should take about 60 % of the 500-run time, leaving about 2.5 s of margin under 10 s on the reference machine. The engine and its results are unchanged, the preset checks and fixtures measure 200 runs whatever a preset sets, and the verdict stays _T. rex_ 100 % ([PRESETS.md](PRESETS.md#simple-run-counts)). The 95 % precision of a share goes from ±4.4 pp to ±5.7 pp at worst (a share near 50 %); at the measured 100 % the Wilson interval is 98.7–100 % (500 runs: 99.2–100 %).
+
+**Measured** with `bench/browser.mjs --run-preset trex-erectus-100` (median of 3, Chromium 157.0.8103.78, Playwright 1.63.0, production build on `vite preview`, the 4 vCPU container, 1366×900), Run to verdict:
+
+| Run count    | Samples (ms)             | Median (ms) |
+| ------------ | ------------------------ | ----------: |
+| 500 (`main`) | 10,151 / 11,729 / 11,529 |      11,529 |
+| 300 (#254)   | 7,078 / 7,404 / 7,730    |       7,404 |
+
+500 runs measured 10.7 s in the first application above and 11.5 s here, on the same container a few hours apart; 300 runs take 64 % of the 500-run time here. No long task from Run in either, result CLS 0 / 0.
+
+**A Simple link written before #254.** A link records its run count, so a Simple link of this preset at 500 runs now has a hidden edit and opens the free form of Advanced mode, where it reproduces its 500-run result ([SHARING.md](SHARING.md), `simpleCanShow`). Tested in `tests/simple-mode.test.ts`.
+
+**Profile** (Node 22 `--cpu-prof`, 60 runs at seed 20261019, about 1,440 ticks and 45 µs per tick per run; the bundle of `bench/lib.mjs`). The cost is spread out: the inlined tick loop of `simulateFreeBattle` 34 % self; the deterministic trigonometry of #197 (`dsin`, `dcos`, `datan2` and their kernels) about 20 %; `steer` 13 % including its trigonometry; the two spatial grid rebuilds per tick 7 %; garbage collection 5 %; morale contagion, cohesion and nearest-enemy queries 2–3 % each. One cheap candidate, not made here: from model 3 a routed agent keeps one escape heading until it leaves (#230), so `steer` recomputes `cos` and `sin` of the same heading every tick. Caching them per agent while the heading is unchanged gave 4–11 % less time per run on this preset in a trial, with the same packed run summaries for every preset in that trial (10 runs each, 60 for this one; the same inputs give the same deterministic outputs); it is not enough on its own to bring 500 runs under 10 s.
 
 ## Not changed
 

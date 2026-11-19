@@ -2,7 +2,7 @@
 //
 //   npx vite preview --port 4173 --strictPort &
 //   PLAYWRIGHT_DIR=<dir> node bench/browser.mjs [--url http://localhost:4173] [--out <file.json>]
-//                                               [--samples 3]
+//                                               [--samples 3] [--run-preset <id>]
 //
 // Playwright is not a dependency of this project. The script loads it from PLAYWRIGHT_DIR (or
 // `--playwright`), a directory whose node_modules holds it, for example one made with
@@ -10,7 +10,8 @@
 // that with a pinned version. It measures the built site served by `vite preview`:
 //
 //   run      long tasks > 50 ms from the click on Run until 1 s after the verdict, one mid-size
-//            preset in Simple mode, 1366x900, no throttling; and the time to the verdict
+//            preset in Simple mode, 1366x900, no throttling; and the time to the verdict.
+//            `--run-preset <id>` times another preset (the response rules' browser timing)
 //   cls      layout shift without recent input in the same window (the first result render),
 //            at 1366x900 and 390x800
 //   startup  long tasks in the first 4 s after navigating to /play/, 412x915, 4x CPU
@@ -37,7 +38,7 @@ const OUT = option('--out') ?? path.join(BENCH_DIR, 'last-browser.json');
 const SAMPLES = Math.max(1, Number(option('--samples') ?? 3));
 const PW_DIR = option('--playwright') ?? env.PLAYWRIGHT_DIR;
 
-const RUN_PRESET = 'elephants-pride';
+const RUN_PRESET = option('--run-preset') ?? 'elephants-pride';
 const REPLAY_PRESET = 'trex-squad-tiger-horde';
 const STARTUP_WINDOW_MS = 4000;
 const AFTER_VERDICT_MS = 1000;

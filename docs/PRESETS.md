@@ -7,6 +7,7 @@
 > - 이탈 점검: 전투 시간 중앙값이 30초 미만이거나 진 쪽의 이탈 비율이 90%를 넘으면 실패입니다(모두 **S**). 문서로 남긴 예외(override)가 있으면 통과합니다. 예외도 받지 못한 프리셋은 보류(hold)되어 쉬운 모드에 나오지 않습니다.
 > - 모델 3(#230)에서는 도주한 쪽이 경기장 밖으로 빠져나갈 때까지 전투가 이어집니다. 승률은 모델 2와 거의 같고, 1:1 대결 다섯과 불곰 vs 늑대 무리, 그리고 보류였던 세 프리셋(사자 무리 vs 호랑이 다섯, 티라노 vs 호모 에렉투스 100, 사자 vs 하이에나)이 이탈 예외로 쉬운 모드에 나옵니다. 보류 해제는 소유자가 정했습니다(2026-11-18). 모델 3의 기준 파일은 `tests/fixtures/preset-shares-mv3.json`입니다.
 > - 모델 4(#237)는 물러나는 상대에게 매달리려는 동물이 그 한 걸음을 따라잡게 합니다. 프리셋 승률은 200회 기준 최대 2회 차이로 그대로이고, 예외와 보류도 바뀌지 않았습니다. 지금 점검하는 기준 파일은 `tests/fixtures/preset-shares-mv4.json`입니다.
+> - 쉬운 모드는 보통 프리셋을 500회 돌리지만, 티라노 vs 호모 에렉투스 100은 300회만 돌립니다(#254). 500회로는 기준 컨테이너의 브라우저에서 실행부터 결과까지 10초가 넘어 성능 대응 규칙에 걸렸습니다. 결과는 어느 쪽이든 티라노 100%이고, 95% 정밀도는 최악의 경우 ±4.4%p에서 ±5.7%p가 됩니다. 점검과 기준 파일은 200회로 재므로 바뀌지 않습니다. 이 변경 전에 만든 쉬운 모드 링크(500회)는 고급 모드의 자유 대결 폼으로 열려 같은 결과를 그대로 재현합니다.
 > - 프리셋 이름, "왜?" 문구, 예외와 보류 사유는 금지어 테스트를 거칩니다. 잔혹하거나 죽음을 뜻하는 말, 베팅 용어, 작품·상표·방송 플랫폼 이름, 조회수를 쓰지 않습니다.
 
 Source of truth: `src/sim/free/presets.ts`, `tests/presets.test.ts` and `tests/fixtures/preset-shares.json`. The design is [RENEWAL-1.0.md §3.2 and §6](design/RENEWAL-1.0.md#32-simple-mode-and-advanced-mode), with owner decision R4 (b): keep the model for 1.0 and contain the mass-rout cascade.
@@ -14,6 +15,7 @@ Source of truth: `src/sim/free/presets.ts`, `tests/presets.test.ts` and `tests/f
 ## Contents
 
 - [Registry](#registry)
+- [Simple run counts](#simple-run-counts)
 - [Measurement](#measurement)
 - [Checks](#checks)
 - [Fixture](#fixture)
@@ -26,18 +28,30 @@ Source of truth: `src/sim/free/presets.ts`, `tests/presets.test.ts` and `tests/f
 
 `FREE_PRESETS` lists every preset of design §6 whose two species exist in `FREE_SPECIES_IDS`. Each entry has:
 
-| Field   | Meaning                                                                                                                     |
-| ------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `id`    | Stable and append-only: links and share images may name it.                                                                 |
-| `name`  | ko and en, common nouns only (design §1.2).                                                                                 |
-| `a`/`b` | Species and head count per side.                                                                                            |
-| `runs`  | Optional run count. No preset sets one, so Simple mode runs the default 500, which every preset fits in the work budget.    |
-| `tags`  | `popular`, `documented`, `close`, `mirror`, `army`, `absurd`, `thought-experiment`, and the §6 tags `ice-age` and `rivals`. |
-| `why`   | The "왜? / Why?" text: the literature or a described source, never a title or a view count.                                 |
-| `check` | Optional documented override of the check limits, with a reason.                                                            |
-| `hold`  | Optional reason the preset stays out of Simple mode.                                                                        |
+| Field   | Meaning                                                                                                                      |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `id`    | Stable and append-only: links and share images may name it.                                                                  |
+| `name`  | ko and en, common nouns only (design §1.2).                                                                                  |
+| `a`/`b` | Species and head count per side.                                                                                             |
+| `runs`  | Optional Simple run count; the default 500 when absent. Only `trex-erectus-100` sets one (300, [below](#simple-run-counts)). |
+| `tags`  | `popular`, `documented`, `close`, `mirror`, `army`, `absurd`, `thought-experiment`, and the §6 tags `ice-age` and `rivals`.  |
+| `why`   | The "왜? / Why?" text: the literature or a described source, never a title or a view count.                                  |
+| `check` | Optional documented override of the check limits, with a reason.                                                             |
+| `hold`  | Optional reason the preset stays out of Simple mode.                                                                         |
 
 `presetConfig(preset, seed?)` builds the `FreeConfig` through `sanitizeFreeConfig`; `readyPresets()` returns the presets that are not on hold. Nothing in the registry runs the engine.
+
+## Simple run counts
+
+Simple mode runs a preset `runs` times (`simpleRuns` in `src/ui/simple-model.ts`: the matching preset's count, else the default 500), lowered by the work budget like any free config. A preset sets `runs` only when its default batch breaks the 10 s rule of [PERFORMANCE.md](PERFORMANCE.md#response-rules-phase-6); the [checks](#checks) and the [fixture](#fixture) measure every preset at 200 runs whatever it sets, so a run count change moves neither.
+
+| Preset             | Simple runs | Why                                                                                                                                                                             | 95 % precision                                                                                |
+| ------------------ | ----------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `trex-erectus-100` |         300 | 500 runs took 10.7–11.5 s from Run to the verdict on the reference machine; 300 take 7.4 s ([PERFORMANCE.md](PERFORMANCE.md#fewer-simple-runs-for-trex-erectus-100-254)) (#254) | ±5.7 pp at worst (500: ±4.4 pp); at the measured 100 % _T. rex_, 98.7–100 % (500: 99.2–100 %) |
+
+At 300 runs (seed 20261019) the preset gives _T. rex_ 300 of 300, median 146.3 s, rout share 94.8 %: the same verdict as 200 runs (fixture: 200 of 200, 142.8 s, 94.6 %) and 500 (500 of 500, 143.5 s, 94.6 %), and the same check result (passes with its rout override, `close` no).
+
+A Simple link records its run count. A link of this preset written before #254 carries 500 runs, which is now a hidden edit (a run count other than Simple's, [SHARING.md](SHARING.md)), so it opens the free form of Advanced mode and reproduces its 500-run result there; it does not open Simple at 300.
 
 ## Measurement
 
