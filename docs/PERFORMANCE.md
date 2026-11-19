@@ -394,7 +394,7 @@ or Actions → Release perf → Run workflow, with that branch selected. The wor
 6. `vite preview` on port 4173 and `node bench/browser.mjs --samples 3`.
 7. `node bench/release-report.mjs` writes the summary (`$GITHUB_STEP_SUMMARY` and `summary.md` in the artifact).
 
-Permissions are `contents: read`, the checkout keeps no credentials, and the actions are SHA-pinned (`tests/workflows.test.ts`).
+Permissions are `contents: read`, the checkout keeps no credentials, and the actions are SHA-pinned (`tests/workflows.test.ts`). A trial run on the runner of #241's phase-4 pull request (4 × Intel Xeon Platinum 8573C, Node 24) took 4 min 50 s and gave the same matrix hash for 0.2.29 as the container (`c3d307b09caa2695`): the results do not depend on the machine or the Node version, only the times do.
 
 **Chromium checks** (`bench/browser.mjs`). Headless Chromium from the pinned Playwright, the production build served by `vite preview` (without the `_headers` CSP), every sample in a fresh browser context, median of 3 samples:
 
