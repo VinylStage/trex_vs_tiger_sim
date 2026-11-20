@@ -632,7 +632,7 @@ Before `intimidation` (every heavy hit cost 0.25 morale), the same seed gave the
 Findings carried over from the research runs:
 
 - **1 HP/kg makes mid-size heavies too fragile.** A 3.2 t elephant has only about 21 lions' worth of HP and no defence against riders except its frontal cone and shake-off. `hide` (elephant 0.3, buffalo 0.5, brown bear 0.5) moves the lone-heavy results to plausible levels while leaving juveniles vulnerable (a 0.9 t juvenile against 27 lions still loses in nearly every run). All `hide` values are **S**; calibrate against the qualitative targets above.
-- **Wolves vs a lone buffalo** (a bison stand-in) give a sigmoidal curve: almost no kills for 1–3 wolves and a plateau from about 12, close to the 9–13-wolf plateau observed for wolves hunting bison [MacNulty 2014]. The model measures "kill within 20 minutes", the field data capture per encounter, so only the shape compares.
+- **Wolves vs a lone buffalo** (a bison stand-in) give a sigmoidal curve: almost no kills for 1–3 wolves and a plateau from about 12, close to the 9–13-wolf plateau observed for wolves hunting bison [MacNulty 2014]. The model measures "kill within 20 minutes", the field data capture per encounter, so only the shape compares. This is a classic `flank` result: classic `direct` and the free model show no plateau at 9–13 (#168, [FREE-MATCHUPS.md §5.3](design/FREE-MATCHUPS.md#53-per-species-pack-buff-traits)).
 - **`pack.dps` is the top Spearman driver** in almost every matchup (|ρ| 0.3–0.6), followed by `heavy.shakeRate` and `heavy.mass`. Per-species dps calibration is the priority.
 - **Herd effects emerge** without herd rules: neighbours' cones cover each other's riders.
 
