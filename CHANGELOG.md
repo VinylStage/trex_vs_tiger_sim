@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.31](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.30...trex-vs-tiger-sim-v0.2.31) (2026-11-20)
+
+
+### Features
+
+* **bench:** live re-simulation benchmark kit at /bench/ ([#191](https://github.com/VinylStage/trex_vs_tiger_sim/issues/191)) ([#260](https://github.com/VinylStage/trex_vs_tiger_sim/issues/260)) ([d90a036](https://github.com/VinylStage/trex_vs_tiger_sim/commit/d90a036d068b63aeb3b67792b831d620779fd94d))
+
 ## [0.2.30](https://github.com/VinylStage/trex_vs_tiger_sim/compare/trex-vs-tiger-sim-v0.2.29...trex-vs-tiger-sim-v0.2.30) (2026-11-19)
 
 
