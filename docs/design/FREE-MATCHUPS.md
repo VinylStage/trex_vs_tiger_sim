@@ -136,7 +136,7 @@ For _Homo erectus_ the two existing role presets merge: mass is identical; heavy
 
 ### 2.3 Which species are social
 
-`social` means **a cooperative group hunter or group fighter**, the trait the owner asked for ("무리동물일 시에"). It is not "lives in groups": elephants, buffalo and mammoths are gregarious but defend as a herd rather than hunt as a pack; herd defence is mechanic M4 (SPECIES.md §8), a separate future layer, split out to [#72](https://github.com/VinylStage/trex_vs_tiger_sim/issues/72) (decision D2, §9).
+`social` means **a cooperative group hunter or group fighter**, the trait the owner asked for ("무리동물일 시에"). It is not "lives in groups": elephants, buffalo and mammoths are gregarious but defend as a herd rather than hunt as a pack; herd defence is mechanic M4 (SPECIES.md §8), a separate future layer, split out to [#72](https://github.com/VinylStage/trex_vs_tiger_sim/issues/72) (decision D2, §9). Its design proposal is [HERD-DEFENSE.md](HERD-DEFENSE.md).
 
 | Species                    |        `social`        | Evidence                                                                                                                                                                                                                                                                                                     |
 | -------------------------- | :--------------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
