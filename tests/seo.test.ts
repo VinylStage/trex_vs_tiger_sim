@@ -128,7 +128,7 @@ describe('indexable pages', () => {
     expect(INDEXABLE_ROUTES).toHaveLength(2 * (1 + CONTENT_PAGES.length));
   });
 
-  it('match the build entries that are pages (findHtmlEntries minus /reset/ and 404)', () => {
+  it('match the build entries that are pages (findHtmlEntries minus /reset/, /bench/ and 404)', () => {
     const discovered = Object.values(findHtmlEntries(ROOT))
       .map((f) => `/${relative(ROOT, f).split('\\').join('/')}`)
       .map((p) => parsePagePath(p))

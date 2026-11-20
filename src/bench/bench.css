@@ -1,0 +1,135 @@
+:root {
+  color-scheme: light dark;
+  --bg: #f7f6f3;
+  --fg: #1b1b1a;
+  --muted: #5f5e5a;
+  --line: #d6d5d0;
+  --pass: #1d7a3a;
+  --fail: #b3261e;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141413;
+    --fg: #f0efec;
+    --muted: #a9a8a1;
+    --line: #3a3a37;
+    --pass: #5cc27a;
+    --fail: #f28b82;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font-family:
+    -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI',
+    'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', sans-serif;
+  line-height: 1.5;
+}
+
+.bench {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.bench h1 {
+  font-size: 1.5rem;
+}
+
+.bench h2 {
+  font-size: 1.15rem;
+  margin-top: 1.5rem;
+}
+
+.bench-device {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+}
+
+.bench-device dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.bench-ua {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+}
+
+.bench-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.bench button {
+  font: inherit;
+  padding: 0.4rem 1rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.bench-status {
+  min-height: 1.5em;
+  color: var(--muted);
+}
+
+.bench-obs-step {
+  border: 1px solid var(--line);
+  padding: 0 1rem 1rem;
+}
+
+.bench-scroll {
+  overflow-x: auto;
+}
+
+.bench table {
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.bench th,
+.bench td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.25rem 0.5rem;
+  text-align: left;
+}
+
+.bench td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.bench td.hash {
+  font-family: ui-monospace, monospace;
+}
+
+.bench td.pass {
+  color: var(--pass);
+}
+
+.bench td.fail {
+  color: var(--fail);
+}
+
+.bench-json {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.5rem;
+  font-family: ui-monospace, monospace;
+  font-size: 0.75rem;
+}
+
+.bench-row {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+}

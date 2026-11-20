@@ -46,3 +46,10 @@ export function checkPages(
   sizes: Record<string, PageSize>,
   budgets: { pages: Record<string, { gzipBytes: number } | undefined> },
 ): PageCheck[];
+
+export function measure(
+  sim: import('./matrix.d.mts').TimingSim,
+  spec: unknown,
+  s: Scenario,
+  options?: { minMs?: number },
+): import('./matrix.d.mts').TimeStats & { id: string; runs: number; mv: number; hash: string };

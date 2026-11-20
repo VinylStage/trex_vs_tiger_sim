@@ -31,3 +31,6 @@
 
 /en/r/*
   X-Robots-Tag: noindex
+
+/bench/*
+  X-Robots-Tag: noindex
