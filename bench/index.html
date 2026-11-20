@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="color-scheme" content="light dark" />
+    <title>실시간 벤치마크 · Live benchmark — 티렉스 대 호랑이 · T-Rex vs Tiger</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <main class="bench">
+      <h1>실시간 벤치마크 <span lang="en">· Live benchmark</span></h1>
+      <p>
+        이 기기에서 모든 프리셋의 라이브 실행과 재시뮬레이션, Simple 배치, 고정 시나리오 행렬을
+        잽니다. 결과는 이 화면에만 나오고 어디에도 보내지 않습니다. 다른 앱을 닫고 시작을 누르세요.
+        <br />
+        <span lang="en"
+          >Measures the live run, the re-simulations and the Simple batch of every preset, and the
+          fixed scenario matrix, on this device. The results stay on this page; nothing is sent
+          anywhere. Close other apps, then press Start.</span
+        >
+      </p>
+
+      <h2>기기 <span lang="en">· Device</span></h2>
+      <dl class="bench-device">
+        <dt>코어 <span lang="en">· Cores</span></dt>
+        <dd id="bench-cores">–</dd>
+        <dt>메모리 <span lang="en">· Device memory</span></dt>
+        <dd id="bench-memory">–</dd>
+        <dt>배치 워커 <span lang="en">· Batch workers</span></dt>
+        <dd id="bench-workers">–</dd>
+        <dt>빌드 <span lang="en">· Build</span></dt>
+        <dd id="bench-build">–</dd>
+        <dt>User agent</dt>
+        <dd id="bench-ua" class="bench-ua">–</dd>
+      </dl>
+
+      <div class="bench-controls">
+        <label
+          ><input type="checkbox" id="bench-matrix" checked /> 시나리오 행렬 포함
+          <span lang="en">· Include the scenario matrix</span></label
+        >
+        <label
+          ><input type="checkbox" id="bench-obs" /> OBS를 켜고 한 번 더
+          <span lang="en">· Second pass with OBS running</span></label
+        >
+        <button type="button" id="bench-start">시작 <span lang="en">· Start</span></button>
+      </div>
+      <p id="bench-status" class="bench-status" role="status" aria-live="polite"></p>
+      <div id="bench-obs-step" class="bench-obs-step" hidden>
+        <p>
+          OBS를 켜고 평소 방송 설정으로 녹화나 송출을 시작한 다음 누르세요.
+          <span lang="en"
+            >Start OBS with your usual stream settings and start recording or streaming, then
+            press:</span
+          >
+        </p>
+        <button type="button" id="bench-obs-run">
+          OBS 측정 시작 <span lang="en">· Run the OBS pass</span>
+        </button>
+      </div>
+
+      <h2>프리셋 <span lang="en">· Presets</span></h2>
+      <div class="bench-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Preset</th>
+              <th scope="col">Pass</th>
+              <th scope="col">Agents</th>
+              <th scope="col">Live sim (ms)</th>
+              <th scope="col">Re-sim p50</th>
+              <th scope="col">Re-sim p95</th>
+              <th scope="col">Gate (a)</th>
+              <th scope="col">p95 ≤ 500 ms</th>
+              <th scope="col">Batch runs</th>
+              <th scope="col">Batch ms/run</th>
+              <th scope="col">Batch wall (ms)</th>
+              <th scope="col">Workers</th>
+            </tr>
+          </thead>
+          <tbody id="bench-presets"></tbody>
+        </table>
+      </div>
+      <p id="bench-verdict" class="bench-verdict"></p>
+
+      <h2>시나리오 행렬 <span lang="en">· Scenario matrix (reduced)</span></h2>
+      <div class="bench-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Scenario</th>
+              <th scope="col">Runs</th>
+              <th scope="col">ms/run median</th>
+              <th scope="col">ms/run p95</th>
+              <th scope="col">Hash</th>
+            </tr>
+          </thead>
+          <tbody id="bench-matrix-rows"></tbody>
+        </table>
+      </div>
+      <p>Matrix hash: <code id="bench-matrix-hash">–</code></p>
+
+      <section id="bench-output" hidden>
+        <h2>결과 <span lang="en">· Result</span></h2>
+        <p>
+          JSON을 복사해 이슈에 붙여 넣으세요.
+          <span lang="en">Copy the JSON and paste it into the issue.</span>
+        </p>
+        <button type="button" id="bench-copy">JSON 복사 <span lang="en">· Copy JSON</span></button>
+        <span id="bench-copied" role="status"></span>
+        <textarea
+          id="bench-json"
+          class="bench-json"
+          readonly
+          rows="12"
+          aria-label="JSON"
+        ></textarea>
+        <p>docs/PERFORMANCE.md, Real devices:</p>
+        <pre id="bench-row" class="bench-row"></pre>
+      </section>
+    </main>
+    <script type="module" src="/src/bench/main.ts"></script>
+  </body>
+</html>

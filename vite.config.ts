@@ -66,6 +66,9 @@ export default defineConfig({
     __BUILD_SHA__: JSON.stringify(info.sha),
     __BUILD_TIME__: JSON.stringify(info.builtAt),
   },
+  resolve: {
+    alias: [{ find: /^@sim\//, replacement: `${root}src/sim/` }],
+  },
   plugins: [
     versionJson(info),
     siteHeader(),

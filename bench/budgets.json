@@ -299,6 +299,9 @@
     "about/index.html": {
       "gzipBytes": 1692
     },
+    "bench/index.html": {
+      "gzipBytes": 30802
+    },
     "en/404.html": {
       "gzipBytes": 1692
     },

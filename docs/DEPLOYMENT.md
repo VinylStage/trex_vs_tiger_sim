@@ -55,6 +55,7 @@ The deployed site is static. Cloudflare Pages only serves the files Vite writes 
 | `404.html`, `en/404.html`                                                            | Not-found pages; Pages serves the nearest one with status 404 for every unknown URL ([SEO.md](SEO.md#404-pages)). Their asset URLs are root-absolute                                                                                                                  |
 | `<32 hex>.txt`                                                                       | IndexNow key file, copied from `public/` ([SEO.md](SEO.md#indexnow))                                                                                                                                                                                                  |
 | `version.json`                                                                       | Deployed version and commit, polled by open tabs (see [VERSIONING.md](VERSIONING.md))                                                                                                                                                                                 |
+| `bench/index.html`                                                                   | Hidden live benchmark kit, noindex (see [PERFORMANCE.md](PERFORMANCE.md#live-benchmark-191))                                                                                                                                                                          |
 | `reset/index.html`                                                                   | Cache and storage reset page (see [VERSIONING.md](VERSIONING.md))                                                                                                                                                                                                     |
 
 Nothing else is deployed:
@@ -212,6 +213,12 @@ Details, browser support and the cookie decision are in [VERSIONING.md](VERSIONI
 | `X-Robots-Tag: noindex` | Result pages are per-link snapshots and must not be indexed (the HTML also carries `<meta name="robots" content="noindex">`, and they are not in the sitemap). `/r/` and `/en/r/` also match `/*/`, so they get `no-cache, no-transform` like every other page. |
 
 These paths run the result-preview Pages Function ([below](#pages-function-r-previews)). Because Cloudflare does not promise to apply `_headers` to responses that pass through a Function, the Function sets the same headers itself (`RESULT_HEADERS` in `src/share/result-function.ts`); `tests/result-share.test.ts` fails when the two drift apart.
+
+### Rule `/bench/*` (live benchmark kit)
+
+| Header                  | Why                                                                                                                                                                                                                                                                             |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `X-Robots-Tag: noindex` | `/bench/` is a measuring tool for the owner's devices (#191, [PERFORMANCE.md](PERFORMANCE.md#live-benchmark-191)), linked from nowhere. The HTML also carries `noindex, nofollow` and the page is not in the sitemap; it gets `/*/`'s `no-cache, no-transform` like every page. |
 
 All other paths keep the Pages default `public, max-age=0, must-revalidate`. That includes the files in `public/` (icons, OG images, the manifest) and the generated `robots.txt`, `sitemap.xml`, `llms.txt`, `llms-full.txt`, which Pages already serves as `text/plain; charset=utf-8` and `application/xml` (checked on the branch preview), so no `Content-Type` rule is needed.
 

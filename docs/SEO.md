@@ -222,7 +222,7 @@ Sitemap: https://trex-vs-tiger.vinylims.com/sitemap.xml
 
 - One group: `*` plus the search and AI crawlers of SEO_GEO §5.6 (Googlebot, Google-Extended, Bingbot, Yeti, Daum, DuckDuckBot, Applebot, Applebot-Extended, OAI-SearchBot, ChatGPT-User, GPTBot, Claude-SearchBot, Claude-User, ClaudeBot, PerplexityBot, Perplexity-User, Amazonbot, meta-externalagent, CCBot). Listing them in the `*` group changes nothing for them (RFC 9309 groups) but states the policy and keeps them on the same rules if a bot-specific group is ever added.
 - `Content-Signal` is Cloudflare's vocabulary for search / AI input / AI training preferences. Google's robots.txt report may show it as "not understood"; that has no effect.
-- `/reset/` is a cache-clearing utility page (noindex); nothing else is disallowed.
+- `/reset/` is a cache-clearing utility page (noindex); nothing else is disallowed. The hidden `/bench/` page (#191) is `noindex, nofollow` and sends `X-Robots-Tag: noindex`, and is deliberately not disallowed either, so a crawler that finds it sees the `noindex`; it is not in the registry, so not in the sitemap or `llms.txt` (`tests/bench-kit.test.ts`).
 - Pages serves `.txt` as `text/plain; charset=utf-8` (checked on the preview), so Korean text and Naver's "robots.txt must be plain text" rule are fine without a `_headers` rule.
 - The robots policy must match the Cloudflare edge settings ([owner actions](#owner-actions)); otherwise crawlers get 403 while robots.txt says "allowed".
 

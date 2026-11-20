@@ -481,7 +481,10 @@ describe('shared site header (src/pages/site-header.ts)', () => {
 
 describe('site footer sources (#64)', () => {
   const root = fileURLToPath(new URL('..', import.meta.url));
-  const sources = Object.values(findHtmlEntries(root)).filter((f) => !f.includes('reset'));
+  // The utility pages /reset/ and /bench/ (#191) have no footer.
+  const sources = Object.values(findHtmlEntries(root)).filter(
+    (f) => !/[/\\](?:reset|bench)[/\\]index\.html$/.test(f),
+  );
 
   it.each(sources.map((f) => [f.slice(root.length)] as const))(
     '%s has the footer placeholder, not a hand-written footer',

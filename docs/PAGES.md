@@ -252,7 +252,7 @@ Every page (the lobbies, both play pages, all content pages including the licens
 
 All links are in the static HTML; nothing a crawler needs is generated at run time. The old app footer claim "서버 전송 · 추적 없음 / No server, no tracking" is gone, because it would become false once ads are added ([ADSENSE.md](ADSENSE.md)). The app no longer renders a footer of its own: it fills the version, and on a language switch rebuilds the links (`renderFooterLinks`) and re-translates the rest. Styles: `src/ui/site-footer.css`.
 
-`/reset/` is a transient utility page (noindex, about half a second on screen) and has no footer.
+`/reset/` is a transient utility page (noindex, about half a second on screen) and has no footer. `/bench/`, the live benchmark kit of #191 ([PERFORMANCE.md](PERFORMANCE.md#live-benchmark-191)), is a hidden utility page: noindex, no header or footer, linked from nowhere, ko and en text side by side.
 
 ## Colour contrast
 
