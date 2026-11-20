@@ -326,7 +326,18 @@ All sampled triangulars `min / mode / max`, `individual: false`, tag **S** unles
 
 `N_min` = 2 and the cap `2` are global. The hyena's slightly higher `k_c` mode reflects the numbers-dependent courage documented for it; _H. erectus_ is lower everywhere because cooperative fighting is not observable in its record.
 
-**Calibration guard.** SPECIES.md §7 found the wolf-vs-buffalo group-size curve already plateaus near 9–13 wolves **without** any group rule ("herd effects emerge"). The buff must not double-count that: P4 acceptance requires the free-model wolf-vs-buffalo curve, buff on, to keep its plateau inside 9–13 [MacNulty 2014], and the buff magnitudes above are to be lowered if it moves.
+**Calibration guard.** This guard was written on the assumption that the wolf-vs-buffalo group-size curve already plateaus near 9–13 wolves **without** any group rule (SPECIES.md §7, "herd effects emerge"), so the buff could only push the plateau out and its magnitudes were to be lowered if it moved. The free model does not bear that out (#168). The plateau in SPECIES.md §7 is a classic-engine result with the `flank` tactic. Classic `direct`, the closest analogue of the free approach, accelerates instead.
+
+Measured on free model 4 (one buffalo, buff on, seed 20261019, 500 runs per count; wolves' win share in %):
+
+| Wolves      |   4 |    6 |    8 |   10 |   12 |   13 |   14 |   16 |   20 |   25 |
+| ----------- | --: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| `allIn`     | 6.2 | 15.6 | 25.2 | 27.6 | 34.8 | 36.4 | 40.0 | 42.6 | 53.2 | 58.2 |
+| `realistic` | 3.6 |  8.0 | 13.2 | 13.8 | 17.6 | 21.0 | 21.2 | 22.4 | 28.8 | 33.2 |
+
+- **Shape.** The curve rises from 4 to 12 wolves and then keeps climbing more slowly, without levelling off: there is no plateau at 9–13. With every buff effect off it accelerates instead (`allIn`: 0.4, 19.0 and 82.2 % at 4, 12 and 25). The buff bends the curve: group latching (E3) lifts the small and middle packs, and rout contagion (E4b) holds the large ones down. Lowering E3, the remedy this guard used to prescribe, straightens the curve instead of flattening it.
+- **The strict plateau is not met.** With G = [p(25) − p(13)] / [p(13) − p(4)], a plateau inside 9–13 means G ≤ 0.5: the gain from 13 to 25 wolves at most half the gain from 4 to 13. Model 4 gives G 0.72 `allIn` and 0.70 `realistic` (0.62 and 0.76 at 2,000 runs). Classic `flank` gives about 0.44, and the free model with the buff off about 2. The only buff knob found to bring G under 0.5 is `routShock` 0. It does so in `allIn` only (0.54 in `realistic`), and it moves two presets out of `close` and two headline match-ups by about 30 pp. A retune is left as an owner decision (#168).
+- **What the test holds** (`tests/free-buff.test.ts`, current model, both flight modes, 300 runs per count, measured counts only). The curve rises: p(12) > p(6), p(6) ≤ 0.8 p(12) and p(13) − p(4) ≥ 10 pp. It also does not accelerate past the field plateau: G ≤ 1. This catches a return to the convex no-buff shape without claiming a plateau the model does not have.
 
 ### 5.4 Deactivation
 
