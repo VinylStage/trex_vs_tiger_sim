@@ -293,25 +293,27 @@ The heaviest Simple batches stay at about 20 core-seconds, about 5 s of wall tim
 > - History 표에는 0.2.28(이 저장소 컨테이너에서 직접 실행)과 0.2.29(모델 4, 출시 뒤 실행) 줄이 들어가 있습니다. Chromium 측정에서 Simple 모드 결과가 처음 그려질 때 CLS가 0.14(1366×900) / 0.40(390×800)으로 나왔는데, 결과 패널이 최종 높이를 미리 잡아 두지 않아 하단 푸터가 밀려나는 한 번의 이동입니다.
 > - Playwright는 이 프로젝트의 의존성이 아닙니다. 워크플로가 고정 버전을 저장소 밖 임시 폴더에 설치해서 씁니다.
 > - 첫 결과 CLS는 #251에서 고쳤습니다(0 / 0, [아래](#layout-shift-when-simple-results-render-251)).
-> - 6단계(대응 규칙)는 시행 중입니다([Response rules](#response-rules-phase-6)). 5단계(실기기, #191)는 아직 계획입니다.
+> - 6단계(대응 규칙)는 시행 중입니다([Response rules](#response-rules-phase-6)). 5단계(실기기)는 #191의 `/bench/` 페이지로 들어갔습니다([Live benchmark](#live-benchmark-191)).
 
 Until #241, performance was measured once per feature (the sections above) and never again, so a regression was noticed only when someone felt it. #230 alone made some presets several times slower per run. These checks re-measure a fixed matrix so the trend is visible and a pull request that slows the engine down fails before it merges.
 
 ### What runs
 
-| Piece                                           | What it does                                                                                                                                                                        |
-| ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `bench/scenarios.json`                          | The fixed matrix: seed, scale ladder, preset and species settings, run counts, and the reduced matrix and limits of the CI job.                                                     |
-| `bench/harness.mjs`                             | The entry that is bundled: the free engine, its design and summary packing, the preset list and the species registry. `@sim/` resolves to the `src/sim/` of the tree being bundled. |
-| `bench/lib.mjs`                                 | Bundles a tree's engine with Vite's SSR build (Vite is already a dev dependency), expands the matrix, times runs, hashes results, measures page JavaScript.                         |
-| `bench/run.mjs` (`npm run bench`)               | Runs the matrix on this checkout, prints the table and writes JSON (`bench/last-run.json`, ignored by git, or `--out`).                                                             |
-| `bench/bundle-size.mjs` (`npm run bench:size`)  | Startup JavaScript of every page in `dist/` against its budget.                                                                                                                     |
-| `bench/budgets.mjs`                             | Writes ceilings into `bench/budgets.json` from a run file (`--from`) and page budgets from a build (`--dist`).                                                                      |
-| `bench/compare.mjs`                             | The CI comparison: base and head in one process, alternating.                                                                                                                       |
-| `.github/workflows/perf.yml`                    | The `perf` job.                                                                                                                                                                     |
-| `bench/browser.mjs`                             | The Chromium checks of the release check, against `vite preview`; Playwright is loaded from outside the project (`PLAYWRIGHT_DIR`).                                                 |
-| `bench/history.mjs`, `bench/release-report.mjs` | Turn a full-matrix run, the page sizes and the Chromium checks into the two History rows and the release summary.                                                                   |
-| `.github/workflows/release-perf.yml`            | The release check (`Release perf`).                                                                                                                                                 |
+| Piece                                           | What it does                                                                                                                                                                             |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `bench/scenarios.json`                          | The fixed matrix: seed, scale ladder, preset and species settings, run counts, and the reduced matrix and limits of the CI job.                                                          |
+| `bench/harness.mjs`                             | The entry that is bundled: the free engine, its design and summary packing, the preset list and the species registry. `@sim/` resolves to the `src/sim/` of the tree being bundled.      |
+| `bench/lib.mjs`                                 | Bundles a tree's engine with Vite's SSR build (Vite is already a dev dependency), expands the matrix, times runs, hashes results, measures page JavaScript.                              |
+| `bench/run.mjs` (`npm run bench`)               | Runs the matrix on this checkout, prints the table and writes JSON (`bench/last-run.json`, ignored by git, or `--out`).                                                                  |
+| `bench/bundle-size.mjs` (`npm run bench:size`)  | Startup JavaScript of every page in `dist/` against its budget.                                                                                                                          |
+| `bench/budgets.mjs`                             | Writes ceilings into `bench/budgets.json` from a run file (`--from`) and page budgets from a build (`--dist`).                                                                           |
+| `bench/compare.mjs`                             | The CI comparison: base and head in one process, alternating.                                                                                                                            |
+| `.github/workflows/perf.yml`                    | The `perf` job.                                                                                                                                                                          |
+| `bench/browser.mjs`                             | The Chromium checks of the release check, against `vite preview`; Playwright is loaded from outside the project (`PLAYWRIGHT_DIR`).                                                      |
+| `bench/history.mjs`, `bench/release-report.mjs` | Turn a full-matrix run, the page sizes and the Chromium checks into the two History rows and the release summary.                                                                        |
+| `bench/matrix.mjs`                              | The matrix expansion, percentiles and the timing loop, without Node built-ins: `bench/lib.mjs` and the `/bench/` page both use it, so a device times exactly what `npm run bench` times. |
+| `/bench/` (`bench/index.html`, `src/bench/`)    | The live benchmark kit for real devices (#191, [Live benchmark](#live-benchmark-191)).                                                                                                   |
+| `.github/workflows/release-perf.yml`            | The release check (`Release perf`).                                                                                                                                                      |
 
 Node built-ins only (`node:crypto`, `node:zlib`, `node:perf_hooks`) plus Vite for bundling; no runtime or dev dependency was added. The release check also needs Playwright, which stays out of `package.json`: the workflow installs a pinned version into a directory outside the checkout (next sections).
 
@@ -487,9 +489,64 @@ First application (2026-11-19, 0.2.29 matrix, then the browser on the reference 
 
 To time a preset other than `elephants-pride` in the browser, pass `--run-preset <id>` to `bench/browser.mjs` (the other checks run as usual; the report's `run` and `cls` blocks then name that preset).
 
-### Planned (phase 5 of #241)
+## Live benchmark (#191)
 
-- **Real devices (phase 5).** The `/bench/` page of #191 runs the same matrix on the owner's PC and a mid-range phone, once per minor version and whenever the gate flags a slowdown.
+The CI runner and the agent containers have no GPU, no OBS and other CPUs, so they can only give a baseline. M3 accepts live cards only on numbers from the reference streamer PC (RENEWAL-1.0 [§10.2 point 5](design/RENEWAL-1.0.md#102-live-step-fork-and-re-simulate-10), [§10.5](design/RENEWAL-1.0.md#105-performance-budgets)): re-simulation p95 ≤ 500 ms for every preset that passes gate (a). The hidden page `/bench/` measures that on any device in a few clicks, and since it also folds in phase 5 of #241 it runs the reduced matrix of `npm run bench` as well, so a device can be put next to the History table.
+
+### How to run the live benchmark
+
+> **한국어**
+>
+> 1. 방송용 PC(또는 비교할 휴대폰)에서 크롬 계열 브라우저로 `https://trex-vs-tiger.vinylims.com/bench/`를 엽니다. 메뉴 어디에도 링크가 없으니 주소를 직접 입력하세요.
+> 2. 다른 앱과 탭을 닫고, 노트북이면 전원을 연결합니다.
+> 3. OBS를 켠 상태와 비교하려면 **OBS를 켜고 한 번 더**에 체크합니다. 이때 OBS는 아직 끈 상태로 둡니다.
+> 4. **시작**을 누릅니다. 모든 프리셋(준비, 라이브 실행, 재시뮬레이션 8번, Simple 배치)과 시나리오 행렬이 차례로 돌아가며, 4코어 컨테이너 기준 1분 정도 걸립니다. 그동안 페이지를 앞에 두고 다른 작업은 하지 마세요.
+> 5. OBS 비교를 골랐다면 안내가 나왔을 때 OBS를 평소 방송 설정으로 켜고 녹화나 송출을 시작한 다음 **OBS 측정 시작**을 누릅니다.
+> 6. **JSON 복사**를 눌러 #191(또는 지정된 이슈)에 붙여 넣습니다. 아래 줄은 [Real devices](#real-devices) 표에 그대로 넣을 수 있습니다.
+>
+> 페이지는 아무것도 보내지 않습니다. 결과는 화면과 복사한 JSON에만 있습니다.
+
+**English**
+
+1. On the streaming PC (or the phone to compare), open `https://trex-vs-tiger.vinylims.com/bench/` in a Chromium-based browser. Nothing links to it; type the address.
+2. Close other apps and tabs; plug a laptop in.
+3. To compare with OBS running, tick **Second pass with OBS running**, and leave OBS closed for now.
+4. Press **Start**. Every preset (warm-up, live run, 8 re-simulations, Simple batch) and then the scenario matrix run in turn; about a minute on the 4-core container. Keep the page in front and the machine otherwise idle.
+5. If you chose the OBS pass: when asked, start OBS with the usual stream settings, start recording or streaming, then press **Run the OBS pass**.
+6. Press **Copy JSON** and paste it into #191 (or the issue that asked for it). The line under it goes into the [Real devices](#real-devices) table as it is.
+
+The page sends nothing: the results exist only on the screen and in the JSON you copy.
+
+### What the page measures
+
+Every number comes from the production build under the production CSP and Trusted Types, as served: the page loads its worker through the one allowed policy, `sim-worker`, which admits only that worker's bundled URL, as on `/play/`.
+
+| Step           | Method                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Device         | `navigator.hardwareConcurrency`, `navigator.deviceMemory` (Chromium only, rounded by the browser), the user agent, the build version and model. Batch workers = `poolSize(cores)`, the app's own count (cores − 1, at most 8).                                                                                                                                                                                                                |
+| Warm-up        | Every worker runs the first small scenarios of the matrix untimed (`warmUpSet`, as `npm run bench`), and each preset's live run is played once untimed before it is timed.                                                                                                                                                                                                                                                                    |
+| Live run       | The preset's run 0 at the matrix seed (20261118), simulated with its trace in one worker and timed there, as the live worker times `replay-free` (`liveSimMs`, without the message transfer).                                                                                                                                                                                                                                                 |
+| Re-simulations | K = 8 runs of the same battle with one card, _Focus_ on side A (available in every model, needs neither morale nor the what-if pack), at 8 ticks spread evenly over the pause window of Live battle mode (25–60 % of the live run's duration, turned into ticks with `cardTick`). p50 and p95 over the 8.                                                                                                                                     |
+| Gate verdict   | Gate (a) as `resimGate` decides it: `liveSimMs × 1.5 ≤ 500 ms`. For a preset that passes, the M3 budget: re-simulation p95 ≤ 500 ms. A preset that fails the gate falls back to pre-battle cards, so the budget does not apply to it. A pass is accepted when no passing preset is over the budget.                                                                                                                                           |
+| Simple batch   | The preset's Simple run count (`presetConfig`, 300 for `trex-erectus-100`, 500 for the rest) split into the app's chunks (`splitRuns`) over the batch workers. Batch ms/run = median of the per-run times on one worker (gate (b)'s `msPerRun`); wall = first chunk sent to last result back.                                                                                                                                                 |
+| OBS pass       | Optional: the same presets again with OBS running. `c_obs` (§10.7) = OBS ÷ plain batch ms/run per preset; the report gives the median.                                                                                                                                                                                                                                                                                                        |
+| Matrix         | The reduced matrix of `bench/scenarios.json` (`expandMatrix(…, { reduced: true })`, 53 scenarios at half the run counts, each repeated until 250 ms is timed) on one worker, with the timing loop of `bench/matrix.mjs`. Hashes are SHA-256 of the packed summaries through `crypto.subtle`, so the matrix hash must equal the one `npm run bench -- --reduced` prints for the same engine: if it differs, the device computed other results. |
+
+Not measured here: the replay's frame time and the time from Run to the rendered verdict, which need the real `/play/` page; `bench/browser.mjs` measures them in the release check. The batch wall time of `elephants-pride` is the closest number to the release check's Run to verdict (no rendering, no aggregation).
+
+The page is `noindex, nofollow` and served with `X-Robots-Tag: noindex` (`public/_headers`), is not in `src/seo/site.ts`, so it stays out of the sitemap and `llms.txt`, has no header, footer or link from any page, and has no network code at all (`connect-src 'self'` would also block it). `tests/bench-kit.test.ts` checks all of that, plus the statistics, the gate verdict, the card ticks, the OBS factor and the Real devices row. Its startup JavaScript is budgeted like every page (`bench/index.html`, 27.3 KB, budget 30.1 KB); the worker (67.5 KB) is loaded on Start.
+
+### Real devices
+
+One row per device and run; the page prints it under the JSON. Ladder and slowest preset from the reduced matrix (ms/run, median; 500v5000 is not in it); worst re-sim p95 among the presets that pass gate (a); `elephants-pride` batch = its Simple batch wall time (ms); OBS = `c_obs` of the OBS pass.
+
+| Version | Date       | Device                              | Workers | 1v1 / 10v100 / 50v1000 (ms/run) | Slowest preset (ms/run)  | Worst re-sim p95, gate passing (ms) | Gate (a) passes | `elephants-pride` batch (ms) | OBS  | Reduced hash       | Note                                                                                                                                                                                                                                                    |
+| ------- | ---------- | ----------------------------------- | ------: | ------------------------------- | ------------------------ | ----------------------------------- | --------------- | ---------------------------: | ---- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.2.30  | 2026-11-19 | 4 cores, 16 GB, Chrome 157 on Linux |       3 | 0.40 / 25.2 / 538               | `trex-erectus-100`, 32.8 | 59.4 (`trex-erectus-100`)           | 18 / 18         |                        3,636 | 1.00 | `f3afd0125da00e3e` | **Container baseline, not the reference.** 4 vCPU Intel Xeon @ 2.10 GHz agent container, headless Chromium (preinstalled Playwright), production build with the production CSP; the OBS pass ran without OBS, so 1.00 only shows the pass-to-pass noise |
+
+Container baseline (2026-11-19, the row above): every preset passes gate (a); the most expensive live run is `trex-erectus-100` at 53.3 ms (gate limit 333 ms) and the worst re-simulation p95 59.4 ms, far inside 500 ms. The longest Simple batch is `trex-squad-tiger-horde` at 6.7 s wall. The plain pass took 51 s with the matrix (18 s of it), the OBS pass 28 s. The reduced hash `f3afd0125da00e3e` equals the one `npm run bench -- --reduced` gives on the same commit in Node, scenario for scenario, and the browser's ms/run were 0.92 times Node's (median over the 53 scenarios, 0.79–1.48).
+
+**Cadence** (phase 5 of #241): once per minor version, and whenever the `perf` gate flags an engine slowdown above 25 %, on the owner's streaming PC (with and without OBS) and one mid-range phone. The owner's rows are the reference for M3 and for the 10 s rule of the [response rules](#response-rules-phase-6).
 
 ## Layout shift when Simple results render (#251)
 
